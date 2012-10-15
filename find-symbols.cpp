@@ -27,19 +27,18 @@ namespace {
     Elf *elf;
     Ebl *ebl;
     size_t shnum;
-    std::tr1::function<void(const find_symbol_info &)> callback;
+    find_symbols_callbacks callbacks;
 
-    impl(Elf *, std::tr1::function<void(const find_symbol_info &)>);
+    impl(Elf *, const find_symbols_callbacks &);
     ~impl();
     void process_sections_by_type(int type);
     void process_section(Elf_Scn *scn, GElf_Shdr *shdr);
   };
 }
 
-void find_symbols(Elf *elf,
-		  std::tr1::function<void(const find_symbol_info &)> callback)
+void find_symbols(Elf *elf, const find_symbols_callbacks &callbacks)
 {
-  impl i(elf, callback);
+  impl i(elf, callbacks);
   i.process_sections_by_type(SHT_DYNSYM);
   i.process_sections_by_type(SHT_SYMTAB);
 }
@@ -47,7 +46,7 @@ void find_symbols(Elf *elf,
 
 static const char * get_visibility_type (int value);
 
-impl::impl(Elf *elf, std::tr1::function<void(const find_symbol_info &)> callback)
+impl::impl(Elf *elf, const find_symbols_callbacks &callbacks)
 {
   this->elf = elf;
   if (elf_getshdrnum (elf, &shnum) < 0) {
@@ -58,7 +57,7 @@ impl::impl(Elf *elf, std::tr1::function<void(const find_symbol_info &)> callback
   if (ebl == NULL) {
     find_symbols_exception::raise("cannot create EBL handle");
   }
-  this->callback = callback;
+  this->callbacks = callbacks;
 }
 
 impl::~impl()
@@ -164,24 +163,13 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
       /* Determine the real section index.  */
       if (sym->st_shndx != SHN_XINDEX)
 	xndx = sym->st_shndx;
+      bool check_def = xndx != SHN_UNDEF;
 
-      find_symbol_info fsinfo;
-      fsinfo.sym = sym;
-      fsinfo.type_name = ebl_symbol_type_name (ebl, GELF_ST_TYPE (sym->st_info),
-					       typebuf, sizeof (typebuf));
-      fsinfo.binding_name =
-	ebl_symbol_binding_name (ebl, GELF_ST_BIND (sym->st_info),
-				 bindbuf, sizeof (bindbuf));
-      fsinfo.visibility_type =
-	get_visibility_type (GELF_ST_VISIBILITY (sym->st_other));
-      fsinfo.section_name = 
-	ebl_section_name (ebl, sym->st_shndx, xndx, scnbuf,
-			  sizeof (scnbuf), NULL, shnum);
-      fsinfo.symbol_name = elf_strptr (elf, shdr->sh_link, sym->st_name);
-      fsinfo.vna_name = NULL;
-      fsinfo.vna_other = 0;
-      fsinfo.vda_name = NULL;
-
+      defined_symbol_info dsinfo;
+      dsinfo.vda_name = NULL;
+      undefined_symbol_info usinfo;
+      usinfo.vna_name = NULL;
+      usinfo.vna_other = 0;
       if (versym_data != NULL)
 	{
 	  /* Get the version information.  */
@@ -191,7 +179,6 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 	  if (versym != NULL && ((*versym & 0x8000) != 0 || *versym > 1))
 	    {
 	      bool is_nobits = false;
-	      bool check_def = xndx != SHN_UNDEF;
 
 	      if (xndx < SHN_LORESERVE || sym->st_shndx == SHN_XINDEX)
 		{
@@ -248,14 +235,14 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 
 		  if (vernaux != NULL && vernaux->vna_other == *versym)
 		    {
-		      fsinfo.vna_name = elf_strptr (elf, verneed_stridx,
+		      usinfo.vna_name = elf_strptr (elf, verneed_stridx,
 						    vernaux->vna_name);
-		      fsinfo.vna_other = vernaux->vna_other;
+		      usinfo.vna_other = vernaux->vna_other;
 		      check_def = 0;
 		    }
 		  else if (! is_nobits)
 		    find_symbols_exception::raise
-		      ("bad dynamic symbol: %s (%u)", fsinfo.symbol_name, cnt);
+		      ("bad dynamic symbol %u", cnt);
 		  else
 		    check_def = 1;
 		}
@@ -288,9 +275,9 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 			= gelf_getverdaux (verdef_data,
 					   vd_offset + verdef->vd_aux,
 					   &verdaux_mem);
-
+		      
 		      if (verdaux != NULL)
-			fsinfo.vda_name = elf_strptr (elf, verdef_stridx,
+			dsinfo.vda_name = elf_strptr (elf, verdef_stridx,
 						      verdaux->vda_name);
 		      // FIXME: printf ((*versym & 0x8000) ? "@%s" : "@@%s",
 		      // FIXME: clarify @/@@ difference
@@ -298,7 +285,31 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 		}
 	    }
 	}
-      callback(fsinfo);
+
+      symbol_info *psinfo;
+      if (check_def) {
+	psinfo = &dsinfo;
+	dsinfo.section_name = 
+	  ebl_section_name (ebl, sym->st_shndx, xndx, scnbuf,
+			    sizeof (scnbuf), NULL, shnum);
+      } else {
+	psinfo = &usinfo;
+      }
+      psinfo->sym = sym;
+      psinfo->type_name =
+	ebl_symbol_type_name (ebl, GELF_ST_TYPE (sym->st_info),
+			      typebuf, sizeof (typebuf));
+      psinfo->binding_name =
+	ebl_symbol_binding_name (ebl, GELF_ST_BIND (sym->st_info),
+				 bindbuf, sizeof (bindbuf));
+      psinfo->visibility_type =
+	get_visibility_type (GELF_ST_VISIBILITY (sym->st_other));
+      psinfo->symbol_name = elf_strptr (elf, shdr->sh_link, sym->st_name);
+      if (check_def) {
+	callbacks.defined(dsinfo);
+      } else {
+	callbacks.undefined(usinfo);
+      }
     }
 }
 

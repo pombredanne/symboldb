@@ -12,16 +12,28 @@ struct find_symbols_exception : std::runtime_error {
     __attribute__((format(printf, 1, 2), noreturn));
 };
 
-struct find_symbol_info {
+struct symbol_info {
   GElf_Sym *sym;
   const char *type_name;
   const char *binding_name;
   const char *visibility_type;
-  const char *section_name;
   const char *symbol_name;
-  const char *vna_name;
+};
+
+struct defined_symbol_info : symbol_info {
+  const char *section_name;
   const char *vda_name;
+};
+
+struct undefined_symbol_info : symbol_info {
+  const char *vna_name;
   unsigned vna_other;
 };
 
-void find_symbols(Elf *elf, std::tr1::function<void(const find_symbol_info &)>);
+struct find_symbols_callbacks {
+  std::tr1::function<void(const defined_symbol_info &)> defined;
+  std::tr1::function<void(const undefined_symbol_info &)> undefined;
+};
+
+
+void find_symbols(Elf *elf, const find_symbols_callbacks &);

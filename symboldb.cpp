@@ -9,10 +9,24 @@
 #include "find-symbols.hpp"
 
 static void
-dump(const find_symbol_info &fsi)
+dump_def(const defined_symbol_info &dsi)
 {
-  printf("%s %s %s %s\n", fsi.symbol_name, fsi.section_name, fsi.vna_name, fsi.vda_name);
+  if (dsi.symbol_name == NULL || dsi.symbol_name[0] == '\0') {
+    return;
+  }
+  printf("DEF %s %s\n", dsi.symbol_name, dsi.vda_name);
 }
+
+static void
+dump_ref(const undefined_symbol_info &usi)
+{
+  if (usi.symbol_name == NULL || usi.symbol_name[0] == '\0') {
+    return;
+  }
+  printf("REF %s %s\n", usi.symbol_name, usi.vna_name);
+}
+
+static find_symbols_callbacks fsc = {dump_def, dump_ref};
 
 int
 main(int argc, char **argv)
@@ -29,7 +43,7 @@ main(int argc, char **argv)
     fprintf(stderr, "elf_begin(%s): %s\n", argv[1], elf_errmsg(-1));
     exit(1);
   }
-  find_symbols(e, dump);
+  find_symbols(e, fsc);
   elf_end(e);
   close(fd);
 
