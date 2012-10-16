@@ -7,6 +7,6 @@ LIBS =  -lebl -lelf -ldl
 
 all:
 	g++ $(DEFINES) $(CXXFLAGS_ADD) $(CXXFLAGS) $(LDFLAGS) -o symboldb \
-		symboldb.cpp find-symbols.cpp find_symbols_exception.cpp \
+		symboldb.cpp find-symbols.cpp find_symbols_exception.cpp cpio_reader.cpp \
 		$(LIBS)
 
