@@ -1,7 +1,9 @@
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <cpio.h>
-#include <inttypes.h>
 
 struct cpio_entry {
   uint32_t magic;
@@ -15,9 +17,12 @@ struct cpio_entry {
   uint64_t mtime;
   uint32_t namesize;
   uint64_t filesize;
+
+  static const size_t header_size = 76;
 };
 
 // Parses a 76-byte header into the fields above.  Returns true on
 // success, sets ERROR to the name of the broken field on error.
-bool parse(const char[76], cpio_entry &, const char *&error);
+bool parse(const char[cpio_entry::header_size], cpio_entry &,
+	   const char *&error);
 
