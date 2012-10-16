@@ -37,6 +37,7 @@ read_octal(const char *where, const char *p, T &result, const char *&error)
     int d = digit(p[i]);
     if (d < 0) {
       error = where;
+      return NULL;
     }
     result = (result << 3) | d;
   }
