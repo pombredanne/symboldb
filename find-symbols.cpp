@@ -167,6 +167,7 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 
       defined_symbol_info dsinfo;
       dsinfo.vda_name = NULL;
+      dsinfo.default_version = false;
       undefined_symbol_info usinfo;
       usinfo.vna_name = NULL;
       usinfo.vna_other = 0;
@@ -279,6 +280,8 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 		      if (verdaux != NULL)
 			dsinfo.vda_name = elf_strptr (elf, verdef_stridx,
 						      verdaux->vda_name);
+		      if (*versym & 0x8000)
+			dsinfo.default_version = true;
 		      // FIXME: printf ((*versym & 0x8000) ? "@%s" : "@@%s",
 		      // FIXME: clarify @/@@ difference
 		    }

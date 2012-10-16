@@ -23,6 +23,7 @@ struct symbol_info {
 struct defined_symbol_info : symbol_info {
   const char *section_name;
   const char *vda_name;
+  bool default_version;
 };
 
 struct undefined_symbol_info : symbol_info {
