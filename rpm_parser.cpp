@@ -132,6 +132,13 @@ rpm_parser_state::read_file(rpm_file_entry &file)
     }
     ++pos;
   }
+
+  // Check for end marker.
+  const char *trailer = "TRAILER!!!";
+  if (file.name.size() == strlen(trailer) + 1
+      && memcmp(&file.name.front(), trailer, strlen(trailer)) == 0) {
+    return false;
+  }
   
   // Read contents.
   file.contents.resize(file.header.filesize);
@@ -144,6 +151,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 				 + " (in cpio file contents)");
     }
   }
+
   // Contents padding.
   pos = file.header.filesize;
   while ((pos % 4) != 0) {
