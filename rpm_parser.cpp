@@ -1,10 +1,15 @@
 #include "rpm_parser.hpp"
 #include "cpio_reader.hpp"
+#include "rpm_file_info.hpp"
+#include "rpmtd_wrapper.hpp"
 
 #include <assert.h>
 
 #include <rpm/rpmlib.h>
 #include <rpm/rpmts.h>
+
+#include <map>
+#include <tr1/memory>
 
 void
 rpm_parser_init()
@@ -12,17 +17,69 @@ rpm_parser_init()
   rpmReadConfigFiles("", "noarch");
 }
 
-// The code below roughly follows rpm2cpio.
-
 struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
   FD_t gzfd;
+
+  typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
+  file_map files;
+  void get_files_from_header();
 };
+
+void
+rpm_parser_state::impl::get_files_from_header()
+{
+  const headerGetFlags hflags = HEADERGET_ALLOC | HEADERGET_EXT;
+
+  rpmtd_wrapper names;
+  if (!headerGet(header, RPMTAG_FILENAMES, names.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILENAMES header");
+  }
+  rpmtd_wrapper users;
+  if (!headerGet(header, RPMTAG_FILEUSERNAME, users.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEUSERNAME header");
+  }
+  rpmtd_wrapper groups;
+  if (!headerGet(header, RPMTAG_FILEGROUPNAME, groups.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEGROUPNAME header");
+  }
+
+  while (true) {
+    const char *name = rpmtdNextString(names.raw);
+    if (name == NULL) {
+      break;
+    }
+    const char *user = rpmtdNextString(users.raw);
+    if (name == NULL) {
+      throw rpm_parser_exception("missing entries in FILEUSERNAME header");
+    }
+    const char *group = rpmtdNextString(groups.raw);
+    if (name == NULL) {
+      throw rpm_parser_exception("missing entries in FILEUSERGROUP header");
+    }
+
+    std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
+    p->name = name;
+    p->user = user;
+    p->group = group;
+    files[p->name] = p;
+  }
+
+  if (rpmtdNextString(users.raw) != NULL) {
+    throw rpm_parser_exception
+      ("FILEUSERNAME header contains too many elements");
+  }
+  if (rpmtdNextString(groups.raw) != NULL) {
+    throw rpm_parser_exception
+      ("FILEGROUPNAME header contains too many elements");
+  }
+}
 
 rpm_parser_state::rpm_parser_state(const char *path)
   : impl_(new impl)
 {
+  // The code below roughly follows rpm2cpio.
   impl_->fd = Fopen(path, "r.ufdio");
   try {
     if (Ferror(impl_->fd)) {
@@ -44,6 +101,8 @@ rpm_parser_state::rpm_parser_state(const char *path)
     default:
       throw rpm_parser_exception("error reading header from RPM package");
     }
+
+    impl_->get_files_from_header();
 
     // Open payload stream.
     try {
@@ -122,8 +181,9 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   }
 
   // Read name.
-  file.name.resize(header.namesize);
-  ret = Fread(&file.name.front(), header.namesize, 1, impl_->gzfd);
+  std::vector<char> name;
+  name.resize(header.namesize);
+  ret = Fread(&name.front(), header.namesize, 1, impl_->gzfd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file name");
   } else if (ret < 0) {
@@ -131,7 +191,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 			       + " (in cpio file name)");
   }
   // Name padding.
-  unsigned pos = 6 + cpio_len + file.name.size();
+  unsigned pos = 6 + cpio_len + name.size();
   while ((pos % 4) != 0) {
     char buf;
     ret = Fread(&buf, 1, 1, impl_->gzfd);
@@ -146,9 +206,26 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 
   // Check for end marker.
   const char *trailer = "TRAILER!!!";
-  if (file.name.size() == strlen(trailer) + 1
-      && memcmp(&file.name.front(), trailer, strlen(trailer)) == 0) {
+  if (name.size() == strlen(trailer) + 1
+      && memcmp(&name.front(), trailer, strlen(trailer)) == 0) {
     return false;
+  }
+
+  // Normalize file name.
+  char *name_normalized = &name.front();
+  if (name.size() >= 2 && name.at(0) == '.' && name.at(1) == '/') {
+    ++name_normalized;
+  }
+
+  // Obtain file information.
+  {
+    impl::file_map::const_iterator p = impl_->files.find(name_normalized);
+    if (p == impl_->files.end()) {
+      throw rpm_parser_exception
+	(std::string("cpio file not found in RPM header: ")
+	 + &name.front());
+    }
+    file.info = p->second;
   }
   
   // Read contents.

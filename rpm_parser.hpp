@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rpm_file_info.hpp"
+
 #include <stdexcept>
 #include <tr1/memory>
 #include <string>
@@ -16,7 +18,7 @@ struct rpm_parser_exception : std::runtime_error {
 };
 
 struct rpm_file_entry {
-  std::vector<char> name;
+  std::tr1::shared_ptr<rpm_file_info> info;
   std::vector<char> contents;
 
   rpm_file_entry();

@@ -50,7 +50,8 @@ main(int argc, char **argv)
     rpm_file_entry file;
 
     while (rpmst.read_file(file)) {
-      fprintf(stderr, "*** [[%s]] %llu\n", &file.name.front(),
+      fprintf(stderr, "*** [[%s %s %s]] %llu\n", file.info->name.c_str(),
+	      file.info->user.c_str(), file.info->group.c_str(),
 	      (unsigned long long)file.contents.size());
       // Check if this is an ELF file.
       if (file.contents.size() > 4
@@ -62,10 +63,10 @@ main(int argc, char **argv)
 	Elf *e = elf_memory(&file.contents.front(), file.contents.size());
 	if (e == NULL)  {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
-		  argv[1], &file.name.front(), elf_errmsg(-1));
+		  argv[1], file.info->name.c_str(), elf_errmsg(-1));
 	  continue;
 	}
-	elf_path = &file.name.front(); // FIXME
+	elf_path = file.info->name.c_str(); // FIXME
 	find_symbols(e, fsc);
 	elf_end(e);
       }
