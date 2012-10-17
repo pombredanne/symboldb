@@ -1,4 +1,7 @@
 #include "rpm_parser.hpp"
+#include "cpio_reader.hpp"
+
+#include <assert.h>
 
 #include <rpm/rpmlib.h>
 #include <rpm/rpmts.h>
@@ -80,6 +83,7 @@ rpm_parser_state::~rpm_parser_state()
 bool
 rpm_parser_state::read_file(rpm_file_entry &file)
 {
+  // Read cpio header magic.
   char cpio_magic[cpio_entry::magic_size];
   ssize_t ret = Fread(cpio_magic, sizeof(cpio_magic), 1, impl_->gzfd);
   if (ret == 0) {
@@ -88,11 +92,16 @@ rpm_parser_state::read_file(rpm_file_entry &file)
     throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
 			       + " (in cpio header)");
   }
+
+  // Determine cpio header length.
   size_t cpio_len = cpio_header_length(cpio_magic);
   if (cpio_len == 0) {
     throw rpm_parser_exception("unknown cpio version");
   }
-  char cpio_header[cpio_len];
+
+  // Read cpio header.
+  char cpio_header[128];
+  assert(cpio_len <= sizeof(cpio_header));
   ret = Fread(cpio_header, cpio_len, 1, impl_->gzfd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file header");
@@ -101,18 +110,20 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 			       + " (in cpio header)");
   }
 
+  // Parse cpio header.
+  cpio_entry header;
   const char *error;
-  if (!parse(cpio_header, cpio_len, file.header, error)) {
+  if (!parse(cpio_header, cpio_len, header, error)) {
     throw rpm_parser_exception(std::string("malformed cpio header field: ") 
 			       + error);
   }
-  if (file.header.namesize == 0) {
+  if (header.namesize == 0) {
     throw rpm_parser_exception("empty file name in cpio header");
   }
 
   // Read name.
-  file.name.resize(file.header.namesize);
-  ret = Fread(&file.name.front(), file.header.namesize, 1, impl_->gzfd);
+  file.name.resize(header.namesize);
+  ret = Fread(&file.name.front(), header.namesize, 1, impl_->gzfd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file name");
   } else if (ret < 0) {
@@ -141,9 +152,9 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   }
   
   // Read contents.
-  file.contents.resize(file.header.filesize);
-  if (file.header.filesize > 0) {
-    ret = Fread(&file.contents.front(), file.header.filesize, 1, impl_->gzfd);
+  file.contents.resize(header.filesize);
+  if (header.filesize > 0) {
+    ret = Fread(&file.contents.front(), header.filesize, 1, impl_->gzfd);
     if (ret == 0) {
       throw rpm_parser_exception("end of stream in cpio file contents");
     } else if (ret < 0) {
@@ -153,7 +164,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   }
 
   // Contents padding.
-  pos = file.header.filesize;
+  pos = header.filesize;
   while ((pos % 4) != 0) {
     char buf;
     ret = Fread(&buf, 1, 1, impl_->gzfd);

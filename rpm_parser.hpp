@@ -1,7 +1,5 @@
 #pragma once
 
-#include "cpio_reader.hpp"
-
 #include <stdexcept>
 #include <tr1/memory>
 #include <string>
@@ -18,7 +16,6 @@ struct rpm_parser_exception : std::runtime_error {
 };
 
 struct rpm_file_entry {
-  cpio_entry header;
   std::vector<char> name;
   std::vector<char> contents;
 
