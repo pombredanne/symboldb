@@ -47,25 +47,25 @@ main(int argc, char **argv)
 
   try {
     rpm_parser_state rpmst(argv[1]);
-    cpio_entry ce;
-    std::vector<char> name, contents;
+    rpm_file_entry file;
 
-    while (rpmst.read_file(ce, name, contents)) {
-      fprintf(stderr, "*** [[%s]] %llu\n", &name.front(), (unsigned long long)contents.size());
+    while (rpmst.read_file(file)) {
+      fprintf(stderr, "*** [[%s]] %llu\n", &file.name.front(),
+	      (unsigned long long)file.contents.size());
       // Check if this is an ELF file.
-      if (contents.size() > 4
-	  && contents.at(0) == '\x7f'
-	  && contents.at(1) == 'E'
-	  && contents.at(2) == 'L'
-	  && contents.at(3) == 'F') {
+      if (file.contents.size() > 4
+	  && file.contents.at(0) == '\x7f'
+	  && file.contents.at(1) == 'E'
+	  && file.contents.at(2) == 'L'
+	  && file.contents.at(3) == 'F') {
 
-	Elf *e = elf_memory(&contents.front(), contents.size());
+	Elf *e = elf_memory(&file.contents.front(), file.contents.size());
 	if (e == NULL)  {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
-		  argv[1], &name.front(), elf_errmsg(-1));
+		  argv[1], &file.name.front(), elf_errmsg(-1));
 	  continue;
 	}
-	elf_path = &name.front(); // FIXME
+	elf_path = &file.name.front(); // FIXME
 	find_symbols(e, fsc);
 	elf_end(e);
       }

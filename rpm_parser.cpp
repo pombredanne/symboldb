@@ -78,9 +78,7 @@ rpm_parser_state::~rpm_parser_state()
 }
 
 bool
-rpm_parser_state::read_file(cpio_entry &entry,
-			    std::vector<char> &name,
-			    std::vector<char> &contents)
+rpm_parser_state::read_file(rpm_file_entry &file)
 {
   char cpio_magic[cpio_entry::magic_size];
   ssize_t ret = Fread(cpio_magic, sizeof(cpio_magic), 1, impl_->gzfd);
@@ -104,17 +102,17 @@ rpm_parser_state::read_file(cpio_entry &entry,
   }
 
   const char *error;
-  if (!parse(cpio_header, cpio_len, entry, error)) {
+  if (!parse(cpio_header, cpio_len, file.header, error)) {
     throw rpm_parser_exception(std::string("malformed cpio header field: ") 
 			       + error);
   }
-  if (entry.namesize == 0) {
+  if (file.header.namesize == 0) {
     throw rpm_parser_exception("empty file name in cpio header");
   }
 
   // Read name.
-  name.resize(entry.namesize);
-  ret = Fread(&name.front(), entry.namesize, 1, impl_->gzfd);
+  file.name.resize(file.header.namesize);
+  ret = Fread(&file.name.front(), file.header.namesize, 1, impl_->gzfd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file name");
   } else if (ret < 0) {
@@ -122,7 +120,7 @@ rpm_parser_state::read_file(cpio_entry &entry,
 			       + " (in cpio file name)");
   }
   // Name padding.
-  unsigned pos = 6 + cpio_len + name.size();
+  unsigned pos = 6 + cpio_len + file.name.size();
   while ((pos % 4) != 0) {
     char buf;
     ret = Fread(&buf, 1, 1, impl_->gzfd);
@@ -136,9 +134,9 @@ rpm_parser_state::read_file(cpio_entry &entry,
   }
   
   // Read contents.
-  contents.resize(entry.filesize);
-  if (entry.filesize > 0) {
-    ret = Fread(&contents.front(), entry.filesize, 1, impl_->gzfd);
+  file.contents.resize(file.header.filesize);
+  if (file.header.filesize > 0) {
+    ret = Fread(&file.contents.front(), file.header.filesize, 1, impl_->gzfd);
     if (ret == 0) {
       throw rpm_parser_exception("end of stream in cpio file contents");
     } else if (ret < 0) {
@@ -147,7 +145,7 @@ rpm_parser_state::read_file(cpio_entry &entry,
     }
   }
   // Contents padding.
-  pos = entry.filesize;
+  pos = file.header.filesize;
   while ((pos % 4) != 0) {
     char buf;
     ret = Fread(&buf, 1, 1, impl_->gzfd);

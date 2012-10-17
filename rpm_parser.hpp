@@ -17,6 +17,15 @@ struct rpm_parser_exception : std::runtime_error {
   rpm_parser_exception(const char *);
 };
 
+struct rpm_file_entry {
+  cpio_entry header;
+  std::vector<char> name;
+  std::vector<char> contents;
+
+  rpm_file_entry();
+  ~rpm_file_entry();
+};
+
 class rpm_parser_state {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
@@ -27,7 +36,5 @@ public:
 
   // Reads the next payload entry.  Returns true if an entry has been
   // read, false on EOF.  Throws rpm_parser_exception on read errors.
-  bool read_file(cpio_entry &entry,
-		 std::vector<char> &name,
-		 std::vector<char> &contents);
+  bool read_file(rpm_file_entry &);
 };

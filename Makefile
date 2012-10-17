@@ -9,5 +9,6 @@ all:
 	g++ $(DEFINES) $(CXXFLAGS_ADD) $(CXXFLAGS) $(LDFLAGS) -o symboldb \
 		symboldb.cpp find-symbols.cpp find_symbols_exception.cpp \
 		cpio_reader.cpp rpm_parser.cpp rpm_parser_exception.cpp \
+		rpm_file_entry.cpp \
 		$(LIBS)
 
