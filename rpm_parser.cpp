@@ -44,6 +44,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (!headerGet(header, RPMTAG_FILEGROUPNAME, groups.raw, hflags)) {
     throw rpm_parser_exception("could not get FILEGROUPNAME header");
   }
+  rpmtd_wrapper mtimes;
+  if (!headerGet(header, RPMTAG_FILEMTIMES, mtimes.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEMTIMES header");
+  }
 
   while (true) {
     const char *name = rpmtdNextString(names.raw);
@@ -58,11 +62,16 @@ rpm_parser_state::impl::get_files_from_header()
     if (name == NULL) {
       throw rpm_parser_exception("missing entries in FILEUSERGROUP header");
     }
+    const uint32_t *mtime = rpmtdNextUint32(mtimes.raw);
+    if (mtime == NULL) {
+      throw rpm_parser_exception("missing entries in FILEMTIMES header");
+    }
 
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
     p->name = name;
     p->user = user;
     p->group = group;
+    p->mtime = *mtime;
     files[p->name] = p;
   }
 
@@ -73,6 +82,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (rpmtdNextString(groups.raw) != NULL) {
     throw rpm_parser_exception
       ("FILEGROUPNAME header contains too many elements");
+  }
+  if (rpmtdNextUint32(groups.raw) != NULL) {
+    throw rpm_parser_exception
+      ("FILEMTIMES header contains too many elements");
   }
 }
 

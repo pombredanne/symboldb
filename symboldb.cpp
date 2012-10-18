@@ -1,6 +1,8 @@
-
+// For <inttypes.h>
+#define __STDC_FORMAT_MACROS
 
 #include <fcntl.h>
+#include <inttypes.h>
 #include <libelf.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -50,8 +52,9 @@ main(int argc, char **argv)
     rpm_file_entry file;
 
     while (rpmst.read_file(file)) {
-      fprintf(stderr, "*** [[%s %s %s]] %llu\n", file.info->name.c_str(),
+      fprintf(stderr, "*** [[%s %s %s %" PRIu32 "]] %llu\n", file.info->name.c_str(),
 	      file.info->user.c_str(), file.info->group.c_str(),
+	      file.info->mtime,
 	      (unsigned long long)file.contents.size());
       // Check if this is an ELF file.
       if (file.contents.size() > 4
