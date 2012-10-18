@@ -27,6 +27,19 @@ struct rpm_parser_state::impl {
   void get_files_from_header();
 };
 
+// Missing from <rpm/rpmtd.h>, see rpmtdNextUint32.
+static uint16_t *
+tdNextUint16(rpmtd td)
+{
+    assert(td != NULL);
+    uint16_t *res = NULL;
+    if (rpmtdNext(td) >= 0) {
+	res = rpmtdGetUint16(td);
+    }
+    return res;
+}
+
+
 void
 rpm_parser_state::impl::get_files_from_header()
 {
@@ -48,6 +61,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (!headerGet(header, RPMTAG_FILEMTIMES, mtimes.raw, hflags)) {
     throw rpm_parser_exception("could not get FILEMTIMES header");
   }
+  rpmtd_wrapper modes;
+  if (!headerGet(header, RPMTAG_FILEMODES, modes.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEMODES header");
+  }
 
   while (true) {
     const char *name = rpmtdNextString(names.raw);
@@ -66,12 +83,17 @@ rpm_parser_state::impl::get_files_from_header()
     if (mtime == NULL) {
       throw rpm_parser_exception("missing entries in FILEMTIMES header");
     }
+    const uint16_t *mode = tdNextUint16(modes.raw);
+    if (mode == NULL) {
+      throw rpm_parser_exception("missing entries in FILEMODES header");
+    }
 
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
     p->name = name;
     p->user = user;
     p->group = group;
     p->mtime = *mtime;
+    p->mode = *mode;
     files[p->name] = p;
   }
 
@@ -86,6 +108,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (rpmtdNextUint32(groups.raw) != NULL) {
     throw rpm_parser_exception
       ("FILEMTIMES header contains too many elements");
+  }
+  if (rpmtdNextUint32(modes.raw) != NULL) {
+    throw rpm_parser_exception
+      ("FILEMODES header contains too many elements");
   }
 }
 
