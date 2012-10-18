@@ -105,7 +105,7 @@ rpm_parser_state::impl::get_files_from_header()
     throw rpm_parser_exception
       ("FILEGROUPNAME header contains too many elements");
   }
-  if (rpmtdNextUint32(groups.raw) != NULL) {
+  if (rpmtdNextUint32(mtimes.raw) != NULL) {
     throw rpm_parser_exception
       ("FILEMTIMES header contains too many elements");
   }
