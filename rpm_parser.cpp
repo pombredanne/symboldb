@@ -40,6 +40,12 @@ tdNextUint16(rpmtd td)
     return res;
 }
 
+static bool
+header_present(Header header, rpmTagVal tag)
+{
+  rpmtd_wrapper td;
+  return headerGet(header, tag, td.raw, HEADERGET_EXT);
+}
 
 void
 rpm_parser_state::impl::get_files_from_header()
@@ -48,7 +54,15 @@ rpm_parser_state::impl::get_files_from_header()
 
   rpmtd_wrapper names;
   if (!headerGet(header, RPMTAG_FILENAMES, names.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILENAMES header");
+    if (header_present(header, RPMTAG_FILEUSERNAME)
+	|| header_present(header, RPMTAG_FILEGROUPNAME)
+	|| header_present(header, RPMTAG_FILEMTIMES)
+	|| header_present(header, RPMTAG_FILEMODES)) {
+      throw rpm_parser_exception("could not get FILENAMES header");
+    } else {
+      // Nothing to do, empty package.
+      return;
+    }
   }
   rpmtd_wrapper users;
   if (!headerGet(header, RPMTAG_FILEUSERNAME, users.raw, hflags)) {
