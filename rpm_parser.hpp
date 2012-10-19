@@ -33,6 +33,8 @@ public:
   rpm_parser_state(const char *path);
   ~rpm_parser_state();
 
+  const char *nevra() const;
+
   // Reads the next payload entry.  Returns true if an entry has been
   // read, false on EOF.  Throws rpm_parser_exception on read errors.
   bool read_file(rpm_file_entry &);

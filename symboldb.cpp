@@ -10,8 +10,11 @@
 
 #include "find-symbols.hpp"
 #include "rpm_parser.hpp"
+#include "database.hpp"
 
 static const char *elf_path; // FIXME
+static database::file_id fid;
+static std::tr1::shared_ptr<database> db; // FIXME
 
 static void
 dump_def(const defined_symbol_info &dsi)
@@ -22,6 +25,7 @@ dump_def(const defined_symbol_info &dsi)
   printf("%s DEF %s %s 0x%llx%s\n", elf_path, dsi.symbol_name, dsi.vda_name,
 	 (unsigned long long)dsi.sym->st_value,
 	 dsi.default_version ? " [default]" : "");
+  db->add_elf_definition(fid, dsi);
 }
 
 static void
@@ -32,6 +36,7 @@ dump_ref(const undefined_symbol_info &usi)
   }
   printf("%s REF %s %s %llx\n", elf_path, usi.symbol_name, usi.vna_name,
 	 (unsigned long long)usi.sym->st_value);
+  db->add_elf_reference(fid, usi);
 }
 
 static find_symbols_callbacks fsc = {dump_def, dump_ref};
@@ -46,16 +51,23 @@ main(int argc, char **argv)
 
   elf_version(EV_CURRENT);
   rpm_parser_init();
+  db.reset(new database);
+
+  db->txn_begin();
 
   try {
     rpm_parser_state rpmst(argv[1]);
     rpm_file_entry file;
+
+    fprintf(stderr, "!!! [[%s]]\n", rpmst.nevra());
+    database::package_id pkg = db->intern_package(rpmst.nevra());
 
     while (rpmst.read_file(file)) {
       fprintf(stderr, "*** [[%s %s %s %" PRIu32 " 0%o]] %llu\n", file.info->name.c_str(),
 	      file.info->user.c_str(), file.info->group.c_str(),
 	      file.info->mtime, file.info->mode,
 	      (unsigned long long)file.contents.size());
+      fid = db->add_file(pkg, *file.info); // FIXME
       // Check if this is an ELF file.
       if (file.contents.size() > 4
 	  && file.contents.at(0) == '\x7f'
@@ -78,6 +90,8 @@ main(int argc, char **argv)
     fprintf(stderr, "%s: RPM error: %s\n", argv[1], e.what());
     exit(1);
   }
+
+  db->txn_commit();
 
   return 0;
 }

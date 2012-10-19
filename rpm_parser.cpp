@@ -21,6 +21,7 @@ struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
   FD_t gzfd;
+  rpmtd_wrapper nevra;
 
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
@@ -141,6 +142,10 @@ rpm_parser_state::rpm_parser_state(const char *path)
       throw rpm_parser_exception("error reading header from RPM package");
     }
 
+    if (!headerGet(impl_->header, RPMTAG_NEVRA, impl_->nevra.raw,
+		   HEADERGET_EXT)) {
+      throw rpm_parser_exception("could not get NEVRA header from RPM package");
+    }
     impl_->get_files_from_header();
 
     // Open payload stream.
@@ -176,6 +181,12 @@ rpm_parser_state::~rpm_parser_state()
 {
   headerFree(impl_->header);
   Fclose(impl_->fd);
+}
+
+const char *
+rpm_parser_state::nevra() const
+{
+  return rpmtdGetString(impl_->nevra.raw);
 }
 
 bool
