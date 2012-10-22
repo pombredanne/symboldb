@@ -4,6 +4,7 @@
 #include "rpmtd_wrapper.hpp"
 
 #include <assert.h>
+#include <limits.h>
 
 #include <rpm/rpmlib.h>
 #include <rpm/rpmts.h>
@@ -21,10 +22,17 @@ struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
   FD_t gzfd;
+
   rpmtd_wrapper nevra;
+  rpmtd_wrapper name;
+  int epoch;
+  rpmtd_wrapper version;
+  rpmtd_wrapper release;
+  rpmtd_wrapper arch;
 
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
+  void get_header();
   void get_files_from_header();
 };
 
@@ -45,6 +53,39 @@ header_present(Header header, rpmTagVal tag)
 {
   rpmtd_wrapper td;
   return headerGet(header, tag, td.raw, HEADERGET_EXT);
+}
+
+void
+rpm_parser_state::impl::get_header()
+{
+  if (!headerGet(header, RPMTAG_NEVRA, nevra.raw, HEADERGET_EXT)) {
+    throw rpm_parser_exception("could not get NEVRA header from RPM package");
+  }
+  if (!headerGet(header, RPMTAG_NAME, name.raw, 0)) {
+    throw rpm_parser_exception("could not get NAME header from RPM package");
+  }
+  if (!headerGet(header, RPMTAG_VERSION, version.raw, 0)) {
+    throw rpm_parser_exception("could not get VERSION header from RPM package");
+  }
+  if (!headerGet(header, RPMTAG_RELEASE, release.raw, 0)) {
+    throw rpm_parser_exception("could not get RELEASE header from RPM package");
+  }
+  if (!headerGet(header, RPMTAG_ARCH, arch.raw, 0)) {
+    throw rpm_parser_exception("could not get ARCH header from RPM package");
+  }
+  rpmtd_wrapper td;
+  if (!headerGet(header, RPMTAG_EPOCH, td.raw, 0)) {
+    epoch = -1;
+  } else {
+    unsigned *p = rpmtdGetUint32(td.raw);
+    if (p == NULL) {
+      throw rpm_parser_exception("could not get EPOCH header");
+    }
+    if (*p > INT_MAX) {
+      throw rpm_parser_exception("RPM epoch out of range");
+    }
+    epoch = *p;
+  }
 }
 
 void
@@ -156,10 +197,7 @@ rpm_parser_state::rpm_parser_state(const char *path)
       throw rpm_parser_exception("error reading header from RPM package");
     }
 
-    if (!headerGet(impl_->header, RPMTAG_NEVRA, impl_->nevra.raw,
-		   HEADERGET_EXT)) {
-      throw rpm_parser_exception("could not get NEVRA header from RPM package");
-    }
+    impl_->get_header();
     impl_->get_files_from_header();
 
     // Open payload stream.
@@ -201,6 +239,36 @@ const char *
 rpm_parser_state::nevra() const
 {
   return rpmtdGetString(impl_->nevra.raw);
+}
+
+const char *
+rpm_parser_state::name() const
+{
+  return rpmtdGetString(impl_->name.raw);
+}
+
+int
+rpm_parser_state::epoch() const
+{
+  return impl_->epoch;
+}
+
+const char *
+rpm_parser_state::version() const
+{
+  return rpmtdGetString(impl_->version.raw);
+}
+
+const char *
+rpm_parser_state::release() const
+{
+  return rpmtdGetString(impl_->release.raw);
+}
+
+const char *
+rpm_parser_state::arch() const
+{
+  return rpmtdGetString(impl_->arch.raw);
 }
 
 bool
