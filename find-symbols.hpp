@@ -3,13 +3,6 @@
 #include <libelf.h>
 
 #include <tr1/functional>
-#include <stdexcept>
-
-struct find_symbols_exception : std::runtime_error {
-  find_symbols_exception(const char *);
-  static void raise(const char *msg, ...)
-    __attribute__((format(printf, 1, 2), noreturn));
-};
 
 class elf_symbol_definition;
 class elf_symbol_reference;

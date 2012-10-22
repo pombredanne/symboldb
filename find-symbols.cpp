@@ -22,6 +22,7 @@
 #include "find-symbols.hpp"
 #include "elf_symbol_definition.hpp"
 #include "elf_symbol_reference.hpp"
+#include "elf_exception.hpp"
 
 #include <elfutils/libebl.h>
 
@@ -54,12 +55,11 @@ impl::impl(Elf *elf, const find_symbols_callbacks &callbacks)
 {
   this->elf = elf;
   if (elf_getshdrnum (elf, &shnum) < 0) {
-    find_symbols_exception::raise
-      ("cannot determine number of sections: %s", elf_errmsg (-1));
+    elf_exception::raise("cannot determine number of sections: %s", elf_errmsg (-1));
   }
   ebl = ebl_openbackend (elf);
   if (ebl == NULL) {
-    find_symbols_exception::raise("cannot create EBL handle");
+    elf_exception::raise("cannot create EBL handle");
   }
   this->callbacks = callbacks;
 }
@@ -138,13 +138,13 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
   /* Get the section header string table index.  */
   size_t shstrndx;
   if (elf_getshdrstrndx (elf, &shstrndx) < 0)
-    throw find_symbols_exception("cannot get section header string table index");
+    throw elf_exception("cannot get section header string table index");
 
   GElf_Shdr glink_mem;
   GElf_Shdr *glink = gelf_getshdr (elf_getscn (elf, shdr->sh_link),
 				   &glink_mem);
   if (glink == NULL)
-    find_symbols_exception::raise("invalid sh_link value in section %Zu",
+    elf_exception::raise("invalid sh_link value in section %Zu",
 				  elf_ndxscn (scn));
 
   /* Now we can compute the number of entries in the section.  */
@@ -242,8 +242,7 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 		      check_def = 0;
 		    }
 		  else if (! is_nobits)
-		    find_symbols_exception::raise
-		      ("bad dynamic symbol %u", cnt);
+		    elf_exception::raise("bad dynamic symbol %u", cnt);
 		  else
 		    check_def = 1;
 		}
