@@ -5,8 +5,14 @@ CREATE SCHEMA symboldb;
 
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
-  nevra TEXT NOT NULL UNIQUE
+  name TEXT NOT NULL,
+  epoch INTEGER CHECK (epoch >= 0),
+  version TEXT NOT NULL,
+  release TEXT NOT NULL,
+  arch TEXT NOT NULL,
+  hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20)
 );
+CREATE INDEX ON symboldb.package (name, version);
 
 CREATE TABLE symboldb.file (
   id SERIAL NOT NULL PRIMARY KEY,	 

@@ -6,6 +6,7 @@
 #include <tr1/memory>
 
 class rpm_file_info;
+class rpm_package_info;
 class defined_symbol_info;
 class undefined_symbol_info;
 
@@ -30,8 +31,8 @@ public:
   typedef int package_id;
   typedef int file_id;
 
-  // FIXME: include hash, split nevra, add source URI
-  package_id intern_package(const char *nevra);
+  // FIXME: add source URI
+  package_id intern_package(const rpm_package_info &);
 
   file_id add_file(package_id, const rpm_file_info &);
 

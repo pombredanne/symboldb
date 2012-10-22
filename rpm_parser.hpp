@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+class rpm_package_info;
+
 // This needs to be called once before creating any rpm_parser_state
 // objects.
 void rpm_parser_init();
@@ -34,11 +36,7 @@ public:
   ~rpm_parser_state();
 
   const char *nevra() const;
-  const char *name() const;
-  int epoch() const;		// -1 if missing
-  const char *version() const;
-  const char *release() const;
-  const char *arch() const;
+  const rpm_package_info &package() const;
 
   // Reads the next payload entry.  Returns true if an entry has been
   // read, false on EOF.  Throws rpm_parser_exception on read errors.

@@ -1,6 +1,7 @@
 #include "rpm_parser.hpp"
 #include "cpio_reader.hpp"
 #include "rpm_file_info.hpp"
+#include "rpm_package_info.hpp"
 #include "rpmtd_wrapper.hpp"
 
 #include <assert.h>
@@ -24,11 +25,7 @@ struct rpm_parser_state::impl {
   FD_t gzfd;
 
   rpmtd_wrapper nevra;
-  rpmtd_wrapper name;
-  int epoch;
-  rpmtd_wrapper version;
-  rpmtd_wrapper release;
-  rpmtd_wrapper arch;
+  rpm_package_info pkg;
 
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
@@ -55,27 +52,35 @@ header_present(Header header, rpmTagVal tag)
   return headerGet(header, tag, td.raw, HEADERGET_EXT);
 }
 
+static std::string
+get_string(Header header, const char *name, rpmTagVal tag)
+{
+  rpmtd_wrapper td;
+  if (headerGet(header, tag, td.raw, 0)) {
+    const char *s = rpmtdGetString(td.raw);
+    if (s != NULL) {
+      return s;
+    }
+  }
+  throw rpm_parser_exception(std::string("could not get RPM ")
+			     + name + " header");
+}
+
 void
 rpm_parser_state::impl::get_header()
 {
   if (!headerGet(header, RPMTAG_NEVRA, nevra.raw, HEADERGET_EXT)) {
     throw rpm_parser_exception("could not get NEVRA header from RPM package");
   }
-  if (!headerGet(header, RPMTAG_NAME, name.raw, 0)) {
-    throw rpm_parser_exception("could not get NAME header from RPM package");
-  }
-  if (!headerGet(header, RPMTAG_VERSION, version.raw, 0)) {
-    throw rpm_parser_exception("could not get VERSION header from RPM package");
-  }
-  if (!headerGet(header, RPMTAG_RELEASE, release.raw, 0)) {
-    throw rpm_parser_exception("could not get RELEASE header from RPM package");
-  }
-  if (!headerGet(header, RPMTAG_ARCH, arch.raw, 0)) {
-    throw rpm_parser_exception("could not get ARCH header from RPM package");
-  }
+
+  pkg.name = get_string(header, "NAME", RPMTAG_NAME);
+  pkg.version = get_string(header, "VERSION", RPMTAG_VERSION);
+  pkg.release = get_string(header, "RELEASE", RPMTAG_RELEASE);
+  pkg.arch = get_string(header, "ARCH", RPMTAG_ARCH);
+  pkg.hash = get_string(header, "SHA1HEADER", RPMTAG_SHA1HEADER);
   rpmtd_wrapper td;
   if (!headerGet(header, RPMTAG_EPOCH, td.raw, 0)) {
-    epoch = -1;
+    pkg.epoch = -1;
   } else {
     unsigned *p = rpmtdGetUint32(td.raw);
     if (p == NULL) {
@@ -84,7 +89,7 @@ rpm_parser_state::impl::get_header()
     if (*p > INT_MAX) {
       throw rpm_parser_exception("RPM epoch out of range");
     }
-    epoch = *p;
+    pkg.epoch = *p;
   }
 }
 
@@ -241,34 +246,10 @@ rpm_parser_state::nevra() const
   return rpmtdGetString(impl_->nevra.raw);
 }
 
-const char *
-rpm_parser_state::name() const
+const rpm_package_info &
+rpm_parser_state::package() const
 {
-  return rpmtdGetString(impl_->name.raw);
-}
-
-int
-rpm_parser_state::epoch() const
-{
-  return impl_->epoch;
-}
-
-const char *
-rpm_parser_state::version() const
-{
-  return rpmtdGetString(impl_->version.raw);
-}
-
-const char *
-rpm_parser_state::release() const
-{
-  return rpmtdGetString(impl_->release.raw);
-}
-
-const char *
-rpm_parser_state::arch() const
-{
-  return rpmtdGetString(impl_->arch.raw);
+  return impl_->pkg;
 }
 
 bool

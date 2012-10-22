@@ -72,7 +72,7 @@ process_rpm(const char *rpm_path)
     if (opt.output != options::quiet) {
       fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
     }
-    database::package_id pkg = db->intern_package(rpmst.nevra());
+    database::package_id pkg = db->intern_package(rpmst.package());
 
     while (rpmst.read_file(file)) {
       if (opt.output == options::verbose) {

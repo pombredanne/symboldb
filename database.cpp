@@ -1,5 +1,6 @@
 #include "database.hpp"
 #include "rpm_file_info.hpp"
+#include "rpm_package_info.hpp"
 #include "find-symbols.hpp"
 
 #include <stdlib.h>
@@ -139,17 +140,19 @@ get_id_force(pgresult_wrapper &res)
 }
 
 database::package_id
-database::intern_package(const char *nevra)
+database::intern_package(const rpm_package_info &pkg)
 {
   // FIXME: This needs a transaction and locking.
-  const char *params[] = {nevra};
 
   // Try to locate existing row.
   {
     pgresult_wrapper res;
+    const char *params[] = {
+      pkg.hash.c_str(),
+    };
     res.raw = PQexecParams
       (impl_->conn,
-       "SELECT id FROM " PACKAGE_TABLE " WHERE nevra = $1",
+       "SELECT id FROM " PACKAGE_TABLE " WHERE hash = decode($1, 'hex')",
        1, NULL, params, NULL, NULL, 0);
     int id = get_id(res);
     if (id > 0) {
@@ -159,11 +162,25 @@ database::intern_package(const char *nevra)
 
   // Insert new row.
   {
+    char epochstr[32];
+    if (pkg.epoch >= 0) {
+      snprintf(epochstr, sizeof(epochstr), "%d", pkg.epoch);
+    }
+    const char *params[] = {
+      pkg.name.c_str(),
+      pkg.epoch >= 0 ? epochstr : NULL,
+      pkg.version.c_str(),
+      pkg.release.c_str(),
+      pkg.arch.c_str(),
+      pkg.hash.c_str(),
+    };
     pgresult_wrapper res;
     res.raw = PQexecParams
       (impl_->conn,
-       "INSERT INTO " PACKAGE_TABLE " (nevra) VALUES ($1) RETURNING id",
-       1, NULL, params, NULL, NULL, 0);
+       "INSERT INTO " PACKAGE_TABLE
+       " (name, epoch, version, release, arch, hash)"
+       " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex')) RETURNING id",
+       6, NULL, params, NULL, NULL, 0);
     return get_id_force(res);
   }
 }
