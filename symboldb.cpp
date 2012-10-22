@@ -2,6 +2,7 @@
 #define __STDC_FORMAT_MACROS
 
 #include <fcntl.h>
+#include <getopt.h>
 #include <inttypes.h>
 #include <libelf.h>
 #include <stdio.h>
@@ -12,6 +13,20 @@
 #include "rpm_parser.hpp"
 #include "database.hpp"
 
+namespace {
+  struct options {
+    enum {
+      standard, verbose, quiet
+    } output;
+
+    options()
+      : output(standard)
+    {
+    }
+  };
+}
+
+static options opt;		// FIXME
 static const char *elf_path; // FIXME
 static database::file_id fid;
 static std::tr1::shared_ptr<database> db; // FIXME
@@ -22,9 +37,12 @@ dump_def(const defined_symbol_info &dsi)
   if (dsi.symbol_name == NULL || dsi.symbol_name[0] == '\0') {
     return;
   }
-  printf("%s DEF %s %s 0x%llx%s\n", elf_path, dsi.symbol_name, dsi.vda_name,
-	 (unsigned long long)dsi.sym->st_value,
-	 dsi.default_version ? " [default]" : "");
+  if (opt.output == options::verbose) {
+    fprintf(stderr, "%s DEF %s %s 0x%llx%s\n",
+	    elf_path, dsi.symbol_name, dsi.vda_name,
+	   (unsigned long long)dsi.sym->st_value,
+	   dsi.default_version ? " [default]" : "");
+  }
   db->add_elf_definition(fid, dsi);
 }
 
@@ -34,8 +52,11 @@ dump_ref(const undefined_symbol_info &usi)
   if (usi.symbol_name == NULL || usi.symbol_name[0] == '\0') {
     return;
   }
-  printf("%s REF %s %s %llx\n", elf_path, usi.symbol_name, usi.vna_name,
-	 (unsigned long long)usi.sym->st_value);
+  if (opt.output == options::verbose) {
+    fprintf(stderr, "%s REF %s %s %llx\n",
+	    elf_path, usi.symbol_name, usi.vna_name,
+	    (unsigned long long)usi.sym->st_value);
+  }
   db->add_elf_reference(fid, usi);
 }
 
@@ -48,14 +69,19 @@ process_rpm(const char *rpm_path)
     rpm_parser_state rpmst(rpm_path);
     rpm_file_entry file;
 
-    fprintf(stderr, "!!! [[%s]]\n", rpmst.nevra());
+    if (opt.output != options::quiet) {
+      fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
+    }
     database::package_id pkg = db->intern_package(rpmst.nevra());
 
     while (rpmst.read_file(file)) {
-      fprintf(stderr, "*** [[%s %s %s %" PRIu32 " 0%o]] %llu\n", file.info->name.c_str(),
-	      file.info->user.c_str(), file.info->group.c_str(),
-	      file.info->mtime, file.info->mode,
-	      (unsigned long long)file.contents.size());
+      if (opt.output == options::verbose) {
+	fprintf(stderr, "%s %s %s %s %" PRIu32 " 0%o %llu\n",
+		rpmst.nevra(), file.info->name.c_str(),
+		file.info->user.c_str(), file.info->group.c_str(),
+		file.info->mtime, file.info->mode,
+		(unsigned long long)file.contents.size());
+      }
       fid = db->add_file(pkg, *file.info); // FIXME
       // Check if this is an ELF file.
       if (file.contents.size() > 4
@@ -81,12 +107,33 @@ process_rpm(const char *rpm_path)
   }
 }
 
+static void
+usage(const char *progname)
+{
+  fprintf(stderr, "usage: %s RPM-FILE...\n", progname);
+  exit(2);
+}
+
 int
 main(int argc, char **argv)
 {
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s RPM-FILE\n", argv[0]);
-    exit(1);
+  {
+    int ch;
+    while ((ch = getopt(argc, argv, "qv")) != -1) {
+      switch (ch) {
+      case 'q':
+	opt.output = options::quiet;
+	break;
+      case 'v':
+	opt.output = options::verbose;
+	break;
+      default:
+	usage(argv[0]);
+      }
+    }
+    if (optind >= argc) {
+      usage(argv[0]);
+    }
   }
 
   elf_version(EV_CURRENT);
@@ -94,7 +141,9 @@ main(int argc, char **argv)
   db.reset(new database);
 
   db->txn_begin();
-  process_rpm(argv[1]);
+  for (int i = optind; i < argc; ++i) {
+    process_rpm(argv[i]);
+  }
   db->txn_commit();
 
   return 0;
