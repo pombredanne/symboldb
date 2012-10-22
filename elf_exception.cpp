@@ -1,8 +1,15 @@
 #include "elf_exception.hpp"
 
+#include <libelf.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+elf_exception::elf_exception()
+  : std::runtime_error(elf_errmsg(-1))
+{
+}
 
 elf_exception::elf_exception(const char *msg)
   : std::runtime_error(msg)
