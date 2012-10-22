@@ -2,6 +2,8 @@
 #include "rpm_file_info.hpp"
 #include "rpm_package_info.hpp"
 #include "find-symbols.hpp"
+#include "elf_symbol_definition.hpp"
+#include "elf_symbol_reference.hpp"
 
 #include <stdlib.h>
 
@@ -217,15 +219,16 @@ database::add_file(package_id pkg, const rpm_file_info &info)
 }
 
 void
-database::add_elf_definition(file_id file, const defined_symbol_info &info)
+database::add_elf_symbol_definition(file_id file,
+				    const elf_symbol_definition &def)
 {
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {
     filestr,
-    info.symbol_name,
-    info.vda_name,
-    info.default_version ? "t" : "f",
+    def.symbol_name.c_str(),
+    def.vda_name.c_str(),
+    def.default_version ? "t" : "f",
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
@@ -237,14 +240,15 @@ database::add_elf_definition(file_id file, const defined_symbol_info &info)
 }
 
 void
-database::add_elf_reference(file_id file, const undefined_symbol_info &info)
+database::add_elf_symbol_reference(file_id file,
+				   const elf_symbol_reference &ref)
 {
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {
     filestr,
-    info.symbol_name,
-    info.vna_name,
+    ref.symbol_name.c_str(),
+    ref.vna_name.c_str(),
   };
   pgresult_wrapper res;
   res.raw = PQexecParams

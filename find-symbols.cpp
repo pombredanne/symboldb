@@ -20,6 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "find-symbols.hpp"
+#include "elf_symbol_definition.hpp"
+#include "elf_symbol_reference.hpp"
+
+#include <elfutils/libebl.h>
 
 namespace {
 
@@ -165,12 +169,8 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 	xndx = sym->st_shndx;
       bool check_def = xndx != SHN_UNDEF;
 
-      defined_symbol_info dsinfo;
-      dsinfo.vda_name = NULL;
-      dsinfo.default_version = false;
-      undefined_symbol_info usinfo;
-      usinfo.vna_name = NULL;
-      usinfo.vna_other = 0;
+      elf_symbol_definition dsinfo;
+      elf_symbol_reference usinfo;
       if (versym_data != NULL)
 	{
 	  /* Get the version information.  */
@@ -289,7 +289,7 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 	    }
 	}
 
-      symbol_info *psinfo;
+      elf_symbol *psinfo;
       if (check_def) {
 	psinfo = &dsinfo;
 	dsinfo.section_name = 
@@ -298,7 +298,6 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
       } else {
 	psinfo = &usinfo;
       }
-      psinfo->sym = sym;
       psinfo->type_name =
 	ebl_symbol_type_name (ebl, GELF_ST_TYPE (sym->st_info),
 			      typebuf, sizeof (typebuf));
@@ -309,9 +308,9 @@ impl::process_section(Elf_Scn *scn, GElf_Shdr *shdr)
 	get_visibility_type (GELF_ST_VISIBILITY (sym->st_other));
       psinfo->symbol_name = elf_strptr (elf, shdr->sh_link, sym->st_name);
       if (check_def) {
-	callbacks.defined(dsinfo);
+	callbacks.definition(dsinfo);
       } else {
-	callbacks.undefined(usinfo);
+	callbacks.reference(usinfo);
       }
     }
 }

@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "elf_symbol_definition.hpp"
+#include "elf_symbol_reference.hpp"
 #include "find-symbols.hpp"
 #include "rpm_parser.hpp"
 #include "database.hpp"
@@ -32,32 +34,30 @@ static database::file_id fid;
 static std::tr1::shared_ptr<database> db; // FIXME
 
 static void
-dump_def(const defined_symbol_info &dsi)
+dump_def(const elf_symbol_definition &def)
 {
-  if (dsi.symbol_name == NULL || dsi.symbol_name[0] == '\0') {
+  if (def.symbol_name.empty()) {
     return;
   }
   if (opt.output == options::verbose) {
     fprintf(stderr, "%s DEF %s %s 0x%llx%s\n",
-	    elf_path, dsi.symbol_name, dsi.vda_name,
-	   (unsigned long long)dsi.sym->st_value,
-	   dsi.default_version ? " [default]" : "");
+	    elf_path, def.symbol_name.c_str(), def.vda_name.c_str(),
+	    def.value, def.default_version ? " [default]" : "");
   }
-  db->add_elf_definition(fid, dsi);
+  db->add_elf_symbol_definition(fid, def);
 }
 
 static void
-dump_ref(const undefined_symbol_info &usi)
+dump_ref(const elf_symbol_reference &ref)
 {
-  if (usi.symbol_name == NULL || usi.symbol_name[0] == '\0') {
+  if (ref.symbol_name.empty()) {
     return;
   }
   if (opt.output == options::verbose) {
-    fprintf(stderr, "%s REF %s %s %llx\n",
-	    elf_path, usi.symbol_name, usi.vna_name,
-	    (unsigned long long)usi.sym->st_value);
+    fprintf(stderr, "%s REF %s %s\n",
+	    elf_path, ref.symbol_name.c_str(), ref.vna_name.c_str());
   }
-  db->add_elf_reference(fid, usi);
+  db->add_elf_symbol_reference(fid, ref);
 }
 
 static find_symbols_callbacks fsc = {dump_def, dump_ref};

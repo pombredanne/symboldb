@@ -7,8 +7,8 @@
 
 class rpm_file_info;
 class rpm_package_info;
-class defined_symbol_info;
-class undefined_symbol_info;
+class elf_symbol_definition;
+class elf_symbol_reference;
 
 // Members of the database class throw this exception on error.
 struct database_exception : std::runtime_error {
@@ -38,8 +38,8 @@ public:
   file_id add_file(package_id, const rpm_file_info &);
 
   // Loading ELF-related tables.
-  void add_elf_definition(file_id, const defined_symbol_info &);
-  void add_elf_reference(file_id, const undefined_symbol_info &);
+  void add_elf_symbol_definition(file_id, const elf_symbol_definition &);
+  void add_elf_symbol_reference(file_id, const elf_symbol_reference &);
   void add_elf_needed(file_id, const std::set<std::string> &names);
   void add_elf_error(file_id, const char *);
 };
