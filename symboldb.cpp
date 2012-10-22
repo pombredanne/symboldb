@@ -4,14 +4,14 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <inttypes.h>
-#include <libelf.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 
 #include "elf_symbol_definition.hpp"
 #include "elf_symbol_reference.hpp"
-#include "find-symbols.hpp"
+#include "elf_image.hpp"
+#include "elf_exception.hpp"
 #include "rpm_parser.hpp"
 #include "database.hpp"
 
@@ -60,8 +60,6 @@ dump_ref(const elf_symbol_reference &ref)
   db->add_elf_symbol_reference(fid, ref);
 }
 
-static find_symbols_callbacks fsc = {dump_def, dump_ref};
-
 static void
 process_rpm(const char *rpm_path)
 {
@@ -98,15 +96,24 @@ process_rpm(const char *rpm_path)
 	  && file.contents.at(2) == 'L'
 	  && file.contents.at(3) == 'F') {
 
-	Elf *e = elf_memory(&file.contents.front(), file.contents.size());
-	if (e == NULL)  {
+	try {
+	  elf_image image(&file.contents.front(), file.contents.size());
+	  std::tr1::shared_ptr<elf_image::symbol_range> symbols =
+	    image.symbols();
+	  while (symbols->next()) {
+	    if (symbols->definition()) {
+	      dump_def(*symbols->definition());
+	    } else if (symbols->reference()) {
+	      dump_ref(*symbols->reference());
+	    } else {
+	      throw std::logic_error("unknown elf_symbol type");
+	    }
+	  }
+	} catch (elf_exception e) {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
-		  rpm_path, file.info->name.c_str(), elf_errmsg(-1));
+		  rpm_path, file.info->name.c_str(), e.what());
 	  continue;
 	}
-	elf_path = file.info->name.c_str(); // FIXME
-	find_symbols(e, fsc);
-	elf_end(e);
       }
     }
   } catch (rpm_parser_exception &e) {
@@ -144,7 +151,7 @@ main(int argc, char **argv)
     }
   }
 
-  elf_version(EV_CURRENT);
+  elf_image_init();
   rpm_parser_init();
   db.reset(new database);
 
