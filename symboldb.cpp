@@ -69,10 +69,18 @@ process_rpm(const char *rpm_path)
     rpm_parser_state rpmst(rpm_path);
     rpm_file_entry file;
 
+    database::package_id pkg;
+    if (!db->intern_package(rpmst.package(), pkg)) {
+      if (opt.output != options::quiet) {
+	fprintf(stderr, "info: skipping %s from %s\n",
+		rpmst.nevra(), rpm_path);
+      }
+      return;
+    }
+
     if (opt.output != options::quiet) {
       fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
     }
-    database::package_id pkg = db->intern_package(rpmst.package());
 
     while (rpmst.read_file(file)) {
       if (opt.output == options::verbose) {

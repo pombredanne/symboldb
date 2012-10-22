@@ -139,8 +139,9 @@ get_id_force(pgresult_wrapper &res)
   return id;
 }
 
-database::package_id
-database::intern_package(const rpm_package_info &pkg)
+bool
+database::intern_package(const rpm_package_info &pkg,
+			 package_id &pkg_id)
 {
   // FIXME: This needs a transaction and locking.
 
@@ -156,7 +157,8 @@ database::intern_package(const rpm_package_info &pkg)
        1, NULL, params, NULL, NULL, 0);
     int id = get_id(res);
     if (id > 0) {
-      return id;
+      pkg_id = id;
+      return false;
     }
   }
 
@@ -181,7 +183,8 @@ database::intern_package(const rpm_package_info &pkg)
        " (name, epoch, version, release, arch, hash)"
        " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex')) RETURNING id",
        6, NULL, params, NULL, NULL, 0);
-    return get_id_force(res);
+    pkg_id = get_id_force(res);
+    return true;
   }
 }
 

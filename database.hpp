@@ -31,8 +31,9 @@ public:
   typedef int package_id;
   typedef int file_id;
 
+  // Returns true if the package_id was freshly added to the database.
   // FIXME: add source URI
-  package_id intern_package(const rpm_package_info &);
+  bool intern_package(const rpm_package_info &, package_id &);
 
   file_id add_file(package_id, const rpm_file_info &);
 
