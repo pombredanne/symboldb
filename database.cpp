@@ -1,7 +1,6 @@
 #include "database.hpp"
 #include "rpm_file_info.hpp"
 #include "rpm_package_info.hpp"
-#include "find-symbols.hpp"
 #include "elf_symbol_definition.hpp"
 #include "elf_symbol_reference.hpp"
 
