@@ -41,22 +41,11 @@ dump_ref(const undefined_symbol_info &usi)
 
 static find_symbols_callbacks fsc = {dump_def, dump_ref};
 
-int
-main(int argc, char **argv)
+static void
+process_rpm(const char *rpm_path)
 {
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s RPM-FILE\n", argv[0]);
-    exit(1);
-  }
-
-  elf_version(EV_CURRENT);
-  rpm_parser_init();
-  db.reset(new database);
-
-  db->txn_begin();
-
   try {
-    rpm_parser_state rpmst(argv[1]);
+    rpm_parser_state rpmst(rpm_path);
     rpm_file_entry file;
 
     fprintf(stderr, "!!! [[%s]]\n", rpmst.nevra());
@@ -78,7 +67,7 @@ main(int argc, char **argv)
 	Elf *e = elf_memory(&file.contents.front(), file.contents.size());
 	if (e == NULL)  {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
-		  argv[1], file.info->name.c_str(), elf_errmsg(-1));
+		  rpm_path, file.info->name.c_str(), elf_errmsg(-1));
 	  continue;
 	}
 	elf_path = file.info->name.c_str(); // FIXME
@@ -87,10 +76,25 @@ main(int argc, char **argv)
       }
     }
   } catch (rpm_parser_exception &e) {
-    fprintf(stderr, "%s: RPM error: %s\n", argv[1], e.what());
+    fprintf(stderr, "%s: RPM error: %s\n", rpm_path, e.what());
+    exit(1);
+  }
+}
+
+int
+main(int argc, char **argv)
+{
+  if (argc != 2) {
+    fprintf(stderr, "usage: %s RPM-FILE\n", argv[0]);
     exit(1);
   }
 
+  elf_version(EV_CURRENT);
+  rpm_parser_init();
+  db.reset(new database);
+
+  db->txn_begin();
+  process_rpm(argv[1]);
   db->txn_commit();
 
   return 0;
