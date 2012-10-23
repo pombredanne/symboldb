@@ -30,6 +30,25 @@ public:
     std::tr1::shared_ptr<elf_symbol_definition> definition() const;
     std::tr1::shared_ptr<elf_symbol_reference> reference() const;
   };
+
+  // Iterates over strings in the dynamic section.
+  class dynamic_section_range {
+    struct state;
+    std::tr1::shared_ptr<state> state_;
+  public:
+    dynamic_section_range(const elf_image &);
+    ~dynamic_section_range();
+
+    // Advances to the next entry.
+    bool next();
+
+    typedef enum {
+      needed, soname, rpath, runpath
+    } kind;
+
+    kind type() const;
+    const std::string &value() const;
+  };
 };
 
 // Call this to initialize the subsystem.

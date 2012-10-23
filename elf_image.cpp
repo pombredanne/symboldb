@@ -30,6 +30,7 @@
 struct elf_image::impl {
   Elf *elf;
   Ebl *ebl;
+  size_t phnum;
   size_t shnum;
 
   impl(const void *start, size_t size)
@@ -43,6 +44,13 @@ struct elf_image::impl {
     ebl = ebl_openbackend (elf);
     if (ebl == NULL) {
       elf_exception::raise("cannot create EBL handle");
+    }
+
+    if (elf_getshdrnum (elf, &shnum) < 0) {
+      throw elf_exception();
+    }
+    if (elf_getphdrnum (elf, &phnum) < 0) {
+      throw elf_exception();
     }
   }
 
@@ -410,4 +418,97 @@ std::tr1::shared_ptr<elf_symbol_reference>
 elf_image::symbol_range::reference() const
 {
   return state_->ref;
+}
+
+struct elf_image::dynamic_section_range::state {
+  std::tr1::shared_ptr<impl> impl_;
+  GElf_Shdr *shdr;
+  Elf_Data *data;
+  size_t cnt;
+  size_t entries;
+  GElf_Shdr shdr_mem;
+  std::string value;
+  kind type;
+
+  state(const elf_image &image)
+    : impl_(image.impl_), cnt(0), entries(0)
+  {
+    for (size_t i = 0; i < impl_->phnum; ++i) {
+      GElf_Phdr phdr_mem;
+      GElf_Phdr *phdr = gelf_getphdr (impl_->elf, i, &phdr_mem);
+      if (phdr != NULL && phdr->p_type == PT_DYNAMIC) {
+	Elf_Scn *scn = gelf_offscn (impl_->elf, phdr->p_offset);
+	shdr = gelf_getshdr (scn, &shdr_mem);
+	if (shdr != NULL && shdr->sh_type == SHT_DYNAMIC) {
+	  // Section found, use it for processing if not empty.
+	  data = elf_getdata (scn, NULL);
+	  if (data != NULL) {
+	    entries = shdr->sh_size / shdr->sh_entsize;
+	  }
+	  break;
+	} else {
+	  shdr = NULL;
+	}
+      }
+    }
+
+  }
+
+  bool next()
+  {
+    value.clear();
+    while (cnt < entries) {
+      GElf_Dyn dynmem;
+      GElf_Dyn *dyn = gelf_getdyn (data, cnt, &dynmem);
+      ++cnt;
+      switch (dyn->d_tag) {
+      case DT_NEEDED:
+	type = needed;
+	break;
+      case DT_SONAME:
+	type = soname;
+	break;
+      case DT_RPATH:
+	type = rpath;
+	break;
+      case DT_RUNPATH:
+	type = runpath;
+	break;
+      default:
+	// Nothing useful found, try again.
+	continue;
+      }
+      value = elf_strptr (impl_->elf, shdr->sh_link, dyn->d_un.d_val);
+      return true;
+    }
+    return false;
+  }
+};
+
+
+elf_image::dynamic_section_range::dynamic_section_range(const elf_image &image)
+  : state_(new state(image))
+{
+}
+
+elf_image::dynamic_section_range::~dynamic_section_range()
+{
+}
+
+bool
+elf_image::dynamic_section_range::next()
+{
+  return state_->next();
+}
+
+elf_image::dynamic_section_range::kind
+elf_image::dynamic_section_range::type() const
+{
+  return state_->type;
+}
+
+const std::string &
+elf_image::dynamic_section_range::value() const
+{
+  return state_->value;
 }
