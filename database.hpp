@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdexcept>
-#include <set>
 #include <string>
 #include <tr1/memory>
 
@@ -40,6 +39,7 @@ public:
   // Loading ELF-related tables.
   void add_elf_symbol_definition(file_id, const elf_symbol_definition &);
   void add_elf_symbol_reference(file_id, const elf_symbol_reference &);
-  void add_elf_needed(file_id, const std::set<std::string> &names);
+  void add_elf_needed(file_id, const char *);
+  void add_elf_soname(file_id, const char *);
   void add_elf_error(file_id, const char *);
 };

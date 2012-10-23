@@ -259,20 +259,17 @@ database::add_elf_symbol_reference(file_id file,
 }
 
 void
-database::add_elf_needed(file_id file, const std::set<std::string> &names)
+database::add_elf_needed(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
-  const char *params[] = {filestr, NULL};
-  for (std::set<std::string>::const_iterator p = names.begin(),
-	 end = names.end(); p != end; ++p) {
-    params[1] = p->c_str();
-    pgresult_wrapper res;
-    res.raw = PQexecParams
+  const char *params[] = {filestr, name};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_NEEDED_TABLE " (file, name) VALUES ($1, $2)",
      2, NULL, params, NULL, NULL, 0);
-    res.check();
-  }
+  res.check();
+}
 }
