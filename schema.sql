@@ -31,7 +31,7 @@ CREATE FUNCTION symboldb.nevra (symboldb.package) RETURNS TEXT AS $$
 $$ LANGUAGE SQL;
 
 CREATE TABLE symboldb.file (
-  id SERIAL NOT NULL PRIMARY KEY,	 
+  id SERIAL NOT NULL PRIMARY KEY,
   package INTEGER NOT NULL
     REFERENCES symboldb.package (id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0),
