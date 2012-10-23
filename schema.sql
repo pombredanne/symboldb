@@ -14,6 +14,22 @@ CREATE TABLE symboldb.package (
 );
 CREATE INDEX ON symboldb.package (name, version);
 
+CREATE FUNCTION symboldb.nvra (symboldb.package) RETURNS TEXT AS $$
+  SELECT
+    $1.name || '-' || $1.version || '-' || $1.release || '.' || $1.arch
+  ;
+$$ LANGUAGE SQL;
+
+CREATE FUNCTION symboldb.nevra (symboldb.package) RETURNS TEXT AS $$
+  SELECT
+    CASE
+      WHEN $1.epoch IS NULL THEN symboldb.nvra ($1)
+      ELSE $1.name || '-' || $1.epoch || ':' || $1.version
+        || '-' || $1.release || '.' || $1.arch
+    END
+  ;
+$$ LANGUAGE SQL;
+
 CREATE TABLE symboldb.file (
   id SERIAL NOT NULL PRIMARY KEY,	 
   package INTEGER NOT NULL
