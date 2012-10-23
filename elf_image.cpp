@@ -69,9 +69,7 @@ elf_image::~elf_image()
 {
 }
 
-struct elf_image::symbol_range_impl : elf_image::symbol_range {
-  std::tr1::shared_ptr<elf_image::impl> parent;
-
+struct elf_image::symbol_range::state {
   // The following are set up by next_section().
   bool eof;
   Elf_Scn *scn;
@@ -93,20 +91,18 @@ struct elf_image::symbol_range_impl : elf_image::symbol_range {
   std::tr1::shared_ptr<elf_symbol_definition> def;
   std::tr1::shared_ptr<elf_symbol_reference> ref;
 
-  symbol_range_impl(const elf_image &e)
-    : parent(e.impl_), eof(false), scn(NULL), nsyms(0), cnt(0)
+  state()
+    : eof(false), scn(NULL), nsyms(0), cnt(0)
   {
   }
 
-  bool next();
-  bool next_section();
-  bool init_section();
-  std::tr1::shared_ptr<elf_symbol_definition> definition() const;
-  std::tr1::shared_ptr<elf_symbol_reference> reference() const;
+  bool next(impl *parent);
+  bool next_section(impl *parent);
+  bool init_section(impl *parent);
 };
 
 bool
-elf_image::symbol_range_impl::next_section()
+elf_image::symbol_range::state::next_section(impl *parent)
 {
   if (eof) {
     return false;
@@ -116,7 +112,7 @@ elf_image::symbol_range_impl::next_section()
     shdr = gelf_getshdr (scn, &shdr_mem);
     if (shdr != NULL && (shdr->sh_type == (GElf_Word) SHT_DYNSYM 
 			 || shdr->sh_type == (GElf_Word) SHT_SYMTAB)) {
-      if (init_section()) {
+      if (init_section(parent)) {
 	return true;
       }
     }
@@ -126,7 +122,7 @@ elf_image::symbol_range_impl::next_section()
 }
 
 bool
-elf_image::symbol_range_impl::init_section()
+elf_image::symbol_range::state::init_section(impl *parent)
 {
   int class_ = gelf_getclass (parent->elf);
   xndx_data = NULL;
@@ -212,7 +208,7 @@ get_visibility_type (int value)
 }
 
 bool
-elf_image::symbol_range_impl::next()
+elf_image::symbol_range::state::next(impl *parent)
 {
   def.reset();
   ref.reset();
@@ -223,7 +219,7 @@ elf_image::symbol_range_impl::next()
 
   while (true) {
     if (cnt >= nsyms) {
-      if (!next_section()) {
+      if (!next_section(parent)) {
 	return false;
       }
     }
@@ -389,21 +385,29 @@ elf_image::symbol_range_impl::next()
   return true;
 }
 
-std::tr1::shared_ptr<elf_symbol_definition>
-elf_image::symbol_range_impl::definition() const
+elf_image::symbol_range::symbol_range(const elf_image &image)
+  : impl_(image.impl_), state_(new state)
 {
-  return def;
+}
+
+elf_image::symbol_range::~symbol_range()
+{
+}
+
+bool
+elf_image::symbol_range::next()
+{
+  return state_->next(impl_.get());
+}
+
+std::tr1::shared_ptr<elf_symbol_definition>
+elf_image::symbol_range::definition() const
+{
+  return state_->def;
 }
 
 std::tr1::shared_ptr<elf_symbol_reference>
-elf_image::symbol_range_impl::reference() const
+elf_image::symbol_range::reference() const
 {
-  return ref;
-}
-
-
-std::tr1::shared_ptr<elf_image::symbol_range>
-elf_image::symbols()
-{
-  return std::tr1::shared_ptr<symbol_range>(new symbol_range_impl(*this));
+  return state_->ref;
 }

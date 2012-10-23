@@ -98,13 +98,12 @@ process_rpm(const char *rpm_path)
 
 	try {
 	  elf_image image(&file.contents.front(), file.contents.size());
-	  std::tr1::shared_ptr<elf_image::symbol_range> symbols =
-	    image.symbols();
-	  while (symbols->next()) {
-	    if (symbols->definition()) {
-	      dump_def(*symbols->definition());
-	    } else if (symbols->reference()) {
-	      dump_ref(*symbols->reference());
+	  elf_image::symbol_range symbols(image);
+	  while (symbols.next()) {
+	    if (symbols.definition()) {
+	      dump_def(*symbols.definition());
+	    } else if (symbols.reference()) {
+	      dump_ref(*symbols.reference());
 	    } else {
 	      throw std::logic_error("unknown elf_symbol type");
 	    }
