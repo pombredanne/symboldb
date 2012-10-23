@@ -154,11 +154,11 @@ main(int argc, char **argv)
   rpm_parser_init();
   db.reset(new database);
 
-  db->txn_begin();
   for (int i = optind; i < argc; ++i) {
+    db->txn_begin();
     process_rpm(argv[i]);
+    db->txn_commit();
   }
-  db->txn_commit();
 
   return 0;
 }
