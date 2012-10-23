@@ -55,6 +55,28 @@ CREATE TABLE symboldb.elf_needed (
 );
 CREATE INDEX ON symboldb.elf_needed (name);
 
+CREATE TABLE symboldb.elf_soname (
+  file INTEGER NOT NULL
+    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  PRIMARY KEY (file, name)
+);
+CREATE INDEX ON symboldb.elf_soname (name);
+
+CREATE TABLE symboldb.elf_rpath (
+  file INTEGER NOT NULL
+    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+  path TEXT NOT NULL,
+  PRIMARY KEY (file, path)
+);
+
+CREATE TABLE symboldb.elf_runpath (
+  file INTEGER NOT NULL
+    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+  path TEXT NOT NULL,
+  PRIMARY KEY (file, path)
+);
+
 CREATE TABLE symboldb.elf_error (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,

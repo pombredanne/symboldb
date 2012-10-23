@@ -41,5 +41,7 @@ public:
   void add_elf_symbol_reference(file_id, const elf_symbol_reference &);
   void add_elf_needed(file_id, const char *);
   void add_elf_soname(file_id, const char *);
+  void add_elf_rpath(file_id, const char *);
+  void add_elf_runpath(file_id, const char *);
   void add_elf_error(file_id, const char *);
 };

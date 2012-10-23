@@ -18,6 +18,9 @@
 #define ELF_DEFINITION_TABLE "symboldb.elf_definition"
 #define ELF_REFERENCE_TABLE "symboldb.elf_reference"
 #define ELF_NEEDED_TABLE "symboldb.elf_needed"
+#define ELF_SONAME_TABLE "symboldb.elf_soname"
+#define ELF_RPATH_TABLE "symboldb.elf_rpath"
+#define ELF_RUNPATH_TABLE "symboldb.elf_runpath"
 
 struct database::impl {
   PGconn *conn;
@@ -272,4 +275,48 @@ database::add_elf_needed(file_id file, const char *name)
      2, NULL, params, NULL, NULL, 0);
   res.check();
 }
+
+void
+database::add_elf_soname(file_id file, const char *name)
+{
+  // FIXME: This needs a transaction.
+  char filestr[32];
+  snprintf(filestr, sizeof(filestr), "%d", file);
+  const char *params[] = {filestr, name};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " ELF_SONAME_TABLE " (file, name) VALUES ($1, $2)",
+     2, NULL, params, NULL, NULL, 0);
+  res.check();
+}
+
+void
+database::add_elf_rpath(file_id file, const char *name)
+{
+  // FIXME: This needs a transaction.
+  char filestr[32];
+  snprintf(filestr, sizeof(filestr), "%d", file);
+  const char *params[] = {filestr, name};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " ELF_RPATH_TABLE " (file, path) VALUES ($1, $2)",
+     2, NULL, params, NULL, NULL, 0);
+  res.check();
+}
+
+void
+database::add_elf_runpath(file_id file, const char *name)
+{
+  // FIXME: This needs a transaction.
+  char filestr[32];
+  snprintf(filestr, sizeof(filestr), "%d", file);
+  const char *params[] = {filestr, name};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)",
+     2, NULL, params, NULL, NULL, 0);
+  res.check();
 }
