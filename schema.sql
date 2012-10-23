@@ -30,6 +30,9 @@ CREATE FUNCTION symboldb.nevra (symboldb.package) RETURNS TEXT AS $$
   ;
 $$ LANGUAGE SQL;
 
+CREATE INDEX ON symboldb.package (symboldb.nvra(package));
+CREATE INDEX ON symboldb.package (symboldb.nevra(package));
+
 CREATE TABLE symboldb.file (
   id SERIAL NOT NULL PRIMARY KEY,
   package INTEGER NOT NULL
