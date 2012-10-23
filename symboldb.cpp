@@ -98,14 +98,35 @@ process_rpm(const char *rpm_path)
 
 	try {
 	  elf_image image(&file.contents.front(), file.contents.size());
-	  elf_image::symbol_range symbols(image);
-	  while (symbols.next()) {
-	    if (symbols.definition()) {
-	      dump_def(*symbols.definition());
-	    } else if (symbols.reference()) {
-	      dump_ref(*symbols.reference());
-	    } else {
-	      throw std::logic_error("unknown elf_symbol type");
+	  {
+	    elf_image::symbol_range symbols(image);
+	    while (symbols.next()) {
+	      if (symbols.definition()) {
+		dump_def(*symbols.definition());
+	      } else if (symbols.reference()) {
+		dump_ref(*symbols.reference());
+	      } else {
+		throw std::logic_error("unknown elf_symbol type");
+	      }
+	    }
+	  }
+	  {
+	    elf_image::dynamic_section_range dyn(image);
+	    while (dyn.next()) {
+	      switch (dyn.type()) {
+	      case elf_image::dynamic_section_range::needed:
+		db->add_elf_needed(fid, dyn.value().c_str());
+		break;
+	      case elf_image::dynamic_section_range::soname:
+		db->add_elf_soname(fid, dyn.value().c_str());
+		break;
+	      case elf_image::dynamic_section_range::rpath:
+		db->add_elf_rpath(fid, dyn.value().c_str());
+		break;
+	      case elf_image::dynamic_section_range::runpath:
+		db->add_elf_runpath(fid, dyn.value().c_str());
+		break;
+	      }
 	    }
 	  }
 	} catch (elf_exception e) {
