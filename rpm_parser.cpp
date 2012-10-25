@@ -1,4 +1,5 @@
 #include "rpm_parser.hpp"
+#include "rpm_parser_exception.hpp"
 #include "cpio_reader.hpp"
 #include "rpm_file_info.hpp"
 #include "rpm_package_info.hpp"

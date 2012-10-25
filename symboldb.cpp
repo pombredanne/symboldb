@@ -13,6 +13,7 @@
 #include "elf_image.hpp"
 #include "elf_exception.hpp"
 #include "rpm_parser.hpp"
+#include "rpm_parser_exception.hpp"
 #include "database.hpp"
 
 namespace {

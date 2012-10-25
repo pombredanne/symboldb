@@ -4,7 +4,6 @@
 
 #include <stdexcept>
 #include <tr1/memory>
-#include <string>
 #include <vector>
 
 class rpm_package_info;
@@ -12,12 +11,6 @@ class rpm_package_info;
 // This needs to be called once before creating any rpm_parser_state
 // objects.
 void rpm_parser_init();
-
-// Thrown if constructing an rpm_parser_state object fails.
-struct rpm_parser_exception : std::runtime_error {
-  rpm_parser_exception(const std::string &);
-  rpm_parser_exception(const char *);
-};
 
 struct rpm_file_entry {
   std::tr1::shared_ptr<rpm_file_info> info;
