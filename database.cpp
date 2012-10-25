@@ -179,14 +179,15 @@ database::intern_package(const rpm_package_info &pkg,
       pkg.release.c_str(),
       pkg.arch.c_str(),
       pkg.hash.c_str(),
+      pkg.source_rpm.c_str(),
     };
     pgresult_wrapper res;
     res.raw = PQexecParams
       (impl_->conn,
        "INSERT INTO " PACKAGE_TABLE
-       " (name, epoch, version, release, arch, hash)"
-       " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex')) RETURNING id",
-       6, NULL, params, NULL, NULL, 0);
+       " (name, epoch, version, release, arch, hash, source)"
+       " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex'), $7) RETURNING id",
+       7, NULL, params, NULL, NULL, 0);
     pkg_id = get_id_force(res);
     return true;
   }

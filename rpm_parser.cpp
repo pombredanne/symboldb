@@ -78,6 +78,7 @@ rpm_parser_state::impl::get_header()
   pkg.version = get_string(header, "VERSION", RPMTAG_VERSION);
   pkg.release = get_string(header, "RELEASE", RPMTAG_RELEASE);
   pkg.arch = get_string(header, "ARCH", RPMTAG_ARCH);
+  pkg.source_rpm = get_string(header, "SOURCERPM", RPMTAG_SOURCERPM);
   pkg.hash = get_string(header, "SHA1HEADER", RPMTAG_SHA1HEADER);
   rpmtd_wrapper td;
   if (!headerGet(header, RPMTAG_EPOCH, td.raw, 0)) {

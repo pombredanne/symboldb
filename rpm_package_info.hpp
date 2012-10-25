@@ -8,6 +8,7 @@ struct rpm_package_info {
   std::string version;
   std::string release;
   std::string arch;
+  std::string source_rpm;
   std::string hash;		// 40 hexadecimal characters
   int epoch;			// -1 if no epoch
 

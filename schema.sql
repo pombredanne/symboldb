@@ -10,8 +10,11 @@ CREATE TABLE symboldb.package (
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
   arch TEXT NOT NULL CHECK (LENGTH(arch) > 0),
-  hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20)
+  hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
+  source TEXT NOT NULL CHECK (LENGTH(source) > 0)
 );
+COMMENT ON COLUMN symboldb.package.source IS
+  'file name of the source RPM package';
 CREATE INDEX ON symboldb.package (name, version);
 
 CREATE FUNCTION symboldb.nvra (symboldb.package) RETURNS TEXT AS $$
