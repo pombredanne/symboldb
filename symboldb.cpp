@@ -146,16 +146,38 @@ process_rpm(const char *rpm_path)
 static void
 usage(const char *progname)
 {
-  fprintf(stderr, "usage: %s RPM-FILE...\n", progname);
+  fprintf(stderr, "Usage:\n\n"
+	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
+	  "\nOptions:\n"
+	  "  --quiet, -q       less output\n"
+	  "  --verbose, -v     more verbose output\n\n",
+	  progname);
   exit(2);
+}
+
+namespace {
+  namespace command {
+    typedef enum {
+      undefined = 1000,
+      load_rpm,
+    } type;
+  };
 }
 
 int
 main(int argc, char **argv)
 {
   {
+    command::type cmd = command::undefined;
+    static const struct option long_options[] = {
+      {"load-rpm", no_argument, 0, command::load_rpm},
+      {"verbose", no_argument, 0, 'v'},
+      {"quiet", no_argument, 0, 'q'},
+      {0, 0, 0, 0}
+    };
     int ch;
-    while ((ch = getopt(argc, argv, "qv")) != -1) {
+    int index;
+    while ((ch = getopt_long(argc, argv, "qv", long_options, &index)) != -1) {
       switch (ch) {
       case 'q':
 	opt.output = options::quiet;
@@ -163,11 +185,14 @@ main(int argc, char **argv)
       case 'v':
 	opt.output = options::verbose;
 	break;
+      case command::load_rpm:
+	cmd = static_cast<command::type>(ch);
+	break;
       default:
 	usage(argv[0]);
       }
     }
-    if (optind >= argc) {
+    if (optind >= argc || cmd == command::undefined) {
       usage(argv[0]);
     }
   }
