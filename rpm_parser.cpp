@@ -23,7 +23,21 @@ rpm_parser_init()
 struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
-  FD_t gzfd;
+
+  impl()
+    : fd(0), header(0)
+  {
+  }
+
+  ~impl()
+  {
+    if (header != NULL) {
+      headerFree(header);
+    }
+    if (fd != NULL) {
+      Fclose(fd);
+    }
+  }
 
   rpmtd_wrapper nevra;
   rpm_package_info pkg;
@@ -183,63 +197,52 @@ rpm_parser_state::rpm_parser_state(const char *path)
 {
   // The code below roughly follows rpm2cpio.
   impl_->fd = Fopen(path, "r.ufdio");
-  try {
-    if (Ferror(impl_->fd)) {
-      throw rpm_parser_exception(Fstrerror(impl_->fd));
-    }
+  if (Ferror(impl_->fd)) {
+    throw rpm_parser_exception(Fstrerror(impl_->fd));
+  }
 
-    // Load header.
-    rpmts ts = rpmtsCreate();
-    int rc = rpmReadPackageFile(ts, impl_->fd, "symboldb", &impl_->header);
-    ts = rpmtsFree(ts);
-    switch (rc) {
-    case RPMRC_OK:
-    case RPMRC_NOKEY:
-    case RPMRC_NOTTRUSTED:
-      break;
-    case RPMRC_NOTFOUND:
+  // Load header.
+  rpmts ts = rpmtsCreate();
+  int rc = rpmReadPackageFile(ts, impl_->fd, "symboldb", &impl_->header);
+  ts = rpmtsFree(ts);
+  switch (rc) {
+  case RPMRC_OK:
+  case RPMRC_NOKEY:
+  case RPMRC_NOTTRUSTED:
+    break;
+  case RPMRC_NOTFOUND:
       throw rpm_parser_exception("not an RPM package");
-    case RPMRC_FAIL:
-    default:
-      throw rpm_parser_exception("error reading header from RPM package");
-    }
+  case RPMRC_FAIL:
+  default:
+    throw rpm_parser_exception("error reading header from RPM package");
+  }
 
-    impl_->get_header();
-    impl_->get_files_from_header();
+  impl_->get_header();
+  impl_->get_files_from_header();
 
-    // Open payload stream.
-    try {
-      const char *compr =
-	headerGetString(impl_->header, RPMTAG_PAYLOADCOMPRESSOR);
-      std::string rpmio_flags("r.");
-      if (compr == NULL) {
-	rpmio_flags += "gzip";
-      } else {
-	rpmio_flags += compr;
-      }
-      impl_->gzfd = Fdopen(impl_->fd, rpmio_flags.c_str());
-      try {
-	if (Ferror(impl_->gzfd)) {
-	  throw rpm_parser_exception(Fstrerror(impl_->gzfd));
-	}
-      } catch (...) {
-	Fclose(impl_->gzfd);
-	throw;
-      }
-    } catch (...) {
-      headerFree(impl_->header);
-      throw;
-    }
-  } catch (...) {
-    Fclose(impl_->fd);
-    throw;
+  // Open payload stream.
+  const char *compr =
+    headerGetString(impl_->header, RPMTAG_PAYLOADCOMPRESSOR);
+  std::string rpmio_flags("r.");
+  if (compr == NULL) {
+    rpmio_flags += "gzip";
+  } else {
+    rpmio_flags += compr;
+  }
+  FD_t gzfd = Fdopen(impl_->fd, rpmio_flags.c_str());
+  if (gzfd == NULL) {
+    throw std::runtime_error("could not allocate compression handle");
+  }
+  if (gzfd != impl_->fd) {
+    throw std::logic_error("handle changed unexpectedly");
+  }
+  if (Ferror(impl_->fd)) {
+    throw rpm_parser_exception(Fstrerror(impl_->fd));
   }
 }
 
 rpm_parser_state::~rpm_parser_state()
 {
-  headerFree(impl_->header);
-  Fclose(impl_->fd);
 }
 
 const char *
@@ -259,11 +262,11 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 {
   // Read cpio header magic.
   char cpio_magic[cpio_entry::magic_size];
-  ssize_t ret = Fread(cpio_magic, sizeof(cpio_magic), 1, impl_->gzfd);
+  ssize_t ret = Fread(cpio_magic, sizeof(cpio_magic), 1, impl_->fd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file header");
   } else if (ret < 0) {
-    throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
+    throw rpm_parser_exception(std::string(Fstrerror(impl_->fd))
 			       + " (in cpio header)");
   }
 
@@ -276,11 +279,11 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   // Read cpio header.
   char cpio_header[128];
   assert(cpio_len <= sizeof(cpio_header));
-  ret = Fread(cpio_header, cpio_len, 1, impl_->gzfd);
+  ret = Fread(cpio_header, cpio_len, 1, impl_->fd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file header");
   } else if (ret < 0) {
-    throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
+    throw rpm_parser_exception(std::string(Fstrerror(impl_->fd))
 			       + " (in cpio header)");
   }
 
@@ -298,22 +301,22 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   // Read name.
   std::vector<char> name;
   name.resize(header.namesize);
-  ret = Fread(&name.front(), header.namesize, 1, impl_->gzfd);
+  ret = Fread(&name.front(), header.namesize, 1, impl_->fd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file name");
   } else if (ret < 0) {
-    throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
+    throw rpm_parser_exception(std::string(Fstrerror(impl_->fd))
 			       + " (in cpio file name)");
   }
   // Name padding.
   unsigned pos = 6 + cpio_len + name.size();
   while ((pos % 4) != 0) {
     char buf;
-    ret = Fread(&buf, 1, 1, impl_->gzfd);
+    ret = Fread(&buf, 1, 1, impl_->fd);
     if (ret == 0) {
       throw rpm_parser_exception("failed to read padding after name");
     } else if (ret < 0) {
-      throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
+      throw rpm_parser_exception(std::string(Fstrerror(impl_->fd))
 				 + " (in cpio file name padding)");
     }
     ++pos;
@@ -346,11 +349,11 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   // Read contents.
   file.contents.resize(header.filesize);
   if (header.filesize > 0) {
-    ret = Fread(&file.contents.front(), header.filesize, 1, impl_->gzfd);
+    ret = Fread(&file.contents.front(), header.filesize, 1, impl_->fd);
     if (ret == 0) {
       throw rpm_parser_exception("end of stream in cpio file contents");
     } else if (ret < 0) {
-      throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
+      throw rpm_parser_exception(std::string(Fstrerror(impl_->fd))
 				 + " (in cpio file contents)");
     }
   }
@@ -359,11 +362,11 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   pos = header.filesize;
   while ((pos % 4) != 0) {
     char buf;
-    ret = Fread(&buf, 1, 1, impl_->gzfd);
+    ret = Fread(&buf, 1, 1, impl_->fd);
     if (ret == 0) {
       throw rpm_parser_exception("failed to read padding after cpio contents");
     } else if (ret < 0) {
-      throw rpm_parser_exception(std::string(Fstrerror(impl_->gzfd))
+      throw rpm_parser_exception(std::string(Fstrerror(impl_->fd))
 				 + " (in cpio file contents padding)");
     }
     ++pos;
