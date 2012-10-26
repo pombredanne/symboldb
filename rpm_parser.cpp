@@ -23,9 +23,10 @@ rpm_parser_init()
 struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
+  bool payload_is_open;
 
   impl()
-    : fd(0), header(0)
+    : fd(0), header(0), payload_is_open(false)
   {
   }
 
@@ -45,7 +46,8 @@ struct rpm_parser_state::impl {
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
   void get_header();
-  void get_files_from_header();
+  void get_files_from_header(); // called on demand by open_payload()
+  void open_payload(); // called on demand by read_file()
 };
 
 // Missing from <rpm/rpmtd.h>, see rpmtdNextUint32.
@@ -192,6 +194,31 @@ rpm_parser_state::impl::get_files_from_header()
   }
 }
 
+void
+rpm_parser_state::impl::open_payload()
+{
+  get_files_from_header();
+  payload_is_open = true;
+  const char *compr =
+    headerGetString(header, RPMTAG_PAYLOADCOMPRESSOR);
+  std::string rpmio_flags("r.");
+  if (compr == NULL) {
+    rpmio_flags += "gzip";
+  } else {
+    rpmio_flags += compr;
+  }
+  FD_t gzfd = Fdopen(fd, rpmio_flags.c_str());
+  if (gzfd == NULL) {
+    throw std::runtime_error("could not allocate compression handle");
+  }
+  if (gzfd != fd) {
+    throw std::logic_error("handle changed unexpectedly");
+  }
+  if (Ferror(fd)) {
+    throw rpm_parser_exception(Fstrerror(fd));
+  }
+}
+
 rpm_parser_state::rpm_parser_state(const char *path)
   : impl_(new impl)
 {
@@ -218,27 +245,6 @@ rpm_parser_state::rpm_parser_state(const char *path)
   }
 
   impl_->get_header();
-  impl_->get_files_from_header();
-
-  // Open payload stream.
-  const char *compr =
-    headerGetString(impl_->header, RPMTAG_PAYLOADCOMPRESSOR);
-  std::string rpmio_flags("r.");
-  if (compr == NULL) {
-    rpmio_flags += "gzip";
-  } else {
-    rpmio_flags += compr;
-  }
-  FD_t gzfd = Fdopen(impl_->fd, rpmio_flags.c_str());
-  if (gzfd == NULL) {
-    throw std::runtime_error("could not allocate compression handle");
-  }
-  if (gzfd != impl_->fd) {
-    throw std::logic_error("handle changed unexpectedly");
-  }
-  if (Ferror(impl_->fd)) {
-    throw rpm_parser_exception(Fstrerror(impl_->fd));
-  }
 }
 
 rpm_parser_state::~rpm_parser_state()
@@ -260,6 +266,10 @@ rpm_parser_state::package() const
 bool
 rpm_parser_state::read_file(rpm_file_entry &file)
 {
+  if (!impl_->payload_is_open) {
+    impl_->open_payload();
+  }
+
   // Read cpio header magic.
   char cpio_magic[cpio_entry::magic_size];
   ssize_t ret = Fread(cpio_magic, sizeof(cpio_magic), 1, impl_->fd);
