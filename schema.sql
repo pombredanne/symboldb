@@ -21,7 +21,7 @@ CREATE FUNCTION symboldb.nvra (symboldb.package) RETURNS TEXT AS $$
   SELECT
     $1.name || '-' || $1.version || '-' || $1.release || '.' || $1.arch
   ;
-$$ LANGUAGE SQL;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
 
 CREATE FUNCTION symboldb.nevra (symboldb.package) RETURNS TEXT AS $$
   SELECT
@@ -31,7 +31,7 @@ CREATE FUNCTION symboldb.nevra (symboldb.package) RETURNS TEXT AS $$
         || '-' || $1.release || '.' || $1.arch
     END
   ;
-$$ LANGUAGE SQL;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
 
 CREATE INDEX ON symboldb.package (symboldb.nvra(package));
 CREATE INDEX ON symboldb.package (symboldb.nevra(package));
