@@ -6,6 +6,11 @@ CREATE SCHEMA symboldb;
 CREATE TYPE symboldb.arch AS ENUM
   ('noarch', 'i686', 'x86_64', 'ppc', 'ppc64', 's390', 's390x');
 
+CREATE DOMAIN symboldb.elf_byte AS SMALLINT
+  CHECK (VALUE BETWEEN 0 AND 255);
+CREATE DOMAIN symboldb.elf_short AS INTEGER
+  CHECK (VALUE BETWEEN 0 AND 65536);
+
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0),
@@ -66,6 +71,15 @@ CREATE TABLE symboldb.file (
 );
 CREATE INDEX ON symboldb.file (package);
 CREATE INDEX ON symboldb.file (name);
+
+CREATE TABLE symboldb.elf_file (
+  file INTEGER NOT NULL PRIMARY KEY
+    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+  ei_class symboldb.elf_byte NOT NULL,
+  ei_data symboldb.elf_byte NOT NULL,
+  e_machine symboldb.elf_short NOT NULL,
+  arch symboldb.arch NOT NULL
+);
 
 CREATE TABLE symboldb.elf_definition (
   file INTEGER NOT NULL

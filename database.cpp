@@ -1,6 +1,7 @@
 #include "database.hpp"
 #include "rpm_file_info.hpp"
 #include "rpm_package_info.hpp"
+#include "elf_image.hpp"
 #include "elf_symbol_definition.hpp"
 #include "elf_symbol_reference.hpp"
 
@@ -15,6 +16,7 @@
 
 #define PACKAGE_TABLE "symboldb.package"
 #define FILE_TABLE "symboldb.file"
+#define ELF_FILE_TABLE "symboldb.elf_file"
 #define ELF_DEFINITION_TABLE "symboldb.elf_definition"
 #define ELF_REFERENCE_TABLE "symboldb.elf_reference"
 #define ELF_NEEDED_TABLE "symboldb.elf_needed"
@@ -221,6 +223,43 @@ database::add_file(package_id pkg, const rpm_file_info &info)
      " VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
      6, NULL, params, NULL, NULL, 0);
   return get_id_force(res);
+}
+
+void
+database::add_elf_image(file_id file, const elf_image &image,
+			const char *fallback_arch)
+{
+  if (fallback_arch == NULL) {
+    throw std::logic_error("fallback_arch");
+  }
+
+  char filestr[32];
+  snprintf(filestr, sizeof(filestr), "%d", file);
+  char ei_class[32];
+  snprintf(ei_class, sizeof(ei_class), "%d", image.ei_class());
+  char ei_data[32];
+  snprintf(ei_data, sizeof(ei_data), "%d", image.ei_data());
+  char e_machine[32];
+  snprintf(e_machine, sizeof(e_machine), "%d", image.e_machine());
+
+  const char *arch = image.arch();
+  if (arch == NULL) {
+    arch = fallback_arch;
+  }
+  const char *params[] = {
+    filestr,
+    ei_class,
+    ei_data,
+    e_machine,
+    arch
+  };
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " ELF_FILE_TABLE
+     " (file, ei_class, ei_data, e_machine, arch) VALUES ($1, $2, $3, $4, $5)",
+     5, NULL, params, NULL, NULL, 0);
+  res.check();
 }
 
 void

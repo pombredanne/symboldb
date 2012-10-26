@@ -6,6 +6,7 @@
 
 class rpm_file_info;
 class rpm_package_info;
+class elf_image;
 class elf_symbol_definition;
 class elf_symbol_reference;
 
@@ -37,6 +38,12 @@ public:
   file_id add_file(package_id, const rpm_file_info &);
 
   // Loading ELF-related tables.
+
+  // Populates the elf_file table.  Uses fallback_arch (from the RPM
+  // header) in case we cannot determine the architecture from the ELF
+  // header.
+  void add_elf_image(file_id, const elf_image &, const char *fallback_arch);
+
   void add_elf_symbol_definition(file_id, const elf_symbol_definition &);
   void add_elf_symbol_reference(file_id, const elf_symbol_reference &);
   void add_elf_needed(file_id, const char *);

@@ -13,6 +13,7 @@
 #include "elf_image.hpp"
 #include "elf_exception.hpp"
 #include "rpm_parser.hpp"
+#include "rpm_package_info.hpp"
 #include "rpm_parser_exception.hpp"
 #include "database.hpp"
 
@@ -69,6 +70,7 @@ load_rpm(const char *rpm_path)
 {
   try {
     rpm_parser_state rpmst(rpm_path);
+    std::string rpm_arch(rpmst.package().arch);
     rpm_file_entry file;
 
     database::package_id pkg;
@@ -102,6 +104,7 @@ load_rpm(const char *rpm_path)
 
 	try {
 	  elf_image image(&file.contents.front(), file.contents.size());
+	  db->add_elf_image(fid, image, rpm_arch.c_str());
 	  {
 	    elf_image::symbol_range symbols(image);
 	    while (symbols.next()) {
