@@ -44,4 +44,9 @@ public:
   void add_elf_rpath(file_id, const char *);
   void add_elf_runpath(file_id, const char *);
   void add_elf_error(file_id, const char *);
+
+  // Package sets.
+  typedef int package_set_id;
+  package_set_id create_package_set(const char *name, const char *arch);
+  void add_package_set(package_set_id, package_id);
 };

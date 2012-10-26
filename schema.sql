@@ -36,6 +36,21 @@ $$ LANGUAGE SQL;
 CREATE INDEX ON symboldb.package (symboldb.nvra(package));
 CREATE INDEX ON symboldb.package (symboldb.nevra(package));
 
+CREATE TABLE symboldb.package_set (
+  id SERIAL NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  arch TEXT NOT NULL CHECK (LENGTH(arch) > 0)
+);
+COMMENT ON COLUMN symboldb.package_set.arch IS 'main architecture';
+
+CREATE TABLE symboldb.package_set_member (
+  set INTEGER NOT NULL
+    REFERENCES symboldb.package_set ON DELETE CASCADE,
+  package INTEGER NOT NULL REFERENCES symboldb.package
+);
+CREATE INDEX ON symboldb.package_set_member (set);
+CREATE INDEX ON symboldb.package_set_member (package);
+
 CREATE TABLE symboldb.file (
   id SERIAL NOT NULL PRIMARY KEY,
   package INTEGER NOT NULL

@@ -22,8 +22,11 @@ namespace {
       standard, verbose, quiet
     } output;
 
+    const char *arch;
+    const char *set_name;
+
     options()
-      : output(standard)
+      : output(standard), arch(NULL), set_name(NULL)
     {
     }
   };
@@ -61,8 +64,8 @@ dump_ref(const elf_symbol_reference &ref)
   db->add_elf_symbol_reference(fid, ref);
 }
 
-static void
-process_rpm(const char *rpm_path)
+static database::package_id
+load_rpm(const char *rpm_path)
 {
   try {
     rpm_parser_state rpmst(rpm_path);
@@ -74,7 +77,7 @@ process_rpm(const char *rpm_path)
 	fprintf(stderr, "info: skipping %s from %s\n",
 		rpmst.nevra(), rpm_path);
       }
-      return;
+      return pkg;
     }
 
     if (opt.output != options::quiet) {
@@ -137,18 +140,51 @@ process_rpm(const char *rpm_path)
 	}
       }
     }
+    return pkg;
   } catch (rpm_parser_exception &e) {
     fprintf(stderr, "%s: RPM error: %s\n", rpm_path, e.what());
     exit(1);
   }
 }
 
-static void
-usage(const char *progname)
+static int
+do_load_rpm(const options &opt, char **argv)
 {
+  // Unreferenced RPMs should not be visible to analyzers, so we can
+  // load each RPM in a separate transaction.
+  for (; *argv; ++argv) {
+    db->txn_begin();
+    load_rpm(*argv);
+    db->txn_commit();
+  }
+  return 0;
+}
+
+static int
+do_create_set(const options &opt, char **argv)
+{
+  db->txn_begin();
+  database::package_set_id set =
+    db->create_package_set(opt.set_name, opt.arch);
+  for (; *argv; ++argv) {
+    database::package_id pkg = load_rpm(*argv);
+    db->add_package_set(set, pkg);
+  }
+  db->txn_commit();
+  return 0;
+}
+
+static void
+usage(const char *progname, const char *error = NULL)
+{
+  if (error) {
+    fprintf(stderr, "error: %s\n", error);
+  }
   fprintf(stderr, "Usage:\n\n"
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
+	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
 	  "\nOptions:\n"
+	  "  --arch=ARCH, -a   base architecture\n"
 	  "  --quiet, -q       less output\n"
 	  "  --verbose, -v     more verbose output\n\n",
 	  progname);
@@ -160,6 +196,7 @@ namespace {
     typedef enum {
       undefined = 1000,
       load_rpm,
+      create_set,
     } type;
   };
 }
@@ -167,23 +204,32 @@ namespace {
 int
 main(int argc, char **argv)
 {
+  command::type cmd = command::undefined;
   {
-    command::type cmd = command::undefined;
     static const struct option long_options[] = {
       {"load-rpm", no_argument, 0, command::load_rpm},
+      {"create-set", required_argument, 0, command::create_set},
+      {"arch", required_argument, 0, 'a'},
       {"verbose", no_argument, 0, 'v'},
       {"quiet", no_argument, 0, 'q'},
       {0, 0, 0, 0}
     };
     int ch;
     int index;
-    while ((ch = getopt_long(argc, argv, "qv", long_options, &index)) != -1) {
+    while ((ch = getopt_long(argc, argv, "a:qv", long_options, &index)) != -1) {
       switch (ch) {
+      case 'a':
+	opt.arch = optarg;
+	break;
       case 'q':
 	opt.output = options::quiet;
 	break;
       case 'v':
 	opt.output = options::verbose;
+	break;
+      case command::create_set:
+	cmd = command::create_set;
+	opt.set_name = optarg;
 	break;
       case command::load_rpm:
 	cmd = static_cast<command::type>(ch);
@@ -192,19 +238,45 @@ main(int argc, char **argv)
 	usage(argv[0]);
       }
     }
-    if (optind >= argc || cmd == command::undefined) {
+    if (cmd == command::undefined) {
       usage(argv[0]);
+    }
+    if (opt.arch != NULL && opt.arch[0] == '\0') {
+      usage(argv[0], "invalid architecture name");
+    }
+    if (opt.set_name != NULL && opt.set_name[0] == '\0') {
+      usage(argv[0], "invalid package set name");
+    }
+    switch (cmd) {
+    case command::load_rpm:
+      if (argc == optind) {
+	break;
+      }
+      break;
+    case command::create_set:
+      if (opt.arch == NULL) {
+	usage(argv[0]);
+      }
+      break;
+    case command::undefined:
+      break;
     }
   }
 
   elf_image_init();
   rpm_parser_init();
+
   db.reset(new database);
 
-  for (int i = optind; i < argc; ++i) {
-    db->txn_begin();
-    process_rpm(argv[i]);
-    db->txn_commit();
+  switch (cmd) {
+  case command::load_rpm:
+    do_load_rpm(opt, argv + optind);
+    break;
+  case command::create_set:
+    return do_create_set(opt, argv + optind);
+  case command::undefined:
+  default:
+    abort();
   }
 
   return 0;

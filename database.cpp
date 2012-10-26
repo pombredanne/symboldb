@@ -21,6 +21,8 @@
 #define ELF_SONAME_TABLE "symboldb.elf_soname"
 #define ELF_RPATH_TABLE "symboldb.elf_rpath"
 #define ELF_RUNPATH_TABLE "symboldb.elf_runpath"
+#define PACKAGE_SET_TABLE "symboldb.package_set"
+#define PACKAGE_SET_MEMBER_TABLE "symboldb.package_set_member"
 
 struct database::impl {
   PGconn *conn;
@@ -321,3 +323,34 @@ database::add_elf_runpath(file_id file, const char *name)
      2, NULL, params, NULL, NULL, 0);
   res.check();
 }
+
+database::package_set_id
+database::create_package_set(const char *name, const char *arch)
+{
+  const char *params[] = {name, arch};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " PACKAGE_SET_TABLE
+     " (name, arch) VALUES ($1, $2) RETURNING id",
+     2, NULL, params, NULL, NULL, 0);
+  return get_id_force(res);
+}
+
+void
+database::add_package_set(package_set_id set, package_id pkg)
+{
+  char setstr[32];
+  snprintf(setstr, sizeof(setstr), "%d", set);
+  char pkgstr[32];
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+  const char *params[] = {setstr, pkgstr};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " PACKAGE_SET_MEMBER_TABLE
+     " (set, package) VALUES ($1, $2)",
+     2, NULL, params, NULL, NULL, 0);
+  res.check();
+}
+
