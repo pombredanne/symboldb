@@ -32,6 +32,10 @@ struct elf_image::impl {
   Ebl *ebl;
   size_t phnum;
   size_t shnum;
+  unsigned char ei_class;
+  unsigned char ei_data;
+  unsigned short e_machine;
+  const char *arch;
 
   impl(const void *start, size_t size)
     : elf(NULL), ebl(NULL)
@@ -44,6 +48,35 @@ struct elf_image::impl {
     ebl = ebl_openbackend (elf);
     if (ebl == NULL) {
       elf_exception::raise("cannot create EBL handle");
+    }
+
+    GElf_Ehdr ehdr_mem;
+    GElf_Ehdr *ehdr = gelf_getehdr (elf, &ehdr_mem);
+    if (ehdr == NULL) {
+      elf_exception::raise("cannot read ELF header: %s", elf_errmsg (-1));
+    }
+    ei_class = ehdr->e_ident[EI_CLASS];
+    ei_data = ehdr->e_ident[EI_DATA];
+    e_machine = ehdr->e_machine;
+    arch = NULL;
+    switch (e_machine) {
+    case EM_386:
+      // Use the current RPM architecture name to avoid confusion.
+      arch = "i686";
+      break;
+    case EM_PPC:
+      arch = "ppc";
+      break;
+    case EM_PPC64:
+      arch = "ppc64";
+      break;
+    case EM_S390:
+      if (ei_class == ELFCLASS32) {
+	arch = "s390";
+      } else if (ei_class == ELFCLASS64) {
+	arch = "s390x";
+      }
+      break;
     }
 
     if (elf_getshdrnum (elf, &shnum) < 0) {
@@ -75,6 +108,30 @@ elf_image::elf_image(const void *start, size_t size)
 
 elf_image::~elf_image()
 {
+}
+
+unsigned char
+elf_image::ei_class() const
+{
+  return impl_->ei_class;
+}
+
+unsigned char
+elf_image::ei_data() const
+{
+  return impl_->ei_data;
+}
+
+unsigned short
+elf_image::e_machine() const
+{
+  return impl_->e_machine;
+}
+
+const char *
+elf_image::arch() const
+{
+  return impl_->arch;
 }
 
 struct elf_image::symbol_range::state {

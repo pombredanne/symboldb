@@ -14,6 +14,15 @@ public:
   elf_image(const void *, size_t);
   ~elf_image();
 
+  // Fields from the ELF header.
+  unsigned char ei_class() const;
+  unsigned char ei_data() const;
+  unsigned short e_machine() const;
+
+  // Architecture from the e_machine field, in RPM-compatible format.
+  // Can be NULL if the architecture cannot be determined.
+  const char *arch() const;
+
   class symbol_range {
     std::tr1::shared_ptr<impl> impl_;
     struct state;
