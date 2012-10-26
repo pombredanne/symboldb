@@ -3,13 +3,16 @@ BEGIN;
 
 CREATE SCHEMA symboldb;
 
+CREATE TYPE symboldb.arch AS ENUM
+  ('noarch', 'i686', 'x86_64', 'ppc', 'ppc64', 's390', 's390x');
+
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0),
   epoch INTEGER CHECK (epoch >= 0),
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
-  arch TEXT NOT NULL CHECK (LENGTH(arch) > 0),
+  arch symboldb.arch NOT NULL,
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
   source TEXT NOT NULL CHECK (LENGTH(source) > 0)
 );
