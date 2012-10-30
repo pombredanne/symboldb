@@ -378,6 +378,19 @@ database::create_package_set(const char *name, const char *arch)
   return get_id_force(res);
 }
 
+database::package_set_id
+database::lookup_package_set(const char *name)
+{
+  const char *params[] = {name};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "SELECT id FROM " PACKAGE_SET_TABLE
+     " WHERE name = $1",
+     1, NULL, params, NULL, NULL, 0);
+  return get_id(res);
+}
+
 void
 database::add_package_set(package_set_id set, package_id pkg)
 {
@@ -395,3 +408,56 @@ database::add_package_set(package_set_id set, package_id pkg)
   res.check();
 }
 
+
+void
+database::print_elf_soname_conflicts(package_set_id set)
+{
+  char setstr[32];
+  snprintf(setstr, sizeof(setstr), "%d", set);
+  const char *params[] = {setstr};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
+     " FROM (SELECT arch, soname, UNNEST(files) AS file"
+     "  FROM symboldb.elf_soname_provider"
+     "  WHERE package_set = $1 AND array_length(files, 1) > 1) c"
+     " JOIN symboldb.file f ON c.file = f.id"
+     " JOIN symboldb.package p ON f.package = p.id"
+     " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name",
+     1, NULL, params, NULL, NULL, 0);
+  res.check();
+
+  std::string arch;
+  std::string soname;
+  int rows = PQntuples(res.raw);
+  if (rows == 0) {
+    printf("No soname conflicts detected.");
+    return;
+  }
+  bool first = true;
+  for (int row = 0; row < rows; ++row) {
+    const char *current_arch = PQgetvalue(res.raw, row, 0);
+    const char *current_soname = PQgetvalue(res.raw, row, 1);
+    const char *file = PQgetvalue(res.raw, row, 2);
+    const char *pkg = PQgetvalue(res.raw, row, 3);
+    bool primary = false;
+    if (current_arch != arch) {
+      if (first) {
+	printf("\n");
+	first = false;
+      }
+      printf("* Architecture: %s\n", current_arch);
+      arch = current_arch;
+      primary = true;
+    } else if (current_soname != soname) {
+      primary = true;
+      soname = current_soname;
+    }
+    if (primary) {
+      printf("\nsoname: %s\n", current_soname);
+    }
+    printf("    %c %s (from %s)\n",
+	   primary ? '*' : ' ', file, pkg);
+  }
+}

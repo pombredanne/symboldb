@@ -55,5 +55,9 @@ public:
   // Package sets.
   typedef int package_set_id;
   package_set_id create_package_set(const char *name, const char *arch);
+  package_set_id lookup_package_set(const char *name);
   void add_package_set(package_set_id, package_id);
+
+  // Debugging functions.
+  void print_elf_soname_conflicts(package_set_id);
 };

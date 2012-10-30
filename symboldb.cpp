@@ -203,6 +203,20 @@ do_create_set(const options &opt, char **argv)
   return 0;
 }
 
+static int
+do_show_soname_conflicts(const options &opt, database &db)
+{
+  database::package_set_id pset = db.lookup_package_set(opt.set_name);
+  if (pset > 0) {
+    db.print_elf_soname_conflicts(pset);
+    return 0;
+  } else {
+    fprintf(stderr, "error: invalid package set: %s\n", opt.set_name);
+    return 1;
+  }
+}
+
+
 static void
 usage(const char *progname, const char *error = NULL)
 {
@@ -212,6 +226,7 @@ usage(const char *progname, const char *error = NULL)
   fprintf(stderr, "Usage:\n\n"
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
+	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
 	  "  --quiet, -q       less output\n"
@@ -226,6 +241,7 @@ namespace {
       undefined = 1000,
       load_rpm,
       create_set,
+      show_soname_conflicts,
     } type;
   };
 }
@@ -238,6 +254,8 @@ main(int argc, char **argv)
     static const struct option long_options[] = {
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
+      {"show-soname-conflicts", required_argument, 0,
+       command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
       {"verbose", no_argument, 0, 'v'},
       {"quiet", no_argument, 0, 'q'},
@@ -257,7 +275,8 @@ main(int argc, char **argv)
 	opt.output = options::verbose;
 	break;
       case command::create_set:
-	cmd = command::create_set;
+      case command::show_soname_conflicts:
+	cmd = static_cast<command::type>(ch);
 	opt.set_name = optarg;
 	break;
       case command::load_rpm:
@@ -287,6 +306,11 @@ main(int argc, char **argv)
 	usage(argv[0]);
       }
       break;
+    case command::show_soname_conflicts:
+      if (argc != optind) {
+	usage(argv[0]);
+      }
+      break;
     case command::undefined:
       break;
     }
@@ -303,6 +327,8 @@ main(int argc, char **argv)
     break;
   case command::create_set:
     return do_create_set(opt, argv + optind);
+  case command::show_soname_conflicts:
+    return do_show_soname_conflicts(opt, *db);
   case command::undefined:
   default:
     abort();
