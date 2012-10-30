@@ -59,5 +59,5 @@ public:
   void add_package_set(package_set_id, package_id);
 
   // Debugging functions.
-  void print_elf_soname_conflicts(package_set_id);
+  void print_elf_soname_conflicts(package_set_id, bool include_unreferenced);
 };

@@ -410,22 +410,42 @@ database::add_package_set(package_set_id set, package_id pkg)
 
 
 void
-database::print_elf_soname_conflicts(package_set_id set)
+database::print_elf_soname_conflicts(package_set_id set,
+				     bool include_unreferenced)
 {
   char setstr[32];
   snprintf(setstr, sizeof(setstr), "%d", set);
   const char *params[] = {setstr};
   pgresult_wrapper res;
-  res.raw = PQexecParams
-    (impl_->conn,
-     "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
-     " FROM (SELECT arch, soname, UNNEST(files) AS file"
-     "  FROM symboldb.elf_soname_provider"
-     "  WHERE package_set = $1 AND array_length(files, 1) > 1) c"
-     " JOIN symboldb.file f ON c.file = f.id"
-     " JOIN symboldb.package p ON f.package = p.id"
-     " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name",
-     1, NULL, params, NULL, NULL, 0);
+  if (include_unreferenced) {
+    res.raw = PQexecParams
+      (impl_->conn,
+       "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
+       " FROM (SELECT arch, soname, UNNEST(files) AS file"
+       "  FROM symboldb.elf_soname_provider"
+       "  WHERE package_set = $1 AND array_length(files, 1) > 1) c"
+       " JOIN symboldb.file f ON c.file = f.id"
+       " JOIN symboldb.package p ON f.package = p.id"
+       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name",
+       1, NULL, params, NULL, NULL, 0);
+  } else {
+    res.raw = PQexecParams
+      (impl_->conn,
+       "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
+       " FROM (SELECT arch, soname, UNNEST(files) AS file"
+       "  FROM symboldb.elf_soname_provider"
+       "  WHERE package_set = $1 AND array_length(files, 1) > 1"
+       "  AND soname IN (SELECT en.name"
+       "    FROM symboldb.package_set_member psm"
+       "    JOIN symboldb.file f ON psm.package = f.package"
+       "    JOIN symboldb.elf_file ef ON f.id = ef.file"
+       "    JOIN symboldb.elf_needed en ON en.file = f.id"
+       "    WHERE psm.set = $1)) c"
+       " JOIN symboldb.file f ON c.file = f.id"
+       " JOIN symboldb.package p ON f.package = p.id"
+       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name",
+       1, NULL, params, NULL, NULL, 0);
+  }
   res.check();
 
   std::string arch;
@@ -444,8 +464,9 @@ database::print_elf_soname_conflicts(package_set_id set)
     bool primary = false;
     if (current_arch != arch) {
       if (first) {
-	printf("\n");
 	first = false;
+      } else {
+	printf("\n\n");
       }
       printf("* Architecture: %s\n", current_arch);
       arch = current_arch;
@@ -459,5 +480,10 @@ database::print_elf_soname_conflicts(package_set_id set)
     }
     printf("    %c %s (from %s)\n",
 	   primary ? '*' : ' ', file, pkg);
+  }
+  printf("\nThe chosen DSO for each soname is marked with \"*\".\n");
+  if (!include_unreferenced) {
+    printf("Re-run with --verbose to see conflicts "
+	   "involving unreferenced sonames.\n");
   }
 }

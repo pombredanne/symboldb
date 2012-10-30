@@ -208,7 +208,7 @@ do_show_soname_conflicts(const options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name);
   if (pset > 0) {
-    db.print_elf_soname_conflicts(pset);
+    db.print_elf_soname_conflicts(pset, opt.output == opt.verbose);
     return 0;
   } else {
     fprintf(stderr, "error: invalid package set: %s\n", opt.set_name);
