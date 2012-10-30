@@ -81,6 +81,7 @@ CREATE TABLE symboldb.elf_file (
   arch symboldb.arch NOT NULL,
   soname TEXT NOT NULL
 );
+CREATE INDEX ON symboldb.elf_file (soname);
 
 CREATE TABLE symboldb.elf_definition (
   file INTEGER NOT NULL
