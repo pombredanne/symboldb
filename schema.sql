@@ -78,7 +78,8 @@ CREATE TABLE symboldb.elf_file (
   ei_class symboldb.elf_byte NOT NULL,
   ei_data symboldb.elf_byte NOT NULL,
   e_machine symboldb.elf_short NOT NULL,
-  arch symboldb.arch NOT NULL
+  arch symboldb.arch NOT NULL,
+  soname TEXT NOT NULL
 );
 
 CREATE TABLE symboldb.elf_definition (
@@ -108,14 +109,6 @@ CREATE TABLE symboldb.elf_needed (
   PRIMARY KEY (file, name)
 );
 CREATE INDEX ON symboldb.elf_needed (name);
-
-CREATE TABLE symboldb.elf_soname (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  PRIMARY KEY (file, name)
-);
-CREATE INDEX ON symboldb.elf_soname (name);
 
 CREATE TABLE symboldb.elf_rpath (
   file INTEGER NOT NULL

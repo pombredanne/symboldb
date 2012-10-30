@@ -17,6 +17,8 @@
 #include "rpm_parser_exception.hpp"
 #include "database.hpp"
 
+#include <sstream>
+
 namespace {
   struct options {
     enum {
@@ -104,7 +106,6 @@ load_rpm(const char *rpm_path)
 
 	try {
 	  elf_image image(&file.contents.front(), file.contents.size());
-	  db->add_elf_image(fid, image, rpm_arch.c_str());
 	  {
 	    elf_image::symbol_range symbols(image);
 	    while (symbols.next()) {
@@ -117,15 +118,29 @@ load_rpm(const char *rpm_path)
 	      }
 	    }
 	  }
+	  std::string soname;
 	  {
 	    elf_image::dynamic_section_range dyn(image);
+	    bool soname_seen = false;
 	    while (dyn.next()) {
 	      switch (dyn.type()) {
 	      case elf_image::dynamic_section_range::needed:
 		db->add_elf_needed(fid, dyn.value().c_str());
 		break;
 	      case elf_image::dynamic_section_range::soname:
-		db->add_elf_soname(fid, dyn.value().c_str());
+		if (soname_seen) {
+		  // The linker ignores some subsequent sonames, but
+		  // not all of them.  Multiple sonames are rare.
+		  if (dyn.value() != soname) {
+		    std::ostringstream out;
+		    out << "duplicate soname ignored: " << dyn.value()
+			<< ", previous soname: " << soname;
+		    db->add_elf_error(fid, out.str().c_str());
+		  }
+		} else {
+		  soname = dyn.value();
+		  soname_seen = true;
+		}
 		break;
 	      case elf_image::dynamic_section_range::rpath:
 		db->add_elf_rpath(fid, dyn.value().c_str());
@@ -135,7 +150,18 @@ load_rpm(const char *rpm_path)
 		break;
 	      }
 	    }
+	    if (!soname_seen) {
+	      // The implicit soname is derived from the name of the
+	      // binary.
+	      size_t slashpos = file.info->name.rfind('/');
+	      if (slashpos == std::string::npos) {
+		soname = file.info->name;
+	      } else {
+		soname = file.info->name.substr(slashpos + 1);
+	      }
+	    }
 	  }
+	  db->add_elf_image(fid, image, rpm_arch.c_str(), soname.c_str());
 	} catch (elf_exception e) {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
 		  rpm_path, file.info->name.c_str(), e.what());

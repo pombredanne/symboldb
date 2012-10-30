@@ -20,9 +20,9 @@
 #define ELF_DEFINITION_TABLE "symboldb.elf_definition"
 #define ELF_REFERENCE_TABLE "symboldb.elf_reference"
 #define ELF_NEEDED_TABLE "symboldb.elf_needed"
-#define ELF_SONAME_TABLE "symboldb.elf_soname"
 #define ELF_RPATH_TABLE "symboldb.elf_rpath"
 #define ELF_RUNPATH_TABLE "symboldb.elf_runpath"
+#define ELF_ERROR_TABLE "symboldb.elf_error"
 #define PACKAGE_SET_TABLE "symboldb.package_set"
 #define PACKAGE_SET_MEMBER_TABLE "symboldb.package_set_member"
 
@@ -227,7 +227,7 @@ database::add_file(package_id pkg, const rpm_file_info &info)
 
 void
 database::add_elf_image(file_id file, const elf_image &image,
-			const char *fallback_arch)
+			const char *fallback_arch, const char *soname)
 {
   if (fallback_arch == NULL) {
     throw std::logic_error("fallback_arch");
@@ -251,14 +251,16 @@ database::add_elf_image(file_id file, const elf_image &image,
     ei_class,
     ei_data,
     e_machine,
-    arch
+    arch,
+    soname,
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_FILE_TABLE
-     " (file, ei_class, ei_data, e_machine, arch) VALUES ($1, $2, $3, $4, $5)",
-     5, NULL, params, NULL, NULL, 0);
+     " (file, ei_class, ei_data, e_machine, arch, soname)"
+     " VALUES ($1, $2, $3, $4, $5, $6)",
+     6, NULL, params, NULL, NULL, 0);
   res.check();
 }
 
@@ -319,21 +321,6 @@ database::add_elf_needed(file_id file, const char *name)
 }
 
 void
-database::add_elf_soname(file_id file, const char *name)
-{
-  // FIXME: This needs a transaction.
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
-  const char *params[] = {filestr, name};
-  pgresult_wrapper res;
-  res.raw = PQexecParams
-    (impl_->conn,
-     "INSERT INTO " ELF_SONAME_TABLE " (file, name) VALUES ($1, $2)",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
-}
-
-void
 database::add_elf_rpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
@@ -359,6 +346,21 @@ database::add_elf_runpath(file_id file, const char *name)
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)",
+     2, NULL, params, NULL, NULL, 0);
+  res.check();
+}
+
+void
+database::add_elf_error(file_id file, const char *message)
+{
+  // FIXME: This needs a transaction.
+  char filestr[32];
+  snprintf(filestr, sizeof(filestr), "%d", file);
+  const char *params[] = {filestr, message};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " ELF_ERROR_TABLE " (file, message) VALUES ($1, $2)",
      2, NULL, params, NULL, NULL, 0);
   res.check();
 }
