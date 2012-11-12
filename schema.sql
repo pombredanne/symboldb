@@ -165,4 +165,64 @@ CREATE VIEW symboldb.elf_soname_needed_missing AS
 COMMENT ON VIEW symboldb.elf_soname_provider IS
   'files which need a soname which cannot be resolved within the same package set';
 
+CREATE TABLE symboldb.elf_closure (
+  package_set INTEGER NOT NULL REFERENCES symboldb.package_set
+    ON DELETE CASCADE,
+  file INTEGER NOT NULL REFERENCES symboldb.file,
+  needed INTEGER NOT NULL REFERENCES symboldb.file
+);
+CREATE INDEX ON symboldb.elf_closure (file);
+CREATE INDEX ON symboldb.elf_closure (needed);
+
+CREATE FUNCTION symboldb.elf_closure_update () RETURNS VOID AS $$
+BEGIN
+  CREATE TEMPORARY TABLE elf_closure_tmp ON COMMIT DROP AS
+    SELECT psm.set, en.file AS file, esp.files[1] AS needed
+    FROM symboldb.package_set_member psm
+    JOIN symboldb.file f ON psm.package = f.package
+    JOIN symboldb.elf_file ef ON f.id = ef.file
+    JOIN symboldb.elf_needed en ON f.id = en.file
+    JOIN symboldb.elf_soname_provider esp
+      ON esp.package_set = psm.set
+      AND esp.arch = ef.arch AND esp.soname = en.name;
+  CREATE INDEX ON elf_closure_tmp (file);
+  DELETE FROM symboldb.elf_closure;
+  INSERT INTO symboldb.elf_closure WITH RECURSIVE
+    ec(set, file, needed) AS (
+      SELECT * FROM elf_closure_tmp
+      UNION (SELECT ec.set, ec.file, elf_closure_tmp.needed
+             FROM ec JOIN elf_closure_tmp ON ec.needed = elf_closure_tmp.file))
+    SELECT * FROM ec ORDER BY file, needed;
+  DROP TABLE elf_closure_tmp;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION symboldb.elf_closure_update () IS
+  'regenerate the contents of the symboldb.elf_closure table, for all package sets';
+SELECT symboldb.elf_closure_update ();
+
+CREATE FUNCTION symboldb.elf_closure_update (INTEGER) RETURNS VOID AS $$
+BEGIN
+  CREATE TEMPORARY TABLE elf_closure_tmp ON COMMIT DROP AS
+    SELECT en.file AS file, esp.files[1] AS needed
+    FROM symboldb.package_set_member psm
+    JOIN symboldb.file f ON psm.package = f.package
+    JOIN symboldb.elf_file ef ON f.id = ef.file
+    JOIN symboldb.elf_needed en ON f.id = en.file
+    JOIN symboldb.elf_soname_provider esp
+      ON psm.set = $1 AND esp.package_set = $1
+      AND esp.arch = ef.arch AND esp.soname = en.name;
+  CREATE INDEX ON elf_closure_tmp (file);
+  DELETE FROM symboldb.elf_closure WHERE package_set = $1;
+  INSERT INTO symboldb.elf_closure WITH RECURSIVE
+    ec(file, needed) AS (
+      SELECT * FROM elf_closure_tmp
+      UNION (SELECT ec.file, elf_closure_tmp.needed
+             FROM ec JOIN elf_closure_tmp ON ec.needed = elf_closure_tmp.file))
+    SELECT $1, * FROM ec ORDER BY file, needed;
+  DROP TABLE elf_closure_tmp;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION symboldb.elf_closure_update (INTEGER) IS
+  'regenerate the contents of the symboldb.elf_closure table, for a single package set';
+
 COMMIT;
