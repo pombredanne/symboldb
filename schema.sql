@@ -138,13 +138,11 @@ CREATE VIEW symboldb.elf_soname_provider AS
     -- heuristic: prefer files with sorter paths
    FROM (SELECT psm.set, ef.arch, ef.soname, array_agg(DISTINCT f.id) AS files
     FROM symboldb.package_set_member psm
-    JOIN symboldb.package p ON psm.package = p.id
-    JOIN symboldb.file f ON p.id = f.package
+    JOIN symboldb.file f ON psm.package = f.package
     JOIN symboldb.elf_file ef ON f.id = ef.file
     WHERE EXISTS(SELECT 1
       FROM symboldb.package_set_member psm2
-      JOIN symboldb.package p2 ON psm2.package = p2.id
-      JOIN symboldb.file f2 ON p2.id = f2.package
+      JOIN symboldb.file f2 ON psm2.package = f2.package
       JOIN symboldb.elf_file ef2 ON f2.id = ef2.file
       JOIN symboldb.elf_needed en2 ON f2.id = en2.file
       WHERE psm.set = psm2.set
@@ -157,8 +155,7 @@ COMMENT ON VIEW symboldb.elf_soname_provider IS
 CREATE VIEW symboldb.elf_soname_needed_missing AS
   SELECT psm.set AS package_set, ef.arch, en.file, en.name AS soname
       FROM symboldb.package_set_member psm
-      JOIN symboldb.package p ON psm.package = p.id
-      JOIN symboldb.file f ON p.id = f.package
+      JOIN symboldb.file f ON psm.package = f.package
       JOIN symboldb.elf_file ef ON f.id = ef.file
       JOIN symboldb.elf_needed en ON f.id = en.file
     WHERE NOT EXISTS (SELECT 1
