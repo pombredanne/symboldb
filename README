@@ -1,0 +1,51 @@
+Prerequisites
+-------------
+
+In addition to the usual C++ build environment, you need the following
+development packages:
+
+- elfutils-devel
+- elfutils-libelf-devel
+- postgresql-devel
+- rpm-devel
+- vim-common
+
+Building
+--------
+
+It should be sufficient to just type "make".
+
+Running
+-------
+
+symboldb honors the PGUSER, PGDATABASE etc. variables generally used
+by PostgreSQL applications.  If you want to change the defaults, you
+have to set those environment variables.  The database schema is
+currently hard-coded to "symboldb".
+
+This command creates the "symboldb" database schema:
+
+    symboldb --create-schema
+
+This adds RPM files to the database, skipping already imported RPMs
+(based on the content hash):
+
+    symboldb --load-rpm *.rpm
+
+Multiple load commands can be executed in parallel, but imports will
+occasionally fail (due to an aborted database transaction) if the same
+RPM file is loaded concurrently.
+
+RPMs can be assigned to a package set (roughly equivalent to a
+compose) using:
+
+    symboldb --create-set=RHEL-7.0/Server/x86_64 --arch=x86_64 *.rpm
+
+A single package set can cover multiple architectures.  The name of
+the package set, RHEL-7.0/Server/x86_64 in the example, just follows a
+naming convention and is not interpreted by the tool.
+
+
+
+
+
