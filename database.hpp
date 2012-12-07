@@ -31,6 +31,9 @@ public:
   typedef int package_id;
   typedef int file_id;
 
+  // Creates the "symboldb" database schema.
+  void create_schema();
+
   // Returns true if the package_id was freshly added to the database.
   // FIXME: add source URI
   bool intern_package(const rpm_package_info &, package_id &);

@@ -5,7 +5,7 @@ DEFINES = -D_GNU_SOURCE
 LDFLAGS =
 LIBS =  -lebl -lelf -ldl -lrpm -lrpmio -lpq
 
-all:
+all: schema.sql.inc
 	g++ $(DEFINES) $(CXXFLAGS_ADD) $(CXXFLAGS) $(LDFLAGS) -o symboldb \
 		symboldb.cpp \
 		cpio_reader.cpp rpm_parser.cpp rpm_parser_exception.cpp \
@@ -19,3 +19,5 @@ all:
 		elf_image.cpp \
 		$(LIBS)
 
+schema.sql.inc: schema.sql
+	xxd -i < $< > $@

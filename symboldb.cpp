@@ -176,6 +176,12 @@ load_rpm(const char *rpm_path)
   }
 }
 
+static int do_create_schema()
+{
+  db->create_schema();
+  return 0;
+}
+
 static int
 do_load_rpm(const options &opt, char **argv)
 {
@@ -224,6 +230,7 @@ usage(const char *progname, const char *error = NULL)
     fprintf(stderr, "error: %s\n", error);
   }
   fprintf(stderr, "Usage:\n\n"
+	  "  %1$s --create-schema\n"
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
@@ -239,6 +246,7 @@ namespace {
   namespace command {
     typedef enum {
       undefined = 1000,
+      create_schema,
       load_rpm,
       create_set,
       show_soname_conflicts,
@@ -252,6 +260,7 @@ main(int argc, char **argv)
   command::type cmd = command::undefined;
   {
     static const struct option long_options[] = {
+      {"create-schema", no_argument, 0, command::create_schema},
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
       {"show-soname-conflicts", required_argument, 0,
@@ -279,6 +288,7 @@ main(int argc, char **argv)
 	cmd = static_cast<command::type>(ch);
 	opt.set_name = optarg;
 	break;
+      case command::create_schema:
       case command::load_rpm:
 	cmd = static_cast<command::type>(ch);
 	break;
@@ -306,6 +316,7 @@ main(int argc, char **argv)
 	usage(argv[0]);
       }
       break;
+    case command::create_schema:
     case command::show_soname_conflicts:
       if (argc != optind) {
 	usage(argv[0]);
@@ -322,6 +333,8 @@ main(int argc, char **argv)
   db.reset(new database);
 
   switch (cmd) {
+  case command::create_schema:
+    return do_create_schema();
   case command::load_rpm:
     do_load_rpm(opt, argv + optind);
     break;

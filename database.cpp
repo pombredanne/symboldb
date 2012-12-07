@@ -26,6 +26,12 @@
 #define PACKAGE_SET_TABLE "symboldb.package_set"
 #define PACKAGE_SET_MEMBER_TABLE "symboldb.package_set_member"
 
+// Include the schema.sql file.
+static const char schema[] = {
+#include "schema.sql.inc"
+  , 0
+};
+
 struct database::impl {
   PGconn *conn;
   
@@ -486,4 +492,12 @@ database::print_elf_soname_conflicts(package_set_id set,
     printf("Re-run with --verbose to see conflicts "
 	   "involving unreferenced sonames.\n");
   }
+}
+
+void
+database::create_schema()
+{
+  pgresult_wrapper res;
+  res.raw = PQexec(impl_->conn, schema);
+  res.check();
 }
