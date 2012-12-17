@@ -195,6 +195,15 @@ do_load_rpm(const options &opt, char **argv)
   return 0;
 }
 
+static void
+finalize_package_set(const options &opt, database::package_set_id set)
+{
+  if (opt.output != options::quiet) {
+    fprintf(stderr, "info: updating package set caches\n");
+  }
+  db->update_package_set_caches(set);
+}
+
 static int
 do_create_set(const options &opt, char **argv)
 {
@@ -205,6 +214,27 @@ do_create_set(const options &opt, char **argv)
     database::package_id pkg = load_rpm(*argv);
     db->add_package_set(set, pkg);
   }
+  finalize_package_set(opt, set);
+  db->txn_commit();
+  return 0;
+}
+
+static int
+do_update_set(const options &opt, char **argv)
+{
+  db->txn_begin();
+  database::package_set_id set = db->lookup_package_set(opt.set_name);
+  if (set == 0) {
+    fprintf(stderr, "error: package set \"%s\" does not exist\n",
+	    opt.set_name);
+    return 1;
+  }
+  db->empty_package_set(set);
+  for (; *argv; ++argv) {
+    database::package_id pkg = load_rpm(*argv);
+    db->add_package_set(set, pkg);
+  }
+  finalize_package_set(opt, set);
   db->txn_commit();
   return 0;
 }
@@ -233,6 +263,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --create-schema\n"
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
+	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
@@ -249,6 +280,7 @@ namespace {
       create_schema,
       load_rpm,
       create_set,
+      update_set,
       show_soname_conflicts,
     } type;
   };
@@ -263,6 +295,7 @@ main(int argc, char **argv)
       {"create-schema", no_argument, 0, command::create_schema},
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
+      {"update-set", required_argument, 0, command::update_set},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
@@ -284,6 +317,7 @@ main(int argc, char **argv)
 	opt.output = options::verbose;
 	break;
       case command::create_set:
+      case command::update_set:
       case command::show_soname_conflicts:
 	cmd = static_cast<command::type>(ch);
 	opt.set_name = optarg;
@@ -323,6 +357,7 @@ main(int argc, char **argv)
       }
       break;
     case command::undefined:
+    case command::update_set:
       break;
     }
   }
@@ -340,6 +375,8 @@ main(int argc, char **argv)
     break;
   case command::create_set:
     return do_create_set(opt, argv + optind);
+  case command::update_set:
+    return do_update_set(opt, argv + optind);
   case command::show_soname_conflicts:
     return do_show_soname_conflicts(opt, *db);
   case command::undefined:
