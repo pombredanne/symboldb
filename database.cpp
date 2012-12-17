@@ -414,6 +414,31 @@ database::add_package_set(package_set_id set, package_id pkg)
   res.check();
 }
 
+void
+database::empty_package_set(package_set_id set)
+{
+  char setstr[32];
+  snprintf(setstr, sizeof(setstr), "%d", set);
+  const char *params[] = {setstr};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn, "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1",
+     1, NULL, params, NULL, NULL, 0);
+  res.check();
+}
+
+void
+database::update_package_set_caches(package_set_id set)
+{
+  char setstr[32];
+  snprintf(setstr, sizeof(setstr), "%d", set);
+  const char *params[] = {setstr};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn, "SELECT symboldb.elf_closure_update($1)",
+     1, NULL, params, NULL, NULL, 0);
+  res.check();
+}
 
 void
 database::print_elf_soname_conflicts(package_set_id set,

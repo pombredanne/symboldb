@@ -61,6 +61,12 @@ public:
   package_set_id lookup_package_set(const char *name);
   void add_package_set(package_set_id, package_id);
 
+  // Remove all members from the package set.
+  void empty_package_set(package_set_id);
+
+  // Update packet-set-wide helper tables (such as ELF linkage).
+  void update_package_set_caches(package_set_id);
+
   // Debugging functions.
   void print_elf_soname_conflicts(package_set_id, bool include_unreferenced);
 };
