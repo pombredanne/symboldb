@@ -1,0 +1,72 @@
+Potential misuses of OpenSSL
+----------------------------
+
+In the examples, replace "3" with the ID of the package set of
+interest.
+
+The d2i_*_bio functions are less robust than their equivalents without
+that suffix.
+
+SELECT p.name AS package, f.name AS file, er1.name AS func
+  FROM symboldb.package_set_member psm
+  JOIN symboldb.package p ON p.id = psm.package
+  JOIN symboldb.file f ON f.package = psm.package
+  JOIN symboldb.elf_reference er1 ON er1.file = f.id
+  WHERE psm.set = 3 AND er1.name ~ 'd2i_.*_bio$'
+  ORDER BY package, file, func;
+
+OpenSSL enables relatively insecure ciphers by default.  These
+defaults can be adjusted with SSL_CTX_set_cipher_list or
+SSL_set_cipher_list.  If neither function is called, it is likely that
+the binary uses OpenSSL in a somewhat insecure way.
+
+SELECT p.name AS package, f.name AS file
+  FROM symboldb.package_set_member psm
+  JOIN symboldb.package p ON p.id = psm.package
+  JOIN symboldb.file f ON f.package = psm.package
+  JOIN symboldb.elf_reference er1 ON er1.file = f.id
+  WHERE psm.set = 3 AND er1.name = 'SSL_new'
+  AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
+                  WHERE er2.file = f.id
+                  AND er2.name IN ('SSL_CTX_set_cipher_list',
+                                   'SSL_set_cipher_list'))
+  ORDER BY 1, 2;
+
+By default, OpenSSL continues TLS sessions after certificate
+verification failures.  Checking verification status with
+SSL_get_verify_result or setting a verification callback is required
+to obtain the results.
+
+SELECT p.name AS package, f.name AS file
+  FROM symboldb.package_set_member psm
+  JOIN symboldb.package p ON p.id = psm.package
+  JOIN symboldb.file f ON f.package = psm.package
+  JOIN symboldb.elf_reference er1 ON er1.file = f.id
+  WHERE psm.set = 3 AND er1.name = 'SSL_new'
+  AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
+                  WHERE er2.file = f.id
+                  AND er2.name IN ('SSL_get_verify_result',
+		      	       	   'SSL_set_verify',
+				   'SSL_CTX_set_cert_verify_callback',
+				   'SSL_CTX_set_verify'))
+  ORDER BY 1, 2;
+
+(The query could return false positives for servers implemented using
+OpenSSL.)
+
+OpenSSL does not perform host name verification.  A client has to
+examine the peer certificate to extract the host name and verify it.
+
+SELECT p.name AS package, f.name AS file
+  FROM symboldb.package_set_member psm
+  JOIN symboldb.package p ON p.id = psm.package
+  JOIN symboldb.file f ON f.package = psm.package
+  JOIN symboldb.elf_reference er1 ON er1.file = f.id
+  WHERE psm.set = 3 AND er1.name = 'SSL_new'
+  AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
+                  WHERE er2.file = f.id
+                  AND er2.name IN ('SSL_get_peer_cert_chain',
+		      	       	   'SSL_get_peer_certificate'))
+  ORDER BY 1, 2;
+
+(The query could return false positives for TLS servers.)
