@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -299,13 +299,15 @@ database::add_elf_symbol_definition(file_id file,
     def.symbol_name.c_str(),
     def.vda_name.empty() ? NULL : def.vda_name.c_str(),
     def.default_version ? "t" : "f",
+    def.visibility(),
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_DEFINITION_TABLE
-     " (file, name, version, primary_version) VALUES ($1, $2, $3, $4)",
-     4, NULL, params, NULL, NULL, 0);
+     " (file, name, version, primary_version, visibility)"
+     " VALUES ($1, $2, $3, $4, $5)",
+     5, NULL, params, NULL, NULL, 0);
   res.check();
 }
 
@@ -319,13 +321,14 @@ database::add_elf_symbol_reference(file_id file,
     filestr,
     ref.symbol_name.c_str(),
     ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
+    ref.visibility(),
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_REFERENCE_TABLE
-     " (file, name, version) VALUES ($1, $2, $3)",
-     3, NULL, params, NULL, NULL, 0);
+     " (file, name, version, visibility) VALUES ($1, $2, $3, $4)",
+     4, NULL, params, NULL, NULL, 0);
   res.check();
 }
 

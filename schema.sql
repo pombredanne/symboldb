@@ -1,4 +1,4 @@
--- Copyright (C) 2012 Red Hat, Inc.
+-- Copyright (C) 2012, 2013 Red Hat, Inc.
 -- Written by Florian Weimer <fweimer@redhat.com>
 --
 -- This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,9 @@ CREATE SCHEMA symboldb;
 
 CREATE TYPE symboldb.arch AS ENUM
   ('noarch', 'i686', 'x86_64', 'ppc', 'ppc64', 's390', 's390x');
+
+CREATE TYPE symboldb.elf_visibility AS ENUM
+  ('default', 'internal', 'hidden', 'protected');
 
 CREATE DOMAIN symboldb.elf_byte AS SMALLINT
   CHECK (VALUE BETWEEN 0 AND 255);
@@ -104,6 +107,7 @@ CREATE TABLE symboldb.elf_definition (
   name TEXT NOT NULL CHECK(length(name) > 0),
   version TEXT CHECK (LENGTH(version) > 0),
   primary_version BOOLEAN NOT NULL,
+  visibility symboldb.elf_visibility NOT NULL,
   CHECK (CASE WHEN version IS NULL THEN NOT primary_version ELSE TRUE END)
 );
 CREATE INDEX ON symboldb.elf_definition (file);
@@ -113,7 +117,8 @@ CREATE TABLE symboldb.elf_reference (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(length(name) > 0),
-  version TEXT CHECK (LENGTH(version) > 0)
+  version TEXT CHECK (LENGTH(version) > 0),
+  visibility symboldb.elf_visibility NOT NULL
 );
 CREATE INDEX ON symboldb.elf_reference (file);
 CREATE INDEX ON symboldb.elf_reference (name, version);
