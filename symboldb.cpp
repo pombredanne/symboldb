@@ -34,8 +34,8 @@
 #include "rpm_package_info.hpp"
 #include "rpm_parser_exception.hpp"
 #include "database.hpp"
+#include "package_set_consolidator.hpp"
 
-#include <set>
 #include <sstream>
 
 namespace {
@@ -87,11 +87,11 @@ dump_ref(const elf_symbol_reference &ref)
 }
 
 static database::package_id
-load_rpm(const char *rpm_path)
+load_rpm(const char *rpm_path, rpm_package_info &info)
 {
   try {
     rpm_parser_state rpmst(rpm_path);
-    std::string rpm_arch(rpmst.package().arch);
+    info = rpmst.package();
     rpm_file_entry file;
 
     database::package_id pkg;
@@ -180,7 +180,7 @@ load_rpm(const char *rpm_path)
 	      }
 	    }
 	  }
-	  db->add_elf_image(fid, image, rpm_arch.c_str(), soname.c_str());
+	  db->add_elf_image(fid, image, info.arch.c_str(), soname.c_str());
 	} catch (elf_exception e) {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
 		  rpm_path, file.info->name.c_str(), e.what());
@@ -196,13 +196,15 @@ load_rpm(const char *rpm_path)
 }
 
 static void
-load_rpms(char **argv, std::set<database::package_set_id> &ids)
+load_rpms(char **argv, package_set_consolidator &ids)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.
+  rpm_package_info info;
   for (; *argv; ++argv) {
     db->txn_begin();
-    ids.insert(load_rpm(*argv));
+    database::package_id pkg = load_rpm(*argv, info);
+    ids.add(info, pkg);
     db->txn_commit();
   }
 }
@@ -216,7 +218,7 @@ static int do_create_schema()
 static int
 do_load_rpm(const options &opt, char **argv)
 {
-  std::set<database::package_set_id> ignored;
+  package_set_consolidator ignored;
   load_rpms(argv, ignored);
   return 0;
 }
@@ -239,9 +241,13 @@ do_create_set(const options &opt, char **argv)
     return 1;
   }
 
-  typedef std::set<database::package_set_id> pset;
+  typedef std::vector<database::package_id> pset;
   pset ids;
-  load_rpms(argv, ids);
+  {
+    package_set_consolidator psc;
+    load_rpms(argv, psc);
+    ids = psc.package_ids();
+  }
 
   db->txn_begin();
   database::package_set_id set =
@@ -264,9 +270,13 @@ do_update_set(const options &opt, char **argv)
     return 1;
   }
 
-  typedef std::set<database::package_set_id> pset;
+  typedef std::vector<database::package_id> pset;
   pset ids;
-  load_rpms(argv, ids);
+  {
+    package_set_consolidator psc;
+    load_rpms(argv, psc);
+    ids = psc.package_ids();
+  }
 
   db->txn_begin();
   db->empty_package_set(set);
