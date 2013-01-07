@@ -29,6 +29,9 @@ CREATE DOMAIN symboldb.elf_byte AS SMALLINT
 CREATE DOMAIN symboldb.elf_short AS INTEGER
   CHECK (VALUE BETWEEN 0 AND 65536);
 
+CREATE DOMAIN symboldb.elf_symbol_type AS TEXT
+  CHECK (LENGTH(VALUE) > 1);
+
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0),
@@ -107,6 +110,7 @@ CREATE TABLE symboldb.elf_definition (
   name TEXT NOT NULL CHECK(length(name) > 0),
   version TEXT CHECK (LENGTH(version) > 0),
   primary_version BOOLEAN NOT NULL,
+  symbol_type symboldb.elf_symbol_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL,
   CHECK (CASE WHEN version IS NULL THEN NOT primary_version ELSE TRUE END)
 );
@@ -118,6 +122,7 @@ CREATE TABLE symboldb.elf_reference (
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(length(name) > 0),
   version TEXT CHECK (LENGTH(version) > 0),
+  symbol_type symboldb.elf_symbol_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL
 );
 CREATE INDEX ON symboldb.elf_reference (file);
