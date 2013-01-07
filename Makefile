@@ -12,6 +12,7 @@ all: schema.sql.inc
 		rpm_file_entry.cpp rpm_file_info.cpp rpmtd_wrapper.cpp \
 		rpm_package_info.cpp \
 		database.cpp database_exception.cpp \
+		package_set_consolidator.cpp \
 		elf_symbol.cpp \
 		elf_symbol_definition.cpp \
 		elf_symbol_reference.cpp \
