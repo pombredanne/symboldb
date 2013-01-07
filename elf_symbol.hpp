@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,8 +23,11 @@
 struct elf_symbol {
   std::string type_name;
   std::string binding_name;
-  std::string visibility_type;
   std::string symbol_name;
+  unsigned char other;		// st_other field, visibility
   elf_symbol();
   ~elf_symbol();
+
+  // Returns the string describing the attribute (in lower case).
+  const char *visibility() const;
 };

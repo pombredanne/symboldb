@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,31 @@
 
 #include "elf_symbol.hpp"
 
+#include <gelf.h>
+#include <assert.h>
+
 elf_symbol::elf_symbol()
+  : other(0)
 {
 }
 
 elf_symbol::~elf_symbol()
 {
+}
+
+const char *
+elf_symbol::visibility() const
+{
+  switch (GELF_ST_VISIBILITY(other)) {
+  case STV_DEFAULT:
+    return "default";
+  case STV_INTERNAL:
+    return "internal";
+  case STV_HIDDEN:
+    return "hidden";
+  case STV_PROTECTED:
+    return "protected";
+  default:
+    assert(0 && "invalid visibility value");
+  }
 }

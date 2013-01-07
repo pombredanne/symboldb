@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -272,24 +272,6 @@ elf_image::symbol_range::state::init_section(impl *parent)
   return true;
 }
 
-static const char *
-get_visibility_type (int value)
-{
-  switch (value)
-    {
-    case STV_DEFAULT:
-      return "DEFAULT";
-    case STV_INTERNAL:
-      return "INTERNAL";
-    case STV_HIDDEN:
-      return "HIDDEN";
-    case STV_PROTECTED:
-      return "PROTECTED";
-    default:
-      return "???";
-    }
-}
-
 bool
 elf_image::symbol_range::state::next(impl *parent)
 {
@@ -460,10 +442,9 @@ elf_image::symbol_range::state::next(impl *parent)
   psymbol->binding_name =
     ebl_symbol_binding_name (parent->ebl, GELF_ST_BIND (sym->st_info),
 			     bindbuf, sizeof (bindbuf));
-  psymbol->visibility_type =
-    get_visibility_type (GELF_ST_VISIBILITY (sym->st_other));
   psymbol->symbol_name =
     elf_strptr (parent->elf, shdr->sh_link, sym->st_name);
+  psymbol->other = sym->st_other;
   ++cnt;
   return true;
 }
