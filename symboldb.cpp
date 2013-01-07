@@ -35,6 +35,7 @@
 #include "rpm_parser_exception.hpp"
 #include "database.hpp"
 
+#include <set>
 #include <sstream>
 
 namespace {
@@ -194,6 +195,18 @@ load_rpm(const char *rpm_path)
   }
 }
 
+static void
+load_rpms(char **argv, std::set<database::package_set_id> &ids)
+{
+  // Unreferenced RPMs should not be visible to analyzers, so we can
+  // load each RPM in a separate transaction.
+  for (; *argv; ++argv) {
+    db->txn_begin();
+    ids.insert(load_rpm(*argv));
+    db->txn_commit();
+  }
+}
+
 static int do_create_schema()
 {
   db->create_schema();
@@ -203,13 +216,8 @@ static int do_create_schema()
 static int
 do_load_rpm(const options &opt, char **argv)
 {
-  // Unreferenced RPMs should not be visible to analyzers, so we can
-  // load each RPM in a separate transaction.
-  for (; *argv; ++argv) {
-    db->txn_begin();
-    load_rpm(*argv);
-    db->txn_commit();
-  }
+  std::set<database::package_set_id> ignored;
+  load_rpms(argv, ignored);
   return 0;
 }
 
@@ -225,12 +233,21 @@ finalize_package_set(const options &opt, database::package_set_id set)
 static int
 do_create_set(const options &opt, char **argv)
 {
+  if (db->lookup_package_set(opt.set_name) != 0){
+    fprintf(stderr, "error: package set \"%s\" already exists\n",
+	    opt.set_name);
+    return 1;
+  }
+
+  typedef std::set<database::package_set_id> pset;
+  pset ids;
+  load_rpms(argv, ids);
+
   db->txn_begin();
   database::package_set_id set =
     db->create_package_set(opt.set_name, opt.arch);
-  for (; *argv; ++argv) {
-    database::package_id pkg = load_rpm(*argv);
-    db->add_package_set(set, pkg);
+  for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
+    db->add_package_set(set, *p);
   }
   finalize_package_set(opt, set);
   db->txn_commit();
@@ -240,17 +257,21 @@ do_create_set(const options &opt, char **argv)
 static int
 do_update_set(const options &opt, char **argv)
 {
-  db->txn_begin();
   database::package_set_id set = db->lookup_package_set(opt.set_name);
   if (set == 0) {
     fprintf(stderr, "error: package set \"%s\" does not exist\n",
 	    opt.set_name);
     return 1;
   }
+
+  typedef std::set<database::package_set_id> pset;
+  pset ids;
+  load_rpms(argv, ids);
+
+  db->txn_begin();
   db->empty_package_set(set);
-  for (; *argv; ++argv) {
-    database::package_id pkg = load_rpm(*argv);
-    db->add_package_set(set, pkg);
+  for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
+    db->add_package_set(set, *p);
   }
   finalize_package_set(opt, set);
   db->txn_commit();
