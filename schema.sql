@@ -31,6 +31,8 @@ CREATE DOMAIN symboldb.elf_short AS INTEGER
 
 CREATE DOMAIN symboldb.elf_symbol_type AS TEXT
   CHECK (LENGTH(VALUE) > 1);
+CREATE DOMAIN symboldb.elf_binding_type AS TEXT
+  CHECK (LENGTH(VALUE) > 1);
 
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
@@ -111,6 +113,7 @@ CREATE TABLE symboldb.elf_definition (
   version TEXT CHECK (LENGTH(version) > 0),
   primary_version BOOLEAN NOT NULL,
   symbol_type symboldb.elf_symbol_type NOT NULL,
+  binding symboldb.elf_binding_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL,
   CHECK (CASE WHEN version IS NULL THEN NOT primary_version ELSE TRUE END)
 );
@@ -123,6 +126,7 @@ CREATE TABLE symboldb.elf_reference (
   name TEXT NOT NULL CHECK(length(name) > 0),
   version TEXT CHECK (LENGTH(version) > 0),
   symbol_type symboldb.elf_symbol_type NOT NULL,
+  binding symboldb.elf_binding_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL
 );
 CREATE INDEX ON symboldb.elf_reference (file);

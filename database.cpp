@@ -300,15 +300,17 @@ database::add_elf_symbol_definition(file_id file,
     def.vda_name.empty() ? NULL : def.vda_name.c_str(),
     def.default_version ? "t" : "f",
     def.type_name.c_str(),
+    def.binding_name.c_str(),
     def.visibility(),
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_DEFINITION_TABLE
-     " (file, name, version, primary_version, symbol_type, visibility)"
-     " VALUES ($1, $2, $3, $4, $5, $6)",
-     6, NULL, params, NULL, NULL, 0);
+     " (file, name, version, primary_version, symbol_type, binding,"
+     " visibility)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
+     7, NULL, params, NULL, NULL, 0);
   res.check();
 }
 
@@ -323,15 +325,16 @@ database::add_elf_symbol_reference(file_id file,
     ref.symbol_name.c_str(),
     ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
     ref.type_name.c_str(),
+    ref.binding_name.c_str(),
     ref.visibility(),
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " ELF_REFERENCE_TABLE
-     " (file, name, version, symbol_type, visibility)"
-     " VALUES ($1, $2, $3, $4, $5)",
-     5, NULL, params, NULL, NULL, 0);
+     " (file, name, version, symbol_type, binding, visibility)"
+     " VALUES ($1, $2, $3, $4, $5, $6)",
+     6, NULL, params, NULL, NULL, 0);
   res.check();
 }
 
