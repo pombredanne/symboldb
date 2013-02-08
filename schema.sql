@@ -254,4 +254,41 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION symboldb.elf_closure_update (INTEGER) IS
   'regenerate the contents of the symboldb.elf_closure table, for a single package set';
 
+-- Formatting file modes.
+
+CREATE FUNCTION symboldb.file_mode_internal
+  (mode INTEGER, mask INTEGER, ch TEXT) RETURNS TEXT AS $$
+  SELECT CASE WHEN (mode & mask) <> 0 THEN ch ELSE '-' END;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_mode_internal
+  (INTEGER, INTEGER, TEXT) IS 'internal helper function';
+
+CREATE FUNCTION symboldb.file_mode_internal
+  (mode INTEGER, mask1 INTEGER, mask2 INTEGER,
+   ch1 TEXT, ch2 TEXT, ch3 TEXT) RETURNS TEXT AS $$
+  SELECT CASE
+    WHEN (mode & mask1) <> 0 AND (mode & mask2) = 0 THEN ch1
+    WHEN (mode & mask1) = 0 AND (mode & mask2) <> 0 THEN ch2
+    WHEN (mode & mask1) <> 0 AND (mode & mask2) <> 0 THEN ch3
+    ELSE '-'
+  END;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_mode_internal
+  (INTEGER, INTEGER, INTEGER, TEXT, TEXT, TEXT) IS
+  'internal helper function';
+
+CREATE FUNCTION symboldb.file_mode (INTEGER) RETURNS TEXT AS $$
+  SELECT symboldb.file_mode_internal($1, 256, 'r')
+    || symboldb.file_mode_internal($1, 128, 'w')
+    || symboldb.file_mode_internal($1, 64, 2048, 'x', 'S', 's')
+    || symboldb.file_mode_internal($1, 32, 'r')
+    || symboldb.file_mode_internal($1, 16, 'w')
+    || symboldb.file_mode_internal($1, 8, 1024, 'x', 'S', 's')
+    || symboldb.file_mode_internal($1, 4, 'r')
+    || symboldb.file_mode_internal($1, 2, 'w')
+    || symboldb.file_mode_internal($1, 1, 512, 'x', 'T', 't');
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
+  'format the integer as a file permission string';
+
 COMMIT;
