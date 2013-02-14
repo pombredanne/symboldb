@@ -4,6 +4,7 @@ Prerequisites
 In addition to the usual C++ build environment, you need the following
 development packages:
 
+- curl-devel
 - elfutils-devel
 - elfutils-libelf-devel
 - postgresql-devel

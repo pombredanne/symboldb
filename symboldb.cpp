@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,6 +35,7 @@
 #include "rpm_parser_exception.hpp"
 #include "database.hpp"
 #include "package_set_consolidator.hpp"
+#include "curl_fetch_result.hpp"
 
 #include <sstream>
 
@@ -289,6 +290,27 @@ do_update_set(const options &opt, char **argv)
 }
 
 static int
+do_download(const options &opt, database &db, const char *url)
+{
+  curl_fetch_result r;
+  r.get(url);
+  if (!r.error.empty()) {
+    fprintf(stderr, "error: %s: %s\n", url, r.error.c_str());
+    return 1;
+  }
+  if (opt.output == options::verbose) {
+    fprintf(stderr, "info: %s: time=%ld, length=%lld, actual=%zu\n",
+	    url, r.http_date, r.http_size, r.data.size());
+  }
+  if (!r.data.empty()
+      && fwrite(&r.data.front(), r.data.size(), 1, stdout) != 1) {
+    perror("fwrite");
+    return 1;
+  }
+  return 0;
+}
+
+static int
 do_show_soname_conflicts(const options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name);
@@ -313,6 +335,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
+	  "  %1$s --download URL\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
@@ -330,6 +353,7 @@ namespace {
       load_rpm,
       create_set,
       update_set,
+      download,
       show_soname_conflicts,
     } type;
   };
@@ -345,6 +369,7 @@ main(int argc, char **argv)
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
       {"update-set", required_argument, 0, command::update_set},
+      {"download", no_argument, 0, command::download},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
@@ -373,6 +398,7 @@ main(int argc, char **argv)
 	break;
       case command::create_schema:
       case command::load_rpm:
+      case command::download:
 	cmd = static_cast<command::type>(ch);
 	break;
       default:
@@ -408,6 +434,10 @@ main(int argc, char **argv)
     case command::undefined:
     case command::update_set:
       break;
+    case command::download:
+      if (argc - optind != 1) {
+	usage(argv[0]);
+      }
     }
   }
 
@@ -426,6 +456,8 @@ main(int argc, char **argv)
     return do_create_set(opt, argv + optind);
   case command::update_set:
     return do_update_set(opt, argv + optind);
+  case command::download:
+    return do_download(opt, *db, argv[optind]);
   case command::show_soname_conflicts:
     return do_show_soname_conflicts(opt, *db);
   case command::undefined:
