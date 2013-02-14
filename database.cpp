@@ -43,6 +43,7 @@
 #define ELF_ERROR_TABLE "symboldb.elf_error"
 #define PACKAGE_SET_TABLE "symboldb.package_set"
 #define PACKAGE_SET_MEMBER_TABLE "symboldb.package_set_member"
+#define URL_CACHE_TABLE "symboldb.url_cache"
 
 // Include the schema.sql file.
 static const char schema[] = {
@@ -465,6 +466,75 @@ database::update_package_set_caches(package_set_id set)
     (impl_->conn, "SELECT symboldb.elf_closure_update($1)",
      1, NULL, params, NULL, NULL, 0);
   res.check();
+}
+
+bool
+database::url_cache_fetch(const char *url, size_t expected_length,
+			  long long expected_time,
+			  std::vector<unsigned char> &data)
+{
+  char lenstr[32];
+  snprintf(lenstr, sizeof(lenstr), "%zu", expected_length);
+  char timestr[32];
+  snprintf(timestr, sizeof(timestr), "%lld", expected_time);
+  const char *params[] = {url, lenstr, timestr};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn, "SELECT data FROM " URL_CACHE_TABLE
+     " WHERE url = $1 AND LENGTH(data) = $2 AND http_time = $3",
+     3, NULL, params, NULL, NULL, 1);
+  res.check();
+  if (PQntuples(res.raw) != 1) {
+    return false;
+  }
+  data.clear();
+  const char *ptr = PQgetvalue(res.raw, 0, 0);
+  data.assign(ptr, ptr + PQgetlength(res.raw, 0, 0));
+  return true;
+}
+
+void
+database::url_cache_update(const char *url,
+			   const std::vector<unsigned char> &data,
+			   long long time)
+{
+  char timestr[32];
+  snprintf(timestr, sizeof(timestr), "%lld", time);
+  const char *params[] = {url, timestr, ""};
+  if (!data.empty()) {
+    params[2] = reinterpret_cast<const char *>(&data.front());
+  }
+  static const Oid paramTypes[] = {25 /* TEXT */, 20 /* INT8 */, 17 /* BYTEA */};
+  const int paramLengths[] = {0, 0, static_cast<int>(data.size())};
+  if (static_cast<size_t>(paramLengths[2]) != data.size()) {
+    throw std::runtime_error("data length out of range");
+  }
+  static const int paramFormats[] = {0, 0, 1};
+  bool found;
+  {
+    pgresult_wrapper res;
+    res.raw = PQexecParams
+      (impl_->conn, "SELECT 1 FROM " URL_CACHE_TABLE " WHERE url = $1 FOR UPDATE",
+       1, NULL, params, NULL, NULL, 0);
+    res.check();
+    found = PQntuples(res.raw) == 1;
+  }
+  pgresult_wrapper res;
+  if (found) {
+    res.raw = PQexecParams
+      (impl_->conn, "UPDATE " URL_CACHE_TABLE
+       " SET http_time = $2, data = $3, last_change = NOW() AT TIME ZONE 'UTC'"
+       " WHERE url = $1",
+       3, paramTypes, params, paramLengths, paramFormats, 0);
+    res.check();
+  } else {
+    res.raw = PQexecParams
+      (impl_->conn, "INSERT INTO " URL_CACHE_TABLE
+       " (url, http_time, data, last_change)"
+       " VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC')",
+       3, paramTypes, params, paramLengths, paramFormats, 0);
+    res.check();
+  }
 }
 
 void

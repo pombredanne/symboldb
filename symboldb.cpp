@@ -293,6 +293,18 @@ static int
 do_download(const options &opt, database &db, const char *url)
 {
   curl_fetch_result r;
+  r.head(url);
+  if (r.error.empty()
+      && r.http_date > 0 && r.http_size >= 0
+      && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
+			    r.http_date, r.data)) {
+    if (opt.output == options::verbose) {
+      fprintf(stderr, "info: %s: cache hit\n", url);
+    }
+    goto write_out;
+  }
+
+  // Error or cache miss.
   r.get(url);
   if (!r.error.empty()) {
     fprintf(stderr, "error: %s: %s\n", url, r.error.c_str());
@@ -302,6 +314,11 @@ do_download(const options &opt, database &db, const char *url)
     fprintf(stderr, "info: %s: time=%ld, length=%lld, actual=%zu\n",
 	    url, r.http_date, r.http_size, r.data.size());
   }
+  // FIXME: we should not store anything in the database if the
+  // previous HEAD request did not return a length or a time stamp.
+  db.url_cache_update(url, r.data, r.http_date);
+
+ write_out:
   if (!r.data.empty()
       && fwrite(&r.data.front(), r.data.size(), 1, stdout) != 1) {
     perror("fwrite");

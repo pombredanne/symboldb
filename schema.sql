@@ -254,6 +254,16 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION symboldb.elf_closure_update (INTEGER) IS
   'regenerate the contents of the symboldb.elf_closure table, for a single package set';
 
+-- URL cache (mainly for raw repository metadata).
+
+CREATE TABLE symboldb.url_cache (
+  url TEXT NOT NULL PRIMARY KEY CHECK (url LIKE '%:%'),
+  http_time BIGINT NOT NULL,
+  data BYTEA,
+  last_change TIMESTAMP WITHOUT TIME ZONE
+);
+COMMENT ON TABLE symboldb.url_cache IS 'cache for URL downloads';
+
 -- Formatting file modes.
 
 CREATE FUNCTION symboldb.file_mode_internal

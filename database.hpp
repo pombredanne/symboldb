@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <string>
 #include <tr1/memory>
+#include <vector>
 
 class rpm_file_info;
 class rpm_package_info;
@@ -84,6 +85,17 @@ public:
 
   // Update packet-set-wide helper tables (such as ELF linkage).
   void update_package_set_caches(package_set_id);
+
+  // Returns true if the URL has been cached with expected length and
+  // modification time, and overwrites data.  Returns false otherwise.
+  bool url_cache_fetch(const char *url, size_t expected_length,
+		       long long expected_time,
+		       std::vector<unsigned char> &data);
+
+  // Updates the cached data for this URL.
+  void url_cache_update(const char *url,
+			const std::vector<unsigned char> &data,
+			long long time);
 
   // Debugging functions.
   void print_elf_soname_conflicts(package_set_id, bool include_unreferenced);
