@@ -36,6 +36,7 @@
 #include "database.hpp"
 #include "package_set_consolidator.hpp"
 #include "curl_fetch_result.hpp"
+#include "repomd.hpp"
 
 #include <sstream>
 
@@ -328,6 +329,56 @@ do_download(const options &opt, database &db, const char *url)
 }
 
 static int
+do_show_repomd(const options &opt, database &db, const char *url)
+{
+  curl_fetch_result r;
+  r.head(url);
+  if (r.error.empty()
+      && r.http_date > 0 && r.http_size >= 0
+      && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
+			    r.http_date, r.data)) {
+    if (opt.output == options::verbose) {
+      fprintf(stderr, "info: %s: cache hit\n", url);
+    }
+    goto write_out;
+  }
+
+  // Error or cache miss.
+  r.get(url);
+  if (!r.error.empty()) {
+    fprintf(stderr, "error: %s: %s\n", url, r.error.c_str());
+    return 1;
+  }
+  if (opt.output == options::verbose) {
+    fprintf(stderr, "info: %s: time=%ld, length=%lld, actual=%zu\n",
+	    url, r.http_date, r.http_size, r.data.size());
+  }
+  // FIXME: we should not store anything in the database if the
+  // previous HEAD request did not return a length or a time stamp.
+  db.url_cache_update(url, r.data, r.http_date);
+
+ write_out:
+  if (r.data.empty()) {
+    fprintf(stderr, "error: %s: empty document\n", url);
+    return 1;
+  }
+
+  std::string error;
+  repomd rp;
+  if (!rp.parse(&r.data.front(), r.data.size(), error)) {
+    fprintf(stderr, "error: %s: %s\n", url, error.c_str());
+    return 1;
+  }
+  printf("revision: %s\n", rp.revision.c_str());
+  for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
+	 end = rp.entries.end();
+       p != end; ++p) {
+    printf("entry: %s %s\n", p->type.c_str(), p->href.c_str());
+  }
+  return 0;
+}
+
+static int
 do_show_soname_conflicts(const options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name);
@@ -353,6 +404,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --download URL\n"
+	  "  %1$s --show-repomd URL\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
@@ -371,6 +423,7 @@ namespace {
       create_set,
       update_set,
       download,
+      show_repomd,
       show_soname_conflicts,
     } type;
   };
@@ -387,6 +440,7 @@ main(int argc, char **argv)
       {"create-set", required_argument, 0, command::create_set},
       {"update-set", required_argument, 0, command::update_set},
       {"download", no_argument, 0, command::download},
+      {"show-repomd", no_argument, 0, command::show_repomd},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
@@ -416,6 +470,7 @@ main(int argc, char **argv)
       case command::create_schema:
       case command::load_rpm:
       case command::download:
+      case command::show_repomd:
 	cmd = static_cast<command::type>(ch);
 	break;
       default:
@@ -452,6 +507,7 @@ main(int argc, char **argv)
     case command::update_set:
       break;
     case command::download:
+    case command::show_repomd:
       if (argc - optind != 1) {
 	usage(argv[0]);
       }
@@ -475,6 +531,8 @@ main(int argc, char **argv)
     return do_update_set(opt, argv + optind);
   case command::download:
     return do_download(opt, *db, argv[optind]);
+  case command::show_repomd:
+    return do_show_repomd(opt, *db, argv[optind]);
   case command::show_soname_conflicts:
     return do_show_soname_conflicts(opt, *db);
   case command::undefined:

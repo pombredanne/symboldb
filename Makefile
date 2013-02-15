@@ -3,7 +3,7 @@ CXXFLAGS = $(CFLAGS)
 CXXFLAGS_ADD = -std=gnu++03
 DEFINES = -D_GNU_SOURCE
 LDFLAGS =
-LIBS =  -lebl -lelf -ldl -lrpm -lrpmio -lpq -lcurl
+LIBS =  -lebl -lelf -ldl -lrpm -lrpmio -lpq -lcurl -lexpat
 
 all: schema.sql.inc
 	g++ $(DEFINES) $(CXXFLAGS_ADD) $(CXXFLAGS) $(LDFLAGS) -o symboldb \
@@ -12,6 +12,8 @@ all: schema.sql.inc
 		rpm_file_entry.cpp rpm_file_info.cpp rpmtd_wrapper.cpp \
 		rpm_package_info.cpp \
 		curl_handle.cpp curl_fetch_result.cpp \
+		expat_handle.cpp expat_minidom.cpp \
+		checksum.cpp repomd.cpp \
 		database.cpp database_exception.cpp \
 		package_set_consolidator.cpp \
 		elf_symbol.cpp \
