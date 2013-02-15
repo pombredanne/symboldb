@@ -78,6 +78,10 @@ namespace {
     if (ret != CURLE_OK) {
       return set_error(r, ret);
     }
+    ret = curl_easy_setopt(h.raw, CURLOPT_CONNECTTIMEOUT, 30L);
+    if (ret != CURLE_OK) {
+      return set_error(r, ret);
+    }
     return true;
   }
 
