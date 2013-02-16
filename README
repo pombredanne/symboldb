@@ -11,6 +11,7 @@ development packages:
 - postgresql-devel
 - rpm-devel
 - vim-common
+- w3c-libwww-devel
 
 Building
 --------

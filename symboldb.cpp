@@ -37,6 +37,7 @@
 #include "package_set_consolidator.hpp"
 #include "curl_fetch_result.hpp"
 #include "repomd.hpp"
+#include "url.hpp"
 
 #include <sstream>
 
@@ -329,51 +330,61 @@ do_download(const options &opt, database &db, const char *url)
 }
 
 static int
-do_show_repomd(const options &opt, database &db, const char *url)
+do_show_repomd(const options &opt, database &db, const char *base)
 {
+  std::string base_canon(base);
+  if (base_canon.empty()) {
+    fprintf(stderr, "error: URL is empty");
+    return 1;
+  }
+  if (base_canon.at(base_canon.size() - 1) != '/') {
+    base_canon += '/';
+  }
+  std::string url(url_combine(base_canon.c_str(), "repodata/repomd.xml"));
   curl_fetch_result r;
-  r.head(url);
+  r.head(url.c_str());
   if (r.error.empty()
       && r.http_date > 0 && r.http_size >= 0
-      && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
+      && db.url_cache_fetch(url.c_str(), static_cast<size_t>(r.http_size),
 			    r.http_date, r.data)) {
     if (opt.output == options::verbose) {
-      fprintf(stderr, "info: %s: cache hit\n", url);
+      fprintf(stderr, "info: %s: cache hit\n", url.c_str());
     }
     goto write_out;
   }
 
   // Error or cache miss.
-  r.get(url);
+  r.get(url.c_str());
   if (!r.error.empty()) {
-    fprintf(stderr, "error: %s: %s\n", url, r.error.c_str());
+    fprintf(stderr, "error: %s: %s\n", url.c_str(), r.error.c_str());
     return 1;
   }
   if (opt.output == options::verbose) {
     fprintf(stderr, "info: %s: time=%ld, length=%lld, actual=%zu\n",
-	    url, r.http_date, r.http_size, r.data.size());
+	    url.c_str(), r.http_date, r.http_size, r.data.size());
   }
   // FIXME: we should not store anything in the database if the
   // previous HEAD request did not return a length or a time stamp.
-  db.url_cache_update(url, r.data, r.http_date);
+  db.url_cache_update(url.c_str(), r.data, r.http_date);
 
  write_out:
   if (r.data.empty()) {
-    fprintf(stderr, "error: %s: empty document\n", url);
+    fprintf(stderr, "error: %s: empty document\n", url.c_str());
     return 1;
   }
 
   std::string error;
   repomd rp;
   if (!rp.parse(&r.data.front(), r.data.size(), error)) {
-    fprintf(stderr, "error: %s: %s\n", url, error.c_str());
+    fprintf(stderr, "error: %s: %s\n", url.c_str(), error.c_str());
     return 1;
   }
   printf("revision: %s\n", rp.revision.c_str());
   for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
 	 end = rp.entries.end();
        p != end; ++p) {
-    printf("entry: %s %s\n", p->type.c_str(), p->href.c_str());
+    std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
+    printf("entry: %s %s\n", p->type.c_str(), entry_url.c_str());
   }
   return 0;
 }
