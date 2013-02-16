@@ -55,4 +55,13 @@ namespace expat_minidom {
   // writes an error message to error.
   std::tr1::shared_ptr<element> parse(const char *buffer, size_t length,
 				      std::string &error);
+
+  // Parses the passed XML document.  Throws std::bad_alloc on memory
+  // allocation failure.  For other errors, returns a null pointer and
+  // writes an error message to error.
+  inline std::tr1::shared_ptr<element>
+  parse(const unsigned char *buffer, size_t length, std::string &error)
+  {
+    return parse(reinterpret_cast<const char *>(buffer), length, error);
+  }
 };
