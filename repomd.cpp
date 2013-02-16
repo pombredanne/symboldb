@@ -130,6 +130,13 @@ repomd::parse(const unsigned char *buffer, size_t length,
 	p = root->children.begin(), end = root->children.end(); p != end; ++p) {
     element *e = dynamic_cast<element *>(p->get());
     if (e && e->name == "data") {
+      element *location = e->first_child("location");
+      if (!location) {
+	error = "location element missing from data element";
+	return false;
+      }
+      const std::string &href(location->attributes["href"]);
+
       element *csum = e->first_child("checksum");
       if (!csum) {
 	error = "checksum element missing from data element";
@@ -137,12 +144,8 @@ repomd::parse(const unsigned char *buffer, size_t length,
       }
       element *open_csum = e->first_child("open-checksum");
       element *size = e->first_child("size");
-      if (!size) {
-	error = "size element missing from data element";
-	return false;
-      }
-      unsigned long long nsize;
-      if (!parse_ull(strip(size->text()), nsize)) {
+      unsigned long long nsize = 0; // not always present
+      if (size && !parse_ull(strip(size->text()), nsize)) {
 	error = "size element malformed";
 	return false;
       }
@@ -150,20 +153,15 @@ repomd::parse(const unsigned char *buffer, size_t length,
       unsigned long long nopen_size = 0;
       if (open_csum) {
 	if (!open_size) {
-	  error = "open-size element missing from data element";
-	  return false;
-	}
-	if (!parse_ull(strip(open_size->text()), nopen_size)) {
-	  error = "open-size element malformed";
-	  return false;
+	  // Backwards-compatibility hack: use 0.
+	} else {
+	  if (!parse_ull(strip(open_size->text()), nopen_size)) {
+	    error = "open-size element malformed";
+	    return false;
+	  }
 	}
       } else if (open_size) {
 	error = "open-size element without open-checksum element";
-	return false;
-      }
-      element *location = e->first_child("location");
-      if (!location) {
-	error = "location element missing from data element";
 	return false;
       }
 
@@ -191,7 +189,7 @@ repomd::parse(const unsigned char *buffer, size_t length,
       } else {
 	en.open_checksum = en.checksum;
       }
-      en.href = location->attributes["href"];
+      en.href = href;
       if (en.href.empty()) {
 	error = "malformed location element";
 	return false;
