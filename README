@@ -12,6 +12,7 @@ development packages:
 - rpm-devel
 - vim-common
 - w3c-libwww-devel
+- zlib-devel
 
 Building
 --------

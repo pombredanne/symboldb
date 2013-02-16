@@ -38,7 +38,11 @@
 #include "repomd.hpp"
 #include "download.hpp"
 #include "url.hpp"
+#include "string_support.hpp"
+#include "zlib.hpp"
+#include "expat_minidom.hpp"
 
+#include <set>
 #include <sstream>
 
 namespace {
@@ -351,6 +355,106 @@ do_show_repomd(const options &, database &db, const char *base)
 }
 
 static int
+do_show_source_packages(const options &opt, database &db, char **argv)
+{
+  std::set<std::string> source_packages;
+  for (; *argv; ++argv) {
+    std::string base_canon(base_url_canon(*argv));
+    repomd rp;
+    if (!acquire_repomd(db, base_canon.c_str(), rp)) {
+      return 1;
+    }
+    bool found = false;
+    for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
+	   end = rp.entries.end();
+	 p != end; ++p) {
+      if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
+	std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
+	std::vector<unsigned char> data, uncompressed;
+	std::string error;
+	if (!download(db, entry_url.c_str(), data, error)) {
+	  fprintf(stderr, "error: %s (from %s): %s\n",
+		  entry_url.c_str(), *argv, error.c_str());
+	  return 1;
+	}
+	if (!gzip_uncompress(data, uncompressed)) {
+	  fprintf(stderr, "error: %s (from %s): gzip decompression error\n",
+		  entry_url.c_str(), *argv);
+	  return 1;
+	}
+	if (uncompressed.empty()) {
+	  fprintf(stderr, "error: %s (from %s): no data\n",
+		  entry_url.c_str(), *argv);
+	  return 1;
+	}
+	found = true;
+	using namespace expat_minidom;
+	std::tr1::shared_ptr<element> root(parse(&uncompressed.front(),
+						 uncompressed.size(), error));
+	if (!root) {
+	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
+		  entry_url.c_str(), *argv, error.c_str());
+	  return 1;
+	}
+	if (root->name != "metadata") {
+	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
+		  entry_url.c_str(), *argv, root->name.c_str());
+	  return 1;
+	}
+	for(std::vector<std::tr1::shared_ptr<node> >::iterator
+	      p = root->children.begin(), end = root->children.end(); p != end; ++p) {
+	  element *e = dynamic_cast<element *>(p->get());
+	  if (e && e->name == "package" && e->attributes["type"] == "rpm") {
+	    element *name = e->first_child("name");
+	    if (!name) {
+	      fprintf(stderr, "error: %s (from %s): missing name element\n",
+		      entry_url.c_str(), *argv);
+	      return 1;
+	    }
+	    element *format = e->first_child("format");
+	    if (!format) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    element *source = format->first_child("rpm:sourcerpm");
+	    if (!source) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing sourcerpm element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    std::string src(source->text());
+	    size_t dash = src.rfind('-');
+	    if (dash != std::string::npos) {
+	      src.resize(dash);	// strip release, architecture
+	      dash = src.rfind('-');
+	      if (dash != std::string::npos) {
+		src.resize(dash); // strip version
+	      }
+	    }
+	    if (dash == std::string::npos) {
+	      fprintf(stderr, "error: %s (from %s): malformed source RPM element: %s\n",
+		      entry_url.c_str(), *argv, source->text().c_str());
+	      return 1;
+	    }
+	    source_packages.insert(src);
+	  }
+	}
+      }
+    }
+    if (!found) {
+      fprintf(stderr, "warning: %s: no suitable primary data found\n", *argv);
+    }
+  }
+  for (std::set<std::string>::const_iterator
+	 p = source_packages.begin(), end = source_packages.end();
+       p != end; ++p) {
+    printf("%s\n", p->c_str());
+  }
+  return 0;
+}
+
+static int
 do_show_soname_conflicts(const options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name);
@@ -377,6 +481,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --download URL\n"
 	  "  %1$s --show-repomd URL\n"
+	  "  %1$s --show-source-packages URL...\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
@@ -396,6 +501,7 @@ namespace {
       update_set,
       download,
       show_repomd,
+      show_source_packages,
       show_soname_conflicts,
     } type;
   };
@@ -413,6 +519,7 @@ main(int argc, char **argv)
       {"update-set", required_argument, 0, command::update_set},
       {"download", no_argument, 0, command::download},
       {"show-repomd", no_argument, 0, command::show_repomd},
+      {"show-source-packages", no_argument, 0, command::show_source_packages},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
@@ -443,6 +550,7 @@ main(int argc, char **argv)
       case command::load_rpm:
       case command::download:
       case command::show_repomd:
+      case command::show_source_packages:
 	cmd = static_cast<command::type>(ch);
 	break;
       default:
@@ -460,8 +568,9 @@ main(int argc, char **argv)
     }
     switch (cmd) {
     case command::load_rpm:
+    case command::show_source_packages:
       if (argc == optind) {
-	break;
+	usage(argv[0]);
       }
       break;
     case command::create_set:
@@ -505,6 +614,8 @@ main(int argc, char **argv)
     return do_download(opt, *db, argv[optind]);
   case command::show_repomd:
     return do_show_repomd(opt, *db, argv[optind]);
+  case command::show_source_packages:
+    return do_show_source_packages(opt, *db, argv + optind);
   case command::show_soname_conflicts:
     return do_show_soname_conflicts(opt, *db);
   case command::undefined:
