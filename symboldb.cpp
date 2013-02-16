@@ -35,8 +35,8 @@
 #include "rpm_parser_exception.hpp"
 #include "database.hpp"
 #include "package_set_consolidator.hpp"
-#include "curl_fetch_result.hpp"
 #include "repomd.hpp"
+#include "download.hpp"
 #include "url.hpp"
 
 #include <sstream>
@@ -292,91 +292,52 @@ do_update_set(const options &opt, char **argv)
 }
 
 static int
-do_download(const options &opt, database &db, const char *url)
+do_download(const options &, database &db, const char *url)
 {
-  curl_fetch_result r;
-  r.head(url);
-  if (r.error.empty()
-      && r.http_date > 0 && r.http_size >= 0
-      && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
-			    r.http_date, r.data)) {
-    if (opt.output == options::verbose) {
-      fprintf(stderr, "info: %s: cache hit\n", url);
-    }
-    goto write_out;
-  }
-
-  // Error or cache miss.
-  r.get(url);
-  if (!r.error.empty()) {
-    fprintf(stderr, "error: %s: %s\n", url, r.error.c_str());
+  std::vector<unsigned char> data;
+  std::string error;
+  if (!download(db, url, data, error)) {
+    fprintf(stderr, "error: %s: %s\n", url, error.c_str());
     return 1;
   }
-  if (opt.output == options::verbose) {
-    fprintf(stderr, "info: %s: time=%ld, length=%lld, actual=%zu\n",
-	    url, r.http_date, r.http_size, r.data.size());
-  }
-  // FIXME: we should not store anything in the database if the
-  // previous HEAD request did not return a length or a time stamp.
-  db.url_cache_update(url, r.data, r.http_date);
-
- write_out:
-  if (!r.data.empty()
-      && fwrite(&r.data.front(), r.data.size(), 1, stdout) != 1) {
+  if (!data.empty()
+      && fwrite(&data.front(), data.size(), 1, stdout) != 1) {
     perror("fwrite");
     return 1;
   }
   return 0;
 }
 
-static int
-do_show_repomd(const options &opt, database &db, const char *base)
+static std::string
+base_url_canon(const char *base)
 {
   std::string base_canon(base);
-  if (base_canon.empty()) {
-    fprintf(stderr, "error: URL is empty");
-    return 1;
-  }
-  if (base_canon.at(base_canon.size() - 1) != '/') {
+  if (!base_canon.empty() && base_canon.at(base_canon.size() - 1) != '/') {
     base_canon += '/';
   }
-  std::string url(url_combine(base_canon.c_str(), "repodata/repomd.xml"));
-  curl_fetch_result r;
-  r.head(url.c_str());
-  if (r.error.empty()
-      && r.http_date > 0 && r.http_size >= 0
-      && db.url_cache_fetch(url.c_str(), static_cast<size_t>(r.http_size),
-			    r.http_date, r.data)) {
-    if (opt.output == options::verbose) {
-      fprintf(stderr, "info: %s: cache hit\n", url.c_str());
-    }
-    goto write_out;
-  }
+  return base_canon;
+}
 
-  // Error or cache miss.
-  r.get(url.c_str());
-  if (!r.error.empty()) {
-    fprintf(stderr, "error: %s: %s\n", url.c_str(), r.error.c_str());
-    return 1;
-  }
-  if (opt.output == options::verbose) {
-    fprintf(stderr, "info: %s: time=%ld, length=%lld, actual=%zu\n",
-	    url.c_str(), r.http_date, r.http_size, r.data.size());
-  }
-  // FIXME: we should not store anything in the database if the
-  // previous HEAD request did not return a length or a time stamp.
-  db.url_cache_update(url.c_str(), r.data, r.http_date);
-
- write_out:
-  if (r.data.empty()) {
-    fprintf(stderr, "error: %s: empty document\n", url.c_str());
-    return 1;
-  }
-
+static bool
+acquire_repomd(database &db, const char *base, repomd &rp)
+{
+  std::string url(url_combine(base, "repodata/repomd.xml"));
+  std::vector<unsigned char> data;
   std::string error;
-  repomd rp;
-  if (!rp.parse(&r.data.front(), r.data.size(), error)) {
+  if (!download(db, url.c_str(), data, error)
+      || !rp.parse(&data.front(), data.size(), error)) {
     fprintf(stderr, "error: %s: %s\n", url.c_str(), error.c_str());
+    return false;
+  }
+  return true;
+}
+
+static int
+do_show_repomd(const options &, database &db, const char *base)
+{
+  std::string base_canon(base_url_canon(base));
+  repomd rp;
+  if (!acquire_repomd(db, base_canon.c_str(), rp)) {
     return 1;
   }
   printf("revision: %s\n", rp.revision.c_str());
