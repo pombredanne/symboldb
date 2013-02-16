@@ -92,6 +92,10 @@ public:
 		       long long expected_time,
 		       std::vector<unsigned char> &data);
 
+  // Returns true if the URL has been cached, and overwrites data.
+  // Returns false otherwise.
+  bool url_cache_fetch(const char *url, std::vector<unsigned char> &data);
+
   // Updates the cached data for this URL.
   void url_cache_update(const char *url,
 			const std::vector<unsigned char> &data,

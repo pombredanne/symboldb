@@ -23,7 +23,19 @@
 
 class database;
 
+struct download_options {
+  enum {
+    no_cache,			// do not use the cache
+    check_cache,		// use the cache if it is current
+    always_cache,		// always use the cache if available
+    only_cache			// only use the cache, no network
+  } cache_mode;
+
+  download_options();
+};
+
 // Tries to download URL and stores its contents in RESULT.  If there
 // is an error, return false and write a message to ERROR.
-bool download(database &, const char *url, std::vector<unsigned char> &result,
+bool download(const download_options &, database &,
+	      const char *url, std::vector<unsigned char> &result,
 	      std::string &error);

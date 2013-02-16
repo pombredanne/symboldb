@@ -52,13 +52,26 @@ namespace {
     } output;
 
     const char *arch;
+    bool no_net;
     const char *set_name;
 
     options()
-      : output(standard), arch(NULL), set_name(NULL)
+      : output(standard), arch(NULL), no_net(false), set_name(NULL)
     {
     }
+
+    download_options download() const;
   };
+
+  download_options
+  options::download() const
+  {
+    download_options d;
+    if (no_net) {
+      d.cache_mode = download_options::only_cache;
+    }
+    return d;
+  }
 }
 
 static options opt;		// FIXME
@@ -296,11 +309,11 @@ do_update_set(const options &opt, char **argv)
 }
 
 static int
-do_download(const options &, database &db, const char *url)
+do_download(const options &opt, database &db, const char *url)
 {
   std::vector<unsigned char> data;
   std::string error;
-  if (!download(db, url, data, error)) {
+  if (!download(opt.download(), db, url, data, error)) {
     fprintf(stderr, "error: %s: %s\n", url, error.c_str());
     return 1;
   }
@@ -323,12 +336,12 @@ base_url_canon(const char *base)
 }
 
 static bool
-acquire_repomd(database &db, const char *base, repomd &rp)
+acquire_repomd(const options &opt, database &db, const char *base, repomd &rp)
 {
   std::string url(url_combine(base, "repodata/repomd.xml"));
   std::vector<unsigned char> data;
   std::string error;
-  if (!download(db, url.c_str(), data, error)
+  if (!download(opt.download(), db, url.c_str(), data, error)
       || !rp.parse(&data.front(), data.size(), error)) {
     fprintf(stderr, "error: %s: %s\n", url.c_str(), error.c_str());
     return false;
@@ -337,11 +350,11 @@ acquire_repomd(database &db, const char *base, repomd &rp)
 }
 
 static int
-do_show_repomd(const options &, database &db, const char *base)
+do_show_repomd(const options &opt, database &db, const char *base)
 {
   std::string base_canon(base_url_canon(base));
   repomd rp;
-  if (!acquire_repomd(db, base_canon.c_str(), rp)) {
+  if (!acquire_repomd(opt, db, base_canon.c_str(), rp)) {
     return 1;
   }
   printf("revision: %s\n", rp.revision.c_str());
@@ -361,9 +374,19 @@ do_show_source_packages(const options &opt, database &db, char **argv)
   for (; *argv; ++argv) {
     std::string base_canon(base_url_canon(*argv));
     repomd rp;
-    if (!acquire_repomd(db, base_canon.c_str(), rp)) {
+    if (!acquire_repomd(opt, db, base_canon.c_str(), rp)) {
       return 1;
     }
+
+    // The metadata URLs include hashes, so we do not have to check
+    // the cache for staleness.  But --no-net overrides that.
+    download_options dopts;
+    if (opt.no_net) {
+      dopts = opt.download();
+    } else {
+      dopts.cache_mode = download_options::always_cache;
+    }
+
     bool found = false;
     for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
 	   end = rp.entries.end();
@@ -372,7 +395,7 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 	std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
 	std::vector<unsigned char> data, uncompressed;
 	std::string error;
-	if (!download(db, entry_url.c_str(), data, error)) {
+	if (!download(dopts, db, entry_url.c_str(), data, error)) {
 	  fprintf(stderr, "error: %s (from %s): %s\n",
 		  entry_url.c_str(), *argv, error.c_str());
 	  return 1;
@@ -479,13 +502,14 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
-	  "  %1$s --download URL\n"
-	  "  %1$s --show-repomd URL\n"
-	  "  %1$s --show-source-packages URL...\n"
+	  "  %1$s --download [OPTIONS] URL\n"
+	  "  %1$s --show-repomd [OPTIONS] URL\n"
+	  "  %1$s --show-source-packages [OPTIONS] URL...\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
 	  "  --quiet, -q       less output\n"
+	  "  --no-net, -N      disable most network access\n"
 	  "  --verbose, -v     more verbose output\n\n",
 	  progname);
   exit(2);
@@ -523,16 +547,20 @@ main(int argc, char **argv)
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
+      {"no-net", no_argument, 0, 'N'},
       {"verbose", no_argument, 0, 'v'},
       {"quiet", no_argument, 0, 'q'},
       {0, 0, 0, 0}
     };
     int ch;
     int index;
-    while ((ch = getopt_long(argc, argv, "a:qv", long_options, &index)) != -1) {
+    while ((ch = getopt_long(argc, argv, "a:Nqv", long_options, &index)) != -1) {
       switch (ch) {
       case 'a':
 	opt.arch = optarg;
+	break;
+      case 'N':
+	opt.no_net = true;
 	break;
       case 'q':
 	opt.output = options::quiet;

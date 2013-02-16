@@ -493,6 +493,25 @@ database::url_cache_fetch(const char *url, size_t expected_length,
   return true;
 }
 
+bool
+database::url_cache_fetch(const char *url,
+			  std::vector<unsigned char> &data)
+{
+  const char *params[] = {url};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn, "SELECT data FROM " URL_CACHE_TABLE " WHERE url = $1",
+     1, NULL, params, NULL, NULL, 1);
+  res.check();
+  if (PQntuples(res.raw) != 1) {
+    return false;
+  }
+  data.clear();
+  const char *ptr = PQgetvalue(res.raw, 0, 0);
+  data.assign(ptr, ptr + PQgetlength(res.raw, 0, 0));
+  return true;
+}
+
 void
 database::url_cache_update(const char *url,
 			   const std::vector<unsigned char> &data,
