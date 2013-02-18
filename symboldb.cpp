@@ -363,6 +363,13 @@ do_show_repomd(const options &opt, database &db, const char *base)
   return 0;
 }
 
+namespace {
+  struct rpm_url {
+    std::string href;
+    checksum csum;
+  };
+}
+
 static int
 do_download_repo(const options &opt, database &db, char **argv)
 {
@@ -380,6 +387,8 @@ do_download_repo(const options &opt, database &db, char **argv)
     fprintf(stderr, "error: invalid RPM cache: %s\n", fcache_path.c_str());
     return 1;
   }
+
+  package_set_consolidator<rpm_url> pset;
 
   for (; *argv; ++ argv) {
     const char *url = *argv;
@@ -403,10 +412,6 @@ do_download_repo(const options &opt, database &db, char **argv)
     } else {
       dopts.cache_mode = download_options::always_cache;
     }
-
-    // Cache bypass for RPM downloads.
-    download_options dopts_no_cache;
-    dopts_no_cache.cache_mode = download_options::no_cache;
 
     bool found = false;
     for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
@@ -448,79 +453,97 @@ do_download_repo(const options &opt, database &db, char **argv)
 	      p = root->children.begin(), end = root->children.end(); p != end; ++p) {
 	  element *e = dynamic_cast<element *>(p->get());
 	  if (e && e->name == "package" && e->attributes["type"] == "rpm") {
-	    element *name = e->first_child("name");
-	    if (!name) {
-	      fprintf(stderr, "error: %s (from %s): missing name element\n",
-		      entry_url.c_str(), url);
-	      return 1;
+	    rpm_package_info rpminfo;
+	    {
+	      element *name = e->first_child("name");
+	      if (!name) {
+		fprintf(stderr, "error: %s (from %s): missing name element\n",
+			entry_url.c_str(), url);
+		return 1;
+	      }
+	      rpminfo.name = strip(name->text());
 	    }
+	    {
+	      element *version = e->first_child("version");
+	      if (!version) {
+		fprintf(stderr, "error: %s (from %s): %s: missing version element\n",
+			entry_url.c_str(), url, rpminfo.name.c_str());
+		return 1;
+	      }
+	      unsigned long long epoch;
+	      rpminfo.version = strip(version->attributes["ver"]);
+	      rpminfo.release = strip(version->attributes["rel"]);
+	      if (!parse_unsigned_long_long(strip(version->attributes["epoch"]),
+					    epoch)
+		  || epoch != static_cast<unsigned long long>(static_cast<int>(epoch))
+		  || rpminfo.version.empty() || rpminfo.release.empty()) {
+		fprintf(stderr, "error: %s (from %s): %s: malformed version element\n",
+			entry_url.c_str(), url, rpminfo.name.c_str());
+		return 1;
+	      }
+	      rpminfo.epoch = epoch;
+	    }
+	    {
+	      element *arch = e->first_child("arch");
+	      if (!arch) {
+		fprintf(stderr, "error: %s (from %s): missing arch element\n",
+			entry_url.c_str(), url);
+		return 1;
+	      }
+	      rpminfo.arch = strip(arch->text());
+	    }
+
 	    element *format = e->first_child("format");
 	    if (!format) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
-		      entry_url.c_str(), url, name->text().c_str());
+		      entry_url.c_str(), url, rpminfo.name.c_str());
 	      return 1;
 	    }
+
 	    element *location = e->first_child("location");
 	    if (!location) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing location element\n",
-		      entry_url.c_str(), url, name->text().c_str());
+		      entry_url.c_str(), url, rpminfo.name.c_str());
 	      return 1;
 	    }
 	    std::string location_href = location->attributes["href"];
 	    if (location_href.empty()) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing href attribute\n",
-		      entry_url.c_str(), url, name->text().c_str());
+		      entry_url.c_str(), url, rpminfo.name.c_str());
 	      return 1;
 	    }
 	    element *checksum_elem = e->first_child("checksum");
 	    if (!checksum_elem) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing checksum element\n",
-		      entry_url.c_str(), url, name->text().c_str());
+		      entry_url.c_str(), url, rpminfo.name.c_str());
 	      return 1;
 	    }
 	    element *size = e->first_child("size");
 	    if (!size) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing size element\n",
-		      entry_url.c_str(), url, name->text().c_str());
+		      entry_url.c_str(), url, rpminfo.name.c_str());
 	      return 1;
 	    }
 	    unsigned long long nsize;
 	    if (!parse_unsigned_long_long(size->attributes["package"], nsize)) {
 	      fprintf(stderr, "error: %s (from %s): %s: malformed size element\n",
-		      entry_url.c_str(), url, name->text().c_str());
+		      entry_url.c_str(), url, rpminfo.name.c_str());
 	      return 1;
 	    }
-	    checksum csum;
-	    if (!csum.set_hexadecimal
+
+	    rpm_url rurl;
+	    rurl.href = url_combine(rp.base_url.c_str(),
+				    location_href.c_str());
+	    if (!rurl.csum.set_hexadecimal
 		(checksum_elem->attributes["type"].c_str(), nsize,
 		 checksum_elem->text().c_str())) {
 	      fprintf(stderr, "error: %s (from %s): %s: malformed checksum element: [%s]\n",
-		      entry_url.c_str(), url, name->text().c_str(),
+		      entry_url.c_str(), url, rpminfo.name.c_str(),
 		      checksum_elem->text().c_str());
 	      return 1;
 	    }
 
-	    std::string rpm_path;
-	    if (!fcache.lookup_path(csum, rpm_path)) {
-	      std::string rpm_url(url_combine(rp.base_url.c_str(),
-					      location_href.c_str()));
-	      if (opt.output == options::verbose) {
-		fprintf(stderr, "info: downloading %s\n", rpm_url.c_str());
-	      }
-	      // FIXME: Incoming data should be streamed to disk.
-	      std::vector<unsigned char> data;
-	      if (!download(dopts_no_cache, db, rpm_url.c_str(), 
-			    data, error)) {
-		fprintf(stderr, "error: %s: %s\n",
-			rpm_url.c_str(), error.c_str());
-		return 1;
-	      }
-	      if (!fcache.add(csum, data, rpm_path, error)) {
-		fprintf(stderr, "error: %s: addding to cache: %s\n",
-			rpm_url.c_str(), error.c_str());
-		return 1;
-	      }
-	    }
+	    pset.add(rpminfo, rurl);
 	  }
 	}
       }
@@ -529,6 +552,46 @@ do_download_repo(const options &opt, database &db, char **argv)
       fprintf(stderr, "warning: %s: no suitable primary data found\n", url);
     }
   }
+
+  // Cache bypass for RPM downloads.
+  download_options dopts_no_cache;
+  dopts_no_cache.cache_mode = download_options::no_cache;
+  std::string error;
+
+  std::vector<rpm_url> urls(pset.values());
+  if (opt.output == options::verbose) {
+    fprintf(stderr, "info: %zu packages in download set\n", urls.size());
+  }
+  size_t skipped = 0;
+
+  for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
+       p != end; ++p) {
+    std::string rpm_path;
+    if (fcache.lookup_path(p->csum, rpm_path)) {
+      ++skipped;
+    } else {
+      if (opt.output == options::verbose) {
+	fprintf(stderr, "info: downloading %s\n", p->href.c_str());
+      }
+      // FIXME: Incoming data should be streamed to disk.
+      std::vector<unsigned char> data;
+      if (!download(dopts_no_cache, db, p->href.c_str(), 
+		    data, error)) {
+	fprintf(stderr, "error: %s: %s\n",
+		p->href.c_str(), error.c_str());
+	return 1;
+      }
+      if (!fcache.add(p->csum, data, rpm_path, error)) {
+	fprintf(stderr, "error: %s: addding to cache: %s\n",
+		p->href.c_str(), error.c_str());
+	return 1;
+      }
+    }
+  }
+  if (opt.output == options::verbose) {
+    fprintf(stderr, "info: %zu downloads found in cache\n", urls.size());
+  }
+
   return 0;
 }
 
