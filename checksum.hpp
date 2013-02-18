@@ -26,6 +26,9 @@ struct checksum {
   unsigned long long length;	// length of data being checksummed
   std::vector<unsigned char> value; // as raw bytes (not hexadecimal)
 
+  // dummy length value if the length is not available.
+  static const unsigned long long no_length = -1;
+
   checksum();
   ~checksum();
 

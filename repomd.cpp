@@ -144,16 +144,16 @@ repomd::parse(const unsigned char *buffer, size_t length,
       }
       element *open_csum = e->first_child("open-checksum");
       element *size = e->first_child("size");
-      unsigned long long nsize = 0; // not always present
+      unsigned long long nsize = checksum::no_length; // not always present
       if (size && !parse_ull(strip(size->text()), nsize)) {
 	error = "size element malformed";
 	return false;
       }
       element *open_size = e->first_child("open-size");
-      unsigned long long nopen_size = 0;
+      unsigned long long nopen_size;
       if (open_csum) {
 	if (!open_size) {
-	  // Backwards-compatibility hack: use 0.
+	  nopen_size = checksum::no_length;
 	} else {
 	  if (!parse_ull(strip(open_size->text()), nopen_size)) {
 	    error = "open-size element malformed";
