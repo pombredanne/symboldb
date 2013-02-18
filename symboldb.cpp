@@ -344,43 +344,20 @@ do_download(const options &opt, database &db, const char *url)
   return 0;
 }
 
-static std::string
-base_url_canon(const char *base)
-{
-  std::string base_canon(base);
-  if (!base_canon.empty() && base_canon.at(base_canon.size() - 1) != '/') {
-    base_canon += '/';
-  }
-  return base_canon;
-}
-
-static bool
-acquire_repomd(const options &opt, database &db, const char *base, repomd &rp)
-{
-  std::string url(url_combine(base, "repodata/repomd.xml"));
-  std::vector<unsigned char> data;
-  std::string error;
-  if (!download(opt.download(), db, url.c_str(), data, error)
-      || !rp.parse(&data.front(), data.size(), error)) {
-    fprintf(stderr, "error: %s: %s\n", url.c_str(), error.c_str());
-    return false;
-  }
-  return true;
-}
-
 static int
 do_show_repomd(const options &opt, database &db, const char *base)
 {
-  std::string base_canon(base_url_canon(base));
   repomd rp;
-  if (!acquire_repomd(opt, db, base_canon.c_str(), rp)) {
+  std::string error;
+  if (!rp.acquire(opt.download(), db, base, error)) {
+    fprintf(stderr, "error: %s: %s\n", base, error.c_str());
     return 1;
   }
   printf("revision: %s\n", rp.revision.c_str());
   for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
 	 end = rp.entries.end();
        p != end; ++p) {
-    std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
+    std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
     printf("entry: %s %s\n", p->type.c_str(), entry_url.c_str());
   }
   return 0;
@@ -405,12 +382,14 @@ do_download_repo(const options &opt, database &db, char **argv)
   }
 
   for (; *argv; ++ argv) {
-    std::string base_canon(base_url_canon(*argv));
+    const char *url = *argv;
     if (opt.output == options::verbose) {
-      fprintf(stderr, "info: processing %s\n", base_canon.c_str());
+      fprintf(stderr, "info: processing %s\n", url);
     }
     repomd rp;
-    if (!acquire_repomd(opt, db, base_canon.c_str(), rp)) {
+    std::string error;
+    if (!rp.acquire(opt.download(), db, url, error)) {
+      fprintf(stderr, "error: %s: %s\n", url, error.c_str());
       return 1;
     }
 
@@ -434,22 +413,21 @@ do_download_repo(const options &opt, database &db, char **argv)
 	   end = rp.entries.end();
 	 p != end; ++p) {
       if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
-	std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
+	std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
 	std::vector<unsigned char> data, uncompressed;
-	std::string error;
 	if (!download(dopts, db, entry_url.c_str(), data, error)) {
 	  fprintf(stderr, "error: %s (from %s): %s\n",
-		  entry_url.c_str(), *argv, error.c_str());
+		  entry_url.c_str(), url, error.c_str());
 	  return 1;
 	}
 	if (!gzip_uncompress(data, uncompressed)) {
 	  fprintf(stderr, "error: %s (from %s): gzip decompression error\n",
-		  entry_url.c_str(), *argv);
+		  entry_url.c_str(), url);
 	  return 1;
 	}
 	if (uncompressed.empty()) {
 	  fprintf(stderr, "error: %s (from %s): no data\n",
-		  entry_url.c_str(), *argv);
+		  entry_url.c_str(), url);
 	  return 1;
 	}
 	found = true;
@@ -458,12 +436,12 @@ do_download_repo(const options &opt, database &db, char **argv)
 						 uncompressed.size(), error));
 	if (!root) {
 	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
-		  entry_url.c_str(), *argv, error.c_str());
+		  entry_url.c_str(), url, error.c_str());
 	  return 1;
 	}
 	if (root->name != "metadata") {
 	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
-		  entry_url.c_str(), *argv, root->name.c_str());
+		  entry_url.c_str(), url, root->name.c_str());
 	  return 1;
 	}
 	for(std::vector<std::tr1::shared_ptr<node> >::iterator
@@ -473,43 +451,43 @@ do_download_repo(const options &opt, database &db, char **argv)
 	    element *name = e->first_child("name");
 	    if (!name) {
 	      fprintf(stderr, "error: %s (from %s): missing name element\n",
-		      entry_url.c_str(), *argv);
+		      entry_url.c_str(), url);
 	      return 1;
 	    }
 	    element *format = e->first_child("format");
 	    if (!format) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
+		      entry_url.c_str(), url, name->text().c_str());
 	      return 1;
 	    }
 	    element *location = e->first_child("location");
 	    if (!location) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing location element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
+		      entry_url.c_str(), url, name->text().c_str());
 	      return 1;
 	    }
 	    std::string location_href = location->attributes["href"];
 	    if (location_href.empty()) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing href attribute\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
+		      entry_url.c_str(), url, name->text().c_str());
 	      return 1;
 	    }
 	    element *checksum_elem = e->first_child("checksum");
 	    if (!checksum_elem) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing checksum element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
+		      entry_url.c_str(), url, name->text().c_str());
 	      return 1;
 	    }
 	    element *size = e->first_child("size");
 	    if (!size) {
 	      fprintf(stderr, "error: %s (from %s): %s: missing size element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
+		      entry_url.c_str(), url, name->text().c_str());
 	      return 1;
 	    }
 	    unsigned long long nsize;
 	    if (!parse_unsigned_long_long(size->attributes["package"], nsize)) {
 	      fprintf(stderr, "error: %s (from %s): %s: malformed size element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
+		      entry_url.c_str(), url, name->text().c_str());
 	      return 1;
 	    }
 	    checksum csum;
@@ -517,14 +495,14 @@ do_download_repo(const options &opt, database &db, char **argv)
 		(checksum_elem->attributes["type"].c_str(), nsize,
 		 checksum_elem->text().c_str())) {
 	      fprintf(stderr, "error: %s (from %s): %s: malformed checksum element: [%s]\n",
-		      entry_url.c_str(), *argv, name->text().c_str(),
+		      entry_url.c_str(), url, name->text().c_str(),
 		      checksum_elem->text().c_str());
 	      return 1;
 	    }
 
 	    std::string rpm_path;
 	    if (!fcache.lookup_path(csum, rpm_path)) {
-	      std::string rpm_url(url_combine(base_canon.c_str(),
+	      std::string rpm_url(url_combine(rp.base_url.c_str(),
 					      location_href.c_str()));
 	      if (opt.output == options::verbose) {
 		fprintf(stderr, "info: downloading %s\n", rpm_url.c_str());
@@ -548,7 +526,7 @@ do_download_repo(const options &opt, database &db, char **argv)
       }
     }
     if (!found) {
-      fprintf(stderr, "warning: %s: no suitable primary data found\n", *argv);
+      fprintf(stderr, "warning: %s: no suitable primary data found\n", url);
     }
   }
   return 0;
@@ -559,9 +537,14 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 {
   std::set<std::string> source_packages;
   for (; *argv; ++argv) {
-    std::string base_canon(base_url_canon(*argv));
+    const char *url = *argv;
+    if (opt.output == options::verbose) {
+      fprintf(stderr, "info: processing %s\n", url);
+    }
     repomd rp;
-    if (!acquire_repomd(opt, db, base_canon.c_str(), rp)) {
+    std::string error;
+    if (!rp.acquire(opt.download(), db, url, error)) {
+      fprintf(stderr, "error: %s: %s\n", url, error.c_str());
       return 1;
     }
 
@@ -579,7 +562,7 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 	   end = rp.entries.end();
 	 p != end; ++p) {
       if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
-	std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
+	std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
 	std::vector<unsigned char> data, uncompressed;
 	std::string error;
 	if (!download(dopts, db, entry_url.c_str(), data, error)) {

@@ -22,6 +22,9 @@
 
 #include <string>
 
+class database;
+class download_options;
+
 struct repomd {
   struct entry {
     std::string type;		// "primary", "primary_db", etc.
@@ -34,6 +37,7 @@ struct repomd {
     ~entry();
   };
 
+  std::string base_url;         // base URL for repodata/repomd.xml
   std::string revision;		// revision number
   std::vector<entry> entries;
 
@@ -42,5 +46,13 @@ struct repomd {
 
   // Parses an XML document containing the repomd element.
   // Returns true on success, false otherwise (and updates error).
+  // Updates the revision and entries members.
   bool parse(const unsigned char *, size_t, std::string &error);
+
+  // Downloads the repodata/repomd.xml file relative to the passed
+  // URL.  (A slash is appended to it if it is missng.)  Parses the
+  // result.  An error message is written to ERROR, and false is
+  // returned on failure.
+  bool acquire(const download_options &, database &,
+	       const char *url, std::string &error);
 };
