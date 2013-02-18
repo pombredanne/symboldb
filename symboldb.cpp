@@ -427,7 +427,7 @@ do_download_repo(const options &opt, database &db, char **argv)
 
     // Cache bypass for RPM downloads.
     download_options dopts_no_cache;
-    dopts.cache_mode = download_options::no_cache;
+    dopts_no_cache.cache_mode = download_options::no_cache;
 
     bool found = false;
     for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
