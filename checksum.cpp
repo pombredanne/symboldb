@@ -47,7 +47,7 @@ checksum::set_hexadecimal(const char *typ, unsigned long long len,
 			  const char *checksum)
 {
   size_t cslen = std::strlen(checksum);
-  if ((cslen % 2) != 1) {
+  if ((cslen % 2) != 0) {
     return false;
   }
   cslen /= 2;
