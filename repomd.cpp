@@ -18,6 +18,7 @@
 
 #include "repomd.hpp"
 #include "expat_minidom.hpp"
+#include "string_support.hpp"
 
 #include <cerrno>
 #include <cstdlib>
@@ -40,24 +41,6 @@ repomd::~repomd()
 }
 
 namespace {
-  inline bool
-  whitespace(char ch)
-  {
-    return 0 <= ch && ch <= ' ';
-  }
-
-  const char *
-  non_whitespace(const char *first, const char *last)
-  {
-    for (; first != last; ++first) {
-      if (whitespace(*first)) {
-	continue;
-      }
-      break;
-    }
-    return first;
-  }
-
   void
   strip_inplace(std::string &s)
   {
@@ -85,27 +68,6 @@ namespace {
     std::string r(s);
     strip_inplace(r);
     return r;
-  }
-  
-  // Parses an unsigned long long while skipping white space.
-  bool
-  parse_ull(const std::string &text, unsigned long long &value)
-  {
-    const char *first = text.c_str();
-    const char *last = first + text.size();
-    first = non_whitespace(first, last);
-    errno = 0;
-    char *endptr;
-    unsigned long long v = strtoull(first, &endptr, 10);
-    if (errno != 0) {
-      return false;
-    }
-    if (non_whitespace(endptr, last) != last) {
-      // Trailing non-whitespace.
-      return false;
-    }
-    value = v;
-    return true;
   }
 }
 
@@ -149,7 +111,7 @@ repomd::parse(const unsigned char *buffer, size_t length,
       element *open_csum = e->first_child("open-checksum");
       element *size = e->first_child("size");
       unsigned long long nsize = checksum::no_length; // not always present
-      if (size && !parse_ull(strip(size->text()), nsize)) {
+      if (size && !parse_unsigned_long_long(strip(size->text()), nsize)) {
 	error = "size element malformed";
 	return false;
       }
@@ -159,7 +121,7 @@ repomd::parse(const unsigned char *buffer, size_t length,
 	if (!open_size) {
 	  nopen_size = checksum::no_length;
 	} else {
-	  if (!parse_ull(strip(open_size->text()), nopen_size)) {
+	  if (!parse_unsigned_long_long(strip(open_size->text()), nopen_size)) {
 	    error = "open-size element malformed";
 	    return false;
 	  }

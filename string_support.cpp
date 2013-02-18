@@ -16,25 +16,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "string_support.hpp"
 
-#include <string>
+#include <cerrno>
+#include <cstdlib>
 
-// Parses an unsigned long long, ignoring leading and trailing white space.
-bool parse_unsigned_long_long(const std::string &, unsigned long long &value);
-
-// Checks if the character is ASCII whitespace.
-inline bool
-whitespace(char ch)
-{
-  return 0 <= ch && ch <= ' ';
+namespace {
+  const char *
+  non_whitespace(const char *first, const char *last)
+  {
+    for (; first != last; ++first) {
+      if (whitespace(*first)) {
+	continue;
+      }
+      break;
+    }
+    return first;
+  }
 }
 
-template <unsigned N> bool
-ends_with(const std::string &s, const char (&pattern)[N])
+// Parses an unsigned long long while skipping white space.
+bool
+parse_unsigned_long_long(const std::string &text, unsigned long long &value)
 {
-  if (s.size() < N - 1) {
+  const char *first = text.c_str();
+  const char *last = first + text.size();
+  first = non_whitespace(first, last);
+  errno = 0;
+  char *endptr;
+  unsigned long long v = strtoull(first, &endptr, 10);
+  if (errno != 0) {
     return false;
   }
-  return __builtin_memcmp(s.data() + (s.size() - N + 1), pattern, N - 1) == 0;
+  if (non_whitespace(endptr, last) != last) {
+    // Trailing non-whitespace.
+    return false;
+  }
+  value = v;
+  return true;
 }
