@@ -12,7 +12,7 @@ all: schema.sql.inc
 		symboldb.cpp \
 		cpio_reader.cpp rpm_parser.cpp rpm_parser_exception.cpp \
 		rpm_file_entry.cpp rpm_file_info.cpp rpmtd_wrapper.cpp \
-		rpm_package_info.cpp \
+		rpm_package_info.cpp rpm_evr.cpp \
 		curl_handle.cpp curl_fetch_result.cpp url.cpp download.cpp \
 		expat_handle.cpp expat_minidom.cpp \
 		checksum.cpp repomd.cpp \

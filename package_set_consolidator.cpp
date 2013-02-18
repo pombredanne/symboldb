@@ -18,10 +18,9 @@
 
 #include "package_set_consolidator.hpp"
 #include "rpm_package_info.hpp"
+#include "rpm_evr.hpp"
 
 #include <map>
-
-#include <rpm/rpmlib.h>
 
 struct package_set_consolidator::impl {
   struct key {
@@ -31,16 +30,8 @@ struct package_set_consolidator::impl {
     bool operator<(const key &other) const;
   };
 
-  struct evr {
-    std::string epoch;
-    std::string version;
-    std::string release;
-
-    bool operator<(const evr &other) const;
-  };
-
   struct value {
-    evr version;
+    rpm_evr version;
     database::package_id id;
 
     value() 
@@ -55,23 +46,6 @@ struct package_set_consolidator::impl {
   arch_map map;
 };
 
-bool
-package_set_consolidator::impl::evr::operator<(const evr &other) const
-{
-  if (epoch == other.epoch) {
-    int ret = rpmvercmp(version.c_str(), other.version.c_str());
-    if (ret != 0) {
-      return ret < 0;
-    }
-    ret = rpmvercmp(release.c_str(), other.release.c_str());
-    return ret < 0;
-  }
-  if (epoch.size() != other.epoch.size()) {
-    return epoch.size() < other.epoch.size();
-  }
-  return epoch < other.epoch;
-}
-
 package_set_consolidator::package_set_consolidator()
   : impl_(new impl)
 {
@@ -85,7 +59,7 @@ void
 package_set_consolidator::add(const rpm_package_info &info,
 			      database::package_id id)
 {
-  impl::evr evr;
+  rpm_evr evr;
   evr.epoch = info.epoch;
   evr.version = info.version;
   evr.release = info.release;
