@@ -41,37 +41,6 @@ repomd::~repomd()
 {
 }
 
-namespace {
-  void
-  strip_inplace(std::string &s)
-  {
-    std::string::iterator p(s.begin());
-    std::string::iterator end(s.end());
-    while (p != end && whitespace(*p)) {
-      ++p;
-    }
-    s.erase(s.begin(), p);
-    p = s.end();
-    end = s.begin();
-    while (p != end) {
-      --p;
-      if (!whitespace(*p)) {
-	++p;
-	s.erase(p, s.end());
-	break;
-      }
-    }
-  }
-
-  std::string
-  strip(const std::string &s)
-  {
-    std::string r(s);
-    strip_inplace(r);
-    return r;
-  }
-}
-
 bool
 repomd::parse(const unsigned char *buffer, size_t length,
 	      std::string &error)

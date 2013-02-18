@@ -30,6 +30,9 @@ whitespace(char ch)
   return 0 <= ch && ch <= ' ';
 }
 
+// Removes leading and trailing whitespace.
+std::string strip(const std::string &);
+
 template <unsigned N> bool
 ends_with(const std::string &s, const char (&pattern)[N])
 {
