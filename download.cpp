@@ -40,20 +40,9 @@ download(const download_options &opt, database &db,
       error = "URL not in cache and network access disabled";
       return false;
     }
-    // fallthrough
+    break;
   case download_options::no_cache:
-  fetch:
-    {
-      curl_fetch_result r;
-      r.get(url);
-      if (!r.error.empty()) {
-	error.swap(r.error);
-	return false;
-      }
-      db.url_cache_update(url, r.data, r.http_date);
-      result.swap(r.data);
-      return true;
-    }
+    break;
   case download_options::check_cache:
     {
       curl_fetch_result r;
@@ -65,10 +54,18 @@ download(const download_options &opt, database &db,
 	result.swap(r.data);
 	return true;
       }
-      goto fetch;
     }
   }
-  error = "internal error";
-  return false;
-}
 
+  curl_fetch_result r;
+  r.get(url);
+  if (!r.error.empty()) {
+    error.swap(r.error);
+    return false;
+  }
+  if (opt.cache_mode != download_options::no_cache) {
+    db.url_cache_update(url, r.data, r.http_date);
+  }
+  result.swap(r.data);
+  return true;
+}
