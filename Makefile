@@ -1,4 +1,4 @@
-CFLAGS = -O0 -g -Wall -W
+CFLAGS = -O2 -g -Wall -W
 CXXFLAGS = $(CFLAGS)
 CXXFLAGS_ADD = -std=gnu++03
 DEFINES = -D_GNU_SOURCE
