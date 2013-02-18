@@ -46,6 +46,8 @@ CREATE TABLE symboldb.package (
 );
 COMMENT ON COLUMN symboldb.package.source IS
   'file name of the source RPM package';
+COMMENT ON COLUMN symboldb.package.hash IS
+  'internal SHA1HEADER hash of the RPM contents';
 CREATE INDEX ON symboldb.package (name, version);
 
 CREATE FUNCTION symboldb.nvra (symboldb.package) RETURNS TEXT AS $$
