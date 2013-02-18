@@ -69,10 +69,14 @@ namespace {
     s.erase(s.begin(), p);
     p = s.end();
     end = s.begin();
-    while (p != end && whitespace(*p)) {
+    while (p != end) {
       --p;
+      if (!whitespace(*p)) {
+	++p;
+	s.erase(p, s.end());
+	break;
+      }
     }
-    s.erase(p, s.end());
   }
 
   std::string
