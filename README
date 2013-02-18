@@ -8,6 +8,7 @@ development packages:
 - elfutils-devel
 - elfutils-libelf-devel
 - expat-devel
+- nss-devel
 - postgresql-devel
 - rpm-devel
 - vim-common

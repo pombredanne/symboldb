@@ -41,6 +41,8 @@
 #include "string_support.hpp"
 #include "zlib.hpp"
 #include "expat_minidom.hpp"
+#include "os.hpp"
+#include "file_cache.hpp"
 
 #include <set>
 #include <sstream>
@@ -54,6 +56,7 @@ namespace {
     const char *arch;
     bool no_net;
     const char *set_name;
+    std::string cache_path;
 
     options()
       : output(standard), arch(NULL), no_net(false), set_name(NULL)
@@ -61,6 +64,8 @@ namespace {
     }
 
     download_options download() const;
+
+    std::string rpm_cache_path() const;
   };
 
   download_options
@@ -71,6 +76,20 @@ namespace {
       d.cache_mode = download_options::only_cache;
     }
     return d;
+  }
+
+  std::string
+  options::rpm_cache_path() const
+  {
+    std::string path;
+    if (cache_path.empty()) {
+      path = home_directory();
+      path += "/.cache/symboldb";
+    } else {
+      path = cache_path;
+    }
+    path += "/rpms";
+    return path;
   }
 }
 
@@ -368,6 +387,174 @@ do_show_repomd(const options &opt, database &db, const char *base)
 }
 
 static int
+do_download_repo(const options &opt, database &db, char **argv)
+{
+  // TODO: only download the latest version from all repos (at least
+  // by default).
+
+  std::string fcache_path(opt.rpm_cache_path().c_str());
+  if (!make_directory_hierarchy(fcache_path.c_str(), 0700)) {
+    fprintf(stderr, "error: could not create cache directory: %s\n",
+	    fcache_path.c_str());
+    return 1;
+  }
+  file_cache fcache(fcache_path.c_str());
+  if (!fcache.valid()) {
+    fprintf(stderr, "error: invalid RPM cache: %s\n", fcache_path.c_str());
+    return 1;
+  }
+
+  for (; *argv; ++ argv) {
+    std::string base_canon(base_url_canon(*argv));
+    if (opt.output == options::verbose) {
+      fprintf(stderr, "info: processing %s\n", base_canon.c_str());
+    }
+    repomd rp;
+    if (!acquire_repomd(opt, db, base_canon.c_str(), rp)) {
+      return 1;
+    }
+
+    // FIXME: consolidate with do_show_source_packages() below.
+
+    // The metadata URLs include hashes, so we do not have to check
+    // the cache for staleness.  But --no-net overrides that.
+    download_options dopts;
+    if (opt.no_net) {
+      dopts = opt.download();
+    } else {
+      dopts.cache_mode = download_options::always_cache;
+    }
+
+    // Cache bypass for RPM downloads.
+    download_options dopts_no_cache;
+    dopts.cache_mode = download_options::no_cache;
+
+    bool found = false;
+    for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
+	   end = rp.entries.end();
+	 p != end; ++p) {
+      if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
+	std::string entry_url(url_combine(base_canon.c_str(), p->href.c_str()));
+	std::vector<unsigned char> data, uncompressed;
+	std::string error;
+	if (!download(dopts, db, entry_url.c_str(), data, error)) {
+	  fprintf(stderr, "error: %s (from %s): %s\n",
+		  entry_url.c_str(), *argv, error.c_str());
+	  return 1;
+	}
+	if (!gzip_uncompress(data, uncompressed)) {
+	  fprintf(stderr, "error: %s (from %s): gzip decompression error\n",
+		  entry_url.c_str(), *argv);
+	  return 1;
+	}
+	if (uncompressed.empty()) {
+	  fprintf(stderr, "error: %s (from %s): no data\n",
+		  entry_url.c_str(), *argv);
+	  return 1;
+	}
+	found = true;
+	using namespace expat_minidom;
+	std::tr1::shared_ptr<element> root(parse(&uncompressed.front(),
+						 uncompressed.size(), error));
+	if (!root) {
+	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
+		  entry_url.c_str(), *argv, error.c_str());
+	  return 1;
+	}
+	if (root->name != "metadata") {
+	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
+		  entry_url.c_str(), *argv, root->name.c_str());
+	  return 1;
+	}
+	for(std::vector<std::tr1::shared_ptr<node> >::iterator
+	      p = root->children.begin(), end = root->children.end(); p != end; ++p) {
+	  element *e = dynamic_cast<element *>(p->get());
+	  if (e && e->name == "package" && e->attributes["type"] == "rpm") {
+	    element *name = e->first_child("name");
+	    if (!name) {
+	      fprintf(stderr, "error: %s (from %s): missing name element\n",
+		      entry_url.c_str(), *argv);
+	      return 1;
+	    }
+	    element *format = e->first_child("format");
+	    if (!format) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    element *location = e->first_child("location");
+	    if (!location) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing location element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    std::string location_href = location->attributes["href"];
+	    if (location_href.empty()) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing href attribute\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    element *checksum_elem = e->first_child("checksum");
+	    if (!checksum_elem) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing checksum element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    element *size = e->first_child("size");
+	    if (!size) {
+	      fprintf(stderr, "error: %s (from %s): %s: missing size element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    unsigned long long nsize;
+	    if (!parse_unsigned_long_long(size->attributes["package"], nsize)) {
+	      fprintf(stderr, "error: %s (from %s): %s: malformed size element\n",
+		      entry_url.c_str(), *argv, name->text().c_str());
+	      return 1;
+	    }
+	    checksum csum;
+	    if (!csum.set_hexadecimal
+		(checksum_elem->attributes["type"].c_str(), nsize,
+		 checksum_elem->text().c_str())) {
+	      fprintf(stderr, "error: %s (from %s): %s: malformed checksum element: [%s]\n",
+		      entry_url.c_str(), *argv, name->text().c_str(),
+		      checksum_elem->text().c_str());
+	      return 1;
+	    }
+
+	    std::string rpm_path;
+	    if (!fcache.lookup_path(csum, rpm_path)) {
+	      std::string rpm_url(url_combine(base_canon.c_str(),
+					      location_href.c_str()));
+	      if (opt.output == options::verbose) {
+		fprintf(stderr, "info: downloading %s\n", rpm_url.c_str());
+	      }
+	      // FIXME: Incoming data should be streamed to disk.
+	      std::vector<unsigned char> data;
+	      if (!download(dopts_no_cache, db, rpm_url.c_str(), 
+			    data, error)) {
+		fprintf(stderr, "error: %s: %s\n",
+			rpm_url.c_str(), error.c_str());
+		return 1;
+	      }
+	      if (!fcache.add(csum, data, rpm_path, error)) {
+		fprintf(stderr, "error: %s: addding to cache: %s\n",
+			rpm_url.c_str(), error.c_str());
+		return 1;
+	      }
+	    }
+	  }
+	}
+      }
+    }
+    if (!found) {
+      fprintf(stderr, "warning: %s: no suitable primary data found\n", *argv);
+    }
+  }
+  return 0;
+}
+
+static int
 do_show_source_packages(const options &opt, database &db, char **argv)
 {
   std::set<std::string> source_packages;
@@ -504,11 +691,13 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --download [OPTIONS] URL\n"
 	  "  %1$s --show-repomd [OPTIONS] URL\n"
+	  "  %1$s --download-repo [OPTIONS] URL...\n"
 	  "  %1$s --show-source-packages [OPTIONS] URL...\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
 	  "  --quiet, -q       less output\n"
+	  "  --cache=DIR, -C   path to the cache (default: ~/.cache/symboldb)\n"
 	  "  --no-net, -N      disable most network access\n"
 	  "  --verbose, -v     more verbose output\n\n",
 	  progname);
@@ -524,6 +713,7 @@ namespace {
       create_set,
       update_set,
       download,
+      download_repo,
       show_repomd,
       show_source_packages,
       show_soname_conflicts,
@@ -542,11 +732,13 @@ main(int argc, char **argv)
       {"create-set", required_argument, 0, command::create_set},
       {"update-set", required_argument, 0, command::update_set},
       {"download", no_argument, 0, command::download},
+      {"download-repo", no_argument, 0, command::download_repo},
       {"show-repomd", no_argument, 0, command::show_repomd},
       {"show-source-packages", no_argument, 0, command::show_source_packages},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
+      {"cache", required_argument, 0, 'C'},
       {"no-net", no_argument, 0, 'N'},
       {"verbose", no_argument, 0, 'v'},
       {"quiet", no_argument, 0, 'q'},
@@ -554,13 +746,16 @@ main(int argc, char **argv)
     };
     int ch;
     int index;
-    while ((ch = getopt_long(argc, argv, "a:Nqv", long_options, &index)) != -1) {
+    while ((ch = getopt_long(argc, argv, "a:NC:qv", long_options, &index)) != -1) {
       switch (ch) {
       case 'a':
 	opt.arch = optarg;
 	break;
       case 'N':
 	opt.no_net = true;
+	break;
+      case 'C':
+	opt.cache_path = optarg;
 	break;
       case 'q':
 	opt.output = options::quiet;
@@ -577,6 +772,7 @@ main(int argc, char **argv)
       case command::create_schema:
       case command::load_rpm:
       case command::download:
+      case command::download_repo:
       case command::show_repomd:
       case command::show_source_packages:
 	cmd = static_cast<command::type>(ch);
@@ -597,6 +793,7 @@ main(int argc, char **argv)
     switch (cmd) {
     case command::load_rpm:
     case command::show_source_packages:
+    case command::download_repo:
       if (argc == optind) {
 	usage(argv[0]);
       }
@@ -640,6 +837,8 @@ main(int argc, char **argv)
     return do_update_set(opt, argv + optind);
   case command::download:
     return do_download(opt, *db, argv[optind]);
+  case command::download_repo:
+    return do_download_repo(opt, *db, argv + optind);
   case command::show_repomd:
     return do_show_repomd(opt, *db, argv[optind]);
   case command::show_source_packages:
