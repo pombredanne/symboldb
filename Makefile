@@ -19,7 +19,6 @@ all: schema.sql.inc
 		zlib.cpp os.cpp \
 		string_support.cpp fd_handle.cpp hash.cpp file_cache.cpp \
 		database.cpp database_exception.cpp \
-		package_set_consolidator.cpp \
 		elf_symbol.cpp \
 		elf_symbol_definition.cpp \
 		elf_symbol_reference.cpp \

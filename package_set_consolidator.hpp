@@ -20,20 +20,88 @@
 
 #include <tr1/memory>
 #include <vector>
+#include <map>
 
-#include "database.hpp"
-
-class rpm_package_info;
+#include "rpm_evr.hpp"
+#include "rpm_package_info.hpp"
 
 // Picks the largest version number for each package name/architecture
 // combinations.
+template <class T>
 class package_set_consolidator {
-  struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  struct key {
+    std::string name;
+    std::string arch;
+
+    bool operator<(const key &other) const;
+  };
+
+  struct value {
+    rpm_evr version;
+    T data;
+
+    value(const rpm_evr &ver, const T &val)
+      : version(ver), data(val)
+    {
+    }
+  };
+
+  typedef std::map<std::string, value> name_map;
+  typedef std::map<std::string, name_map> arch_map;
+  arch_map map;
+
 public:
   package_set_consolidator();
   ~package_set_consolidator();
 
-  void add(const rpm_package_info &, database::package_id);
-  std::vector<database::package_id> package_ids() const;
+  void add(const rpm_package_info &, const T &value);
+  std::vector<T> values() const;
 };
+
+template <class T>
+package_set_consolidator<T>::package_set_consolidator()
+{
+}
+
+template <class T>
+package_set_consolidator<T>::~package_set_consolidator()
+{
+}
+
+template <class T>
+void
+package_set_consolidator<T>::add(const rpm_package_info &info, const T &v)
+{
+  rpm_evr evr;
+  evr.epoch = info.epoch;
+  evr.version = info.version;
+  evr.release = info.release;
+
+
+  name_map &nmap(map[info.arch]);
+  typename name_map::iterator p(nmap.find(info.name));
+  if (p == nmap.end()) {
+    nmap.insert(std::make_pair(info.name, value(evr, v)));
+  } else {
+    if (p->second.version < evr) {
+      p->second.version = evr;
+      p->second.data = v;
+    }
+  }
+}
+
+template <class T>
+std::vector<T>
+package_set_consolidator<T>::values() const
+{
+  std::vector<T> result;
+  for (typename arch_map::const_iterator archp = map.begin(),
+	 archend = map.end(); archp != archend; ++archp) {
+    const name_map &arch = archp->second;
+    for (typename name_map::const_iterator namep = arch.begin(),
+	   nameend = arch.end(); namep != nameend; ++namep) {
+      result.push_back(namep->second.data);
+    }
+  }
+  return result;
+}

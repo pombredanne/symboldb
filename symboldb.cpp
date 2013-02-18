@@ -235,7 +235,7 @@ load_rpm(const char *rpm_path, rpm_package_info &info)
 }
 
 static void
-load_rpms(char **argv, package_set_consolidator &ids)
+load_rpms(char **argv, package_set_consolidator<database::package_id> &ids)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.
@@ -257,7 +257,7 @@ static int do_create_schema()
 static int
 do_load_rpm(const options &opt, char **argv)
 {
-  package_set_consolidator ignored;
+  package_set_consolidator<database::package_id> ignored;
   load_rpms(argv, ignored);
   return 0;
 }
@@ -283,9 +283,9 @@ do_create_set(const options &opt, char **argv)
   typedef std::vector<database::package_id> pset;
   pset ids;
   {
-    package_set_consolidator psc;
+    package_set_consolidator<database::package_id> psc;
     load_rpms(argv, psc);
-    ids = psc.package_ids();
+    ids = psc.values();
   }
 
   db->txn_begin();
@@ -312,9 +312,9 @@ do_update_set(const options &opt, char **argv)
   typedef std::vector<database::package_id> pset;
   pset ids;
   {
-    package_set_consolidator psc;
+    package_set_consolidator<database::package_id> psc;
     load_rpms(argv, psc);
-    ids = psc.package_ids();
+    ids = psc.values();
   }
 
   db->txn_begin();
