@@ -276,6 +276,26 @@ database::add_package_sha256(package_id pkg,
   res.check();
 }
 
+database::package_id
+database::package_by_sha256(const std::vector<unsigned char> &digest)
+{
+  if (digest.size() != 32) {
+    throw std::logic_error("invalid SHA-256 digest length");
+  }
+  static const Oid paramTypes[] = {17 /* BYTEA */};
+  const int paramLengths[] = {static_cast<int>(digest.size())};
+  const char *params[] = {
+    reinterpret_cast<const char *>(&digest.front()),
+  };
+  static const int paramFormats[] = {1};
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "SELECT package FROM " PACKAGE_SHA256_TABLE " WHERE sha256 = $1",
+     1, paramTypes, params, paramLengths, paramFormats, 0);
+  return get_id(res);
+}
+
 database::file_id
 database::add_file(package_id pkg, const rpm_file_info &info)
 {

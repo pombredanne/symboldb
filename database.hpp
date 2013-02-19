@@ -63,6 +63,10 @@ public:
   // different signatures and compression.
   void add_package_sha256(package_id, const std::vector<unsigned char> &digest);
 
+  // Looks up a package ID by the external SHA-256 digest.  Returns 0
+  // if the package ID was not found.
+  package_id package_by_sha256(const std::vector<unsigned char> &digest);
+
   file_id add_file(package_id, const rpm_file_info &);
 
   // Loading ELF-related tables.
