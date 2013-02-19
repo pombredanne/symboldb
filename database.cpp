@@ -148,6 +148,14 @@ database::txn_commit()
   res.check();
 }
 
+void
+database::txn_rollback()
+{
+  pgresult_wrapper res;
+  res.raw = PQexec(impl_->conn, "ROLLBACK");
+  res.check();
+}
+
 static int
 get_id(pgresult_wrapper &res)
 {

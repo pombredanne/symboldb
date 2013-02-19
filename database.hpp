@@ -46,6 +46,7 @@ public:
   
   void txn_begin();
   void txn_commit();
+  void txn_rollback();
 
   typedef int package_id;
   typedef int file_id;
