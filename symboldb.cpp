@@ -236,25 +236,35 @@ load_rpm(const char *rpm_path, rpm_package_info &info)
 }
 
 static bool
-load_rpms(char **argv, package_set_consolidator<database::package_id> &ids)
+load_rpm(database &db, const char *path, rpm_package_info &info)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.
+  db.txn_begin();
+  database::package_id pkg = load_rpm(path, info);
+
+  std::vector<unsigned char> digest;
+  std::string error;
+  if (!hash_sha256_file(path, digest, error)) {
+    fprintf(stderr, "error: hashing %s: %s\n", path, error.c_str());
+    return false;
+  }
+  db.add_package_sha256(pkg, digest);
+
+  db.txn_commit();
+  return true;
+}
+
+static bool
+load_rpms(char **argv, package_set_consolidator<database::package_id> &ids)
+{
   rpm_package_info info;
   for (; *argv; ++argv) {
-    db->txn_begin();
-    database::package_id pkg = load_rpm(*argv, info);
-    ids.add(info, pkg);
-
-    std::vector<unsigned char> digest;
-    std::string error;
-    if (!hash_sha256_file(*argv, digest, error)) {
-      fprintf(stderr, "error: hashing %s: %s\n", *argv, error.c_str());
+    database::package_id pkg = load_rpm(*db, *argv, info);
+    if (pkg == 0) {
       return false;
     }
-    db->add_package_sha256(pkg, digest);
-
-    db->txn_commit();
+    ids.add(info, pkg);
   }
   return true;
 }
@@ -388,7 +398,7 @@ namespace {
 }
 
 static int
-do_download_repo(const options &opt, database &db, char **argv)
+do_download_repo(const options &opt, database &db, char **argv, bool load)
 {
   // TODO: only download the latest version from all repos (at least
   // by default).
@@ -580,9 +590,19 @@ do_download_repo(const options &opt, database &db, char **argv)
     fprintf(stderr, "info: %zu packages in download set\n", urls.size());
   }
   size_t skipped = 0;
+  std::set<database::package_id> pids;
 
   for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
        p != end; ++p) {
+    if (load) {
+      database::package_id pid = db.package_by_sha256(p->csum.value);
+      if (pid != 0) {
+	++skipped;
+	pids.insert(pid);
+	continue;
+      }
+    }
+
     std::string rpm_path;
     if (fcache.lookup_path(p->csum, rpm_path)) {
       ++skipped;
@@ -603,6 +623,15 @@ do_download_repo(const options &opt, database &db, char **argv)
 		p->href.c_str(), error.c_str());
 	return 1;
       }
+    }
+
+    if (load) {
+      rpm_package_info info;
+      database::package_id pid = load_rpm(db, rpm_path.c_str(), info);
+      if (pid == 0) {
+	return 1;
+      }
+      pids.insert(pid);
     }
   }
   if (opt.output == options::verbose) {
@@ -777,6 +806,7 @@ namespace {
       update_set,
       download,
       download_repo,
+      load_repo,
       show_repomd,
       show_source_packages,
       show_soname_conflicts,
@@ -796,6 +826,7 @@ main(int argc, char **argv)
       {"update-set", required_argument, 0, command::update_set},
       {"download", no_argument, 0, command::download},
       {"download-repo", no_argument, 0, command::download_repo},
+      {"load-repo", no_argument, 0, command::load_repo},
       {"show-repomd", no_argument, 0, command::show_repomd},
       {"show-source-packages", no_argument, 0, command::show_source_packages},
       {"show-soname-conflicts", required_argument, 0,
@@ -836,6 +867,7 @@ main(int argc, char **argv)
       case command::load_rpm:
       case command::download:
       case command::download_repo:
+      case command::load_repo:
       case command::show_repomd:
       case command::show_source_packages:
 	cmd = static_cast<command::type>(ch);
@@ -857,6 +889,7 @@ main(int argc, char **argv)
     case command::load_rpm:
     case command::show_source_packages:
     case command::download_repo:
+    case command::load_repo:
       if (argc == optind) {
 	usage(argv[0]);
       }
@@ -901,7 +934,9 @@ main(int argc, char **argv)
   case command::download:
     return do_download(opt, *db, argv[optind]);
   case command::download_repo:
-    return do_download_repo(opt, *db, argv + optind);
+    return do_download_repo(opt, *db, argv + optind, false);
+  case command::load_repo:
+    return do_download_repo(opt, *db, argv + optind, true);
   case command::show_repomd:
     return do_show_repomd(opt, *db, argv[optind]);
   case command::show_source_packages:
