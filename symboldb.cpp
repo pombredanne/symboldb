@@ -430,8 +430,8 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 
   for (; *argv; ++ argv) {
     const char *url = *argv;
-    if (opt.output == options::verbose) {
-      fprintf(stderr, "info: processing %s\n", url);
+    if (opt.output != options::quiet) {
+      fprintf(stderr, "info: processing repository %s\n", url);
     }
     repomd rp;
     std::string error;
@@ -597,7 +597,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
   std::string error;
 
   std::vector<rpm_url> urls(pset.values());
-  if (opt.output == options::verbose) {
+  if (opt.output != options::quiet) {
     fprintf(stderr, "info: %zu packages in download set\n", urls.size());
   }
   size_t skipped = 0;
@@ -608,7 +608,9 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     if (load) {
       database::package_id pid = db.package_by_sha256(p->csum.value);
       if (pid != 0) {
-	fprintf(stderr, "info: skipping %s\n", p->href.c_str());
+	if (opt.output != options::quiet) {
+	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());
+	}
 	++skipped;
 	pids.insert(pid);
 	continue;
@@ -619,7 +621,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     if (fcache.lookup_path(p->csum, rpm_path)) {
       ++skipped;
     } else {
-      if (opt.output == options::verbose) {
+      if (opt.output != options::quiet) {
 	fprintf(stderr, "info: downloading %s\n", p->href.c_str());
       }
       // FIXME: Incoming data should be streamed to disk.
@@ -646,7 +648,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       pids.insert(pid);
     }
   }
-  if (opt.output == options::verbose) {
+  if (opt.output != options::quiet) {
     fprintf(stderr, "info: %zu downloads of %zu found in cache\n",
 	    urls.size(), urls.size());
   }
@@ -670,7 +672,7 @@ do_show_source_packages(const options &opt, database &db, char **argv)
   std::set<std::string> source_packages;
   for (; *argv; ++argv) {
     const char *url = *argv;
-    if (opt.output == options::verbose) {
+    if (opt.output != options::quiet) {
       fprintf(stderr, "info: processing %s\n", url);
     }
     repomd rp;
