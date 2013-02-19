@@ -403,6 +403,15 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
   // TODO: only download the latest version from all repos (at least
   // by default).
 
+  database::package_set_id set = 0;
+  if (load && opt.set_name) {
+    set = db.lookup_package_set(opt.set_name);
+    if (set == 0) {
+      fprintf(stderr, "error: unknown package set: %s\n", opt.set_name);
+      return 1;
+    }
+  }
+
   std::string fcache_path(opt.rpm_cache_path().c_str());
   if (!make_directory_hierarchy(fcache_path.c_str(), 0700)) {
     fprintf(stderr, "error: could not create cache directory: %s\n",
@@ -597,6 +606,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     if (load) {
       database::package_id pid = db.package_by_sha256(p->csum.value);
       if (pid != 0) {
+	fprintf(stderr, "info: skipping %s\n", p->href.c_str());
 	++skipped;
 	pids.insert(pid);
 	continue;
@@ -635,7 +645,18 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     }
   }
   if (opt.output == options::verbose) {
-    fprintf(stderr, "info: %zu downloads found in cache\n", urls.size());
+    fprintf(stderr, "info: %zu downloads of %zu found in cache\n",
+	    urls.size(), urls.size());
+  }
+  if (load && set > 0) {
+    db.txn_begin();
+    db.empty_package_set(set);
+    for (std::set<database::package_id>::iterator
+	   p = pids.begin(), end = pids.end(); p != end; ++p) {
+      db.add_package_set(set, *p);
+    }
+    finalize_package_set(opt, set);
+    db.txn_commit();
   }
 
   return 0;
@@ -781,6 +802,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
 	  "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
+	  "  %1$s --update-set-from-repo=NAME [OPTIONS] URL...\n"
 	  "  %1$s --download [OPTIONS] URL\n"
 	  "  %1$s --show-repomd [OPTIONS] URL\n"
 	  "  %1$s --download-repo [OPTIONS] URL...\n"
@@ -804,6 +826,7 @@ namespace {
       load_rpm,
       create_set,
       update_set,
+      update_set_from_repo,
       download,
       download_repo,
       load_repo,
@@ -824,6 +847,7 @@ main(int argc, char **argv)
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
       {"update-set", required_argument, 0, command::update_set},
+      {"update-set-from-repo", required_argument, 0, command::update_set_from_repo},
       {"download", no_argument, 0, command::download},
       {"download-repo", no_argument, 0, command::download_repo},
       {"load-repo", no_argument, 0, command::load_repo},
@@ -859,6 +883,7 @@ main(int argc, char **argv)
 	break;
       case command::create_set:
       case command::update_set:
+      case command::update_set_from_repo:
       case command::show_soname_conflicts:
 	cmd = static_cast<command::type>(ch);
 	opt.set_name = optarg;
@@ -907,6 +932,7 @@ main(int argc, char **argv)
       break;
     case command::undefined:
     case command::update_set:
+    case command::update_set_from_repo:
       break;
     case command::download:
     case command::show_repomd:
@@ -936,6 +962,7 @@ main(int argc, char **argv)
   case command::download_repo:
     return do_download_repo(opt, *db, argv + optind, false);
   case command::load_repo:
+  case command::update_set_from_repo:
     return do_download_repo(opt, *db, argv + optind, true);
   case command::show_repomd:
     return do_show_repomd(opt, *db, argv[optind]);
