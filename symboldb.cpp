@@ -94,13 +94,12 @@ namespace {
   }
 }
 
-static options opt;		// FIXME
 static const char *elf_path; // FIXME
 static database::file_id fid;
 static std::tr1::shared_ptr<database> db; // FIXME
 
 static void
-dump_def(const elf_symbol_definition &def)
+dump_def(const options &opt, const elf_symbol_definition &def)
 {
   if (def.symbol_name.empty()) {
     return;
@@ -114,7 +113,7 @@ dump_def(const elf_symbol_definition &def)
 }
 
 static void
-dump_ref(const elf_symbol_reference &ref)
+dump_ref(const options &opt, const elf_symbol_reference &ref)
 {
   if (ref.symbol_name.empty()) {
     return;
@@ -127,7 +126,7 @@ dump_ref(const elf_symbol_reference &ref)
 }
 
 static database::package_id
-load_rpm(const char *rpm_path, rpm_package_info &info)
+load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 {
   try {
     rpm_parser_state rpmst(rpm_path);
@@ -169,9 +168,9 @@ load_rpm(const char *rpm_path, rpm_package_info &info)
 	    elf_image::symbol_range symbols(image);
 	    while (symbols.next()) {
 	      if (symbols.definition()) {
-		dump_def(*symbols.definition());
+		dump_def(opt, *symbols.definition());
 	      } else if (symbols.reference()) {
-		dump_ref(*symbols.reference());
+		dump_ref(opt, *symbols.reference());
 	      } else {
 		throw std::logic_error("unknown elf_symbol type");
 	      }
@@ -236,12 +235,13 @@ load_rpm(const char *rpm_path, rpm_package_info &info)
 }
 
 static bool
-load_rpm(database &db, const char *path, rpm_package_info &info)
+load_rpm(const options &opt, database &db,
+	 const char *path, rpm_package_info &info)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.
   db.txn_begin();
-  database::package_id pkg = load_rpm(path, info);
+  database::package_id pkg = load_rpm(opt, path, info);
 
   std::vector<unsigned char> digest;
   std::string error;
@@ -257,11 +257,12 @@ load_rpm(database &db, const char *path, rpm_package_info &info)
 }
 
 static bool
-load_rpms(char **argv, package_set_consolidator<database::package_id> &ids)
+load_rpms(const options &opt, char **argv,
+	  package_set_consolidator<database::package_id> &ids)
 {
   rpm_package_info info;
   for (; *argv; ++argv) {
-    database::package_id pkg = load_rpm(*db, *argv, info);
+    database::package_id pkg = load_rpm(opt, *db, *argv, info);
     if (pkg == 0) {
       return false;
     }
@@ -280,7 +281,7 @@ static int
 do_load_rpm(const options &opt, char **argv)
 {
   package_set_consolidator<database::package_id> ignored;
-  if (!load_rpms(argv, ignored)) {
+  if (!load_rpms(opt, argv, ignored)) {
     return 1;
   }
   return 0;
@@ -308,7 +309,7 @@ do_create_set(const options &opt, char **argv)
   pset ids;
   {
     package_set_consolidator<database::package_id> psc;
-    if (!load_rpms(argv, psc)) {
+    if (!load_rpms(opt, argv, psc)) {
       return 1;
     }
     ids = psc.values();
@@ -339,7 +340,7 @@ do_update_set(const options &opt, char **argv)
   pset ids;
   {
     package_set_consolidator<database::package_id> psc;
-    if (!load_rpms(argv, psc)) {
+    if (!load_rpms(opt, argv, psc)) {
       return 1;
     }
     ids = psc.values();
@@ -638,7 +639,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 
     if (load) {
       rpm_package_info info;
-      database::package_id pid = load_rpm(db, rpm_path.c_str(), info);
+      database::package_id pid = load_rpm(opt, db, rpm_path.c_str(), info);
       if (pid == 0) {
 	return 1;
       }
@@ -841,6 +842,7 @@ namespace {
 int
 main(int argc, char **argv)
 {
+  options opt;
   command::type cmd = command::undefined;
   {
     static const struct option long_options[] = {
