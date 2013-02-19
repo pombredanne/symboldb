@@ -33,6 +33,7 @@
 // Database table names
 
 #define PACKAGE_TABLE "symboldb.package"
+#define PACKAGE_SHA256_TABLE "symboldb.package_sha256"
 #define FILE_TABLE "symboldb.file"
 #define ELF_FILE_TABLE "symboldb.elf_file"
 #define ELF_DEFINITION_TABLE "symboldb.elf_definition"
@@ -220,6 +221,51 @@ database::intern_package(const rpm_package_info &pkg,
     pkg_id = get_id_force(res);
     return true;
   }
+}
+
+void
+database::add_package_sha256(package_id pkg,
+			     const std::vector<unsigned char> &digest)
+{
+  // FIXME: This needs a transaction and locking.
+
+  if (digest.size() != 32) {
+    throw std::logic_error("invalid SHA-256 digest length");
+  }
+
+  char pkgstr[32];
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+
+  static const Oid paramTypes[] = {23 /* INT4 */, 17 /* BYTEA */};
+  const int paramLengths[] = {0, static_cast<int>(digest.size())};
+  const char *params[] = {
+    pkgstr,
+    reinterpret_cast<const char *>(&digest.front()),
+  };
+  static const int paramFormats[] = {0, 1};
+
+  // Try to locate existing row.
+  {
+    pgresult_wrapper res;
+    res.raw = PQexecParams
+      (impl_->conn,
+       "SELECT 1 FROM " PACKAGE_SHA256_TABLE
+       " WHERE package = $1 AND sha256 = $2",
+       2, paramTypes, params, paramLengths, paramFormats, 0);
+    res.check();
+    if (PQntuples(res.raw) > 0) {
+      return;
+    }
+  }
+
+  // Insert new row.
+  pgresult_wrapper res;
+  res.raw = PQexecParams
+    (impl_->conn,
+     "INSERT INTO " PACKAGE_SHA256_TABLE " (package, sha256)"
+     " VALUES ($1, $2)",
+     2, paramTypes, params, paramLengths, paramFormats, 0);
+  res.check();
 }
 
 database::file_id

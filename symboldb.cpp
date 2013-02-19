@@ -43,6 +43,7 @@
 #include "expat_minidom.hpp"
 #include "os.hpp"
 #include "file_cache.hpp"
+#include "hash.hpp"
 
 #include <set>
 #include <sstream>
@@ -234,7 +235,7 @@ load_rpm(const char *rpm_path, rpm_package_info &info)
   }
 }
 
-static void
+static bool
 load_rpms(char **argv, package_set_consolidator<database::package_id> &ids)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
@@ -244,8 +245,18 @@ load_rpms(char **argv, package_set_consolidator<database::package_id> &ids)
     db->txn_begin();
     database::package_id pkg = load_rpm(*argv, info);
     ids.add(info, pkg);
+
+    std::vector<unsigned char> digest;
+    std::string error;
+    if (!hash_sha256_file(*argv, digest, error)) {
+      fprintf(stderr, "error: hashing %s: %s\n", *argv, error.c_str());
+      return false;
+    }
+    db->add_package_sha256(pkg, digest);
+
     db->txn_commit();
   }
+  return true;
 }
 
 static int do_create_schema()
@@ -258,7 +269,9 @@ static int
 do_load_rpm(const options &opt, char **argv)
 {
   package_set_consolidator<database::package_id> ignored;
-  load_rpms(argv, ignored);
+  if (!load_rpms(argv, ignored)) {
+    return 1;
+  }
   return 0;
 }
 
@@ -284,7 +297,9 @@ do_create_set(const options &opt, char **argv)
   pset ids;
   {
     package_set_consolidator<database::package_id> psc;
-    load_rpms(argv, psc);
+    if (!load_rpms(argv, psc)) {
+      return 1;
+    }
     ids = psc.values();
   }
 
@@ -313,7 +328,9 @@ do_update_set(const options &opt, char **argv)
   pset ids;
   {
     package_set_consolidator<database::package_id> psc;
-    load_rpms(argv, psc);
+    if (!load_rpms(argv, psc)) {
+      return 1;
+    }
     ids = psc.values();
   }
 

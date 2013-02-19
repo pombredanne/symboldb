@@ -57,6 +57,11 @@ public:
   // FIXME: add source URI
   bool intern_package(const rpm_package_info &, package_id &);
 
+  // Adds the SHA-256 hash of a file representation.  A single RPM
+  // with identical contents can have multiple representations due to
+  // different signatures and compression.
+  void add_package_sha256(package_id, const std::vector<unsigned char> &digest);
+
   file_id add_file(package_id, const rpm_file_info &);
 
   // Loading ELF-related tables.
