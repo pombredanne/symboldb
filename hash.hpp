@@ -19,5 +19,12 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 std::vector<unsigned char> hash_sha256(const std::vector<unsigned char> &data);
+
+// Reads the file at PATH and writes its SHA-256 hash to DIGEST.
+// ERROR is updated in case of file system errors, and the function
+// returns false.  On NSS errors, and exception is thrown.
+bool hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
+		      std::string &error);

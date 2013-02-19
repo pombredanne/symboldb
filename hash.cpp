@@ -17,9 +17,13 @@
  */
 
 #include "hash.hpp"
+#include "fd_handle.hpp"
 
 #include <cassert>
 #include <stdexcept>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <pk11pub.h>
 
@@ -62,3 +66,43 @@ hash_sha256(const std::vector<unsigned char> &data)
   return digest;
 }
 
+
+bool
+hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
+		 std::string &error)
+{
+  fd_handle fd;
+  fd.raw = open(path, O_RDONLY | O_CLOEXEC);
+  if (fd.raw < 0) {
+    error = "could not open file";
+    return false;
+  }
+
+  PK11Context_handle ctx;
+  if (PK11_DigestBegin(ctx.raw) != SECSuccess) {
+    throw std::runtime_error("PK11_DigestBegin");
+  }
+
+  unsigned char buf[8192];
+  while (true) {
+    ssize_t ret = read(fd.raw, buf, sizeof(buf));
+    if (ret == 0) {
+      break;
+    }
+    if (ret < 0) {
+      error = "could not read file";
+      return false;
+    }
+    if (PK11_DigestOp(ctx.raw, buf, ret) != SECSuccess) {
+      throw std::runtime_error("PK11_DigestOp");
+    }
+  }
+
+  digest.resize(32);
+  unsigned len = digest.size();
+  if (PK11_DigestFinal(ctx.raw, &digest.front(), &len, digest.size()) != SECSuccess) {
+    throw std::runtime_error("PK11_DigestFinal");
+  }
+  assert(len == digest.size());
+  return true;
+}
