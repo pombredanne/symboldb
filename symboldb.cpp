@@ -247,6 +247,7 @@ load_rpm(database &db, const char *path, rpm_package_info &info)
   std::string error;
   if (!hash_sha256_file(path, digest, error)) {
     fprintf(stderr, "error: hashing %s: %s\n", path, error.c_str());
+    db.txn_rollback();
     return false;
   }
   db.add_package_sha256(pkg, digest);
