@@ -4,6 +4,7 @@ Prerequisites
 In addition to the usual C++ build environment, you need the following
 development packages:
 
+- cmake
 - curl-devel
 - elfutils-devel
 - elfutils-libelf-devel
@@ -18,7 +19,19 @@ development packages:
 Building
 --------
 
-It should be sufficient to just type "make".
+Create a build directory, run cmake and make:
+
+  mkdir build
+  cd build
+  cmake ..
+  make
+
+Alternatively, you can use the Ninja build tool:
+
+  mkdir build
+  cd build
+  cmake -G Ninja -DCMAKE_MAKE_PROGRAM=ninja-build ..
+  ninja-build
 
 Running
 -------

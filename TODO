@@ -1,7 +1,5 @@
 * Write some documentation, including a manual page.
 
-* Write a real makefile which supports incremental builds.
-
 * Check portability of the sources to non-Fedora systems.
 
 * Implement a more efficient XML parser.  The current parser needs
