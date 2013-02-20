@@ -18,6 +18,7 @@
 
 #include "hash.hpp"
 #include "fd_handle.hpp"
+#include "os.hpp"
 
 #include <cassert>
 #include <stdexcept>
@@ -74,7 +75,11 @@ hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
   fd_handle fd;
   fd.raw = open(path, O_RDONLY | O_CLOEXEC);
   if (fd.raw < 0) {
-    error = "could not open file";
+    std::string s(error_string());
+    error = "could not open file ";
+    error += path;
+    error += ": ";
+    error += s;
     return false;
   }
 
@@ -90,7 +95,11 @@ hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
       break;
     }
     if (ret < 0) {
-      error = "could not read file";
+      std::string s(error_string());
+      error = "could not write to file ";
+      error += path;
+      error += ": ";
+      error += s;
       return false;
     }
     if (PK11_DigestOp(ctx.raw, buf, ret) != SECSuccess) {
