@@ -20,50 +20,80 @@
 #include "fd_handle.hpp"
 #include "os.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
 
 #include <fcntl.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include <pk11pub.h>
 
-namespace {
-  struct PK11Context_handle {
-    PK11Context *raw;
-    PK11Context_handle()
-    {
-      raw = PK11_CreateDigestContext(SEC_OID_SHA256);
-      if (raw == NULL) {
-	throw std::runtime_error("PK11_CreateDigestContext");
-      }
-    }
+struct sha256_sink::impl {
+  PK11Context *raw;
 
-    ~PK11Context_handle()
-    {
-      PK11_DestroyContext(raw, PR_TRUE);
+  impl()
+  {
+    raw = PK11_CreateDigestContext(SEC_OID_SHA256);
+    if (raw == NULL) {
+      throw std::runtime_error("PK11_CreateDigestContext");
     }
-  };
+  }
+
+  ~impl()
+  {
+    PK11_DestroyContext(raw, PR_TRUE);
+  }
+};
+
+sha256_sink::sha256_sink()
+  : impl_(new impl)
+{
+  if (PK11_DigestBegin(impl_->raw) != SECSuccess) {
+    throw std::runtime_error("PK11_DigestBegin");
+  }
 }
+
+sha256_sink::~sha256_sink()
+{
+}
+
+void
+sha256_sink::write(const unsigned char *buf, size_t len)
+{
+  while (len > 0) {
+    size_t to_hash = std::min(len, static_cast<size_t>(INT_MAX) / 2);
+    if (PK11_DigestOp(impl_->raw, buf, to_hash) != SECSuccess) {
+      throw std::runtime_error("PK11_DigestOp");
+    }
+    buf += to_hash;
+    len -= to_hash;
+  }
+}
+
+void
+sha256_sink::digest(std::vector<unsigned char> &d)
+{
+  d.resize(32);
+  unsigned len = d.size();
+  if (PK11_DigestFinal(impl_->raw, &d.front(), &len, d.size()) != SECSuccess) {
+    throw std::runtime_error("PK11_DigestFinal");
+  }
+  assert(len == d.size());
+}
+
+//////////////////////////////////////////////////////////////////////
 
 std::vector<unsigned char>
 hash_sha256(const std::vector<unsigned char> &data)
 {
-  PK11Context_handle ctx;
-  if (PK11_DigestBegin(ctx.raw) != SECSuccess) {
-    throw std::runtime_error("PK11_DigestBegin");
-  }
+  sha256_sink sink;
   if (!data.empty()) {
-    if (PK11_DigestOp(ctx.raw, &data.front(), data.size()) != SECSuccess) {
-      throw std::runtime_error("PK11_DigestOp");
-    }
+    sink.write(&data.front(), data.size());
   }
-  std::vector<unsigned char> digest(32);
-  unsigned len;
-  if (PK11_DigestFinal(ctx.raw, &digest.front(), &len, digest.size()) != SECSuccess) {
-    throw std::runtime_error("PK11_DigestFinal");
-  }
-  assert(len == digest.size());
+  std::vector<unsigned char> digest;
+  sink.digest(digest);
   return digest;
 }
 
@@ -72,6 +102,8 @@ bool
 hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
 		 std::string &error)
 {
+  sha256_sink sink;
+
   fd_handle fd;
   fd.raw = open(path, O_RDONLY | O_CLOEXEC);
   if (fd.raw < 0) {
@@ -81,11 +113,6 @@ hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
     error += ": ";
     error += s;
     return false;
-  }
-
-  PK11Context_handle ctx;
-  if (PK11_DigestBegin(ctx.raw) != SECSuccess) {
-    throw std::runtime_error("PK11_DigestBegin");
   }
 
   unsigned char buf[8192];
@@ -102,16 +129,9 @@ hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
       error += s;
       return false;
     }
-    if (PK11_DigestOp(ctx.raw, buf, ret) != SECSuccess) {
-      throw std::runtime_error("PK11_DigestOp");
-    }
+    sink.write(buf, ret);
   }
 
-  digest.resize(32);
-  unsigned len = digest.size();
-  if (PK11_DigestFinal(ctx.raw, &digest.front(), &len, digest.size()) != SECSuccess) {
-    throw std::runtime_error("PK11_DigestFinal");
-  }
-  assert(len == digest.size());
+  sink.digest(digest);
   return true;
 }
