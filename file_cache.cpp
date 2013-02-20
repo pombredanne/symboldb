@@ -69,9 +69,9 @@ file_cache::lookup_path(const checksum &csum, std::string &path)
   if (csum.type != TYPE) {
     return false;
   }
-  struct stat st;
+  struct stat64 st;
   std::string hex(base16_encode(csum.value.begin(), csum.value.end()));
-  if( fstatat(impl_->dirfd.raw, hex.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0
+  if( fstatat64(impl_->dirfd.raw, hex.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0
       && (csum.length == checksum::no_length
 	  || csum.length == static_cast<unsigned long long>(st.st_size))
       && S_ISREG(st.st_mode)) {

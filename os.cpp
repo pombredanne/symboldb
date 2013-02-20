@@ -32,8 +32,8 @@
 bool
 is_directory(const char *path)
 {
-  struct stat st;
-  if (stat(path, &st) != 0) {
+  struct stat64 st;
+  if (stat64(path, &st) != 0) {
     return false;
   }
   return S_ISDIR(st.st_mode);
