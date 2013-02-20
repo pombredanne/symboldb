@@ -1,0 +1,50 @@
+* Write some documentation, including a manual page.
+
+* Write a real makefile which supports incremental builds.
+
+* Check portability of the sources to non-Fedora systems.
+
+* Do not copy full RPM files into memory.  Stream them to directly to
+  disk when downloading them.
+
+* Add proper locking to guard against multiple parallel downloads and
+  parallel RPM package loading (by multiple symboldb processes running
+  in parallel).  This is mostly a performance issue.  The current code
+  might perform unnecessary downloads and abort on database update
+  conflicts, but it should not produce data.
+
+* Better logging, in particular of network activity.  Final URLs after
+  redirection should be included in error messages.
+
+* Retry failed downloads.  Especially with download.fedoraproject.org,
+  some downloads fail initially, but succeed when attempted again.
+
+* Reimplement the ELF ld.so emulation outside PostgreSQL.  The current
+  implementation is rather slow and slightly buggy because it may pick
+  the wrong DSO in case of soname collisions (which are fortunately
+  rare).
+
+* Implement removal of stale RPM cache entries not referenced by any
+  package set.
+
+* Parallelize downloading.
+
+* Support extracting Java symbols (class, method, field definitions
+  and references).
+
+* Support for extracting Python symbols.  This probably needs a some
+  flow analysis to give good results.
+
+* Parallelize RPM parsing and database loading.  It is not entirely
+  clear if this is beneficial on small systems, but it will probably
+  help if symboldb ever runs on real server systems.
+
+* Support unattended operation.  The package set <-> compose URL
+  mapping should probably reside in the database, and a single command
+  (which can be run from cron) could use that to update all package
+  sets.  This also relies on better logging/diagnostics and improved
+  error recovery.
+
+* Provide a workaround for non-UTF-8 paths in some broken RPM
+  packages.  These file names should probably be treated as
+  ISO-8859-1.
