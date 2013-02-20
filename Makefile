@@ -16,7 +16,8 @@ all: schema.sql.inc
 		curl_handle.cpp curl_fetch_result.cpp url.cpp download.cpp \
 		expat_handle.cpp expat_minidom.cpp \
 		checksum.cpp repomd.cpp \
-		zlib.cpp os.cpp sink.cpp vector_sink.cpp \
+		zlib.cpp os.cpp sink.cpp vector_sink.cpp tee_sink.cpp \
+		fd_sink.cpp os_exception.cpp \
 		string_support.cpp fd_handle.cpp hash.cpp file_cache.cpp \
 		database.cpp database_exception.cpp \
 		elf_symbol.cpp \

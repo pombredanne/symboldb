@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "sink.hpp"
+
 #include <string>
 #include <tr1/memory>
 #include <vector>
@@ -46,7 +48,18 @@ public:
   bool add(const checksum &, const std::vector<unsigned char> &data,
 	   std::string &path, std::string &error);
 
-  // FIXME: add an interface for streaming injection (so that the blob
-  // does not have to be stored in RAM).  Optional locking against
-  // concurrent addition would be desirable as well.
+  // Creates a sink for data with the specified checksum.
+  // FIXME: Does not use locking yet.
+  class add_sink : public sink {
+    struct add_impl;
+    std::tr1::shared_ptr<add_impl> impl_;
+  public:
+    add_sink(file_cache &, const checksum &);
+    ~add_sink();
+
+    void write(const unsigned char *, size_t);
+
+    // Performs checksum validation
+    bool finish(std::string &path, std::string &error);
+  };
 };
