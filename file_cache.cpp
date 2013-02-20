@@ -21,6 +21,7 @@
 #include "fd_handle.hpp"
 #include "string_support.hpp"
 #include "hash.hpp"
+#include "os.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -103,7 +104,12 @@ file_cache::add(const checksum &csum, const std::vector<unsigned char> &data,
   fd_handle fd;
   fd.raw = openat(impl_->dirfd.raw, hex.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
   if (fd.raw < 0) {
-    error = "could not open file";
+    std::string s(error_string());
+    error = "could not open file ";
+    error += impl_->root;
+    error += hex.c_str();
+    error += ": ";
+    error += s;
     return false;
   }
   if (!data.empty()) {
@@ -112,10 +118,20 @@ file_cache::add(const checksum &csum, const std::vector<unsigned char> &data,
     while (p != end) {
       ssize_t ret = write(fd.raw, p, end - p);
       if (ret == 0 || (ret < 0 && errno == ENOSPC)) {
-	error = "disk full";
+	std::string s(error_string(ENOSPC));
+	error = "could not write to file ";
+	error += impl_->root;
+	error += hex.c_str();
+	error += ": ";
+	error += s;
 	return false;
       } else if (ret < 0) {
-	error = "write error";
+	std::string s(error_string());
+	error = "could not write to file ";
+	error += impl_->root;
+	error += hex.c_str();
+	error += ": ";
+	error += s;
 	return false;
       }
       p += ret;
