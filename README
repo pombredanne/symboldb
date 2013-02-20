@@ -35,7 +35,7 @@ following commands as the "postgres" user:
   createdb USER
 
 Afterwards, as "USER", run "psql" to check if you can access the
-database.
+database.  The following commands have to be invoked as "USER", too.
 
 This command creates the "symboldb" database schema:
 
