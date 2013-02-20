@@ -28,6 +28,15 @@ by PostgreSQL applications.  If you want to change the defaults, you
 have to set those environment variables.  The database schema is
 currently hard-coded to "symboldb".
 
+To create a database for your user account (named "USER"), run the
+following commands as the "postgres" user:
+
+  createuser USER
+  createdb USER
+
+Afterwards, as "USER", run "psql" to check if you can access the
+database.
+
 This command creates the "symboldb" database schema:
 
     symboldb --create-schema
@@ -44,13 +53,21 @@ RPM file is loaded concurrently.
 RPMs can be assigned to a package set (roughly equivalent to a
 compose) using:
 
-    symboldb --create-set=RHEL-7.0/Server/x86_64 --arch=x86_64 *.rpm
+    symboldb --create-set=Fedora/18/x86_64 --arch=x86_64 *.rpm
+
+To load RPMs from a combination of composes, use this command
+
+    symboldb --create-set=Fedora/18/x86_64 --arch=x86_64
+    symboldb --update-set-from-repo=Fedora/18/x86_64 \
+      http://download.fedoraproject.org/pub/fedora/linux/updates/18/x86_64/ \
+      http://download.fedoraproject.org/pub/fedora/linux/releases/18/Everything/x86_64/os/
+
+This only downloads the latest version for each package
+name/architecture combination.  RPMs are cached in a directory under
+~/.cache/symboldb by default.
 
 A single package set can cover multiple architectures.  The name of
 the package set, RHEL-7.0/Server/x86_64 in the example, just follows a
 naming convention and is not interpreted by the tool.
 
 Examples for SQL queries are found in the doc/examples directory.
-
-
-
