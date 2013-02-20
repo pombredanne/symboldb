@@ -1,0 +1,23 @@
+32 bit stat system calls
+------------------------
+
+With the transition to 64-bit inode numbers, calling 32-bit stat(),
+fstat(), lstat() on small files (less than 2 GB) can fail, so these
+interfaces have to be considered obsolete.
+
+This lists affected packages because they reference the 32-bit
+versions of the system calls:
+
+SELECT DISTINCT symboldb.nevra(p)
+  FROM symboldb.package_set_member psm
+  JOIN symboldb.package p ON psm.package = p.id
+  JOIN symboldb.file f ON p.id = f.package
+  JOIN symboldb.elf_reference er ON f.id = er.file
+  WHERE psm.set = 9 AND  er.name IN ('__xstat', '__lxstat', '__fxstat')
+  ORDER BY 1;
+
+(Replace "9" with the package set in question.)
+
+The fix is to compile the package with -DFILE_OFFSET_BITS=64, then the
+symbol references will turn to '__xstat64', '__lxstat64',
+'__fxstat64'.
