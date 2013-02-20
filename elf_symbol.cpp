@@ -18,6 +18,8 @@
 
 #include "elf_symbol.hpp"
 
+#include <stdexcept>
+
 #include <gelf.h>
 #include <assert.h>
 
@@ -42,7 +44,6 @@ elf_symbol::visibility() const
     return "hidden";
   case STV_PROTECTED:
     return "protected";
-  default:
-    assert(0 && "invalid visibility value");
   }
+  throw std::logic_error("invalid visibility value");
 }
