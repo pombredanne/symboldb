@@ -67,7 +67,7 @@ name/architecture combination.  RPMs are cached in a directory under
 ~/.cache/symboldb by default.
 
 A single package set can cover multiple architectures.  The name of
-the package set, RHEL-7.0/Server/x86_64 in the example, just follows a
+the package set, Fedora/18/x86_64 in the example, just follows a
 naming convention and is not interpreted by the tool.
 
 Examples for SQL queries are found in the doc/examples directory.
