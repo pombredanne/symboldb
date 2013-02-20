@@ -33,3 +33,9 @@ std::string home_directory();
 // hierarchy already existed or was created successfully), otherwise
 // false.
 bool make_directory_hierarchy(const char *path, unsigned mode);
+
+// Turns an errno code into a string.
+std::string error_string(int);
+
+// Turns the current errno value into a string.
+std::string error_string();
