@@ -38,7 +38,7 @@ struct repomd {
   };
 
   std::string base_url;         // base URL for repodata/repomd.xml
-  std::string revision;		// revision number
+  std::string revision;		// revision number (or 0 if not present)
   std::vector<entry> entries;
 
   repomd();

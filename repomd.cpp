@@ -56,11 +56,12 @@ repomd::parse(const unsigned char *buffer, size_t length,
     return false;
   }
   element *rev = root->first_child("revision");
-  if (!rev) {
-    error = "missing \"revision\" element";
-    return false;
+  if (rev) {
+    revision = rev->text();
+  } else {
+    // Older repomd.xml files lack this element.
+    revision.clear();
   }
-  revision = rev->text();
   entries.clear();
   for(std::vector<std::tr1::shared_ptr<expat_minidom::node> >::iterator
 	p = root->children.begin(), end = root->children.end(); p != end; ++p) {
