@@ -4,9 +4,6 @@
 
 * Check portability of the sources to non-Fedora systems.
 
-* Do not copy full RPM files into memory.  Stream them to directly to
-  disk when downloading them.
-
 * Add proper locking to guard against multiple parallel downloads and
   parallel RPM package loading (by multiple symboldb processes running
   in parallel).  This is mostly a performance issue.  The current code

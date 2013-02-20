@@ -624,15 +624,14 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       if (opt.output != options::quiet) {
 	fprintf(stderr, "info: downloading %s\n", p->href.c_str());
       }
-      // FIXME: Incoming data should be streamed to disk.
-      std::vector<unsigned char> data;
+      file_cache::add_sink sink(fcache, p->csum);
       if (!download(dopts_no_cache, db, p->href.c_str(), 
-		    data, error)) {
+		    &sink, error)) {
 	fprintf(stderr, "error: %s: %s\n",
 		p->href.c_str(), error.c_str());
 	return 1;
       }
-      if (!fcache.add(p->csum, data, rpm_path, error)) {
+      if (!sink.finish(rpm_path, error)) {
 	fprintf(stderr, "error: %s: addding to cache: %s\n",
 		p->href.c_str(), error.c_str());
 	return 1;
