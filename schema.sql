@@ -69,14 +69,15 @@ $$ IMMUTABLE STRICT LANGUAGE SQL;
 CREATE INDEX ON symboldb.package (symboldb.nvra(package));
 CREATE INDEX ON symboldb.package (symboldb.nevra(package));
 
-CREATE TABLE symboldb.package_sha256 (
-  sha256 BYTEA NOT NULL PRIMARY KEY CHECK (LENGTH(sha256) = 32),
+CREATE TABLE symboldb.package_digest (
+  digest BYTEA NOT NULL PRIMARY KEY
+    CHECK (LENGTH(digest) IN (20, 32)),
   package INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE
 );
-CREATE INDEX ON symboldb.package_sha256 (package);
-COMMENT ON table symboldb.package_sha256 IS
-  'SHA-256 hashes of multiple representations of the same RPM package';
+CREATE INDEX ON symboldb.package_digest (package);
+COMMENT ON table symboldb.package_digest IS
+  'SHA-1 and SHA-256 hashes of multiple representations of the same RPM package';
 
 CREATE TABLE symboldb.package_set (
   id SERIAL NOT NULL PRIMARY KEY,

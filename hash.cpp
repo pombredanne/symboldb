@@ -30,12 +30,26 @@
 
 #include <pk11pub.h>
 
-struct sha256_sink::impl {
+struct hash_sink::impl {
   PK11Context *raw;
+  size_t digest_length;
 
-  impl()
+  impl(type t)
   {
-    raw = PK11_CreateDigestContext(SEC_OID_SHA256);
+    SECOidTag oid;
+    switch (t) {
+    case sha1:
+      oid = SEC_OID_SHA1;
+      digest_length = 20;
+      break;
+    case sha256:
+      oid = SEC_OID_SHA256;
+      digest_length = 32;
+      break;
+    default:
+      throw std::logic_error("invalid hash_sink::type");
+    }
+    raw = PK11_CreateDigestContext(oid);
     if (raw == NULL) {
       throw std::runtime_error("PK11_CreateDigestContext");
     }
@@ -47,20 +61,20 @@ struct sha256_sink::impl {
   }
 };
 
-sha256_sink::sha256_sink()
-  : impl_(new impl)
+hash_sink::hash_sink(type t)
+  : impl_(new impl(t))
 {
   if (PK11_DigestBegin(impl_->raw) != SECSuccess) {
     throw std::runtime_error("PK11_DigestBegin");
   }
 }
 
-sha256_sink::~sha256_sink()
+hash_sink::~hash_sink()
 {
 }
 
 void
-sha256_sink::write(const unsigned char *buf, size_t len)
+hash_sink::write(const unsigned char *buf, size_t len)
 {
   while (len > 0) {
     size_t to_hash = std::min(len, static_cast<size_t>(INT_MAX) / 2);
@@ -73,9 +87,9 @@ sha256_sink::write(const unsigned char *buf, size_t len)
 }
 
 void
-sha256_sink::digest(std::vector<unsigned char> &d)
+hash_sink::digest(std::vector<unsigned char> &d)
 {
-  d.resize(32);
+  d.resize(impl_->digest_length);
   unsigned len = d.size();
   if (PK11_DigestFinal(impl_->raw, &d.front(), &len, d.size()) != SECSuccess) {
     throw std::runtime_error("PK11_DigestFinal");
@@ -86,9 +100,9 @@ sha256_sink::digest(std::vector<unsigned char> &d)
 //////////////////////////////////////////////////////////////////////
 
 std::vector<unsigned char>
-hash_sha256(const std::vector<unsigned char> &data)
+hash(hash_sink::type t, const std::vector<unsigned char> &data)
 {
-  sha256_sink sink;
+  hash_sink sink(t);
   if (!data.empty()) {
     sink.write(&data.front(), data.size());
   }
@@ -99,10 +113,11 @@ hash_sha256(const std::vector<unsigned char> &data)
 
 
 bool
-hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
-		 std::string &error)
+hash_file(hash_sink::type t,
+	       const char *path, std::vector<unsigned char> &digest,
+	       std::string &error)
 {
-  sha256_sink sink;
+  hash_sink sink(t);
 
   fd_handle fd;
   fd.raw = open(path, O_RDONLY | O_CLOEXEC);

@@ -33,7 +33,7 @@
 // Database table names
 
 #define PACKAGE_TABLE "symboldb.package"
-#define PACKAGE_SHA256_TABLE "symboldb.package_sha256"
+#define PACKAGE_DIGEST_TABLE "symboldb.package_digest"
 #define FILE_TABLE "symboldb.file"
 #define ELF_FILE_TABLE "symboldb.elf_file"
 #define ELF_DEFINITION_TABLE "symboldb.elf_definition"
@@ -232,13 +232,13 @@ database::intern_package(const rpm_package_info &pkg,
 }
 
 void
-database::add_package_sha256(package_id pkg,
+database::add_package_digest(package_id pkg,
 			     const std::vector<unsigned char> &digest)
 {
   // FIXME: This needs a transaction and locking.
 
-  if (digest.size() != 32) {
-    throw std::logic_error("invalid SHA-256 digest length");
+  if (digest.size() < 16) {
+    throw std::logic_error("invalid digest length");
   }
 
   char pkgstr[32];
@@ -257,8 +257,8 @@ database::add_package_sha256(package_id pkg,
     pgresult_wrapper res;
     res.raw = PQexecParams
       (impl_->conn,
-       "SELECT 1 FROM " PACKAGE_SHA256_TABLE
-       " WHERE package = $1 AND sha256 = $2",
+       "SELECT 1 FROM " PACKAGE_DIGEST_TABLE
+       " WHERE package = $1 AND digest = $2",
        2, paramTypes, params, paramLengths, paramFormats, 0);
     res.check();
     if (PQntuples(res.raw) > 0) {
@@ -270,17 +270,17 @@ database::add_package_sha256(package_id pkg,
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
-     "INSERT INTO " PACKAGE_SHA256_TABLE " (package, sha256)"
+     "INSERT INTO " PACKAGE_DIGEST_TABLE " (package, digest)"
      " VALUES ($1, $2)",
      2, paramTypes, params, paramLengths, paramFormats, 0);
   res.check();
 }
 
 database::package_id
-database::package_by_sha256(const std::vector<unsigned char> &digest)
+database::package_by_digest(const std::vector<unsigned char> &digest)
 {
-  if (digest.size() != 32) {
-    throw std::logic_error("invalid SHA-256 digest length");
+  if (digest.size() < 16) {
+    throw std::logic_error("invalid digest length");
   }
   static const Oid paramTypes[] = {17 /* BYTEA */};
   const int paramLengths[] = {static_cast<int>(digest.size())};
@@ -291,7 +291,7 @@ database::package_by_sha256(const std::vector<unsigned char> &digest)
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
-     "SELECT package FROM " PACKAGE_SHA256_TABLE " WHERE sha256 = $1",
+     "SELECT package FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
      1, paramTypes, params, paramLengths, paramFormats, 0);
   return get_id(res);
 }

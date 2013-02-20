@@ -58,14 +58,14 @@ public:
   // FIXME: add source URI
   bool intern_package(const rpm_package_info &, package_id &);
 
-  // Adds the SHA-256 hash of a file representation.  A single RPM
-  // with identical contents can have multiple representations due to
-  // different signatures and compression.
-  void add_package_sha256(package_id, const std::vector<unsigned char> &digest);
+  // Adds a digest of the file representation.  A single RPM with
+  // identical contents can have multiple representations due to
+  // different signatures and compression (and different digest).
+  void add_package_digest(package_id, const std::vector<unsigned char> &digest);
 
-  // Looks up a package ID by the external SHA-256 digest.  Returns 0
-  // if the package ID was not found.
-  package_id package_by_sha256(const std::vector<unsigned char> &digest);
+  // Looks up a package ID by the external SHA-1 or SHA-256 digest.
+  // Returns 0 if the package ID was not found.
+  package_id package_by_digest(const std::vector<unsigned char> &digest);
 
   file_id add_file(package_id, const rpm_file_info &);
 

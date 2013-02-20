@@ -24,16 +24,20 @@
 #include <string>
 #include <tr1/memory>
 
+
 // Hashing sink implementation.
 // On NSS errors, an exception is thrown.
-class sha256_sink : public sink {
+class hash_sink : public sink {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  sha256_sink(const sha256_sink &); // not implemented
-  void operator=(const sha256_sink &); // not implemented
+  hash_sink(const hash_sink &); // not implemented
+  void operator=(const hash_sink &); // not implemented
 public:
-  sha256_sink();
-  ~sha256_sink();
+  typedef enum {
+    sha1, sha256
+  } type;
+  hash_sink(type);
+  ~hash_sink();
 
   // Hashes the specified byte array.
   void write(const unsigned char *, size_t);
@@ -45,10 +49,12 @@ public:
 
 // Computes the 32-byte SHA-256 hash of the argument.
 // On NSS errors, an exception is thrown.
-std::vector<unsigned char> hash_sha256(const std::vector<unsigned char> &data);
+std::vector<unsigned char> hash(hash_sink::type,
+				const std::vector<unsigned char> &data);
 
 // Reads the file at PATH and writes its SHA-256 hash to DIGEST.
 // ERROR is updated in case of file system errors, and the function
 // returns false.  On NSS errors, an exception is thrown.
-bool hash_sha256_file(const char *path, std::vector<unsigned char> &digest,
-		      std::string &error);
+bool hash_file(hash_sink::type, const char *path,
+	       std::vector<unsigned char> &digest,
+	       std::string &error);

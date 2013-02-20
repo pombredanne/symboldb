@@ -27,6 +27,10 @@
 class checksum;
 
 // A cache for content-addressed files on the disk.
+//
+// Note that we currently do not discriminate between the digest
+// types.  We currently support SHA-1 and SHA-256, so we can still
+// tell them apart.
 class file_cache {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;

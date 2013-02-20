@@ -245,12 +245,20 @@ load_rpm(const options &opt, database &db,
 
   std::vector<unsigned char> digest;
   std::string error;
-  if (!hash_sha256_file(path, digest, error)) {
+  // SHA-256
+  if (!hash_file(hash_sink::sha256, path, digest, error)) {
     fprintf(stderr, "error: hashing %s: %s\n", path, error.c_str());
     db.txn_rollback();
     return false;
   }
-  db.add_package_sha256(pkg, digest);
+  db.add_package_digest(pkg, digest);
+  // SHA-1
+  if (!hash_file(hash_sink::sha1, path, digest, error)) {
+    fprintf(stderr, "error: hashing %s: %s\n", path, error.c_str());
+    db.txn_rollback();
+    return false;
+  }
+  db.add_package_digest(pkg, digest);
 
   db.txn_commit();
   return true;
@@ -606,7 +614,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
   for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
        p != end; ++p) {
     if (load) {
-      database::package_id pid = db.package_by_sha256(p->csum.value);
+      database::package_id pid = db.package_by_digest(p->csum.value);
       if (pid != 0) {
 	if (opt.output != options::quiet) {
 	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());

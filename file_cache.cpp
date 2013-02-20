@@ -31,8 +31,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-static const char TYPE[] = "sha256";
-
 struct file_cache::impl {
   std::string root;
   fd_handle dirfd;
@@ -66,7 +64,7 @@ file_cache::valid()
 bool
 file_cache::lookup_path(const checksum &csum, std::string &path)
 {
-  if (csum.type != TYPE) {
+  if (csum.type != "sha" && csum.type != "sha256") {
     return false;
   }
   struct stat64 st;
@@ -89,24 +87,37 @@ struct file_cache::add_sink::add_impl {
   std::string error;
   fd_handle handle;
   fd_sink sink;
-  sha256_sink hash;
+  hash_sink hash;
   tee_sink tee;
   unsigned long long length;
 
-  add_impl(const std::tr1::shared_ptr<file_cache::impl> &c)
-    : cache(c), handle(), sink(), hash(), tee(&sink, &hash), length(0)
+  add_impl(const std::tr1::shared_ptr<file_cache::impl> &c,
+	   hash_sink::type hash_type)
+    : cache(c), handle(), sink(), hash(hash_type), tee(&sink, &hash), length(0)
   {
   }
 };
 
 file_cache::add_sink::add_sink(file_cache &c, const checksum &csum)
-  : impl_(new add_impl(c.impl_))
 {
-  if (csum.type != TYPE) {
+  hash_sink::type hash_type = hash_sink::sha256;
+  bool hash_valid = true;
+  if (csum.type == "sha256") {
+    // already set
+  } else if (csum.type == "sha") {
+    hash_type = hash_sink::sha1;
+  } else {
+    // unknown
+    hash_valid = false;
+  }
+
+  impl_.reset(new add_impl(c.impl_, hash_type));
+  if (!hash_valid) {
     impl_->error = "unsupported hash: ";
     impl_->error += csum.type;
     return;
   }
+
   impl_->csum = csum;
   impl_->hex = base16_encode(csum.value.begin(), csum.value.end());
   impl_->handle.raw = openat(c.impl_->dirfd.raw, impl_->hex.c_str(),
