@@ -28,48 +28,66 @@ download_options::download_options()
 
 bool
 download(const download_options &opt, database &db,
-	 const char *url, std::vector<unsigned char> &result,
-	 std::string &error)
+	 const char *url, sink *target, std::string &error)
 {
   switch (opt.cache_mode) {
   case download_options::only_cache:
   case download_options::always_cache:
-    if (db.url_cache_fetch(url, result)) {
-      return true;
-    }
-    if (opt.cache_mode == download_options::only_cache) {
-      error = "URL not in cache and network access disabled";
-      return false;
+    {
+      std::vector<unsigned char> data;
+      if (db.url_cache_fetch(url, data)) {
+	if (!data.empty()) {
+	  target->write(&data.front(), data.size());
+	}
+	return true;
+      }
+      if (opt.cache_mode == download_options::only_cache) {
+	error = "URL not in cache and network access disabled";
+	return false;
+      }
     }
     break;
   case download_options::no_cache:
     break;
   case download_options::check_cache:
     {
-      vector_sink target;
-      curl_fetch_result r(&target);
+      vector_sink vsink;
+      curl_fetch_result r(&vsink);
       r.head(url);
-      target.data.clear();
       if (r.error.empty()
 	  && r.http_date > 0 && r.http_size >= 0
 	  && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
-				r.http_date, target.data)) {
-	result.swap(target.data);
+				r.http_date, vsink.data)) {
+	if (!vsink.data.empty()) {
+	  target->write(&vsink.data.front(), vsink.data.size());
+	}
 	return true;
       }
     }
   }
 
-  vector_sink target;
-  curl_fetch_result r(&target);
+  curl_fetch_result r(target);
   r.get(url);
   if (!r.error.empty()) {
     error.swap(r.error);
     return false;
   }
   if (opt.cache_mode != download_options::no_cache) {
-    db.url_cache_update(url, target.data, r.http_date);
+    if (vector_sink *vsink = dynamic_cast<vector_sink *>(target)) {
+      db.url_cache_update(url, vsink->data, r.http_date);
+    }
   }
-  result.swap(target.data);
   return true;
+}
+
+bool
+download(const download_options &opt, database &db,
+	 const char *url, std::vector<unsigned char> &result,
+	 std::string &error)
+{
+  vector_sink target;
+  target.data.swap(result);
+  bool ret = download(opt, db, url, &target, error);
+  target.data.swap(result);
+  return ret;
 }

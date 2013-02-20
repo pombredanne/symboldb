@@ -22,6 +22,7 @@
 #include <vector>
 
 class database;
+class sink;
 
 struct download_options {
   enum {
@@ -33,6 +34,12 @@ struct download_options {
 
   download_options();
 };
+
+// Tries to download URL and sends its contents to SINK.  If there
+// is an error, return false and write a message to ERROR.
+bool download(const download_options &, database &,
+	      const char *url, sink *,
+	      std::string &error);
 
 // Tries to download URL and stores its contents in RESULT.  If there
 // is an error, return false and write a message to ERROR.
