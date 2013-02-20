@@ -19,6 +19,7 @@
 #include "download.hpp"
 #include "database.hpp"
 #include "curl_fetch_result.hpp"
+#include "vector_sink.hpp"
 
 download_options::download_options()
   : cache_mode(check_cache)
@@ -45,27 +46,30 @@ download(const download_options &opt, database &db,
     break;
   case download_options::check_cache:
     {
-      curl_fetch_result r;
+      vector_sink target;
+      curl_fetch_result r(&target);
       r.head(url);
+      target.data.clear();
       if (r.error.empty()
 	  && r.http_date > 0 && r.http_size >= 0
 	  && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
-				r.http_date, r.data)) {
-	result.swap(r.data);
+				r.http_date, target.data)) {
+	result.swap(target.data);
 	return true;
       }
     }
   }
 
-  curl_fetch_result r;
+  vector_sink target;
+  curl_fetch_result r(&target);
   r.get(url);
   if (!r.error.empty()) {
     error.swap(r.error);
     return false;
   }
   if (opt.cache_mode != download_options::no_cache) {
-    db.url_cache_update(url, r.data, r.http_date);
+    db.url_cache_update(url, target.data, r.http_date);
   }
-  result.swap(r.data);
+  result.swap(target.data);
   return true;
 }

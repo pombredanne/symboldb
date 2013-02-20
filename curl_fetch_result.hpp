@@ -18,14 +18,19 @@
 
 #pragma once
 
+class sink;
+
 #include <string>
 #include <vector>
 
 struct curl_fetch_result {
-  std::vector<unsigned char> data; // retrieved data
+  sink *target;	             // receives the data
   std::string error;	     // error message, empty if successful
   long http_date;	     // last modification date, -1 if not available
   long long http_size;	     // file size on the server, -1 if not available
+
+  curl_fetch_result(sink *); // initializes target
+  ~curl_fetch_result();
 
   // Performs a GET request for the URL, using reasonable defaults.
   // May throw std::bad_alloc.  Other errors are indicated through

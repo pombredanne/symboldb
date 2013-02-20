@@ -18,6 +18,7 @@
 
 #include "curl_handle.hpp"
 #include "curl_fetch_result.hpp"
+#include "sink.hpp"
 
 namespace {
   bool 
@@ -31,15 +32,22 @@ namespace {
   write_function(char *ptr, size_t size, size_t nmemb, void *userdata)
   {
     curl_fetch_result &r(*static_cast<curl_fetch_result *>(userdata));
+    if (!r.error.empty()) {
+      return 0;
+    }
     size = size * nmemb;
-    r.data.insert(r.data.end(), ptr, ptr + size);
+    try {
+      r.target->write(reinterpret_cast<unsigned char *>(ptr), size);
+    } catch (std::exception &e) {
+      r.error = e.what();
+      return 0;
+    }
     return size;
   }
 
   bool
   init(curl_fetch_result &r, curl_handle &h, const char *url)
   {
-    r.data.clear();
     r.error.clear();
     r.http_date = -1;
     r.http_size = -1;
@@ -99,6 +107,15 @@ namespace {
     r.http_size = size;
     return true;
   }
+}
+
+curl_fetch_result::curl_fetch_result(sink *t)
+  : target(t)
+{
+}
+
+curl_fetch_result::~curl_fetch_result()
+{
 }
 
 void
