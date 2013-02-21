@@ -2,6 +2,9 @@
 
 * Check portability of the sources to non-Fedora systems.
 
+* Remove dependency on libwww from W3C.  Apparently, this library is
+  unmaintained upstream and not widely available.
+
 * Implement a more efficient XML parser.  The current parser needs
   several hundred megabytes to store the Fedora primary.xml file.
 
