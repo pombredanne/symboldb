@@ -192,6 +192,12 @@ os_exception::function(T *addr)
   return function(reinterpret_cast<void *>(addr));
 }
 
+inline void *
+os_exception::function() const
+{
+  return function_;
+}
+
 inline const std::string &
 os_exception::function_name() const
 {
