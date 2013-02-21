@@ -35,6 +35,7 @@ add_executable (symboldb
   expat_minidom.cpp
   fd_handle.cpp
   fd_sink.cpp
+  fd_source.cpp
   file_cache.cpp
   hash.cpp
   os.cpp
@@ -48,6 +49,8 @@ add_executable (symboldb
   rpm_parser_exception.cpp
   rpmtd_wrapper.cpp
   sink.cpp
+  source.cpp
+  source_sink.cpp
   string_support.cpp
   symboldb.cpp
   tee_sink.cpp
