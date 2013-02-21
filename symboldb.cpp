@@ -158,6 +158,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 		file.info->mtime, file.info->mode,
 		(unsigned long long)file.contents.size());
       }
+      file.info->normalize_name();
       fid = db->add_file(pkg, *file.info); // FIXME
       // Check if this is an ELF file.
       if (file.contents.size() > 4

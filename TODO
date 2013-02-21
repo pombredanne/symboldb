@@ -48,7 +48,3 @@
   (which can be run from cron) could use that to update all package
   sets.  This also relies on better logging/diagnostics and improved
   error recovery.
-
-* Provide a workaround for non-UTF-8 paths in some broken RPM
-  packages.  These file names should probably be treated as
-  ISO-8859-1.
