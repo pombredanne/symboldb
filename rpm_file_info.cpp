@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,14 +17,24 @@
  */
 
 #include "rpm_file_info.hpp"
+#include "utf8.hpp"
 
 #include <stdlib.h>
 
 rpm_file_info::rpm_file_info()
-  : mode(0), mtime(0)
+  : mode(0), mtime(0), normalized(false)
 {
 }
 
 rpm_file_info::~rpm_file_info()
 {
+}
+
+void
+rpm_file_info::normalize_name()
+{
+  if (!normalized && !is_valid_utf8(name)) {
+    name = latin1_to_utf8(name);
+    normalized = true;
+  }
 }

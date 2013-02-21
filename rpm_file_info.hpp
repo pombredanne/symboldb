@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,9 +31,15 @@ struct rpm_file_info {
   std::string group;
   uint32_t mode;
   uint32_t mtime;
+  bool normalized; // See normalize_name() below.
 
   rpm_file_info();
   ~rpm_file_info();
+
+  // Some of the names are not encoded as UTF-8.  We pamper over that
+  // by re-encoding from ISO-8859-1 to UTF-8.  Sets normalized to
+  // true.
+  void normalize_name();
 };
 
 // TODO:
