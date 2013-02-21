@@ -35,6 +35,13 @@ struct test_case {
 typedef std::vector<test_case> test_suite;
 static test_suite *tests;
 
+static struct tests_cleanup {
+  ~tests_cleanup()
+  {
+    delete tests;
+  }
+} tests_cleanup_;
+
 test_register::test_register(const char *name, void(*func)())
 {
   if (tests == 0) {
