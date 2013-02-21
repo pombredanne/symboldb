@@ -45,8 +45,13 @@ std::string readlink(const char *path);
 // and std::bad_alloc for memory allocation errors.
 std::string realpath(const char *path);
 
-// Turns an errno code into a string.  Can throw std::bad_alloc.
+// Turns an errno code into a string.  Uses ERROR(nnn) for unknown
+// errors.  Can throw std::bad_alloc.
 std::string error_string(int);
+
+// Turns an errno code into the matching E* constant.  Returns NULL
+// for unknown constants.  Does not throw.
+const char *error_string_or_null(int code) throw();
 
 // Turns the current errno value into a string.  Can throw
 // std::bad_alloc.

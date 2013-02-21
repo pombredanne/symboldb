@@ -71,8 +71,7 @@ test(void)
   } catch (os_exception &e) {
     CHECK(starts_with(e.what(), "function=open["));
     CHECK(ends_with(e.what(),
-		    "] error=\"No such file or directory\""
-		    " path=#does-not-exist#"));
+		    "] error=ENOENT path=#does-not-exist#"));
   }
 }
 

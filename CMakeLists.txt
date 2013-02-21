@@ -13,6 +13,12 @@ include_directories (
 )
 
 add_custom_command (
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
+  COMMAND bash ${PROJECT_SOURCE_DIR}/error-constants.sh > ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
+  DEPENDS error-constants.sh
+)
+
+add_custom_command (
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
   COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
   DEPENDS schema.sql
@@ -39,6 +45,7 @@ add_library (SymbolDB
   file_cache.cpp
   hash.cpp
   os.cpp
+  os_error_string.cpp
   os_exception.cpp
   os_exception_function.cpp
   os_exception_defaults.cpp
@@ -61,6 +68,7 @@ add_library (SymbolDB
   utf8.cpp
   vector_sink.cpp
   zlib.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
 )
 

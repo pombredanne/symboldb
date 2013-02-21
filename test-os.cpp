@@ -21,6 +21,8 @@
 #include "os_exception.hpp"
 #include "string_support.hpp"
 
+#include <errno.h>
+
 static void
 test(void)
 {
@@ -41,16 +43,24 @@ test(void)
   } catch (os_exception &e) {
     CHECK(starts_with(e.what(), "function=realpath["));
     CHECK(ends_with(e.what(),
-		    "] error=\"No such file or directory\""
-		    " path=#does-not-exist#"));
+		    "] error=ENOENT path=#does-not-exist#"));
   }
 
   try {
     readlink(".");
   } catch (os_exception &e) {
     CHECK(starts_with(e.what(), "function=readlink["));
-    CHECK(ends_with(e.what(), "] error=\"Invalid argument\" path=."));
+    CHECK(ends_with(e.what(), "] error=EINVAL path=."));
   }
+
+  CHECK(error_string_or_null(0) == NULL);
+  CHECK(error_string_or_null(-1) == NULL);
+  COMPARE_STRING(error_string(0), "ERROR(0)");
+  COMPARE_STRING(error_string(-1), "ERROR(-1)");
+  COMPARE_STRING(error_string(EINVAL), "EINVAL");
+  COMPARE_STRING(error_string_or_null(EINVAL), "EINVAL");
+  COMPARE_STRING(error_string(ERANGE), "ERANGE");
+  COMPARE_STRING(error_string_or_null(ERANGE), "ERANGE");
 }
 
 static test_register t("os", test);
