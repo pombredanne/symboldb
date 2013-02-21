@@ -18,10 +18,17 @@
 
 #pragma once
 
+#include <string>
+
 // Records an error if EXPR evaluates to false.
 #define CHECK(expr) test_check((expr), #expr, __FILE__, __LINE__);
 void test_check(bool expr, const char *str, const char *file, unsigned line);
 
+#define COMPARE_STRING(left, right) \
+  test_compare_string((left), (right), #left, #right, __FILE__, __LINE__)
+void test_compare_string(const std::string &left, const std::string &right,
+			 const char *left_str, const char *rihgt_str,
+			 const char *file, unsigned line);
 
 // Registers a test case in the test suite.  This is supposed to be
 // used to define a file-level static object per test case.

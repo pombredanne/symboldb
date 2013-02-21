@@ -74,6 +74,24 @@ test_check(bool expr, const char *str, const char *file, unsigned line)
   fprintf(stderr, "%s:%u: failed check: %s\n", file, line, str);
 }
 
+void
+test_compare_string(const std::string &left, const std::string &right,
+		    const char *left_str, const char *right_str,
+		    const char *file, unsigned line)
+{
+  if (left == right) {
+    ++success_count;
+    return;
+  }
+  ++failure_count;
+  test_header();
+  fprintf(stderr, "%s:%u: string comparison failure\n", file, line);
+  fprintf(stderr, "%s:%u:   left: %s\n", file, line, left.c_str());
+  fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, left_str);
+  fprintf(stderr, "%s:%u:   right: %s\n", file, line, right.c_str());
+  fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, right_str);
+}
+
 int
 run_tests()
 {
@@ -97,5 +115,7 @@ run_tests()
 	    failure_count, failure_count + success_count, exception_count);
     return 1;
   }
+  fprintf(stderr, "info: %u tests successful\n",
+	  success_count + failure_count);
   return 0;
 }
