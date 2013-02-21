@@ -34,6 +34,11 @@ struct fd_handle {
   // Opens the file for reading.  Throws os_exception on error.
   void open_read_only(const char *path);
 
+  // Opens this descriptor relative to the passed-in descriptor.
+  // Throws os_exception on error.
+  void openat(int fd, const char *path, int flags);
+  void openat(int fd, const char *path, int flags, unsigned mode);
+
   // Closes RAW if it is not negative.
   ~fd_handle();
 };

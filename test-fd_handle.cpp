@@ -21,21 +21,49 @@
 #include "os_exception.hpp"
 #include "string_support.hpp"
 
+#include <errno.h>
+#include <fcntl.h>
+
 static void
 test(void)
 {
-  int fd;
   {
-    fd_handle h;
-    h.open_read_only("/dev/null");
-    fd = h.raw;
+    int fd;
+    {
+      fd_handle h;
+      h.open_read_only("/dev/null");
+      fd = h.raw;
+    }
+    CHECK(fd > 2);
+    {
+      fd_handle h;
+      h.open_read_only("/dev/null");
+      CHECK(h.raw == fd);
+    }
   }
-  CHECK(fd > 2);
+
   {
-    fd_handle h;
-    h.open_read_only("/dev/null");
-    CHECK(h.raw == fd);
+    fd_handle dir;
+    dir.open("/dev", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    CHECK(dir.raw == 3);
+    {
+      fd_handle h;
+      h.openat(dir.raw, "null", O_RDONLY | O_CLOEXEC);
+      CHECK(h.raw == 4);
+    }
+
+    try {
+      fd_handle h;
+      h.openat(dir.raw, "#does-not-exist#", O_RDONLY);
+    } catch (os_exception &e) {
+      CHECK(starts_with(e.function_name(), "openat["));
+      CHECK(e.error_code() == ENOENT);
+      CHECK(e.fd() == 3);
+      COMPARE_STRING(e.path(), "/dev");
+      COMPARE_STRING(e.path2(), "#does-not-exist#");
+    }
   }
+
 
   try {
     fd_handle h;

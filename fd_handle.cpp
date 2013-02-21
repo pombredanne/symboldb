@@ -41,6 +41,28 @@ fd_handle::open(const char *path, int flags)
 }
 
 void
+fd_handle::openat(int fd, const char *path, int flags, unsigned mode)
+{
+  int ret = ::openat(fd, path, flags, mode);
+  if (ret < 0) {
+    throw os_exception().function(::openat).fd(fd).path2(path).defaults();
+  }
+  ::close(raw);
+  raw = ret;
+}
+
+void
+fd_handle::openat(int fd, const char *path, int flags)
+{
+  int ret = ::openat(fd, path, flags);
+  if (ret < 0) {
+    throw os_exception().function(::openat).fd(fd).path2(path).defaults();
+  }
+  ::close(raw);
+  raw = ret;
+}
+
+void
 fd_handle::open_read_only(const char *path)
 {
   open(path, O_RDONLY | O_CLOEXEC);
