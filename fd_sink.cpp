@@ -47,7 +47,7 @@ write(const unsigned char *buf, size_t len)
       errno = ENOSPC;
     }
     if (ret < 0) {
-      throw os_exception();
+      throw os_exception().fd(raw).count(len).function(::write).defaults();
     }
     buf += ret;
     len -= ret;

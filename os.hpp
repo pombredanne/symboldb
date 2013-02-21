@@ -34,8 +34,20 @@ std::string home_directory();
 // false.
 bool make_directory_hierarchy(const char *path, unsigned mode);
 
-// Turns an errno code into a string.
+// Wrapper around getcwd(3).
+std::string current_directory();
+
+// Wrapper around readlink(2).  Throws os_exception for general errors
+// and std::bad_alloc for memory allocation errors.
+std::string readlink(const char *path);
+
+// Wrapper around realpath(3).  Throws os_exception for general errors
+// and std::bad_alloc for memory allocation errors.
+std::string realpath(const char *path);
+
+// Turns an errno code into a string.  Can throw std::bad_alloc.
 std::string error_string(int);
 
-// Turns the current errno value into a string.
+// Turns the current errno value into a string.  Can throw
+// std::bad_alloc.
 std::string error_string();

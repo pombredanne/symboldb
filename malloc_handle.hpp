@@ -16,32 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fd_source.hpp"
-#include "os_exception.hpp"
+#pragma once
 
-#include <errno.h>
-#include <unistd.h>
+#include <cstdlib>
 
-fd_source::fd_source()
-  : raw(-1)
-{
-}
-
-fd_source::fd_source(int d)
-  : raw(d)
-{
-}
-
-fd_source::~fd_source()
-{
-}
-
-size_t
-fd_source::read(unsigned char *buf, size_t len)
-{
-  ssize_t ret = ::read(raw, buf, len);
-  if (ret < 0) {
-    throw os_exception().fd(raw).count(len).function(::read).defaults();
+// Helper class to ensure that free() is called on a malloc()ed
+// pointer on scope exit.
+template <class T>
+class malloc_handle {
+  malloc_handle(const malloc_handle &); // not implemented
+  malloc_handle &operator=(const malloc_handle &); // not implemented
+public:
+  T *raw;
+  
+  malloc_handle()
+    : raw(0)
+  {
   }
-  return ret;
-}
+
+  explicit malloc_handle(T *p)
+    : raw(p)
+  {
+  }
+
+  ~malloc_handle()
+  {
+    free(raw);
+  }
+};

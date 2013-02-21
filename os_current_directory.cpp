@@ -16,32 +16,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fd_source.hpp"
+#include "os.hpp"
 #include "os_exception.hpp"
 
+#include <vector>
+
+#include <assert.h>
 #include <errno.h>
 #include <unistd.h>
 
-fd_source::fd_source()
-  : raw(-1)
+std::string
+current_directory()
 {
-}
+  char buf[4096];
+  char *ret = getcwd(buf, sizeof(buf));
+  if (ret == NULL) {
+    if (errno != ERANGE) {
+      throw os_exception().function(getcwd);
+    }
+    std::vector<char> vec(2 * sizeof(buf));
+    while (true) {
+      ret = getcwd( &vec.front(), vec.size());
+      if (ret != NULL) {
+	break;
+      }
+      if (errno != ERANGE) {
+	throw os_exception().function(getcwd);
+      }
 
-fd_source::fd_source(int d)
-  : raw(d)
-{
-}
-
-fd_source::~fd_source()
-{
-}
-
-size_t
-fd_source::read(unsigned char *buf, size_t len)
-{
-  ssize_t ret = ::read(raw, buf, len);
-  if (ret < 0) {
-    throw os_exception().fd(raw).count(len).function(::read).defaults();
+      size_t new_size = 2 * vec.size();
+      if (new_size < vec.size()) {
+	throw std::bad_alloc();
+      }
+      vec.resize(new_size);
+    }
+    return std::string(&vec.front());
   }
-  return ret;
+  return std::string(buf);
 }
+

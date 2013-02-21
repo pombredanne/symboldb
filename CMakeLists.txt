@@ -40,6 +40,10 @@ add_library (SymbolDB
   hash.cpp
   os.cpp
   os_exception.cpp
+  os_exception_function.cpp
+  os_exception_defaults.cpp
+  os_current_directory.cpp
+  os_readlink.cpp
   repomd.cpp
   rpm_evr.cpp
   rpm_file_entry.cpp
@@ -59,6 +63,10 @@ add_library (SymbolDB
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
 )
 
+target_link_libraries (SymbolDB
+  -ldl
+)
+
 add_executable (symboldb
   symboldb.cpp
 )
@@ -66,7 +74,7 @@ add_executable (symboldb
 target_link_libraries (symboldb
   SymbolDB
   -lcurl
-  -ldl -lrpm
+  -lrpm
   -lebl -lelf
   -lexpat
   -lnss3
@@ -79,7 +87,11 @@ install (TARGETS symboldb DESTINATION bin)
 
 add_executable (runtests
   runtests.cpp
+  test-fd_handle.cpp
+  test-fd_sink.cpp
+  test-fd_source.cpp
   test-os.cpp
+  test-os_exception.cpp
   test.cpp
 )
 

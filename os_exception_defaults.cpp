@@ -16,32 +16,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fd_source.hpp"
+// Separate translation unit because of operating-system-dependent
+// magic.
+
+#include "os.hpp"
 #include "os_exception.hpp"
 
-#include <errno.h>
+#include <stdio.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
-fd_source::fd_source()
-  : raw(-1)
-{
-}
-
-fd_source::fd_source(int d)
-  : raw(d)
-{
-}
-
-fd_source::~fd_source()
-{
-}
-
-size_t
-fd_source::read(unsigned char *buf, size_t len)
-{
-  ssize_t ret = ::read(raw, buf, len);
-  if (ret < 0) {
-    throw os_exception().fd(raw).count(len).function(::read).defaults();
+namespace {
+  std::string
+  path_from_fd(int fd)
+  {
+    char buf[128];
+    snprintf(buf, sizeof(buf), "/proc/self/fd/%d", fd);
+    return readlink(buf);
   }
-  return ret;
+}
+
+os_exception &
+os_exception::defaults()
+{
+  if (path_.empty() && fd_ >= 0) {  
+    try {
+      path_ = path_from_fd(fd_);
+    } catch (...) {
+    }
+  }
+  if (!offset_set_ && fd_ >= 0) {
+    off64_t ret = lseek64(fd_, 0, SEEK_CUR);
+    if (ret != static_cast<off64_t>(-1)) {
+      offset_ = ret;
+      offset_set_ = true;
+    }
+  }
+  if (!length_set_ && fd_ >= 0) {
+    struct stat64 st;
+    if (fstat64(fd_, &st) == 0) {
+      length_ = st.st_size;
+      length_set_ = true;
+    }
+  }
+  return *this;
 }

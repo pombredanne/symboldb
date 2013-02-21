@@ -17,7 +17,9 @@
  */
 
 #include "fd_handle.hpp"
+#include "os_exception.hpp"
 
+#include <fcntl.h>
 #include <unistd.h>
 
 fd_handle::~fd_handle()
@@ -25,4 +27,21 @@ fd_handle::~fd_handle()
   if (raw >= 0) {
     close(raw);
   }
+}
+
+void
+fd_handle::open(const char *path, int flags)
+{
+  int ret = ::open(path, flags);
+  if (ret < 0) {
+    throw os_exception().function(::open).path(path);
+  }
+  ::close(raw);
+  raw = ret;
+}
+
+void
+fd_handle::open_read_only(const char *path)
+{
+  open(path, O_RDONLY | O_CLOEXEC);
 }

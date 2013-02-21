@@ -16,32 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "test.hpp"
+#include "fd_handle.hpp"
 #include "fd_source.hpp"
-#include "os_exception.hpp"
 
-#include <errno.h>
-#include <unistd.h>
-
-fd_source::fd_source()
-  : raw(-1)
+static void
+test(void)
 {
-}
-
-fd_source::fd_source(int d)
-  : raw(d)
-{
-}
-
-fd_source::~fd_source()
-{
-}
-
-size_t
-fd_source::read(unsigned char *buf, size_t len)
-{
-  ssize_t ret = ::read(raw, buf, len);
-  if (ret < 0) {
-    throw os_exception().fd(raw).count(len).function(::read).defaults();
+  {
+    fd_handle h;
+    h.open_read_only("/dev/null");
+    fd_source s(h.raw);
+    unsigned char buf[3] = {65, 66, 67};
+    CHECK(s.read(buf, sizeof(buf)) == 0);
+    COMPARE_STRING(std::string(buf, buf + sizeof(buf)), "ABC");
   }
-  return ret;
+  {
+    fd_handle h;
+    h.open_read_only("/dev/zero");
+    fd_source s(h.raw);
+    unsigned char buf[3] = {65, 66, 67};
+    CHECK(s.read(buf, sizeof(buf)) == 3);
+    COMPARE_STRING(std::string(buf, buf + sizeof(buf)),
+		   std::string(sizeof(buf), '\0'));
+  }
 }
+
+static test_register t("fd_source", test);

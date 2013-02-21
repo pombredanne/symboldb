@@ -27,6 +27,13 @@ struct fd_handle {
   {
   }
 
+  // Opens the file with the indicated flags.  Throws os_exception on
+  // error.
+  void open(const char *path, int flags);
+
+  // Opens the file for reading.  Throws os_exception on error.
+  void open_read_only(const char *path);
+
   // Closes RAW if it is not negative.
   ~fd_handle();
 };

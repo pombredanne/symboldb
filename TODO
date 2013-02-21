@@ -17,6 +17,9 @@
 * Better logging, in particular of network activity.  Final URLs after
   redirection should be included in error messages.
 
+* error_string() should return one of the E* constants instead of a
+  localized string.
+
 * Retry failed downloads.  Especially with download.fedoraproject.org,
   some downloads fail initially, but succeed when attempted again.
 

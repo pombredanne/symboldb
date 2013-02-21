@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "malloc_handle.hpp"
 #include "os.hpp"
+#include "os_exception.hpp"
 
 #include <assert.h>
 #include <errno.h>
@@ -86,6 +88,18 @@ make_directory_hierarchy(const char *path, unsigned mode)
   }
 
   return is_directory(path);
+}
+
+std::string
+realpath(const char *path)
+{
+  malloc_handle<char> handle;
+  handle.raw = realpath(path, NULL);
+  if (handle.raw == NULL) {
+    throw os_exception().function<char *(const char *, char *)>(realpath)
+      .path(path);
+  }
+  return handle.raw;
 }
 
 // We do not know for sure which strerror_r prototype we got.

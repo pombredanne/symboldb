@@ -18,6 +18,8 @@
 
 #include "os.hpp"
 #include "test.hpp"
+#include "os_exception.hpp"
+#include "string_support.hpp"
 
 static void
 test(void)
@@ -29,6 +31,26 @@ test(void)
   CHECK(!is_directory(""));
   CHECK(!is_directory("#does-not-exists#"));
   CHECK(!is_directory("/tmp/#does-not-exists#"));
+
+  CHECK(current_directory() != ".");
+  COMPARE_STRING(current_directory(), realpath("."));
+
+  COMPARE_STRING(realpath("/"), "/");
+  try {
+    realpath("#does-not-exist#");
+  } catch (os_exception &e) {
+    CHECK(starts_with(e.what(), "function=realpath["));
+    CHECK(ends_with(e.what(),
+		    "] error=\"No such file or directory\""
+		    " path=#does-not-exist#"));
+  }
+
+  try {
+    readlink(".");
+  } catch (os_exception &e) {
+    CHECK(starts_with(e.what(), "function=readlink["));
+    CHECK(ends_with(e.what(), "] error=\"Invalid argument\" path=."));
+  }
 }
 
 static test_register t("os", test);

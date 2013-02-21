@@ -16,32 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fd_source.hpp"
+#include "test.hpp"
+#include "fd_handle.hpp"
+#include "fd_sink.hpp"
 #include "os_exception.hpp"
+#include "string_support.hpp"
 
-#include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
 
-fd_source::fd_source()
-  : raw(-1)
+static void
+test(void)
 {
-}
-
-fd_source::fd_source(int d)
-  : raw(d)
-{
-}
-
-fd_source::~fd_source()
-{
-}
-
-size_t
-fd_source::read(unsigned char *buf, size_t len)
-{
-  ssize_t ret = ::read(raw, buf, len);
-  if (ret < 0) {
-    throw os_exception().fd(raw).count(len).function(::read).defaults();
+  {
+    fd_handle h;
+    h.open("/dev/full", O_WRONLY);
+    fd_sink s(h.raw);
+    unsigned char buf[3] = {65, 66, 67};
+    try {
+      s.write(buf, sizeof(buf));
+    } catch (os_exception &e) {
+      CHECK(starts_with(e.what(), "function=write["));
+      CHECK(ends_with(e.what(),
+		      "error=\"No space left on device\" fd=3 path=/dev/full"
+		      " offset=0 length=0 count=3"));
+    }
   }
-  return ret;
 }
+
+static test_register t("fd_sink", test);

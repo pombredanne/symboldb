@@ -16,32 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fd_source.hpp"
+#include "test.hpp"
+#include "fd_handle.hpp"
 #include "os_exception.hpp"
+#include "string_support.hpp"
 
-#include <errno.h>
-#include <unistd.h>
-
-fd_source::fd_source()
-  : raw(-1)
+static void
+test(void)
 {
-}
-
-fd_source::fd_source(int d)
-  : raw(d)
-{
-}
-
-fd_source::~fd_source()
-{
-}
-
-size_t
-fd_source::read(unsigned char *buf, size_t len)
-{
-  ssize_t ret = ::read(raw, buf, len);
-  if (ret < 0) {
-    throw os_exception().fd(raw).count(len).function(::read).defaults();
+  int fd;
+  {
+    fd_handle h;
+    h.open_read_only("/dev/null");
+    fd = h.raw;
   }
-  return ret;
+  CHECK(fd > 2);
+  {
+    fd_handle h;
+    h.open_read_only("/dev/null");
+    CHECK(h.raw == fd);
+  }
+
+  try {
+    fd_handle h;
+    h.open_read_only("#does-not-exist#");
+  } catch (os_exception &e) {
+    CHECK(starts_with(e.what(), "function=open["));
+    CHECK(ends_with(e.what(),
+		    "] error=\"No such file or directory\""
+		    " path=#does-not-exist#"));
+  }
 }
+
+static test_register t("fd_handle", test);
