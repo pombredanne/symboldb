@@ -102,8 +102,11 @@ CREATE TABLE symboldb.file (
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0),
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
-  mode INTEGER NOT NULL CHECK (mode >= 0)
+  mode INTEGER NOT NULL CHECK (mode >= 0),
+  normalized BOOLEAN NOT NULL
 );
+COMMENT ON COLUMN symboldb.file.normalized IS
+  'indicates that the file name has been forced to UTF-8 encoding';
 CREATE INDEX ON symboldb.file (package);
 CREATE INDEX ON symboldb.file (name);
 

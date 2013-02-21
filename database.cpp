@@ -313,14 +313,15 @@ database::add_file(package_id pkg, const rpm_file_info &info)
     info.group.c_str(),
     mtimestr,
     modestr,
+    info.normalized ? "true" : "false",
   };
   pgresult_wrapper res;
   res.raw = PQexecParams
     (impl_->conn,
      "INSERT INTO " FILE_TABLE
-     " (package, name, user_name, group_name, mtime, mode)"
-     " VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
-     6, NULL, params, NULL, NULL, 0);
+     " (package, name, user_name, group_name, mtime, mode, normalized)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+     7, NULL, params, NULL, NULL, 0);
   return get_id_force(res);
 }
 
