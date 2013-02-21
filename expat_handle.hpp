@@ -30,4 +30,8 @@ struct expat_handle {
   // Deallocates the raw pointer.  If you want to avoid this, set it
   // to NULL.
   ~expat_handle();
+
+private:
+  expat_handle(const expat_handle &); // not implemented
+  expat_handle &operator=(const expat_handle &); // not implemented
 };
