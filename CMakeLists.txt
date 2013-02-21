@@ -18,7 +18,7 @@ add_custom_command (
   DEPENDS schema.sql
 )
 
-add_executable (symboldb
+add_library (SymbolDB
   checksum.cpp
   cpio_reader.cpp
   curl_fetch_result.cpp
@@ -52,7 +52,6 @@ add_executable (symboldb
   source.cpp
   source_sink.cpp
   string_support.cpp
-  symboldb.cpp
   tee_sink.cpp
   url.cpp
   vector_sink.cpp
@@ -60,7 +59,12 @@ add_executable (symboldb
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
 )
 
+add_executable (symboldb
+  symboldb.cpp
+)
+
 target_link_libraries (symboldb
+  SymbolDB
   -lcurl
   -ldl -lrpm
   -lebl -lelf
@@ -72,3 +76,13 @@ target_link_libraries (symboldb
 )
 
 install (TARGETS symboldb DESTINATION bin)
+
+add_executable (runtests
+  runtests.cpp
+  test-os.cpp
+  test.cpp
+)
+
+target_link_libraries (runtests
+  SymbolDB
+)
