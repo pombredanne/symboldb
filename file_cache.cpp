@@ -59,8 +59,6 @@ file_cache::valid()
   return impl_->dirfd.raw >= 0;
 }
 
-#include <stdio.h>
-
 bool
 file_cache::lookup_path(const checksum &csum, std::string &path)
 {
