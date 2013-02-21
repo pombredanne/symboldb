@@ -629,22 +629,31 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       }
     }
 
-    // FIXME: handle file_cache::exception
     std::string rpm_path;
-    if (fcache.lookup_path(p->csum, rpm_path)) {
-      ++skipped;
-    } else {
-      if (opt.output != options::quiet) {
-	fprintf(stderr, "info: downloading %s\n", p->href.c_str());
+    try {
+      if (fcache.lookup_path(p->csum, rpm_path)) {
+	++skipped;
+      } else {
+	if (opt.output != options::quiet) {
+	  fprintf(stderr, "info: downloading %s\n", p->href.c_str());
+	}
+	file_cache::add_sink sink(fcache, p->csum);
+	if (!download(dopts_no_cache, db, p->href.c_str(), 
+		      &sink, error)) {
+	  fprintf(stderr, "error: %s: %s\n",
+		  p->href.c_str(), error.c_str());
+	  return 1;
+	}
+	sink.finish(rpm_path);
       }
-      file_cache::add_sink sink(fcache, p->csum);
-      if (!download(dopts_no_cache, db, p->href.c_str(), 
-		    &sink, error)) {
-	fprintf(stderr, "error: %s: %s\n",
-		p->href.c_str(), error.c_str());
-	return 1;
-      }
-      sink.finish(rpm_path);
+    } catch (file_cache::unsupported_hash &e) {
+      fprintf(stderr, "error: unsupported hash for %s: %s\n",
+	      p->href.c_str(), e.what());
+      return 1;
+    } catch (file_cache::checksum_mismatch &e) {
+      fprintf(stderr, "error: checksum mismatch for %s: %s\n",
+	      p->href.c_str(), e.what());
+      return 1;
     }
 
     if (load) {
