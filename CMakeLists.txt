@@ -58,6 +58,7 @@ add_library (SymbolDB
   string_support.cpp
   tee_sink.cpp
   url.cpp
+  utf8.cpp
   vector_sink.cpp
   zlib.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
@@ -92,6 +93,7 @@ add_executable (runtests
   test-fd_source.cpp
   test-os.cpp
   test-os_exception.cpp
+  test-utf8.cpp
   test.cpp
 )
 
