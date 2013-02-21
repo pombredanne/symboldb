@@ -438,11 +438,6 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     return 1;
   }
   file_cache fcache(fcache_path.c_str());
-  if (!fcache.valid()) {
-    fprintf(stderr, "error: invalid RPM cache: %s\n", fcache_path.c_str());
-    return 1;
-  }
-
   package_set_consolidator<rpm_url> pset;
 
   for (; *argv; ++ argv) {
@@ -634,6 +629,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       }
     }
 
+    // FIXME: handle file_cache::exception
     std::string rpm_path;
     if (fcache.lookup_path(p->csum, rpm_path)) {
       ++skipped;
@@ -648,11 +644,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 		p->href.c_str(), error.c_str());
 	return 1;
       }
-      if (!sink.finish(rpm_path, error)) {
-	fprintf(stderr, "error: %s: addding to cache: %s\n",
-		p->href.c_str(), error.c_str());
-	return 1;
-      }
+      sink.finish(rpm_path);
     }
 
     if (load) {

@@ -24,6 +24,7 @@
 #include "os.hpp"
 #include "fd_sink.hpp"
 #include "tee_sink.hpp"
+#include "os_exception.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -40,7 +41,7 @@ struct file_cache::impl {
     if (root.size() > 0 && root.at(root.size() - 1) != '/') {
       root += '/';
     }
-    dirfd.raw = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    dirfd.open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   }
 };
 
@@ -51,12 +52,6 @@ file_cache::file_cache(const char *path)
 
 file_cache::~file_cache()
 {
-}
-
-bool
-file_cache::valid()
-{
-  return impl_->dirfd.raw >= 0;
 }
 
 bool
@@ -82,7 +77,6 @@ struct file_cache::add_sink::add_impl {
   std::tr1::shared_ptr<file_cache::impl> cache;
   checksum csum;
   std::string hex;		// part of the file name
-  std::string error;
   fd_handle handle;
   fd_sink sink;
   hash_sink hash;
@@ -99,36 +93,19 @@ struct file_cache::add_sink::add_impl {
 file_cache::add_sink::add_sink(file_cache &c, const checksum &csum)
 {
   hash_sink::type hash_type = hash_sink::sha256;
-  bool hash_valid = true;
   if (csum.type == "sha256") {
     // already set
   } else if (csum.type == "sha") {
     hash_type = hash_sink::sha1;
   } else {
-    // unknown
-    hash_valid = false;
+    throw unsupported_hash(csum.type);
   }
 
   impl_.reset(new add_impl(c.impl_, hash_type));
-  if (!hash_valid) {
-    impl_->error = "unsupported hash: ";
-    impl_->error += csum.type;
-    return;
-  }
-
   impl_->csum = csum;
   impl_->hex = base16_encode(csum.value.begin(), csum.value.end());
-  impl_->handle.raw = openat(c.impl_->dirfd.raw, impl_->hex.c_str(),
-			     O_WRONLY | O_CREAT | O_TRUNC, 0666);
-  if (impl_->handle.raw < 0) {
-    std::string s(error_string());
-    impl_->error = "could not open file ";
-    impl_->error += c.impl_->root;
-    impl_->error += impl_->hex.c_str();
-    impl_->error += ": ";
-    impl_->error += s;
-    return;
-  }
+  impl_->handle.openat(c.impl_->dirfd.raw, impl_->hex.c_str(),
+		       O_WRONLY | O_CREAT | O_TRUNC, 0666);
   impl_->sink.raw = impl_->handle.raw;
 }
 
@@ -139,61 +116,76 @@ file_cache::add_sink::~add_sink()
 void
 file_cache::add_sink::write(const unsigned char *buf, size_t len)
 {
-  if (impl_->error.empty()) {
-    try {
-      impl_->tee.write(buf, len);
-    } catch (std::exception e) {
-      impl_->error = "writing to ";
-      impl_->error += impl_->cache->root;
-      impl_->error += impl_->hex.c_str();
-      impl_->error += ": ";
-      impl_->error += e.what();
-    }
-    impl_->length += len;
-  }
+  impl_->tee.write(buf, len);
+  impl_->length += len;
 }
 
-bool
-file_cache::add_sink::finish(std::string &path, std::string &error)
+void
+file_cache::add_sink::finish(std::string &path)
 {
-  if (impl_->error.empty()) {
-    if (impl_->csum.length != checksum::no_length
-	&& impl_->csum.length != impl_->length) {
-      error = impl_->error = "data length does not match checksum";
-      return false;
-    }
-    std::vector<unsigned char> digest;
-    impl_->hash.digest(digest);
-    if (digest != impl_->csum.value) {
-      error = impl_->error = "data does not match checksum";
-      return false;
-    }
-
-    if (fsync(impl_->handle.raw) != 0) {
-      std::string s(error_string());
-      error = "fsync error: ";
-      error += s;
-      impl_->error = error;
-      return false;
-    }
-
-    path = impl_->cache->root;
-    path += impl_->hex;
-    return true;
-  } else {
-    error = impl_->error;
-    return false;
+  if (impl_->csum.length != checksum::no_length
+      && impl_->csum.length != impl_->length) {
+    throw checksum_mismatch("length");
   }
+  std::vector<unsigned char> digest;
+  impl_->hash.digest(digest);
+  if (digest != impl_->csum.value) {
+    throw checksum_mismatch("digest");
+  }
+
+  if (fsync(impl_->handle.raw) != 0) {
+    throw os_exception().fd(impl_->handle.raw).function(fsync).defaults();
+  }
+
+  path = impl_->cache->root;
+  path += impl_->hex;
 }
 
 
-bool
+void
 file_cache::add(const checksum &csum, const std::vector<unsigned char> &data,
-		std::string &path, std::string &error)
+		std::string &path)
 {
   add_sink sink(*this, csum);
   if (!data.empty()) {
     sink.write(&data.front(), data.size());
   }
-  return sink.finish(path, error);
+  sink.finish(path);
+}
+
+// Exceptions.
+//////////////////////////////////////////////////////////////////////
+
+file_cache::exception::~exception() throw()
+{
+}
+
+file_cache::unsupported_hash::unsupported_hash(const std::string &h)
+  : hash_(h)
+{
+}
+
+file_cache::unsupported_hash::~unsupported_hash() throw()
+{
+}
+
+const char *
+file_cache::unsupported_hash::what() const throw()
+{
+  return hash_.c_str();
+}
+
+file_cache::checksum_mismatch::checksum_mismatch(const char *k)
+  : kind_(k)
+{
+}
+
+file_cache::checksum_mismatch::~checksum_mismatch() throw()
+{
+}
+
+const char *
+file_cache::checksum_mismatch::what() const throw()
+{
+  return kind_;
 }

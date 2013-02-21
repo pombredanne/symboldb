@@ -38,9 +38,6 @@ public:
   file_cache(const char *path);
   ~file_cache();
 
-  // Returns true if the cache directory actually exists.
-  bool valid();
-
   // Returns true if the checksum is in the cache and writes the full
   // file name to PATH.
   bool lookup_path(const checksum &, std::string &path);
@@ -49,8 +46,8 @@ public:
   // verifying that the checksum matches).  Updates PATH with the file
   // name.  Returns true on success, false on error (ERROR is
   // updated).
-  bool add(const checksum &, const std::vector<unsigned char> &data,
-	   std::string &path, std::string &error);
+  void add(const checksum &, const std::vector<unsigned char> &data,
+	   std::string &path);
 
   // Creates a sink for data with the specified checksum.
   // FIXME: Does not use locking yet.
@@ -64,6 +61,27 @@ public:
     void write(const unsigned char *, size_t);
 
     // Performs checksum validation
-    bool finish(std::string &path, std::string &error);
+    void finish(std::string &path);
+  };
+
+  struct exception : std::exception {
+    ~exception() throw();
+  };
+
+  class unsupported_hash : public exception {
+    std::string hash_;
+  public:
+    unsupported_hash(const std::string &);
+    ~unsupported_hash() throw ();
+    const char *what() const throw();
+  };
+
+  // Thrown by add(), add_sink if a checksum mismatch is detected.
+  class checksum_mismatch : public exception {
+    const char *kind_;
+  public:
+    checksum_mismatch(const char *);
+    ~checksum_mismatch() throw ();
+    const char *what() const throw();
   };
 };
