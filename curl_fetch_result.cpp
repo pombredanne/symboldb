@@ -101,6 +101,14 @@ namespace {
     if (ret != CURLE_OK) {
       return set_error(r, ret);
     }
+    long status;
+    curl_easy_getinfo(h.raw, CURLINFO_RESPONSE_CODE, &status);
+    if (status != 200) {
+      char buf[50];
+      snprintf(buf, sizeof(buf), "status code: %ld", status);
+      r.error = buf;
+      return false;
+    }
     curl_easy_getinfo(h.raw, CURLINFO_FILETIME, &r.http_date);
     double size;
     curl_easy_getinfo(h.raw, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &size);
