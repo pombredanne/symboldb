@@ -613,7 +613,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
   if (opt.output != options::quiet) {
     fprintf(stderr, "info: %zu packages in download set\n", urls.size());
   }
-  size_t skipped = 0;
+  size_t download_count = 0;
   std::set<database::package_id> pids;
 
   for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
@@ -624,7 +624,6 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 	if (opt.output != options::quiet) {
 	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());
 	}
-	++skipped;
 	pids.insert(pid);
 	continue;
       }
@@ -632,12 +631,11 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 
     std::string rpm_path;
     try {
-      if (fcache.lookup_path(p->csum, rpm_path)) {
-	++skipped;
-      } else {
+      if (!fcache.lookup_path(p->csum, rpm_path)) {
 	if (opt.output != options::quiet) {
 	  fprintf(stderr, "info: downloading %s\n", p->href.c_str());
 	}
+	++download_count;
 	file_cache::add_sink sink(fcache, p->csum);
 	if (!download(dopts_no_cache, db, p->href.c_str(), 
 		      &sink, error)) {
@@ -667,8 +665,8 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     }
   }
   if (opt.output != options::quiet) {
-    fprintf(stderr, "info: %zu downloads of %zu found in cache\n",
-	    urls.size(), urls.size());
+    fprintf(stderr, "info: downloaded %zu of %zu packages\n",
+	    download_count, urls.size());
   }
   if (load && set > 0) {
     db.txn_begin();
