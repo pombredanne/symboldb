@@ -34,6 +34,15 @@ whitespace(char ch)
 std::string strip(const std::string &);
 
 template <unsigned N> bool
+starts_with(const std::string &s, const char (&pattern)[N])
+{
+  if (s.size() < N - 1) {
+    return false;
+  }
+  return __builtin_memcmp(s.data(), pattern, N - 1) == 0;
+}
+
+template <unsigned N> bool
 ends_with(const std::string &s, const char (&pattern)[N])
 {
   if (s.size() < N - 1) {
