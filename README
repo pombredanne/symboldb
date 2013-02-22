@@ -1,5 +1,5 @@
 Prerequisites
--------------
+─────────────
 
 In addition to the usual C++ build environment, you need the following
 development packages:
@@ -9,15 +9,16 @@ development packages:
 - elfutils-devel
 - elfutils-libelf-devel
 - expat-devel
+- gawk (for /usr/bin/awk)
 - nss-devel
 - postgresql-devel
 - rpm-devel
-- vim-common
+- vim-common (for /usr/bin/xxd)
 - w3c-libwww-devel
 - zlib-devel
 
 Building
---------
+────────
 
 Create a build directory, run cmake and make:
 
@@ -34,7 +35,15 @@ Alternatively, you can use the Ninja build tool:
   ninja-build
 
 Running
--------
+───────
+
+╔════════════════════════════════════════════════════════════════════╗
+║ NOTE: The database schema is still evolving.  I do not provide     ║
+║ automated schema migration support at this stage because I do not  ║
+║ assume that there are any users of this code.  Please drop me a    ║
+║ note if you use this software, and I will be more careful about    ║
+║ database schema changes.                                           ║
+╚════════════════════════════════════════════════════════════════════╝
 
 symboldb honors the PGUSER, PGDATABASE etc. variables generally used
 by PostgreSQL applications.  If you want to change the defaults, you
