@@ -63,6 +63,7 @@ add_library (SymbolDB
   sink.cpp
   source.cpp
   source_sink.cpp
+  string_source.cpp
   string_support.cpp
   tee_sink.cpp
   url.cpp
@@ -103,6 +104,7 @@ add_executable (runtests
   test-file_cache.cpp
   test-os.cpp
   test-os_exception.cpp
+  test-string_source.cpp
   test-utf8.cpp
   test.cpp
 )
