@@ -34,6 +34,11 @@ std::string home_directory();
 // false.
 bool make_directory_hierarchy(const char *path, unsigned mode);
 
+// Creates a temporary directory with the indicated prefix (which
+// shall not contain any XXXXXX characters).  Throws os_exception on
+// failure.
+std::string make_temporary_directory(const char *prefix);
+
 // Wrapper around getcwd(3).
 std::string current_directory();
 

@@ -22,6 +22,8 @@
 #include "string_support.hpp"
 
 #include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static void
 test(void)
@@ -36,6 +38,23 @@ test(void)
 
   CHECK(current_directory() != ".");
   COMPARE_STRING(current_directory(), realpath("."));
+
+  {
+    std::string dir(make_temporary_directory("/tmp/test-os-"));
+    CHECK(is_directory(dir.c_str()));
+    struct stat64 st;
+    CHECK(stat64(dir.c_str(), &st) == 0);
+    CHECK((st.st_mode & S_IRWXU) == 0700);
+    CHECK(make_directory_hierarchy((dir + "/first/second").c_str(), 0700));
+    CHECK(stat64((dir + "/first/second").c_str(), &st) == 0);
+    CHECK((st.st_mode & S_IRWXU) == 0700);
+    CHECK(stat64((dir + "/first").c_str(), &st) == 0);
+    CHECK((st.st_mode & S_IRWXU) == 0700);
+    CHECK(rmdir((dir + "/first/second").c_str()) == 0);
+    CHECK(rmdir((dir + "/first").c_str()) == 0);
+    CHECK(rmdir(dir.c_str()) == 0);
+    CHECK(!is_directory(dir.c_str()));
+  }
 
   COMPARE_STRING(realpath("/"), "/");
   try {

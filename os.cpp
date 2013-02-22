@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include <stdexcept>
+#include <vector>
 
 bool
 is_directory(const char *path)
@@ -88,6 +89,19 @@ make_directory_hierarchy(const char *path, unsigned mode)
   }
 
   return is_directory(path);
+}
+
+std::string
+make_temporary_directory(const char *prefix)
+{
+  std::vector<char> templ(prefix, prefix + strlen(prefix));
+  static const char placeholder[7] = "XXXXXX";
+  templ.insert(templ.end(), placeholder, placeholder + sizeof(placeholder));
+  const char *ret = mkdtemp(templ.data());
+  if (ret == NULL) {
+    throw os_exception().path(prefix).function(mkdtemp);
+  }
+  return ret;
 }
 
 std::string
