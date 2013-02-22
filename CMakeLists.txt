@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 project (symboldb)
 
+include(CheckCSourceCompiles)
+
 if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "-std=gnu++03 -O2 -g -Wall -W -fstack-protector -D_GNU_SOURCE -D_FORTIFY_SOURCE=2")
   set(CMAKE_EXE_LINKER_FLAGS "-g")
@@ -10,6 +12,17 @@ include_directories (
   /usr/include/nss3
   /usr/include/nspr4
   ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+CHECK_C_SOURCE_COMPILES ("#include <libpq-fe.h>
+int main() { PGRES_SINGLE_TUPLE; return 0; }
+"
+  HAVE_PG_SINGLE_TUPLE
+)
+
+configure_file (
+  "${PROJECT_SOURCE_DIR}/symboldb_config.h.in"
+  "${PROJECT_BINARY_DIR}/symboldb_config.h"
 )
 
 add_custom_command (

@@ -22,6 +22,7 @@
 #include "elf_image.hpp"
 #include "elf_symbol_definition.hpp"
 #include "elf_symbol_reference.hpp"
+#include "symboldb_config.h"
 
 #include <stdlib.h>
 
@@ -107,6 +108,9 @@ pgresult_wrapper::check()
   case PGRES_COPY_OUT:
   case PGRES_COPY_IN:
   case PGRES_COPY_BOTH:
+#ifdef HAVE_PG_SINGLE_TUPLE
+  case PGRES_SINGLE_TUPLE:
+#endif
     return;
   case PGRES_BAD_RESPONSE:
   case PGRES_NONFATAL_ERROR:
