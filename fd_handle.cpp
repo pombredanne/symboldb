@@ -41,6 +41,17 @@ fd_handle::open(const char *path, int flags)
   }
   raw = ret;
 }
+
+void
+fd_handle::open(const char *path, int flags, unsigned mode)
+{
+  int ret = ::open(path, flags, mode);
+  if (ret < 0) {
+    throw os_exception().function(::open).path(path);
+  }
+  if (raw >= 0) {
+    ::close(raw);
+  }
   raw = ret;
 }
 

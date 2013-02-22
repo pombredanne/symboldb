@@ -31,6 +31,10 @@ struct fd_handle {
   // error.
   void open(const char *path, int flags);
 
+  // Opens the file with the indicated flags.  Throws os_exception on
+  // error.
+  void open(const char *path, int flags, unsigned mode);
+
   // Opens the file for reading.  Throws os_exception on error.
   void open_read_only(const char *path);
 
