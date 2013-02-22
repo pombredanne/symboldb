@@ -39,6 +39,7 @@ add_library (SymbolDB
   elf_symbol_reference.cpp
   expat_handle.cpp
   expat_minidom.cpp
+  expat_source.cpp
   fd_handle.cpp
   fd_sink.cpp
   fd_source.cpp
@@ -77,6 +78,7 @@ add_library (SymbolDB
 target_link_libraries (SymbolDB
   -ldl
   -lebl -lelf
+  -lexpat
   -lnss3
   -lrpm -lrpmio
 )
@@ -88,7 +90,6 @@ add_executable (symboldb
 target_link_libraries (symboldb
   SymbolDB
   -lcurl
-  -lexpat
   -lpq
   -lwwwcore -lwwwutils
   -lz
@@ -102,6 +103,7 @@ add_executable (runtests
   test-fd_sink.cpp
   test-fd_source.cpp
   test-file_cache.cpp
+  test-expat_source.cpp
   test-os.cpp
   test-os_exception.cpp
   test-string_source.cpp
