@@ -75,6 +75,9 @@ add_library (SymbolDB
 
 target_link_libraries (SymbolDB
   -ldl
+  -lebl -lelf
+  -lnss3
+  -lrpm -lrpmio
 )
 
 add_executable (symboldb
@@ -84,11 +87,8 @@ add_executable (symboldb
 target_link_libraries (symboldb
   SymbolDB
   -lcurl
-  -lrpm
-  -lebl -lelf
   -lexpat
-  -lnss3
-  -lrpmio -lpq
+  -lpq
   -lwwwcore -lwwwutils
   -lz
 )
