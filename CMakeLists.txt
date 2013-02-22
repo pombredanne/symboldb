@@ -105,6 +105,7 @@ add_executable (runtests
   test-os.cpp
   test-os_exception.cpp
   test-string_source.cpp
+  test-string_support.cpp
   test-utf8.cpp
   test.cpp
 )

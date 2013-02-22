@@ -20,6 +20,51 @@
 
 #include <cerrno>
 #include <cstdlib>
+#include <sstream>
+
+std::string
+quote(const std::string &str)
+{
+  for (const char *p = str.data(), *end = p + str.size(); p != end; ++p) {
+    unsigned char ch = *p;
+    if (ch <= ' ' || ch == '\\' || ch == '"' || ch == '\'' || ch >= 0x7f) {
+      std::ostringstream s;
+      s << std::hex;
+      // Restart from the beginning.
+      for (p = str.data(); p != end; ++p) {
+	unsigned char ch = *p;
+	switch (ch) {
+	case '\r':
+	  s << "\\r";
+	  break;
+	case '\n':
+	  s << "\\n";
+	  break;
+	case '\t':
+	  s << "\\t";
+	  break;
+	case '"':
+	case '\'':
+	case '\\':
+	  s << '\\' << ch;
+	  break;
+	default:
+	  if (ch < ' ' || ch >= 0x7f) {
+	    s << "\\x";
+	    s.width(2);
+	    s.fill('0');
+	    s << (int)ch;
+	  } else {
+	    s << ch;
+	  }
+	}
+      }
+      return s.str();
+    }
+  }
+  // No special characters found.
+  return str;
+}
 
 namespace {
   const char *

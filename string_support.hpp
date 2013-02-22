@@ -20,6 +20,11 @@
 
 #include <string>
 
+// Replaces non-printable characters (less than ASCII 32, greater than
+// ASCII 126) with hexadecimal escape seqences or special escape
+// sequences.  Does not include the surrounding quote characters.
+std::string quote(const std::string &);
+
 // Parses an unsigned long long, ignoring leading and trailing white space.
 bool parse_unsigned_long_long(const std::string &, unsigned long long &value);
 
