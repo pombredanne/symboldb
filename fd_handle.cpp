@@ -36,7 +36,11 @@ fd_handle::open(const char *path, int flags)
   if (ret < 0) {
     throw os_exception().function(::open).path(path);
   }
-  ::close(raw);
+  if (raw >= 0) {
+    ::close(raw);
+  }
+  raw = ret;
+}
   raw = ret;
 }
 
@@ -47,7 +51,9 @@ fd_handle::openat(int fd, const char *path, int flags, unsigned mode)
   if (ret < 0) {
     throw os_exception().function(::openat).fd(fd).path2(path).defaults();
   }
-  ::close(raw);
+  if (raw >= 0) {
+    ::close(raw);
+  }
   raw = ret;
 }
 
@@ -58,7 +64,9 @@ fd_handle::openat(int fd, const char *path, int flags)
   if (ret < 0) {
     throw os_exception().function(::openat).fd(fd).path2(path).defaults();
   }
-  ::close(raw);
+  if (raw >= 0) {
+    ::close(raw);
+  }
   raw = ret;
 }
 
