@@ -51,6 +51,7 @@ add_library (SymbolDB
   os_exception_defaults.cpp
   os_current_directory.cpp
   os_readlink.cpp
+  os_remove_directory_tree.cpp
   repomd.cpp
   rpm_evr.cpp
   rpm_file_entry.cpp

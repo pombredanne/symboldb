@@ -39,6 +39,10 @@ bool make_directory_hierarchy(const char *path, unsigned mode);
 // failure.
 std::string make_temporary_directory(const char *prefix);
 
+// Removes the directory tree at ROOT.  Throws os_exception on the
+// first error.
+void remove_directory_tree(const char *root);
+
 // Wrapper around getcwd(3).
 std::string current_directory();
 
