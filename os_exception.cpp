@@ -18,6 +18,7 @@
 
 #include "os_exception.hpp"
 #include "os.hpp"
+#include "string_support.hpp"
 
 #include <sstream>
 
@@ -116,42 +117,12 @@ namespace {
   void
   maybe_quote(std::ostream &s, const std::string str)
   {
-    for (const char *p = str.data(), *end = p + str.size(); p != end; ++p) {
-      unsigned char ch = *p;
-      if (ch <= ' ' || ch == '\\' || ch == '"' || ch == '\'' || ch >= 0x7f) {
-	// Restart from the beginning.
-	s << '"';
-	for (p = str.data(); p != end; ++p) {
-	  unsigned char ch = *p;
-	  switch (ch) {
-	  case '\r':
-	    s << "\\r";
-	    break;
-	  case '\n':
-	    s << "\\n";
-	    break;
-	  case '\t':
-	    s << "\\n";
-	    break;
-	  case '"':
-	  case '\'':
-	  case '\\':
-	    s << '\\' << ch;
-	    break;
-	  default:
-	    if (ch < ' ' || ch >= 0x7f) {
-	      s << '\\' << (int)ch; // FIXME
-	    } else {
-	      s << ch;
-	    }
-	  }
-	}
-	s << '"';
-	return;
-      }
+    std::string quoted(quote(str));
+    if (quoted.size() > str.size()) {
+      s << '"' << quoted << '"';
+    } else {
+      s << str;
     }
-    // No special characters found, output verbatim.
-    s << str;
   }
 
   void
