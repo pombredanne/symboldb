@@ -109,10 +109,12 @@ run_tests()
     try {
       p->func();
     } catch (std::exception &e) {
+      ++exception_count;
       test_header();
       fprintf(stderr, "error: %s: exception %s: %s\n",
 	      p->name, typeid(e).name(), e.what());
     } catch (...) {
+      ++exception_count;
       test_header();
       fprintf(stderr, "error: %s: unknown exception\n", p->name);
     }
