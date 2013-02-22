@@ -33,6 +33,9 @@ test(void)
       fd_handle h;
       h.open_read_only("/dev/null");
       fd = h.raw;
+      CHECK(h.release() == fd);
+      CHECK(h.raw == -1);
+      h.raw = fd;
     }
     CHECK(fd > 2);
     {

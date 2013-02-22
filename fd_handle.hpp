@@ -42,7 +42,19 @@ struct fd_handle {
   // Closes RAW if it is not negative.
   ~fd_handle();
 
+  // Returns the current value of RAW and sets it to -1, effectively
+  // releasing ownership.
+  int release();
+
 private:
   fd_handle(const fd_handle &); // not implemented
   fd_handle &operator=(const fd_handle &); // not implemented
 };
+
+inline int
+fd_handle::release()
+{
+  int fd = raw;
+  raw = -1;
+  return fd;
+}
