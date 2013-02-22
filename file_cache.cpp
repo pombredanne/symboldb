@@ -127,14 +127,24 @@ file_cache::add_sink::finish(std::string &path)
       && impl_->csum.length != impl_->length) {
     throw checksum_mismatch("length");
   }
-  std::vector<unsigned char> digest;
-  impl_->hash.digest(digest);
-  if (digest != impl_->csum.value) {
-    throw checksum_mismatch("digest");
-  }
 
-  if (fsync(impl_->handle.raw) != 0) {
-    throw os_exception().fd(impl_->handle.raw).function(fsync).defaults();
+  try {
+    std::vector<unsigned char> digest;
+    impl_->hash.digest(digest);
+    if (digest != impl_->csum.value) {
+      throw checksum_mismatch("digest");
+    }
+
+    if (fsync(impl_->handle.raw) != 0) {
+      throw os_exception().fd(impl_->handle.raw).function(fsync).defaults();
+    }
+  } catch (...) {
+    // Clean up broken file, but not if there is a length mismatch
+    // because another process might be writing the file.
+    unlinkat(impl_->cache->dirfd.raw, impl_->hex.c_str(), 0);
+    // FIXME: There is a race here if the file has the expected
+    // length, but the wrong digest.
+    throw;
   }
 
   path = impl_->cache->root;

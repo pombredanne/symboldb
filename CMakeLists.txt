@@ -100,6 +100,7 @@ add_executable (runtests
   test-fd_handle.cpp
   test-fd_sink.cpp
   test-fd_source.cpp
+  test-file_cache.cpp
   test-os.cpp
   test-os_exception.cpp
   test-utf8.cpp
