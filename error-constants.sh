@@ -18,6 +18,8 @@
 set -e
 set -o pipefail
 
+cc=$1
+
 echo '#include <errno.h>' \
-    | gcc -E -x c -dD -  \
+    | $cc -E -x c -dD -  \
     | awk '/^#define E[^ ]* /{print "check("$2");"}'

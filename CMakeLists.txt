@@ -14,7 +14,7 @@ include_directories (
 
 add_custom_command (
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
-  COMMAND bash ${PROJECT_SOURCE_DIR}/error-constants.sh > ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
+  COMMAND bash ${PROJECT_SOURCE_DIR}/error-constants.sh ${CMAKE_C_COMPILER} > ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
   DEPENDS error-constants.sh
 )
 
