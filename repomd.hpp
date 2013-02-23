@@ -78,4 +78,22 @@ struct repomd {
 
     size_t read(unsigned char *, size_t);
   };
+
+  // Iterator over the primary.xml file.  Call next() until it returns
+  // false, and examine the accessors after each call.
+  class primary {
+    struct impl;
+    std::tr1::shared_ptr<impl> impl_;
+  public:
+    // SOURCE is the byte stream with the (uncompressed) XML.
+    primary(source *);
+    ~primary();
+
+    // Advances the iterator to the next element.
+    bool next();
+
+    // Accessors for package attributes.
+    const std::string &name() const;
+    const std::string &sourcerpm() const;
+  };
 };
