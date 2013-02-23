@@ -26,6 +26,8 @@ Create a build directory, run cmake and make:
   cd build
   cmake ..
   make
+  cd ..
+  build/runtests
 
 Alternatively, you can use the Ninja build tool:
 
@@ -33,6 +35,8 @@ Alternatively, you can use the Ninja build tool:
   cd build
   cmake -G Ninja -DCMAKE_MAKE_PROGRAM=ninja-build ..
   ninja-build
+  cd ..
+  build/runtests
 
 Running
 ───────
