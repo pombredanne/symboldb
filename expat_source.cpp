@@ -162,7 +162,7 @@ expat_source::impl::feed()
   assert(upcoming_pos_ == upcoming_.size());
   upcoming_.clear();
   upcoming_pos_ = 0;
-  char buf[1024];
+  char buf[4096];
   do {
     size_t ret = source_->read(reinterpret_cast<unsigned char *>(buf),
 			       sizeof(buf));
