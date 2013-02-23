@@ -41,6 +41,7 @@
 #include "string_support.hpp"
 #include "zlib.hpp"
 #include "memory_range_source.hpp"
+#include "gunzip_source.hpp"
 #include "expat_source.hpp"
 #include "expat_minidom.hpp"
 #include "os.hpp"
@@ -719,26 +720,17 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 	 p != end; ++p) {
       if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
 	std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
-	std::vector<unsigned char> data, uncompressed;
+	std::vector<unsigned char> compressed;
 	std::string error;
-	if (!download(dopts, db, entry_url.c_str(), data, error)) {
+	if (!download(dopts, db, entry_url.c_str(), compressed, error)) {
 	  fprintf(stderr, "error: %s (from %s): %s\n",
 		  entry_url.c_str(), *argv, error.c_str());
 	  return 1;
 	}
-	if (!gzip_uncompress(data, uncompressed)) {
-	  fprintf(stderr, "error: %s (from %s): gzip decompression error\n",
-		  entry_url.c_str(), *argv);
-	  return 1;
-	}
-	if (uncompressed.empty()) {
-	  fprintf(stderr, "error: %s (from %s): no data\n",
-		  entry_url.c_str(), *argv);
-	  return 1;
-	}
 	found = true;
-	memory_range_source mrsource(uncompressed.data(), uncompressed.size());
-	expat_source esource(&mrsource);
+	memory_range_source mrsource(compressed.data(), compressed.size());
+	gunzip_source gzsource(&mrsource);
+	expat_source esource(&gzsource);
 	esource.next();
 	if (esource.name() != "metadata") {
 	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
