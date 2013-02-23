@@ -491,22 +491,25 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 	found = true;
 	memory_range_source mrsource(uncompressed.data(), uncompressed.size());
 	expat_source esource(&mrsource);
-	using namespace expat_minidom;
-	std::tr1::shared_ptr<element> root(parse(esource));
-	if (!root) {
-	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
-		  entry_url.c_str(), url, error.c_str());
-	  return 1;
-	}
-	if (root->name != "metadata") {
+	esource.next();
+	if (esource.name() != "metadata") {
 	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
-		  entry_url.c_str(), url, root->name.c_str());
+		  entry_url.c_str(), *argv, esource.name().c_str());
 	  return 1;
 	}
-	for(std::vector<std::tr1::shared_ptr<node> >::iterator
-	      p = root->children.begin(), end = root->children.end(); p != end; ++p) {
-	  element *e = dynamic_cast<element *>(p->get());
-	  if (e && e->name == "package" && e->attributes["type"] == "rpm") {
+	esource.next();
+
+	while (esource.state() != expat_source::END) {
+	  if (esource.state() != expat_source::START) {
+	    if (!esource.next()) {
+	      break;
+	    }
+	    continue;
+	  }
+
+	  using namespace expat_minidom;
+	  std::tr1::shared_ptr<element> e(parse(esource));
+	  if (e->name == "package" && e->attributes["type"] == "rpm") {
 	    rpm_package_info rpminfo;
 	    {
 	      element *name = e->first_child("name");
