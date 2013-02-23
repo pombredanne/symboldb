@@ -473,25 +473,16 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 	 p != end; ++p) {
       if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
 	std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
-	std::vector<unsigned char> data, uncompressed;
-	if (!download(dopts, db, entry_url.c_str(), data, error)) {
+	std::vector<unsigned char> compressed;
+	if (!download(dopts, db, entry_url.c_str(), compressed, error)) {
 	  fprintf(stderr, "error: %s (from %s): %s\n",
 		  entry_url.c_str(), url, error.c_str());
 	  return 1;
 	}
-	if (!gzip_uncompress(data, uncompressed)) {
-	  fprintf(stderr, "error: %s (from %s): gzip decompression error\n",
-		  entry_url.c_str(), url);
-	  return 1;
-	}
-	if (uncompressed.empty()) {
-	  fprintf(stderr, "error: %s (from %s): no data\n",
-		  entry_url.c_str(), url);
-	  return 1;
-	}
 	found = true;
-	memory_range_source mrsource(uncompressed.data(), uncompressed.size());
-	expat_source esource(&mrsource);
+	memory_range_source mrsource(compressed.data(), compressed.size());
+	gunzip_source gzsource(&mrsource);
+	expat_source esource(&gzsource);
 	esource.next();
 	if (esource.name() != "metadata") {
 	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
