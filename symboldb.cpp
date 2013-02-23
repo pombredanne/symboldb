@@ -49,6 +49,7 @@
 #include "hash.hpp"
 #include "fd_handle.hpp"
 #include "fd_source.hpp"
+#include "fd_sink.hpp"
 #include "tee_sink.hpp"
 #include "source_sink.hpp"
 
@@ -410,6 +411,27 @@ do_show_repomd(const options &opt, database &db, const char *base)
     std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
     printf("entry: %s %s\n", p->type.c_str(), entry_url.c_str());
   }
+  return 0;
+}
+
+static int
+do_show_primary(const options &opt, database &db, const char *base)
+{
+  repomd rp;
+  std::string error;
+  if (!rp.acquire(opt.download(), db, base, error)) {
+    fprintf(stderr, "error: %s: %s\n", base, error.c_str());
+    return 1;
+  }
+  download_options dopts;
+  if (opt.no_net) {
+    dopts = opt.download();
+  } else {
+    dopts.cache_mode = download_options::always_cache;
+  }
+  repomd::primary_xml primary(rp, dopts, db);
+  fd_sink out(STDOUT_FILENO);
+  copy_source_to_sink(primary, out);
   return 0;
 }
 
@@ -776,6 +798,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --update-set-from-repo=NAME [OPTIONS] URL...\n"
 	  "  %1$s --download [OPTIONS] URL\n"
 	  "  %1$s --show-repomd [OPTIONS] URL\n"
+	  "  %1$s --show-primary [OPTIONS] URL\n"
 	  "  %1$s --download-repo [OPTIONS] URL...\n"
 	  "  %1$s --show-source-packages [OPTIONS] URL...\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
@@ -802,6 +825,7 @@ namespace {
       download_repo,
       load_repo,
       show_repomd,
+      show_primary,
       show_source_packages,
       show_soname_conflicts,
     } type;
@@ -824,6 +848,7 @@ main(int argc, char **argv)
       {"download-repo", no_argument, 0, command::download_repo},
       {"load-repo", no_argument, 0, command::load_repo},
       {"show-repomd", no_argument, 0, command::show_repomd},
+      {"show-primary", no_argument, 0, command::show_primary},
       {"show-source-packages", no_argument, 0, command::show_source_packages},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
@@ -866,6 +891,7 @@ main(int argc, char **argv)
       case command::download_repo:
       case command::load_repo:
       case command::show_repomd:
+      case command::show_primary:
       case command::show_source_packages:
 	cmd = static_cast<command::type>(ch);
 	break;
@@ -908,6 +934,7 @@ main(int argc, char **argv)
       break;
     case command::download:
     case command::show_repomd:
+    case command::show_primary:
       if (argc - optind != 1) {
 	usage(argv[0]);
       }
@@ -938,6 +965,8 @@ main(int argc, char **argv)
     return do_download_repo(opt, *db, argv + optind, true);
   case command::show_repomd:
     return do_show_repomd(opt, *db, argv[optind]);
+  case command::show_primary:
+    return do_show_primary(opt, *db, argv[optind]);
   case command::show_source_packages:
     return do_show_source_packages(opt, *db, argv + optind);
   case command::show_soname_conflicts:
