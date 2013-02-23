@@ -57,6 +57,7 @@ add_library (SymbolDB
   fd_sink.cpp
   fd_source.cpp
   file_cache.cpp
+  gunzip_source.cpp
   hash.cpp
   memory_range_source.cpp
   os.cpp
@@ -85,6 +86,7 @@ add_library (SymbolDB
   utf8.cpp
   vector_sink.cpp
   zlib.cpp
+  zlib_inflate_exception.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
 )
@@ -95,6 +97,7 @@ target_link_libraries (SymbolDB
   -lexpat
   -lnss3
   -lrpm -lrpmio
+  -lz
 )
 
 add_executable (symboldb
@@ -106,7 +109,6 @@ target_link_libraries (symboldb
   -lcurl
   -lpq
   -lwwwcore -lwwwutils
-  -lz
 )
 
 install (TARGETS symboldb DESTINATION bin)
@@ -119,6 +121,7 @@ add_executable (runtests
   test-file_cache.cpp
   test-expat_minidom.cpp
   test-expat_source.cpp
+  test-gunzip_source.cpp
   test-os.cpp
   test-os_exception.cpp
   test-string_source.cpp
