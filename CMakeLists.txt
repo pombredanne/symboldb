@@ -58,6 +58,7 @@ add_library (SymbolDB
   fd_source.cpp
   file_cache.cpp
   hash.cpp
+  memory_range_source.cpp
   os.cpp
   os_error_string.cpp
   os_exception.cpp
