@@ -423,9 +423,6 @@ namespace {
 static int
 do_download_repo(const options &opt, database &db, char **argv, bool load)
 {
-  // TODO: only download the latest version from all repos (at least
-  // by default).
-
   database::package_set_id set = 0;
   if (load && opt.set_name) {
     set = db.lookup_package_set(opt.set_name);
