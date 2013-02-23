@@ -20,7 +20,7 @@
 #include <string>
 
 // Exception class mostly intended for POSIX-related errors.
-class os_exception : std::exception {
+class os_exception : public std::exception {
   std::string message_;
   std::string path_;
   std::string path2_;
