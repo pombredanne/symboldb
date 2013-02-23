@@ -79,6 +79,19 @@ public:
   // The pointer is invalidated by a call to next().
   const char *text_ptr() const;
 
+  // Consumes the current sequence of TEXT nodes and returns its
+  // concatenation.  Afterwards, the new position is on a non-TEXT
+  // node.
+  std::string text_and_next();
+
+  // Skips over the current element (and its contents), or the current
+  // sequence of TEXT nodes.
+  void skip();
+
+  // Skip until the first non-nested END is reached, and then skip
+  // that as well.
+  void unnest();
+
   // Returns a string for the state type.  Throws std::logic_error on
   // an invalid state type.
   static const char *state_string(state_type);

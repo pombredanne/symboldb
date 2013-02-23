@@ -140,6 +140,56 @@ test()
     CHECK(!src.next());
     CHECK(src.state() == expat_source::EOD);
   }
+  {
+    string_source xml("<root>ab<!-- cd -->ef<n/></root>");
+    expat_source src(&xml);
+    CHECK(src.next());
+    COMPARE_STRING(src.name(), "root");
+    CHECK(src.next());
+    COMPARE_STRING(src.text_and_next(), "abef");
+    COMPARE_STRING(src.name(), "n");
+    CHECK(src.next());
+    CHECK(src.state() == expat_source::END);
+    CHECK(src.next());
+    CHECK(src.state() == expat_source::END);
+    CHECK(!src.next());
+    CHECK(src.state() == expat_source::EOD);
+  }
+  {
+    string_source xml("<root>ab<!-- cd -->ef<n/>?</root>");
+    expat_source src(&xml);
+    CHECK(src.next());
+    COMPARE_STRING(src.name(), "root");
+    CHECK(src.next());
+    src.skip(); // "abef"
+    CHECK(src.state() == expat_source::START);
+    COMPARE_STRING(src.name(), "n");
+    src.skip(); // <n/>
+    CHECK(src.state() == expat_source::TEXT);
+    COMPARE_STRING(src.text_and_next(), "?");
+    CHECK(src.state() == expat_source::END);
+  }
+  {
+    string_source xml("<root>ab<n>x<m>y</m>z</n>?</root>");
+    expat_source src(&xml);
+    CHECK(src.next());
+    COMPARE_STRING(src.name(), "root");
+    CHECK(src.next());
+    src.skip(); // "ab"
+    CHECK(src.state() == expat_source::START);
+    COMPARE_STRING(src.name(), "n");
+    CHECK(src.next());
+    CHECK(src.state() == expat_source::TEXT);
+    COMPARE_STRING(src.text(), "x");
+    src.unnest();
+    COMPARE_STRING(src.text(), "?");
+    CHECK(src.state() == expat_source::TEXT);
+    src.unnest();
+    CHECK(!src.next());
+    CHECK(src.state() == expat_source::EOD);
+    src.unnest();
+    CHECK(src.state() == expat_source::EOD);
+  }
 }
 
 static test_register t("expat_source", test);

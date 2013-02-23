@@ -398,6 +398,74 @@ expat_source::text_ptr() const
   return impl_->upcoming_.data() + impl_->elem_start_;
 }
 
+std::string
+expat_source::text_and_next()
+{
+  impl_->check_state(TEXT);
+  const char *p = impl_->upcoming_.data() + impl_->elem_start_;
+  std::string result(p, impl_->elem_len_);
+  next();
+  while (impl_->state_ == TEXT) {
+    p = impl_->upcoming_.data() + impl_->elem_start_;
+    result.append(p, impl_->elem_len_);
+    next();
+  }
+  return result;
+}
+
+void
+expat_source::skip()
+{
+  switch (impl_->state_) {
+  case INIT:
+    next();
+    break;
+  case START:
+    {
+      unsigned nested = 1;
+      next();
+      while (nested) {
+	switch (impl_->state_) {
+	case START:
+	  ++nested;
+	  break;
+	case END:
+	  --nested;
+	  break;
+	case TEXT:
+	  break;
+	case EOD:
+	case INIT:
+	  assert(false);
+	}
+	next();
+      }
+    }
+    break;
+  case TEXT:
+    do {
+      next();
+    } while (impl_->state_ == TEXT);
+    break;
+  case END:
+    next();
+    break;
+  case EOD:
+    break;
+  }
+}
+
+void
+expat_source::unnest()
+{
+  if (impl_->state_ != EOD) {
+    while (impl_->state_ != END) {
+      skip();
+    }
+    next();
+  }
+}
+
 const char *
 expat_source::state_string(state_type e)
 {
