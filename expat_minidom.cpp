@@ -78,8 +78,8 @@ expat_minidom::parse(expat_source &source)
   while (true) {
     if (source.state() == expat_source::START) {
       std::tr1::shared_ptr<element> n(new element);
-      n->name = source.name();
-      n->attributes = source.attributes();
+      n->name = source.name_ptr();
+      source.attributes(n->attributes);
       if (!stack.empty()) {
 	stack.back()->children.push_back(n);
       }
@@ -96,7 +96,7 @@ expat_minidom::parse(expat_source &source)
       std::tr1::shared_ptr<text> n(new text);
       stack.back()->children.push_back(n);
       while (source.state() == expat_source::TEXT) {
-	n->data += source.text();
+	n->data += source.text_ptr();
 	source.next();
       }
     }
