@@ -17,6 +17,8 @@
  */
 
 #include "repomd.hpp"
+#include "memory_range_source.hpp"
+#include "expat_source.hpp"
 #include "expat_minidom.hpp"
 #include "string_support.hpp"
 #include "download.hpp"
@@ -45,9 +47,10 @@ bool
 repomd::parse(const unsigned char *buffer, size_t length,
 	      std::string &error)
 {
+  memory_range_source mrsource(buffer, length);
+  expat_source esource(&mrsource);
   using namespace expat_minidom;
-  const char *buf = reinterpret_cast<const char *>(buffer);
-  std::tr1::shared_ptr<element> root(expat_minidom::parse(buf, length, error));
+  std::tr1::shared_ptr<element> root(expat_minidom::parse(esource));
   if (!root) {
     return false;
   }

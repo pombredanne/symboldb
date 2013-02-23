@@ -23,6 +23,8 @@
 #include <string>
 #include <tr1/memory>
 
+class expat_source;
+
 namespace expat_minidom {
   struct node {
     virtual ~node();
@@ -30,7 +32,7 @@ namespace expat_minidom {
 
   struct text : node {
     std::string data;
-    text(const char *buffer, size_t length);
+    text();
     ~text();
   };
 
@@ -39,7 +41,7 @@ namespace expat_minidom {
     std::map<std::string, std::string> attributes;
     std::vector<std::tr1::shared_ptr<node> > children;
 
-    element(const char *name, const char **attrs);
+    element();
     ~element();
 
     // Returns a pointer to the first child element of that name, or
@@ -50,18 +52,7 @@ namespace expat_minidom {
     std::string text() const;
   };
 
-  // Parses the passed XML document.  Throws std::bad_alloc on memory
-  // allocation failure.  For other errors, returns a null pointer and
-  // writes an error message to error.
-  std::tr1::shared_ptr<element> parse(const char *buffer, size_t length,
-				      std::string &error);
-
-  // Parses the passed XML document.  Throws std::bad_alloc on memory
-  // allocation failure.  For other errors, returns a null pointer and
-  // writes an error message to error.
-  inline std::tr1::shared_ptr<element>
-  parse(const unsigned char *buffer, size_t length, std::string &error)
-  {
-    return parse(reinterpret_cast<const char *>(buffer), length, error);
-  }
+  // Loads the element at the current position of EXPAT_SOURCE.
+  // EXPAT_SOURCE must be in state INIT or START.
+  std::tr1::shared_ptr<element> parse(expat_source &);
 };

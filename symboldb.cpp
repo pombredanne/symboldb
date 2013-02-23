@@ -40,6 +40,8 @@
 #include "url.hpp"
 #include "string_support.hpp"
 #include "zlib.hpp"
+#include "memory_range_source.hpp"
+#include "expat_source.hpp"
 #include "expat_minidom.hpp"
 #include "os.hpp"
 #include "file_cache.hpp"
@@ -487,9 +489,10 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 	  return 1;
 	}
 	found = true;
+	memory_range_source mrsource(uncompressed.data(), uncompressed.size());
+	expat_source esource(&mrsource);
 	using namespace expat_minidom;
-	std::tr1::shared_ptr<element> root(parse(uncompressed.data(),
-						 uncompressed.size(), error));
+	std::tr1::shared_ptr<element> root(parse(esource));
 	if (!root) {
 	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
 		  entry_url.c_str(), url, error.c_str());
@@ -731,9 +734,10 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 	  return 1;
 	}
 	found = true;
+	memory_range_source mrsource(uncompressed.data(), uncompressed.size());
+	expat_source esource(&mrsource);
 	using namespace expat_minidom;
-	std::tr1::shared_ptr<element> root(parse(uncompressed.data(),
-						 uncompressed.size(), error));
+	std::tr1::shared_ptr<element> root(parse(esource));
 	if (!root) {
 	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
 		  entry_url.c_str(), *argv, error.c_str());

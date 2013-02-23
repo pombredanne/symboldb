@@ -117,6 +117,7 @@ add_executable (runtests
   test-fd_sink.cpp
   test-fd_source.cpp
   test-file_cache.cpp
+  test-expat_minidom.cpp
   test-expat_source.cpp
   test-os.cpp
   test-os_exception.cpp
