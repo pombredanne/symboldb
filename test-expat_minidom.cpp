@@ -22,10 +22,26 @@
 
 #include "test.hpp"
 
+using namespace expat_minidom;
+
+static void
+check_helper(element &e)
+{
+  COMPARE_STRING(e.name, "root");
+  CHECK(e.attributes.empty());
+  CHECK(e.children.size() == 3);
+  COMPARE_STRING(e.text(), "abef");
+  COMPARE_STRING(std::tr1::dynamic_pointer_cast<text>(e.children.at(0))->data,
+		 "ab");
+  COMPARE_STRING(std::tr1::dynamic_pointer_cast<element>(e.children.at(1))->name,
+		 "n");
+  COMPARE_STRING(std::tr1::dynamic_pointer_cast<text>(e.children.at(2))->data,
+		 "ef");
+}
+
 static void
 test()
 {
-  using namespace expat_minidom;
 
   {
     string_source xml("<root/>");
@@ -34,6 +50,7 @@ test()
     COMPARE_STRING(e->name, "root");
     CHECK(e->attributes.empty());
     CHECK(e->children.empty());
+    CHECK(src.state() == expat_source::EOD);
   }
   {
     string_source xml("<root>ab<!-- cd -->ef</root>");
@@ -45,21 +62,31 @@ test()
     COMPARE_STRING(e->text(), "abef");
     COMPARE_STRING(std::tr1::dynamic_pointer_cast<text>(e->children.front())->data,
 		   "abef");
+    CHECK(src.state() == expat_source::EOD);
   }
   {
     string_source xml("<root>ab<n/>ef</root>");
     expat_source src(&xml);
     std::tr1::shared_ptr<element> e(parse(src));
-    COMPARE_STRING(e->name, "root");
-    CHECK(e->attributes.empty());
-    CHECK(e->children.size() == 3);
-    COMPARE_STRING(e->text(), "abef");
-    COMPARE_STRING(std::tr1::dynamic_pointer_cast<text>(e->children.at(0))->data,
-		   "ab");
-    COMPARE_STRING(std::tr1::dynamic_pointer_cast<element>(e->children.at(1))->name,
-		   "n");
-    COMPARE_STRING(std::tr1::dynamic_pointer_cast<text>(e->children.at(2))->data,
-		   "ef");
+    check_helper(*e);
+    CHECK(src.state() == expat_source::EOD);
+  }
+  {
+    string_source xml("<outer>!<root>ab<n/>ef</root>?</outer>");
+    expat_source src(&xml);
+    CHECK(src.next());
+    COMPARE_STRING(src.name(), "outer");
+    CHECK(src.next());
+    COMPARE_STRING(src.text(), "!");
+    CHECK(src.next());
+    COMPARE_STRING(src.name(), "root");
+    std::tr1::shared_ptr<element> e(parse(src));
+    check_helper(*e);
+    COMPARE_STRING(src.text(), "?");
+    CHECK(src.next());
+    CHECK(src.state() == expat_source::END);
+    CHECK(!src.next());
+    CHECK(src.state() == expat_source::EOD);
   }
 }
 
