@@ -57,8 +57,15 @@ public:
   // Returns the element name.  Only valid with state() == START.
   std::string name() const;
 
+  // Similar to name().
+  // The pointer is invalidated by a call to next().
+  const char *name_ptr() const;
+
   // Returns the attributes.  Only valid with state() == START.
   std::map<std::string, std::string> attributes() const;
+
+  // Similar to attributes().  Does not clear the passed-in map.
+  void attributes(std::map<std::string, std::string> &) const;
 
   // Returns the value of a specific attribute.
   // Only valid with state() == START.
@@ -67,6 +74,10 @@ public:
   // Returns the contents of a text node.
   // Only valid with state() == TEXT.
   std::string text() const;
+
+  // Similar to text().
+  // The pointer is invalidated by a call to next().
+  const char *text_ptr() const;
 
   // Returns a string for the state type.  Throws std::logic_error on
   // an invalid state type.

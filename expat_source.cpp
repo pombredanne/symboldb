@@ -331,6 +331,13 @@ expat_source::name() const
   return std::string(p, p + impl_->elem_len_);
 }
 
+const char *
+expat_source::name_ptr() const
+{
+  impl_->check_state(START);
+  return impl_->upcoming_.data() + impl_->elem_start_;
+}
+
 std::string
 expat_source::attribute(const char *name) const
 {
@@ -356,6 +363,14 @@ expat_source::attributes() const
 {
   impl_->check_state(START);
   std::map<std::string, std::string> result;
+  attributes(result);
+  return result;
+}
+
+void
+expat_source::attributes(std::map<std::string, std::string> &result) const
+{
+  impl_->check_state(START);
   const char *p = impl_->upcoming_.data() + impl_->attr_start_;
   const char *end = impl_->upcoming_end();
   while (p != end && *p == ENC_ATTRIBUTE) {
@@ -366,9 +381,7 @@ expat_source::attributes() const
     p += strlen(p) + 1;
     result.insert(std::make_pair(std::string(key), std::string(value)));
   }
-  return result;
 }
-
 
 std::string
 expat_source::text() const
@@ -376,6 +389,13 @@ expat_source::text() const
   impl_->check_state(TEXT);
   const char *p = impl_->upcoming_.data() + impl_->elem_start_;
   return std::string(p, impl_->elem_len_);
+}
+
+const char *
+expat_source::text_ptr() const
+{
+  impl_->check_state(TEXT);
+  return impl_->upcoming_.data() + impl_->elem_start_;
 }
 
 const char *

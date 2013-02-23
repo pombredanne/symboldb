@@ -31,6 +31,7 @@ test()
     CHECK(src.next());
     CHECK(src.state() == expat_source::START);
     COMPARE_STRING(src.name(), "root");
+    COMPARE_STRING(src.name_ptr(), "root");
     CHECK(src.attributes().empty());
     COMPARE_STRING(src.attribute("attribute"), "");
     CHECK(src.next());
@@ -129,6 +130,9 @@ test()
     COMPARE_STRING(src.attribute("a1"), "v1");
     COMPARE_STRING(src.attribute("a2"), "v2");
     COMPARE_STRING(src.attribute("a3"), "");
+    std::map<std::string, std::string> m;
+    src.attributes(m);
+    CHECK(m == src.attributes());
     CHECK(src.next());
     CHECK(src.state() == expat_source::END);
     CHECK(!src.next());
