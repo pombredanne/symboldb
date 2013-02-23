@@ -464,138 +464,119 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       dopts.cache_mode = download_options::always_cache;
     }
 
-    bool found = false;
-    for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
-	   end = rp.entries.end();
-	 p != end; ++p) {
-      if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
-	std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
-	std::vector<unsigned char> compressed;
-	if (!download(dopts, db, entry_url.c_str(), compressed, error)) {
-	  fprintf(stderr, "error: %s (from %s): %s\n",
-		  entry_url.c_str(), url, error.c_str());
-	  return 1;
-	}
-	found = true;
-	memory_range_source mrsource(compressed.data(), compressed.size());
-	gunzip_source gzsource(&mrsource);
-	expat_source esource(&gzsource);
-	esource.next();
-	if (esource.name() != "metadata") {
-	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
-		  entry_url.c_str(), *argv, esource.name().c_str());
-	  return 1;
-	}
-	esource.next();
-
-	while (esource.state() != expat_source::END) {
-	  if (esource.state() != expat_source::START) {
-	    if (!esource.next()) {
-	      break;
-	    }
-	    continue;
-	  }
-
-	  using namespace expat_minidom;
-	  std::tr1::shared_ptr<element> e(parse(esource));
-	  if (e->name == "package" && e->attributes["type"] == "rpm") {
-	    rpm_package_info rpminfo;
-	    {
-	      element *name = e->first_child("name");
-	      if (!name) {
-		fprintf(stderr, "error: %s (from %s): missing name element\n",
-			entry_url.c_str(), url);
-		return 1;
-	      }
-	      rpminfo.name = strip(name->text());
-	    }
-	    {
-	      element *version = e->first_child("version");
-	      if (!version) {
-		fprintf(stderr, "error: %s (from %s): %s: missing version element\n",
-			entry_url.c_str(), url, rpminfo.name.c_str());
-		return 1;
-	      }
-	      unsigned long long epoch;
-	      rpminfo.version = strip(version->attributes["ver"]);
-	      rpminfo.release = strip(version->attributes["rel"]);
-	      if (!parse_unsigned_long_long(strip(version->attributes["epoch"]),
-					    epoch)
-		  || epoch != static_cast<unsigned long long>(static_cast<int>(epoch))
-		  || rpminfo.version.empty() || rpminfo.release.empty()) {
-		fprintf(stderr, "error: %s (from %s): %s: malformed version element\n",
-			entry_url.c_str(), url, rpminfo.name.c_str());
-		return 1;
-	      }
-	      rpminfo.epoch = epoch;
-	    }
-	    {
-	      element *arch = e->first_child("arch");
-	      if (!arch) {
-		fprintf(stderr, "error: %s (from %s): missing arch element\n",
-			entry_url.c_str(), url);
-		return 1;
-	      }
-	      rpminfo.arch = strip(arch->text());
-	    }
-
-	    element *format = e->first_child("format");
-	    if (!format) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str());
-	      return 1;
-	    }
-
-	    element *location = e->first_child("location");
-	    if (!location) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing location element\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str());
-	      return 1;
-	    }
-	    std::string location_href = location->attributes["href"];
-	    if (location_href.empty()) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing href attribute\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str());
-	      return 1;
-	    }
-	    element *checksum_elem = e->first_child("checksum");
-	    if (!checksum_elem) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing checksum element\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str());
-	      return 1;
-	    }
-	    element *size = e->first_child("size");
-	    if (!size) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing size element\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str());
-	      return 1;
-	    }
-	    unsigned long long nsize;
-	    if (!parse_unsigned_long_long(size->attributes["package"], nsize)) {
-	      fprintf(stderr, "error: %s (from %s): %s: malformed size element\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str());
-	      return 1;
-	    }
-
-	    rpm_url rurl;
-	    rurl.href = url_combine(rp.base_url.c_str(),
-				    location_href.c_str());
-	    if (!rurl.csum.set_hexadecimal
-		(checksum_elem->attributes["type"].c_str(), nsize,
-		 checksum_elem->text().c_str())) {
-	      fprintf(stderr, "error: %s (from %s): %s: malformed checksum element: [%s]\n",
-		      entry_url.c_str(), url, rpminfo.name.c_str(),
-		      checksum_elem->text().c_str());
-	      return 1;
-	    }
-
-	    pset.add(rpminfo, rurl);
-	  }
-	}
-      }
+    repomd::primary_xml primary_xml(rp, dopts, db);
+    expat_source esource(&primary_xml);
+    esource.next();
+    if (esource.name() != "metadata") {
+      fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
+	      primary_xml.url().c_str(), *argv, esource.name().c_str());
+      return 1;
     }
-    if (!found) {
-      fprintf(stderr, "warning: %s: no suitable primary data found\n", url);
+    esource.next();
+
+    while (esource.state() != expat_source::END) {
+      if (esource.state() != expat_source::START) {
+	if (!esource.next()) {
+	  break;
+	}
+	continue;
+      }
+
+      using namespace expat_minidom;
+      std::tr1::shared_ptr<element> e(parse(esource));
+      if (e->name == "package" && e->attributes["type"] == "rpm") {
+	rpm_package_info rpminfo;
+	{
+	  element *name = e->first_child("name");
+	  if (!name) {
+	    fprintf(stderr, "error: %s (from %s): missing name element\n",
+		    primary_xml.url().c_str(), url);
+	    return 1;
+	  }
+	  rpminfo.name = strip(name->text());
+	}
+	{
+	  element *version = e->first_child("version");
+	  if (!version) {
+	    fprintf(stderr, "error: %s (from %s): %s: missing version element\n",
+		    primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	    return 1;
+	  }
+	  unsigned long long epoch;
+	  rpminfo.version = strip(version->attributes["ver"]);
+	  rpminfo.release = strip(version->attributes["rel"]);
+	  if (!parse_unsigned_long_long(strip(version->attributes["epoch"]),
+					epoch)
+	      || epoch != static_cast<unsigned long long>(static_cast<int>(epoch))
+	      || rpminfo.version.empty() || rpminfo.release.empty()) {
+	    fprintf(stderr, "error: %s (from %s): %s: malformed version element\n",
+		    primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	    return 1;
+	  }
+	  rpminfo.epoch = epoch;
+	}
+	{
+	  element *arch = e->first_child("arch");
+	  if (!arch) {
+	    fprintf(stderr, "error: %s (from %s): missing arch element\n",
+		    primary_xml.url().c_str(), url);
+	    return 1;
+	  }
+	  rpminfo.arch = strip(arch->text());
+	}
+
+	element *format = e->first_child("format");
+	if (!format) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	  return 1;
+	}
+
+	element *location = e->first_child("location");
+	if (!location) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing location element\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	  return 1;
+	}
+	std::string location_href = location->attributes["href"];
+	if (location_href.empty()) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing href attribute\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	  return 1;
+	}
+	element *checksum_elem = e->first_child("checksum");
+	if (!checksum_elem) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing checksum element\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	  return 1;
+	}
+	element *size = e->first_child("size");
+	if (!size) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing size element\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	  return 1;
+	}
+	unsigned long long nsize;
+	if (!parse_unsigned_long_long(size->attributes["package"], nsize)) {
+	  fprintf(stderr, "error: %s (from %s): %s: malformed size element\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str());
+	  return 1;
+	}
+
+	rpm_url rurl;
+	rurl.href = url_combine(rp.base_url.c_str(),
+				location_href.c_str());
+	if (!rurl.csum.set_hexadecimal
+	    (checksum_elem->attributes["type"].c_str(), nsize,
+	     checksum_elem->text().c_str())) {
+	  fprintf(stderr, "error: %s (from %s): %s: malformed checksum element: [%s]\n",
+		  primary_xml.url().c_str(), url, rpminfo.name.c_str(),
+		  checksum_elem->text().c_str());
+	  return 1;
+	}
+
+	pset.add(rpminfo, rurl);
+      }
     }
   }
 
