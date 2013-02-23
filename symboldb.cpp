@@ -702,81 +702,61 @@ do_show_source_packages(const options &opt, database &db, char **argv)
       dopts.cache_mode = download_options::always_cache;
     }
 
-    bool found = false;
-    for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
-	   end = rp.entries.end();
-	 p != end; ++p) {
-      if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
-	std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
-	std::vector<unsigned char> compressed;
-	std::string error;
-	if (!download(dopts, db, entry_url.c_str(), compressed, error)) {
-	  fprintf(stderr, "error: %s (from %s): %s\n",
-		  entry_url.c_str(), *argv, error.c_str());
-	  return 1;
-	}
-	found = true;
-	memory_range_source mrsource(compressed.data(), compressed.size());
-	gunzip_source gzsource(&mrsource);
-	expat_source esource(&gzsource);
-	esource.next();
-	if (esource.name() != "metadata") {
-	  fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
-		  entry_url.c_str(), *argv, esource.name().c_str());
-	  return 1;
-	}
-	esource.next();
-
-	while (esource.state() != expat_source::END) {
-	  if (esource.state() != expat_source::START) {
-	    if (!esource.next()) {
-	      break;
-	    }
-	    continue;
-	  }
-
-	  using namespace expat_minidom;
-	  std::tr1::shared_ptr<element> e(parse(esource));
-	  if (e->name == "package" && e->attributes["type"] == "rpm") {
-	    element *name = e->first_child("name");
-	    if (!name) {
-	      fprintf(stderr, "error: %s (from %s): missing name element\n",
-		      entry_url.c_str(), *argv);
-	      return 1;
-	    }
-	    element *format = e->first_child("format");
-	    if (!format) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
-	      return 1;
-	    }
-	    element *source = format->first_child("rpm:sourcerpm");
-	    if (!source) {
-	      fprintf(stderr, "error: %s (from %s): %s: missing sourcerpm element\n",
-		      entry_url.c_str(), *argv, name->text().c_str());
-	      return 1;
-	    }
-	    std::string src(source->text());
-	    size_t dash = src.rfind('-');
-	    if (dash != std::string::npos) {
-	      src.resize(dash);	// strip release, architecture
-	      dash = src.rfind('-');
-	      if (dash != std::string::npos) {
-		src.resize(dash); // strip version
-	      }
-	    }
-	    if (dash == std::string::npos) {
-	      fprintf(stderr, "error: %s (from %s): malformed source RPM element: %s\n",
-		      entry_url.c_str(), *argv, source->text().c_str());
-	      return 1;
-	    }
-	    source_packages.insert(src);
-	  }
-	}
-      }
+    repomd::primary_xml primary_xml(rp, dopts, db);
+    expat_source esource(&primary_xml);
+    esource.next();
+    if (esource.name() != "metadata") {
+      fprintf(stderr, "error: %s (from %s): invalid XML root element: %s\n",
+	      primary_xml.url().c_str(), *argv, esource.name().c_str());
+      return 1;
     }
-    if (!found) {
-      fprintf(stderr, "warning: %s: no suitable primary data found\n", *argv);
+    esource.next();
+
+    while (esource.state() != expat_source::END) {
+      if (esource.state() != expat_source::START) {
+	if (!esource.next()) {
+	  break;
+	}
+	continue;
+      }
+
+      using namespace expat_minidom;
+      std::tr1::shared_ptr<element> e(parse(esource));
+      if (e->name == "package" && e->attributes["type"] == "rpm") {
+	element *name = e->first_child("name");
+	if (!name) {
+	  fprintf(stderr, "error: %s (from %s): missing name element\n",
+		  primary_xml.url().c_str(), *argv);
+	  return 1;
+	}
+	element *format = e->first_child("format");
+	if (!format) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing format element\n",
+		  primary_xml.url().c_str(), *argv, name->text().c_str());
+	  return 1;
+	}
+	element *source = format->first_child("rpm:sourcerpm");
+	if (!source) {
+	  fprintf(stderr, "error: %s (from %s): %s: missing sourcerpm element\n",
+		  primary_xml.url().c_str(), *argv, name->text().c_str());
+	  return 1;
+	}
+	std::string src(source->text());
+	size_t dash = src.rfind('-');
+	if (dash != std::string::npos) {
+	  src.resize(dash);	// strip release, architecture
+	  dash = src.rfind('-');
+	  if (dash != std::string::npos) {
+	    src.resize(dash); // strip version
+	  }
+	}
+	if (dash == std::string::npos) {
+	  fprintf(stderr, "error: %s (from %s): malformed source RPM element: %s\n",
+		  primary_xml.url().c_str(), *argv, source->text().c_str());
+	  return 1;
+	}
+	source_packages.insert(src);
+      }
     }
   }
   for (std::set<std::string>::const_iterator
