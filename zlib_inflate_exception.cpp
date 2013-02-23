@@ -19,7 +19,7 @@
 #include "zlib_inflate_exception.hpp"
 
 zlib_inflate_exception::zlib_inflate_exception(const char *msg)
-  : what_(msg)
+  : what_(msg ? msg : "inflate error")
 {
 }
 
