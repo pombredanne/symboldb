@@ -69,6 +69,7 @@ add_library (SymbolDB
   os_readlink.cpp
   os_remove_directory_tree.cpp
   repomd.cpp
+  repomd_primary_xml.cpp
   rpm_evr.cpp
   rpm_file_entry.cpp
   rpm_file_info.cpp

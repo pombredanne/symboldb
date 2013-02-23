@@ -19,8 +19,10 @@
 #pragma once
 
 #include "checksum.hpp"
+#include "source.hpp"
 
 #include <string>
+#include <tr1/memory>
 
 class database;
 class download_options;
@@ -55,4 +57,25 @@ struct repomd {
   // returned on failure.
   bool acquire(const download_options &, database &,
 	       const char *url, std::string &error);
+
+  // Source which provides access to the primary.XML file for the
+  // repository.
+  class primary_xml : public source {
+    struct impl;
+    std::tr1::shared_ptr<impl> impl_;
+    primary_xml(const primary_xml &); // not implemented
+    primary_xml &operator=(const primary_xml &); // not implemented
+  public:
+    // Download the primary.xml file from the repository.  You can use
+    // download_options::always_cache because usually, the file name
+    // embeds a hash of the file, so if we have a matching entry in
+    // the cache, we know that it has the right contents.
+    primary_xml(const repomd &, const download_options &, database &);
+    ~primary_xml();
+
+    // Returns the full URL for the (compressed) primary.xml file.
+    const std::string &url();
+
+    size_t read(unsigned char *, size_t);
+  };
 };
