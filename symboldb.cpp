@@ -708,7 +708,7 @@ do_show_source_packages(const options &opt, database &db, char **argv)
     repomd::primary_xml primary_xml(rp, dopts, db);
     repomd::primary primary(&primary_xml);
     while (primary.next()) {
-      std::string src(primary.sourcerpm());
+      std::string src(primary.info().source_rpm);
       size_t dash = src.rfind('-');
       if (dash != std::string::npos) {
 	src.resize(dash);	// strip release, architecture
@@ -719,7 +719,8 @@ do_show_source_packages(const options &opt, database &db, char **argv)
       }
       if (dash == std::string::npos) {
 	fprintf(stderr, "error: %s (from %s): malformed source RPM element: %s\n",
-		primary_xml.url().c_str(), *argv, primary.sourcerpm().c_str());
+		primary_xml.url().c_str(), *argv,
+		primary.info().source_rpm.c_str());
 	return 1;
       }
       source_packages.insert(src);

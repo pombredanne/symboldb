@@ -47,6 +47,107 @@
   </format>
 </package>
 <package type="rpm">
+  <name>bind</name>
+  <arch>x86_64</arch>
+  <version epoch="32" ver="9.9.2" rel="5.P1.fc18"/>
+  <checksum type="sha256" pkgid="YES">e8914e18e2264100d40a422ba91be6f19a803a96c5a1e464a3fef2248ad1063b</checksum>
+  <summary>The Berkeley Internet Name Domain (BIND) DNS (Domain Name System) server</summary>
+  <description>BIND (Berkeley Internet Name Domain) is an implementation of the DNS
+(Domain Name System) protocols. BIND includes a DNS server (named),
+which resolves host names to IP addresses; a resolver library
+(routines for applications to use when interfacing with DNS); and
+tools for verifying that the DNS server is operating properly.</description>
+  <packager>Fedora Project</packager>
+  <url>http://www.isc.org/products/BIND/</url>
+  <time file="1354736869" build="1354698074"/>
+  <size package="2182152" installed="5641000" archive="5662908"/>
+<location href="Packages/b/bind-9.9.2-5.P1.fc18.x86_64.rpm"/>
+  <format>
+    <rpm:license>ISC</rpm:license>
+    <rpm:vendor>Fedora Project</rpm:vendor>
+    <rpm:group>System Environment/Daemons</rpm:group>
+    <rpm:buildhost>buildvm-05.phx2.fedoraproject.org</rpm:buildhost>
+    <rpm:sourcerpm>bind-9.9.2-5.P1.fc18.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="1384" end="100140"/>
+    <rpm:provides>
+      <rpm:entry name="bind" flags="EQ" epoch="32" ver="9.9.2" rel="5.P1.fc18"/>
+      <rpm:entry name="bind(x86-64)" flags="EQ" epoch="32" ver="9.9.2" rel="5.P1.fc18"/>
+      <rpm:entry name="bind-config" flags="EQ" epoch="30" ver="9.3.2" rel="34.fc6"/>
+      <rpm:entry name="caching-nameserver" flags="EQ" epoch="31" ver="9.4.1" rel="7.fc8"/>
+      <rpm:entry name="config(bind)" flags="EQ" epoch="32" ver="9.9.2" rel="5.P1.fc18"/>
+      <rpm:entry name="dnssec-conf" flags="EQ" epoch="0" ver="1.27" rel="1"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="/bin/bash"/>
+      <rpm:entry name="/bin/sh"/>
+      <rpm:entry name="/bin/sh" pre="1"/>
+      <rpm:entry name="/usr/bin/python"/>
+      <rpm:entry name="bind-libs" flags="EQ" epoch="32" ver="9.9.2" rel="5.P1.fc18"/>
+      <rpm:entry name="coreutils"/>
+      <rpm:entry name="grep" pre="1"/>
+      <rpm:entry name="libbind9.so.90()(64bit)"/>
+      <rpm:entry name="libc.so.6(GLIBC_2.14)(64bit)"/>
+      <rpm:entry name="libcap.so.2()(64bit)"/>
+      <rpm:entry name="libcom_err.so.2()(64bit)"/>
+      <rpm:entry name="libcrypto.so.10()(64bit)"/>
+      <rpm:entry name="libdl.so.2()(64bit)"/>
+      <rpm:entry name="libdl.so.2(GLIBC_2.2.5)(64bit)"/>
+      <rpm:entry name="libdns.so.95()(64bit)"/>
+      <rpm:entry name="libgssapi_krb5.so.2()(64bit)"/>
+      <rpm:entry name="libisc.so.92()(64bit)"/>
+      <rpm:entry name="libisccc.so.90()(64bit)"/>
+      <rpm:entry name="libisccfg.so.90()(64bit)"/>
+      <rpm:entry name="libk5crypto.so.3()(64bit)"/>
+      <rpm:entry name="libkrb5.so.3()(64bit)"/>
+      <rpm:entry name="liblwres.so.90()(64bit)"/>
+      <rpm:entry name="libpthread.so.0()(64bit)"/>
+      <rpm:entry name="libpthread.so.0(GLIBC_2.2.5)(64bit)"/>
+      <rpm:entry name="rtld(GNU_HASH)"/>
+      <rpm:entry name="shadow-utils" pre="1"/>
+      <rpm:entry name="systemd"/>
+      <rpm:entry name="systemd" pre="1"/>
+      <rpm:entry name="systemd-units"/>
+    </rpm:requires>
+    <rpm:obsoletes>
+      <rpm:entry name="bind-config" flags="LT" epoch="30" ver="9.3.2" rel="34.fc6"/>
+      <rpm:entry name="caching-nameserver" flags="LT" epoch="31" ver="9.4.1" rel="7.fc8"/>
+      <rpm:entry name="dnssec-conf" flags="LT" epoch="0" ver="1.27" rel="2"/>
+    </rpm:obsoletes>
+    <file>/etc/NetworkManager/dispatcher.d/13-named</file>
+    <file>/etc/logrotate.d/named</file>
+    <file>/etc/named.conf</file>
+    <file>/etc/named.iscdlv.key</file>
+    <file>/etc/named.rfc1912.zones</file>
+    <file>/etc/named.root.key</file>
+    <file>/etc/sysconfig/named</file>
+    <file>/etc/tmpfiles.d/named.conf</file>
+    <file>/usr/sbin/arpaname</file>
+    <file>/usr/sbin/ddns-confgen</file>
+    <file>/usr/sbin/dnssec-checkds</file>
+    <file>/usr/sbin/dnssec-dsfromkey</file>
+    <file>/usr/sbin/dnssec-keyfromlabel</file>
+    <file>/usr/sbin/dnssec-keygen</file>
+    <file>/usr/sbin/dnssec-revoke</file>
+    <file>/usr/sbin/dnssec-settime</file>
+    <file>/usr/sbin/dnssec-signzone</file>
+    <file>/usr/sbin/dnssec-verify</file>
+    <file>/usr/sbin/genrandom</file>
+    <file>/usr/sbin/isc-hmac-fixup</file>
+    <file>/usr/sbin/lwresd</file>
+    <file>/usr/sbin/named</file>
+    <file>/usr/sbin/named-checkconf</file>
+    <file>/usr/sbin/named-checkzone</file>
+    <file>/usr/sbin/named-compilezone</file>
+    <file>/usr/sbin/named-journalprint</file>
+    <file>/usr/sbin/nsec3hash</file>
+    <file>/usr/sbin/rndc</file>
+    <file>/usr/sbin/rndc-confgen</file>
+    <file type="dir">/etc/named</file>
+    <file type="ghost">/etc/rndc.conf</file>
+    <file type="ghost">/etc/rndc.key</file>
+  </format>
+</package>
+<package type="rpm">
   <name>oniguruma</name>
   <arch>i686</arch>
   <version ver="5.9.2" rel="4.fc18"/>

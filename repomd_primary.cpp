@@ -18,11 +18,15 @@
 
 #include "repomd.hpp"
 #include "expat_source.hpp"
+#include "rpm_package_info.hpp"
+#include "string_support.hpp"
+#include "checksum.hpp"
 
 struct repomd::primary::impl {
   expat_source source_;
-  std::string name_;
-  std::string sourcerpm_;
+  rpm_package_info info_;
+  std::string href_;
+  ::checksum checksum_;
 
   impl(source *src)
     : source_(src)
@@ -37,23 +41,38 @@ struct repomd::primary::impl {
 
   void clear()
   {
-    name_.clear();
-    sourcerpm_.clear();
+    info_.name.clear();
+    info_.version.clear();
+    info_.release.clear();
+    info_.arch.clear();
+    info_.source_rpm.clear();
+    info_.hash.clear();
+    info_.epoch = -1;
+    href_.clear();
+    checksum_.type.clear();
+    checksum_.value.clear();
+    checksum_.length = ::checksum::no_length;
   }
 
   void validate()
   {
     // FIXME: proper exception
-    if (name_.empty()) {
+    if (info_.name.empty()) {
       throw std::runtime_error("missing <name> element");
     }
-    if (sourcerpm_.empty()) {
-      throw std::runtime_error
-	("missing <format>/<rpm:sourcerpm> element for " + name_);
+    check_attr("<version>", info_.version); // covers release
+    check_attr("<arch>", info_.arch);
+    check_attr("<format>/<rpm:sourcerpm>", info_.source_rpm);
+    check_attr("<location>/href", href_);
+    check_attr("<checksum>", checksum_.type);
+    if (checksum_.length == ::checksum::no_length) {
+      throw std::runtime_error("missing <size> element");
     }
   }
 
-  bool next()
+  void check_attr(const char *name, const std::string &);
+
+   bool next()
   {
     clear();
 
@@ -86,8 +105,29 @@ struct repomd::primary::impl {
       std::string tag(source_.name());
       if (tag == "name") {
 	source_.next();
-	name_ = source_.text_and_next();
+	info_.name = source_.text_and_next();
 	source_.unnest();
+      } else if (tag == "arch") {
+	source_.next();
+	info_.arch = source_.text_and_next();
+	source_.unnest();
+      } else if (tag == "version") {
+	process_version();
+      } else if (tag == "checksum") {
+	std::string type(source_.attribute("type"));
+	source_.next();
+	// FIXME: proper exception
+	checksum_.set_hexadecimal(type.c_str(), checksum_.length,
+				  source_.text_and_next().c_str());
+	source_.unnest();
+      } else if (tag == "size") {
+	// FIXME: proper exception
+	parse_unsigned_long_long(source_.attribute("package"),
+				 checksum_.length);
+	source_.skip();
+      } else if (tag == "location") {
+	href_ = source_.attribute("href");
+	source_.skip();
       } else if (tag == "format") {
 	process_format();
       } else {
@@ -98,6 +138,23 @@ struct repomd::primary::impl {
 
     validate();
     return true;
+  }
+
+  void process_version()
+  {
+    info_.version = strip(source_.attribute("ver"));
+    info_.release = strip(source_.attribute("rel"));
+    unsigned long long epoch;
+    std::string epochstr(strip(source_.attribute("epoch")));
+    if (!parse_unsigned_long_long(epochstr, epoch)
+	|| epoch != (static_cast<unsigned long long>
+		     (static_cast<int>(epoch)))) {
+      // FIXME: proper exception
+      info_.version.clear();
+    } else {
+      info_.epoch = epoch;
+    }
+    source_.skip();
   }
 
   void process_format()
@@ -112,7 +169,7 @@ struct repomd::primary::impl {
       }
       if (source_.name() == "rpm:sourcerpm") {
 	source_.next();
-	sourcerpm_ = source_.text_and_next();
+	info_.source_rpm = source_.text_and_next();
 	source_.unnest();
       } else {
 	source_.skip();
@@ -121,6 +178,18 @@ struct repomd::primary::impl {
     source_.next(); // leaving <format>
   }
 };
+
+void
+repomd::primary::impl::check_attr(const char *name, const std::string &value)
+{
+  if (value.empty()) {
+    std::string msg("missing ");
+    msg += name;
+    msg += " element in package: ";
+    msg += info_.name;
+    throw std::runtime_error(msg); // FIXME
+  }
+}
 
 repomd::primary::primary(source *src)
   : impl_(new impl(src))
@@ -137,14 +206,20 @@ repomd::primary::next()
   return impl_->next();
 }
 
-const std::string &
-repomd::primary::name() const
+const rpm_package_info &
+repomd::primary::info() const
 {
-  return impl_->name_;
+  return impl_->info_;
+}
+
+const checksum &
+repomd::primary::checksum() const
+{
+  return impl_->checksum_;
 }
 
 const std::string &
-repomd::primary::sourcerpm() const
+repomd::primary::href() const
 {
-  return impl_->sourcerpm_;
+  return impl_->href_;
 }

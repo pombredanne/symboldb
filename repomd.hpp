@@ -26,6 +26,8 @@
 
 class database;
 class download_options;
+class rpm_package_info;
+class checksum;
 
 struct repomd {
   struct entry {
@@ -93,7 +95,8 @@ struct repomd {
     bool next();
 
     // Accessors for package attributes.
-    const std::string &name() const;
-    const std::string &sourcerpm() const;
+    const rpm_package_info &info() const; // without hash
+    const ::checksum &checksum() const;
+    const std::string &href() const;
   };
 };

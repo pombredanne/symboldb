@@ -19,6 +19,8 @@
 #include "repomd.hpp"
 #include "fd_handle.hpp"
 #include "fd_source.hpp"
+#include "rpm_package_info.hpp"
+#include "string_support.hpp"
 
 #include "test.hpp"
 
@@ -30,11 +32,50 @@ test_primary()
   fd_source source(handle.raw);
   repomd::primary primary(&source);
   CHECK(primary.next());
-  COMPARE_STRING(primary.name(), "opensm-libs");
-  COMPARE_STRING(primary.sourcerpm(), "opensm-3.3.15-3.fc18.src.rpm");
+  COMPARE_STRING(primary.info().name, "opensm-libs");
+  COMPARE_STRING(primary.info().arch, "x86_64");
+  CHECK(primary.info().epoch == 0);
+  COMPARE_STRING(primary.info().version, "3.3.15");
+  COMPARE_STRING(primary.info().release, "3.fc18");
+  COMPARE_STRING(primary.checksum().type, "sha256");
+  COMPARE_STRING(base16_encode(primary.checksum().value.begin(),
+			       primary.checksum().value.end()),
+		 "c2c85a567d1b92dd6131bd326611b162ed485f6f97583e46459b430006908d66");
+  CHECK(primary.checksum().length == 62796);
+  COMPARE_STRING(primary.href(),
+		 "Packages/o/opensm-libs-3.3.15-3.fc18.x86_64.rpm");
+  COMPARE_STRING(primary.info().source_rpm, "opensm-3.3.15-3.fc18.src.rpm");
+
   CHECK(primary.next());
-  COMPARE_STRING(primary.name(), "oniguruma");
-  COMPARE_STRING(primary.sourcerpm(), "oniguruma-5.9.2-4.fc18.src.rpm");
+  COMPARE_STRING(primary.info().name, "bind");
+  COMPARE_STRING(primary.info().arch, "x86_64");
+  CHECK(primary.info().epoch == 32);
+  COMPARE_STRING(primary.info().version, "9.9.2");
+  COMPARE_STRING(primary.info().release, "5.P1.fc18");
+  COMPARE_STRING(primary.checksum().type, "sha256");
+  COMPARE_STRING(base16_encode(primary.checksum().value.begin(),
+			       primary.checksum().value.end()),
+		 "e8914e18e2264100d40a422ba91be6f19a803a96c5a1e464a3fef2248ad1063b");
+  CHECK(primary.checksum().length == 2182152);
+  COMPARE_STRING(primary.href(),
+		 "Packages/b/bind-9.9.2-5.P1.fc18.x86_64.rpm");
+  COMPARE_STRING(primary.info().source_rpm, "bind-9.9.2-5.P1.fc18.src.rpm");
+
+  CHECK(primary.next());
+  COMPARE_STRING(primary.info().name, "oniguruma");
+  COMPARE_STRING(primary.info().arch, "i686");
+  CHECK(primary.info().epoch == 0);
+  COMPARE_STRING(primary.info().version, "5.9.2");
+  COMPARE_STRING(primary.info().release, "4.fc18");
+  COMPARE_STRING(primary.checksum().type, "sha256");
+  COMPARE_STRING(base16_encode(primary.checksum().value.begin(),
+			       primary.checksum().value.end()),
+		 "4e03d256c6aacc905efdb83c7bd16bd452771758d1a0a80cea647cfe0f2c6314");
+  CHECK(primary.checksum().length == 133156);
+  COMPARE_STRING(primary.href(),
+		 "Packages/o/oniguruma-5.9.2-4.fc18.i686.rpm");
+  COMPARE_STRING(primary.info().source_rpm, "oniguruma-5.9.2-4.fc18.src.rpm");
+
   CHECK(!primary.next());
 }
 
