@@ -29,7 +29,7 @@ struct fd_sink : sink {
   fd_sink();
 
   // Initializes RAW to the specified descriptor.
-  fd_sink(int);
+  explicit fd_sink(int);
 
   ~fd_sink();
 
