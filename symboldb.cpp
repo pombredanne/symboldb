@@ -168,7 +168,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 	  && file.contents.at(3) == 'F') {
 
 	try {
-	  elf_image image(&file.contents.front(), file.contents.size());
+	  elf_image image(file.contents.data(), file.contents.size());
 	  {
 	    elf_image::symbol_range symbols(image);
 	    while (symbols.next()) {
@@ -384,7 +384,7 @@ do_download(const options &opt, database &db, const char *url)
     return 1;
   }
   if (!data.empty()
-      && fwrite(&data.front(), data.size(), 1, stdout) != 1) {
+      && fwrite(data.data(), data.size(), 1, stdout) != 1) {
     perror("fwrite");
     return 1;
   }
@@ -488,7 +488,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 	}
 	found = true;
 	using namespace expat_minidom;
-	std::tr1::shared_ptr<element> root(parse(&uncompressed.front(),
+	std::tr1::shared_ptr<element> root(parse(uncompressed.data(),
 						 uncompressed.size(), error));
 	if (!root) {
 	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",
@@ -732,7 +732,7 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 	}
 	found = true;
 	using namespace expat_minidom;
-	std::tr1::shared_ptr<element> root(parse(&uncompressed.front(),
+	std::tr1::shared_ptr<element> root(parse(uncompressed.data(),
 						 uncompressed.size(), error));
 	if (!root) {
 	  fprintf(stderr, "error: %s (from %s): XML error: %s\n",

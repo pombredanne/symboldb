@@ -36,7 +36,7 @@ current_directory()
     }
     std::vector<char> vec(2 * sizeof(buf));
     while (true) {
-      ret = getcwd( &vec.front(), vec.size());
+      ret = getcwd(vec.data(), vec.size());
       if (ret != NULL) {
 	break;
       }
@@ -50,7 +50,7 @@ current_directory()
       }
       vec.resize(new_size);
     }
-    return std::string(&vec.front());
+    return std::string(vec.data());
   }
   return std::string(buf);
 }

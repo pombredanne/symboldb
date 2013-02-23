@@ -91,7 +91,7 @@ hash_sink::digest(std::vector<unsigned char> &d)
 {
   d.resize(impl_->digest_length);
   unsigned len = d.size();
-  if (PK11_DigestFinal(impl_->raw, &d.front(), &len, d.size()) != SECSuccess) {
+  if (PK11_DigestFinal(impl_->raw, d.data(), &len, d.size()) != SECSuccess) {
     throw std::runtime_error("PK11_DigestFinal");
   }
   assert(len == d.size());
@@ -103,9 +103,7 @@ std::vector<unsigned char>
 hash(hash_sink::type t, const std::vector<unsigned char> &data)
 {
   hash_sink sink(t);
-  if (!data.empty()) {
-    sink.write(&data.front(), data.size());
-  }
+  sink.write(data.data(), data.size());
   std::vector<unsigned char> digest;
   sink.digest(digest);
   return digest;

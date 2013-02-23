@@ -154,7 +154,7 @@ repomd::acquire(const download_options &opt, database &db,
     error = "empty document";
     return false;
   }
-  if (!parse(&data.front(), data.size(), error)) {
+  if (!parse(data.data(), data.size(), error)) {
     return false;
   }
   base_url.swap(base_canon);

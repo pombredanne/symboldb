@@ -36,7 +36,7 @@ readlink(const char *path)
   } if (ret == sizeof(buf)) {
     std::vector<char> vec(2 * sizeof(buf));
     while (true) {
-      ret = readlink(path, &vec.front(), vec.size());
+      ret = readlink(path, vec.data(), vec.size());
       if (ret < 0) {
 	throw os_exception()
 	  .function<ssize_t(const char *, char *, size_t)>(readlink)

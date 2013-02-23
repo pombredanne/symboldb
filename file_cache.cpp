@@ -157,9 +157,7 @@ file_cache::add(const checksum &csum, const std::vector<unsigned char> &data,
 		std::string &path)
 {
   add_sink sink(*this, csum);
-  if (!data.empty()) {
-    sink.write(&data.front(), data.size());
-  }
+  sink.write(data.data(), data.size());
   sink.finish(path);
 }
 

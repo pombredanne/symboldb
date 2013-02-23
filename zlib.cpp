@@ -57,7 +57,7 @@ bool gzip_uncompress(const std::vector<unsigned char> &in,
 
   z_stream stream;
   memset(&stream, 0, sizeof(stream));
-  stream.next_in = const_cast<Bytef *>(&in.front());
+  stream.next_in = const_cast<Bytef *>(in.data());
   stream.avail_in = in.size();
   if (in.size() != stream.avail_in) {
     return false;
@@ -71,7 +71,7 @@ bool gzip_uncompress(const std::vector<unsigned char> &in,
   }
   try {
     while (true) {
-      stream.next_out = &out.front() + stream.total_out;
+      stream.next_out = out.data() + stream.total_out;
       stream.avail_out = out.size() - stream.total_out;
 
       err = inflate(&stream, Z_NO_FLUSH);

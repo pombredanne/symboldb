@@ -340,7 +340,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   // Read name.
   std::vector<char> name;
   name.resize(header.namesize);
-  ret = Fread(&name.front(), header.namesize, 1, impl_->fd);
+  ret = Fread(name.data(), header.namesize, 1, impl_->fd);
   if (ret == 0) {
     throw rpm_parser_exception("end of stream in cpio file name");
   } else if (ret < 0) {
@@ -364,12 +364,12 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   // Check for end marker.
   const char *trailer = "TRAILER!!!";
   if (name.size() == strlen(trailer) + 1
-      && memcmp(&name.front(), trailer, strlen(trailer)) == 0) {
+      && memcmp(name.data(), trailer, strlen(trailer)) == 0) {
     return false;
   }
 
   // Normalize file name.
-  char *name_normalized = &name.front();
+  char *name_normalized = name.data();
   if (name.size() >= 2 && name.at(0) == '.' && name.at(1) == '/') {
     ++name_normalized;
   }
@@ -380,7 +380,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
     if (p == impl_->files.end()) {
       throw rpm_parser_exception
 	(std::string("cpio file not found in RPM header: ")
-	 + &name.front());
+	 + name.data());
     }
     file.info = p->second;
   }
@@ -388,7 +388,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   // Read contents.
   file.contents.resize(header.filesize);
   if (header.filesize > 0) {
-    ret = Fread(&file.contents.front(), header.filesize, 1, impl_->fd);
+    ret = Fread(file.contents.data(), header.filesize, 1, impl_->fd);
     if (ret == 0) {
       throw rpm_parser_exception("end of stream in cpio file contents");
     } else if (ret < 0) {

@@ -252,7 +252,7 @@ database::add_package_digest(package_id pkg,
   const int paramLengths[] = {0, static_cast<int>(digest.size())};
   const char *params[] = {
     pkgstr,
-    reinterpret_cast<const char *>(&digest.front()),
+    reinterpret_cast<const char *>(digest.data()),
   };
   static const int paramFormats[] = {0, 1};
 
@@ -289,7 +289,7 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
   static const Oid paramTypes[] = {17 /* BYTEA */};
   const int paramLengths[] = {static_cast<int>(digest.size())};
   const char *params[] = {
-    reinterpret_cast<const char *>(&digest.front()),
+    reinterpret_cast<const char *>(digest.data()),
   };
   static const int paramFormats[] = {1};
   pgresult_wrapper res;
@@ -598,10 +598,11 @@ database::url_cache_update(const char *url,
 {
   char timestr[32];
   snprintf(timestr, sizeof(timestr), "%lld", time);
-  const char *params[] = {url, timestr, ""};
-  if (!data.empty()) {
-    params[2] = reinterpret_cast<const char *>(&data.front());
-  }
+  const char *params[] = {
+    url,
+    timestr,
+    reinterpret_cast<const char *>(data.data()),
+  };
   static const Oid paramTypes[] = {25 /* TEXT */, 20 /* INT8 */, 17 /* BYTEA */};
   const int paramLengths[] = {0, 0, static_cast<int>(data.size())};
   if (static_cast<size_t>(paramLengths[2]) != data.size()) {
