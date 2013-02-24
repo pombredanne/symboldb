@@ -27,6 +27,9 @@ struct fd_handle {
   {
   }
 
+  // Closes RAW if it is not negative.
+  ~fd_handle();
+
   // Opens the file with the indicated flags.  Throws os_exception on
   // error.
   void open(const char *path, int flags);
@@ -43,8 +46,9 @@ struct fd_handle {
   void openat(int fd, const char *path, int flags);
   void openat(int fd, const char *path, int flags, unsigned mode);
 
-  // Closes RAW if it is not negative.
-  ~fd_handle();
+  // Changes or returns the status of the FD_CLOEXEC flag.
+  void close_on_exec(bool);
+  bool close_on_exec() const;
 
   // Returns the current value of RAW and sets it to -1, effectively
   // releasing ownership.

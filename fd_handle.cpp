@@ -86,6 +86,33 @@ fd_handle::open_read_only(const char *path)
 }
 
 void
+fd_handle::close_on_exec(bool flag)
+{
+  int flags = fcntl(raw, F_GETFD, 0);
+  if (flags == -1) {
+    throw os_exception().function(fcntl).message("F_GETFD");
+  }
+  if (flag) {
+    flags |= FD_CLOEXEC;
+  } else {
+    flags &= ~FD_CLOEXEC;
+  }
+  if (fcntl(raw, F_SETFD, flags) == -1) {
+    throw os_exception().function(fcntl).message("F_SETFD");
+  }
+}
+
+bool
+fd_handle::close_on_exec() const
+{
+  int flags = fcntl(raw, F_GETFD, 0);
+  if (flags == -1) {
+    throw os_exception().function(fcntl).message("F_GETFD");
+  }
+  return (flags & FD_CLOEXEC) != 0;
+}
+
+void
 fd_handle::close_nothrow() throw()
 {
   if (raw >= 0) {

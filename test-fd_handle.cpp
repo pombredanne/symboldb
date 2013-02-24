@@ -55,6 +55,11 @@ test(void)
       CHECK(h.raw == fd);
       h.open_read_only("/dev/null");
       CHECK(h.raw == fd + 1);
+      CHECK(h.close_on_exec());
+      h.close_on_exec(false);
+      CHECK(!h.close_on_exec());
+      h.close_on_exec(true);
+      CHECK(h.close_on_exec());
     }
   }
 
