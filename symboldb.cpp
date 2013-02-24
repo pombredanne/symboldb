@@ -132,21 +132,40 @@ dump_ref(const options &opt, database &db, const elf_symbol_reference &ref)
   db.add_elf_symbol_reference(fid, ref);
 }
 
+namespace {
+  // Lock the digest using its first 8 bytes.
+  template <class RandomAcessIterator>
+  database::advisory_lock
+  lock_digest(database &db, RandomAcessIterator first, RandomAcessIterator last)
+  {
+    if (last - first < 8) {
+      throw std::logic_error("lock_digest: digest is too short");
+    }
+    int a = (*first & 0xFF) << 24;
+    ++first;
+    a |= (*first & 0xFF) << 16;
+    ++first;
+    a |= (*first & 0xFF) << 8;
+    ++first;
+    a |= *first & 0xFF;
+    ++first;
+    int b = (*first & 0xFF) << 24;
+    ++first;
+    b |= (*first & 0xFF) << 16;
+    ++first;
+    b |= (*first & 0xFF) << 8;
+    ++first;
+    b |= *first & 0xFF;
+    return db.lock(a, b);
+  }
+}
+
 // Locks the package digest in the database.  Used to prevent
 // concurrent insertion of RPMs.
 static database::advisory_lock
 lock_rpm(database &db, const rpm_package_info &info)
 {
-  const std::string &digest(info.hash);
-  int a = ((digest.at(0) & 0xFF) << 24)
-    | ((digest.at(1) & 0xFF) << 16)
-    | ((digest.at(2) & 0xFF) << 8)
-    | (digest.at(3) & 0xFF);
-  int b = ((digest.at(4) & 0xFF) << 24)
-    | ((digest.at(5) & 0xFF) << 16)
-    | ((digest.at(6) & 0xFF) << 8)
-    | (digest.at(7) & 0xFF);
-  return db.lock(a, b);
+  return lock_digest(db, info.hash.begin(), info.hash.end());
 }
 
 static database::package_id
