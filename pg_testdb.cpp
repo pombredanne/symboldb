@@ -184,26 +184,6 @@ pg_testdb::~pg_testdb()
 {
 }
 
-PGconn *
-pg_testdb::connect(const char *dbname)
-{
-  static const char *const keys[] = {
-    "host", "port", "dbname",
-  };
-  const char *values[] = {
-    impl_->directory.c_str(), "5432", dbname,
-  };
-  pgconn_handle handle(PQconnectdbParams(keys, values, 0));
-  if (handle.raw == NULL) {
-    throw std::bad_alloc();
-  }
-  if (PQstatus(handle.raw) != CONNECTION_OK) {
-    throw pg_exception(handle.raw);
-  }
-  PQsetNoticeProcessor(handle.raw, impl::notice_processor, impl_.get());
-  return handle.release();
-}
-
 const std::vector<std::string> &
 pg_testdb::notices() const
 {
@@ -220,4 +200,24 @@ const std::string &
 pg_testdb::logfile()
 {
   return impl_->logfile;
+}
+
+PGconn *
+pg_testdb::connect(const char *dbname)
+{
+  static const char *const keys[] = {
+    "host", "port", "dbname", NULL
+  };
+  const char *values[] = {
+    impl_->directory.c_str(), "5432", dbname, NULL
+  };
+  pgconn_handle handle(PQconnectdbParams(keys, values, 0));
+  if (handle.raw == NULL) {
+    throw std::bad_alloc();
+  }
+  if (PQstatus(handle.raw) != CONNECTION_OK) {
+    throw pg_exception(handle.raw);
+  }
+  PQsetNoticeProcessor(handle.raw, impl::notice_processor, impl_.get());
+  return handle.release();
 }
