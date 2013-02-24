@@ -160,6 +160,73 @@ database::txn_rollback()
   res.check();
 }
 
+database::advisory_lock_guard::~advisory_lock_guard()
+{
+}
+
+struct database::advisory_lock_impl : database::advisory_lock_guard {
+  std::tr1::shared_ptr<database::impl> impl_;
+  int a;
+  int b;
+  virtual ~advisory_lock_impl();
+};
+
+database::advisory_lock_impl::~advisory_lock_impl()
+{
+  char astr[32];
+  snprintf(astr, sizeof(astr), "%d", a);
+  char bstr[32];
+  snprintf(bstr, sizeof(bstr), "%d", b);
+  const char *params[] = {astr, bstr};
+
+  try {
+    pgresult_wrapper res;
+    res.raw = PQexecParams
+      (impl_->conn,
+       "SELECT pg_advisory_unlock($1, $2)",
+       2, NULL, params, NULL, NULL, 0);
+    res.check();
+  } catch(...) {
+    // TODO: Not much we can do here.  Logging would be useful.
+  }
+}
+
+database::advisory_lock
+database::lock(int a, int b)
+{
+  char astr[32];
+  snprintf(astr, sizeof(astr), "%d", a);
+  char bstr[32];
+  snprintf(bstr, sizeof(bstr), "%d", b);
+  const char *params[] = {astr, bstr};
+  pgresult_wrapper res;
+
+  if (PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS) {
+    res.raw = PQexecParams
+      (impl_->conn,
+       "SELECT pg_advisory_xact_lock($1, $2)",
+       2, NULL, params, NULL, NULL, 0);
+    res.check();
+    // As this is a NOP, we do not have to guard against exceptions
+    // from the object allocation.
+    return advisory_lock(new advisory_lock_guard);
+  } else {
+    // Allocate beforehand to avoid exceptions after acquiring the
+    // lock.
+    std::tr1::shared_ptr<advisory_lock_impl> lock(new advisory_lock_impl);
+    res.raw = PQexecParams
+      (impl_->conn,
+       "SELECT pg_advisory_lock($1, $2)",
+       2, NULL, params, NULL, NULL, 0);
+    res.check();
+    lock->impl_ = impl_;
+    lock->a = a;
+    lock->b = b;
+    return lock;
+  }
+}
+
+
 static int
 get_id(pgresult_wrapper &res)
 {

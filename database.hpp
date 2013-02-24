@@ -38,6 +38,7 @@ struct database_exception : std::runtime_error {
 class database {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
+  struct advisory_lock_impl;
 
 public:
   // Uses the environment to locate a database.
@@ -47,6 +48,19 @@ public:
   void txn_begin();
   void txn_commit();
   void txn_rollback();
+
+  struct advisory_lock_guard {
+    virtual ~advisory_lock_guard();
+  };
+  typedef std::tr1::shared_ptr<advisory_lock_guard> advisory_lock;
+
+  // Creates an advisory lock on this pair of integers.  The lock is a
+  // transaction-scope lock if in a transaction.  Otherwise, it is a
+  // plain advisory lock.  (The reason for this is that we cannot
+  // unlock an regular advisory lock within an aborted transaction.)
+  // Transaction-scoped locks are released when the transaction
+  // concludes.
+  advisory_lock lock(int, int);
 
   typedef int package_id;
   typedef int file_id;
