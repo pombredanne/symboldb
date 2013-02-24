@@ -103,7 +103,9 @@ namespace {
     }
     long status;
     curl_easy_getinfo(h.raw, CURLINFO_RESPONSE_CODE, &status);
-    if (status != 200) {
+    // A response code of 0 is used if the protocol does not support
+    // response codes.
+    if (status != 200 && status != 0) {
       char buf[50];
       snprintf(buf, sizeof(buf), "status code: %ld", status);
       r.error = buf;
