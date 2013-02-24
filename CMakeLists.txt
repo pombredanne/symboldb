@@ -44,6 +44,7 @@ add_library (SymbolDB
   curl_handle.cpp
   database.cpp
   database_exception.cpp
+  dir_handle.cpp
   download.cpp
   elf_exception.cpp
   elf_image.cpp
@@ -119,6 +120,7 @@ install (TARGETS symboldb DESTINATION bin)
 
 add_executable (runtests
   runtests.cpp
+  test-dir_handle.cpp
   test-fd_handle.cpp
   test-fd_sink.cpp
   test-fd_source.cpp
