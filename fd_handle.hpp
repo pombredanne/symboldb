@@ -52,7 +52,8 @@ struct fd_handle {
 
   // Returns the current value of RAW and sets it to -1, effectively
   // releasing ownership.
-  int release();
+  int release() throw();
+
 
   // Closes the descriptor if open, ignoring error return values.
   void close_nothrow() throw();
@@ -63,7 +64,7 @@ private:
 };
 
 inline int
-fd_handle::release()
+fd_handle::release() throw()
 {
   int fd = raw;
   raw = -1;
