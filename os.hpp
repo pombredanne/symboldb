@@ -25,6 +25,13 @@
 // Returns true if PATH is a directory.
 bool is_directory(const char *path);
 
+// Returns true if PATH is executable (by the current user).
+bool is_executable(const char *path);
+
+// Returns true if PATH exists in the file system (not necessarily as
+// a file).
+bool path_exists(const char *path);
+
 // Returns the path to the home directory.
 std::string home_directory();
 

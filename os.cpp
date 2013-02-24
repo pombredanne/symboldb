@@ -42,6 +42,18 @@ is_directory(const char *path)
   return S_ISDIR(st.st_mode);
 }
 
+bool
+is_executable(const char *path)
+{
+  return access(path, X_OK) == 0;
+}
+
+bool
+path_exists(const char *path)
+{
+  return access(path, F_OK) == 0;
+}
+
 std::string home_directory()
 {
   const char *home = getenv("HOME");
