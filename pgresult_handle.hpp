@@ -40,6 +40,9 @@ public:
   // ownership of the handle.
   PGresult *release() throw();
 
+  // Replaces RAW with PGRESULT, closing RAW first if necessary.
+  void reset(PGresult *) throw();
+
   // Closes the connection handle and sets RAW to NULL.
   void close() throw();
 
@@ -71,6 +74,13 @@ pgresult_handle::release() throw()
   PGresult *c = raw;
   raw = NULL;
   return c;
+}
+
+inline void
+pgresult_handle::reset(PGresult *res) throw()
+{
+  PQclear(raw);
+  raw = res;
 }
 
 inline void

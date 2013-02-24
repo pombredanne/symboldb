@@ -40,6 +40,9 @@ public:
   // ownership of the handle.
   PGconn *release() throw();
 
+  // Replaces RAW with PGCONN, closing RAW first if necessary.
+  void reset(PGconn *) throw();
+
   // Closes the connection handle and sets RAW to NULL.
   void close() throw();
 
@@ -71,6 +74,13 @@ pgconn_handle::release() throw()
   PGconn *c = raw;
   raw = NULL;
   return c;
+}
+
+inline void
+pgconn_handle::reset(PGconn *conn) throw()
+{
+  PQfinish(raw);
+  raw = conn;
 }
 
 inline void

@@ -29,6 +29,9 @@ test()
   pg_testdb db;
   pgconn_handle h(db.connect("template1"));
   h.check();
+  h.reset(db.connect("template1"));
+  h.check();
+  CHECK(db.notices().empty());
   {
     pgresult_handle r(PQexec(h.raw, "SELECT 'abc'"));
     r.check();
