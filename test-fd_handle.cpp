@@ -43,6 +43,19 @@ test(void)
       h.open_read_only("/dev/null");
       CHECK(h.raw == fd);
     }
+    {
+      fd_handle h;
+      h.open_read_only("/dev/null");
+      CHECK(h.raw == fd);
+      h.open_read_only("/dev/null");
+      CHECK(h.raw == fd + 1);
+      h.close_nothrow();
+      CHECK(h.raw == -1);
+      h.open_read_only("/dev/null");
+      CHECK(h.raw == fd);
+      h.open_read_only("/dev/null");
+      CHECK(h.raw == fd + 1);
+    }
   }
 
   {

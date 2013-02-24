@@ -50,6 +50,9 @@ struct fd_handle {
   // releasing ownership.
   int release();
 
+  // Closes the descriptor if open, ignoring error return values.
+  void close_nothrow() throw();
+
 private:
   fd_handle(const fd_handle &); // not implemented
   fd_handle &operator=(const fd_handle &); // not implemented

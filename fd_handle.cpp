@@ -24,9 +24,7 @@
 
 fd_handle::~fd_handle()
 {
-  if (raw >= 0) {
-    close(raw);
-  }
+  close_nothrow();
 }
 
 void
@@ -85,4 +83,13 @@ void
 fd_handle::open_read_only(const char *path)
 {
   open(path, O_RDONLY | O_CLOEXEC);
+}
+
+void
+fd_handle::close_nothrow() throw()
+{
+  if (raw >= 0) {
+    close(raw);
+    raw = -1;
+  }
 }
