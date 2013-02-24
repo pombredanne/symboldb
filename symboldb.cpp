@@ -52,6 +52,7 @@
 #include "fd_sink.hpp"
 #include "tee_sink.hpp"
 #include "source_sink.hpp"
+#include "pg_exception.hpp"
 
 #include <set>
 #include <sstream>
@@ -857,36 +858,42 @@ main(int argc, char **argv)
   elf_image_init();
   rpm_parser_init();
 
-  database db;
+  try {
+    database db;
 
-  switch (cmd) {
-  case command::create_schema:
-    return do_create_schema(db);
-  case command::load_rpm:
-    do_load_rpm(opt, db, argv + optind);
-    break;
-  case command::create_set:
-    return do_create_set(opt, db, argv + optind);
-  case command::update_set:
-    return do_update_set(opt, db, argv + optind);
-  case command::download:
-    return do_download(opt, db, argv[optind]);
-  case command::download_repo:
-    return do_download_repo(opt, db, argv + optind, false);
-  case command::load_repo:
-  case command::update_set_from_repo:
-    return do_download_repo(opt, db, argv + optind, true);
-  case command::show_repomd:
-    return do_show_repomd(opt, db, argv[optind]);
-  case command::show_primary:
-    return do_show_primary(opt, db, argv[optind]);
-  case command::show_source_packages:
-    return do_show_source_packages(opt, db, argv + optind);
-  case command::show_soname_conflicts:
-    return do_show_soname_conflicts(opt, db);
-  case command::undefined:
-  default:
-    abort();
+    switch (cmd) {
+    case command::create_schema:
+      return do_create_schema(db);
+    case command::load_rpm:
+      do_load_rpm(opt, db, argv + optind);
+      break;
+    case command::create_set:
+      return do_create_set(opt, db, argv + optind);
+    case command::update_set:
+      return do_update_set(opt, db, argv + optind);
+    case command::download:
+      return do_download(opt, db, argv[optind]);
+    case command::download_repo:
+      return do_download_repo(opt, db, argv + optind, false);
+    case command::load_repo:
+    case command::update_set_from_repo:
+      return do_download_repo(opt, db, argv + optind, true);
+    case command::show_repomd:
+      return do_show_repomd(opt, db, argv[optind]);
+    case command::show_primary:
+      return do_show_primary(opt, db, argv[optind]);
+    case command::show_source_packages:
+      return do_show_source_packages(opt, db, argv + optind);
+    case command::show_soname_conflicts:
+      return do_show_soname_conflicts(opt, db);
+    case command::undefined:
+    default:
+      abort();
+    }
+  } catch (pg_exception &e) {
+    fprintf(stderr, "error: from PostgreSQL:\n");
+    dump("error: ", e, stderr);
+    return 1;
   }
 
   return 0;
