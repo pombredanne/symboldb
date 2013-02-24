@@ -132,13 +132,33 @@ dump_ref(const options &opt, database &db, const elf_symbol_reference &ref)
   db.add_elf_symbol_reference(fid, ref);
 }
 
+// Locks the package digest in the database.  Used to prevent
+// concurrent insertion of RPMs.
+static database::advisory_lock
+lock_rpm(database &db, const rpm_package_info &info)
+{
+  const std::string &digest(info.hash);
+  int a = ((digest.at(0) & 0xFF) << 24)
+    | ((digest.at(1) & 0xFF) << 16)
+    | ((digest.at(2) & 0xFF) << 8)
+    | (digest.at(3) & 0xFF);
+  int b = ((digest.at(4) & 0xFF) << 24)
+    | ((digest.at(5) & 0xFF) << 16)
+    | ((digest.at(6) & 0xFF) << 8)
+    | (digest.at(7) & 0xFF);
+  return db.lock(a, b);
+}
+
 static database::package_id
-load_rpm(const options &opt, database &db,
-	 const char *rpm_path, rpm_package_info &info)
+load_rpm_internal(const options &opt, database &db,
+		  const char *rpm_path, rpm_package_info &info)
 {
   try {
     rpm_parser_state rpmst(rpm_path);
     info = rpmst.package();
+    // We can destroy the lock immediately because we are running in a
+    // transaction.
+    lock_rpm(db, info);
     rpm_file_entry file;
 
     database::package_id pkg;
@@ -244,13 +264,13 @@ load_rpm(const options &opt, database &db,
 }
 
 static bool
-load_rpm_txn(const options &opt, database &db,
+load_rpm(const options &opt, database &db,
 	     const char *path, rpm_package_info &info)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.
   db.txn_begin();
-  database::package_id pkg = load_rpm(opt, db, path, info);
+  database::package_id pkg = load_rpm_internal(opt, db, path, info);
 
   hash_sink sha256(hash_sink::sha256);
   hash_sink sha1(hash_sink::sha1);
@@ -284,7 +304,7 @@ load_rpms(const options &opt, database &db, char **argv,
 {
   rpm_package_info info;
   for (; *argv; ++argv) {
-    database::package_id pkg = load_rpm_txn(opt, db, *argv, info);
+    database::package_id pkg = load_rpm(opt, db, *argv, info);
     if (pkg == 0) {
       return false;
     }
@@ -308,6 +328,9 @@ do_load_rpm(const options &opt, database &db, char **argv)
   }
   return 0;
 }
+
+// Lock namespace for package sets.
+enum { PACKAGE_SET_LOCK_TAG = 1667369644 };
 
 static void
 finalize_package_set(const options &opt, database &db,
@@ -341,10 +364,13 @@ do_create_set(const options &opt, database &db, char **argv)
   db.txn_begin();
   database::package_set_id set =
     db.create_package_set(opt.set_name, opt.arch);
-  for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
-    db.add_package_set(set, *p);
+  {
+    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
+    for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
+      db.add_package_set(set, *p);
+    }
+    finalize_package_set(opt, db, set);
   }
-  finalize_package_set(opt, db, set);
   db.txn_commit();
   return 0;
 }
@@ -370,11 +396,14 @@ do_update_set(const options &opt, database &db, char **argv)
   }
 
   db.txn_begin();
-  db.empty_package_set(set);
-  for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
-    db.add_package_set(set, *p);
+  {
+    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
+    db.empty_package_set(set);
+    for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
+      db.add_package_set(set, *p);
+    }
+    finalize_package_set(opt, db, set);
   }
-  finalize_package_set(opt, db, set);
   db.txn_commit();
   return 0;
 }
@@ -564,12 +593,15 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
   }
   if (load && set > 0) {
     db.txn_begin();
-    db.empty_package_set(set);
-    for (std::set<database::package_id>::iterator
-	   p = pids.begin(), end = pids.end(); p != end; ++p) {
-      db.add_package_set(set, *p);
+    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
+    {
+      db.empty_package_set(set);
+      for (std::set<database::package_id>::iterator
+	     p = pids.begin(), end = pids.end(); p != end; ++p) {
+	db.add_package_set(set, *p);
+      }
+      finalize_package_set(opt, db, set);
     }
-    finalize_package_set(opt, db, set);
     db.txn_commit();
   }
 

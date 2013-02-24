@@ -5,11 +5,9 @@
 * Remove dependency on libwww from W3C.  Apparently, this library is
   unmaintained upstream and not widely available.
 
-* Add proper locking to guard against multiple parallel downloads and
-  parallel RPM package loading (by multiple symboldb processes running
-  in parallel).  This is mostly a performance issue.  The current code
-  might perform unnecessary downloads and abort on database update
-  conflicts, but it should not produce data.
+* Add proper locking to guard against multiple parallel downloads.
+  This is mostly a performance issue.  The current code might perform
+  unnecessary downloads, but it should not produce bad data.
 
 * Better logging, in particular of network activity.  Final URLs after
   redirection should be included in error messages.
