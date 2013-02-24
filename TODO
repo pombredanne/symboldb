@@ -5,10 +5,6 @@
 * Remove dependency on libwww from W3C.  Apparently, this library is
   unmaintained upstream and not widely available.
 
-* Add proper locking to guard against multiple parallel downloads.
-  This is mostly a performance issue.  The current code might perform
-  unnecessary downloads, but it should not produce bad data.
-
 * Better logging, in particular of network activity.  Final URLs after
   redirection should be included in error messages.
 

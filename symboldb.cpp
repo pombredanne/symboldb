@@ -573,6 +573,8 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 
     std::string rpm_path;
     try {
+      database::advisory_lock lock
+	(lock_digest(db, p->csum.value.begin(), p->csum.value.end()));
       if (!fcache.lookup_path(p->csum, rpm_path)) {
 	if (opt.output != options::quiet) {
 	  fprintf(stderr, "info: downloading %s\n", p->href.c_str());
