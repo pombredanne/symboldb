@@ -137,12 +137,7 @@ subprocess::subprocess()
 
 subprocess::~subprocess()
 {
-  if (impl_->pid != 0) {
-    // Terminate the subprocess.
-    // FIXME: we should probably log errors.
-    ::kill(SIGKILL, impl_->pid);
-    ::waitpid(impl_->pid, NULL, 0);
-  }
+  destroy_nothrow();
 }
 
 subprocess &
@@ -363,5 +358,17 @@ subprocess::kill(int signo)
     // FIXME: pid?
     throw os_exception().function(::kill).offset(impl_->pid)
       .path(impl_->image.raw);
+  }
+}
+
+void
+subprocess::destroy_nothrow() throw()
+{
+  if (impl_->pid != 0) {
+    // Terminate the subprocess.
+    // FIXME: we should probably log errors.
+    ::kill(impl_->pid, SIGKILL);
+    ::waitpid(impl_->pid, NULL, 0);
+    impl_->pid = 0;
   }
 }

@@ -80,4 +80,7 @@ public:
   // Terminates the child process.
   void kill(); // uses SIGKILL
   void kill(int signal);
+
+  // Terminates the process if it runs.
+  void destroy_nothrow() throw();
 };
