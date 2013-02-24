@@ -29,12 +29,8 @@ class elf_image;
 class elf_symbol_definition;
 class elf_symbol_reference;
 
-// Members of the database class throw this exception on error.
-struct database_exception : std::runtime_error {
-  database_exception(const char *);
-  database_exception(const std::string &);
-};
-
+// Database wrapper.
+// Members of this class throw pg_exception on error.
 class database {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
