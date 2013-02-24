@@ -37,6 +37,11 @@ test()
     r.check();
     CHECK(PQntuples(r.raw) == 1);
     COMPARE_STRING(PQgetvalue(r.raw, 0, 0), "abc");
+    r.reset(PQexec(h.raw, "CREATE TABLE test_table (pk TEXT PRIMARY KEY)"));
+    CHECK(db.notices().size() == 1);
+    COMPARE_STRING(db.notices().at(0),
+		   "NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit"
+		   " index \"test_table_pkey\" for table \"test_table\"\n");
   }
   {
     pgresult_handle r(PQexec(h.raw, "garbage"));

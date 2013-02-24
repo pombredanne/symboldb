@@ -50,6 +50,7 @@ struct pg_testdb::impl {
   std::string program_prefix;
   std::string directory;
   std::string logfile;
+  std::vector<std::string> notices;
   subprocess server;
 
   impl();
@@ -59,6 +60,8 @@ struct pg_testdb::impl {
   void configure();
   void start();
   void wait_for_socket();
+
+  static void notice_processor(void *arg, const char *message);
 };
 
 pg_testdb::impl::impl()
@@ -161,6 +164,17 @@ pg_testdb::impl::wait_for_socket()
   throw pg_exception(("socket did not appear at: " + socket).c_str());
 }
 
+void
+pg_testdb::impl::notice_processor(void *arg, const char *message)
+{
+  impl *impl_ = static_cast<impl *>(arg);
+  try {
+    impl_->notices.push_back(message);
+  } catch (...) {
+    // FIXME: log
+  }
+}
+
 pg_testdb::pg_testdb()
   : impl_(new impl)
 {
@@ -186,7 +200,14 @@ pg_testdb::connect(const char *dbname)
   if (PQstatus(handle.raw) != CONNECTION_OK) {
     throw pg_exception(handle.raw);
   }
+  PQsetNoticeProcessor(handle.raw, impl::notice_processor, impl_.get());
   return handle.release();
+}
+
+const std::vector<std::string> &
+pg_testdb::notices() const
+{
+  return impl_->notices;
 }
 
 const std::string &

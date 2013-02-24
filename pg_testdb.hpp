@@ -22,6 +22,7 @@
 
 #include <string>
 #include <tr1/memory>
+#include <vector>
 
 // A wrapper for a PostgreSQL server running as a subprocess, against
 // a temporary database directory (which is removed when the object is
@@ -32,6 +33,9 @@ class pg_testdb {
 public:
   pg_testdb();
   ~pg_testdb();
+
+  // Notices are suppressed and added to this vector.
+  const std::vector<std::string> &notices() const;
 
   // The path to the database directory.
   const std::string &directory();
