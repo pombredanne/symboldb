@@ -23,6 +23,7 @@
 #include "os_exception.hpp"
 #include "pg_exception.hpp"
 #include "pgconn_handle.hpp"
+#include "pgresult_handle.hpp"
 #include "source_sink.hpp"
 #include "string_sink.hpp"
 #include "subprocess.hpp"
@@ -220,4 +221,13 @@ pg_testdb::connect(const char *dbname)
   }
   PQsetNoticeProcessor(handle.raw, impl::notice_processor, impl_.get());
   return handle.release();
+}
+
+void
+pg_testdb::exec_test_sql(const char *dbname, const char *sql)
+{
+  pgconn_handle conn(connect(dbname));
+  conn.check();
+  pgresult_handle res(PQexec(conn.raw, sql));
+  res.check();
 }

@@ -34,8 +34,10 @@ test()
   h.reset(db.connect("template1"));
   h.check();
   CHECK(db.notices().empty());
+  db.exec_test_sql("template1", "CREATE TABLE abc(data TEXT)");
+  db.exec_test_sql("template1", "INSERT INTO abc VALUES ('abc')");
   {
-    pgresult_handle r(PQexec(h.raw, "SELECT 'abc'"));
+    pgresult_handle r(PQexec(h.raw, "SELECT * FROM abc"));
     r.check();
     CHECK(PQntuples(r.raw) == 1);
     COMPARE_STRING(PQgetvalue(r.raw, 0, 0), "abc");

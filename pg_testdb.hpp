@@ -45,4 +45,10 @@ public:
 
   // Connects to the database with the indicated name;
   PGconn *connect(const char *dbname);
+
+  // Runs the specified SQL string in the database.  It is recommended
+  // to use this function for dangerous commands (DROP SCHEMA etc.),
+  // to make sure that this isn't issue against a production database
+  // by accident.
+  void exec_test_sql(const char *dbname, const char *sql);
 };
