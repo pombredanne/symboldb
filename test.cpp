@@ -17,8 +17,12 @@
  */
 
 #include "test.hpp"
+#include "dir_handle.hpp"
+#include "os.hpp"
+#include "os_exception.hpp"
 #include "string_support.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <typeinfo>
 #include <vector>
@@ -102,9 +106,76 @@ test_compare_string(const std::string &left, const std::string &right,
   fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, right_str);
 }
 
+static std::vector<int>
+file_descriptors()
+{
+  dir_handle fds("/proc/self/fd");
+  int self = fds.dirfd();
+  std::vector<int> result;
+  while (dirent *e = fds.readdir()) {
+    unsigned long long fdu;
+    if (!parse_unsigned_long_long(e->d_name, fdu)
+	|| static_cast<unsigned long long>(static_cast<int>(fdu)) != fdu) {
+      fprintf(stderr, "warning: invalid /proc/self/fd entry: %s\n", e->d_name);
+    } else {
+      int fd = fdu;
+      if (fd != self) {
+	result.push_back(fd);
+      }
+    }
+  }
+  std::sort(result.begin(), result.end());
+  return result;
+}
+
+static bool
+file_descriptors_valid(const std::vector<int> &fd)
+{
+  return fd.size() == 3
+    && fd.at(0) == 0 && fd.at(1) == 1 && fd.at(2) == 2;
+}
+
+static void
+report_descriptor(const char *prefix, int fd)
+{
+  char buf[128];
+  snprintf(buf, sizeof(buf), "/proc/self/fd/%d", fd);
+  std::string path;
+  try {
+    path = readlink(buf);
+  } catch (os_exception &) {
+    // ignore errors
+  }
+  if (path.empty()) {
+    fprintf(stderr, "%sdescriptor %d: unknown\n", prefix, fd);
+  } else {
+    fprintf(stderr, "%sdescriptor %d: \"%s\"\n",
+	    prefix, fd, quote(path).c_str());
+  }
+}
+
+static void
+report_descriptors(const char *prefix, const std::vector<int> &fds, bool all)
+{
+  for (std::vector<int>::const_iterator p = fds.begin(), end = fds.end();
+       p != end; ++p) {
+    int fd = *p;
+    if (fd < 0 || fd > 2 || all) {
+      report_descriptor(prefix, fd);
+    }
+  }
+}
+
+
 int
 run_tests()
 {
+  std::vector<int> start_fds(file_descriptors());
+  if (!file_descriptors_valid(start_fds)) {
+    fprintf(stderr, "warning: invalid set of file descriptors:\n");
+    report_descriptors("warning:   ", start_fds, true);
+  }
+
   for (test_suite::iterator p = tests->begin(), end = tests->end();
        p != end; ++p) {
     current_test = p->name;
@@ -127,6 +198,16 @@ run_tests()
 	    failure_count, failure_count + success_count, exception_count);
     return 1;
   }
+
+  if (file_descriptors_valid(start_fds)) {
+    std::vector<int> end_fds(file_descriptors());
+    if (!file_descriptors_valid(end_fds)) {
+      fprintf(stderr, "error: leaked file descriptors:\n");
+      report_descriptors("error:   ", end_fds, false);
+      return 1;
+    }
+  }
+
   fprintf(stderr, "info: %u tests successful\n",
 	  success_count + failure_count);
   return 0;
