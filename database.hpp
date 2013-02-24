@@ -45,6 +45,9 @@ public:
   database();
   ~database();
 
+  // Uses a specific database name.
+  database(const char *host, const char *dbname);
+
   // The database schema, as a sequence of PostgreSQL DDL statements.
   static const char SCHEMA[];
   

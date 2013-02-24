@@ -101,6 +101,7 @@ add_library (SymbolDB
 )
 
 target_link_libraries (SymbolDB
+  -lcurl
   -ldl
   -lebl -lelf
   -lexpat
@@ -116,7 +117,6 @@ add_executable (symboldb
 
 target_link_libraries (symboldb
   SymbolDB
-  -lcurl
   -lwwwcore -lwwwutils
 )
 
@@ -125,6 +125,7 @@ install (TARGETS symboldb DESTINATION bin)
 add_executable (runtests
   runtests.cpp
   test-dir_handle.cpp
+  test-download.cpp
   test-fd_handle.cpp
   test-fd_sink.cpp
   test-fd_source.cpp

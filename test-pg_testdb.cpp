@@ -21,8 +21,6 @@
 #include "pgresult_handle.hpp"
 #include "pg_exception.hpp"
 
-#include "database.hpp"
-
 #include "test.hpp"
 
 static void
@@ -60,10 +58,6 @@ test()
       CHECK(e.status_ == PGRES_FATAL_ERROR);
       COMPARE_STRING(PQresStatus(e.status_), "PGRES_FATAL_ERROR");
     }
-  }
-  {
-    pgresult_handle r(PQexec(h.raw, database::SCHEMA));
-    r.check();
   }
 }
 

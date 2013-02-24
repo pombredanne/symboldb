@@ -133,6 +133,19 @@ database::database()
   impl_->check();
 }
 
+database::database(const char *host, const char *dbname)
+  : impl_(new impl)
+{
+  static const char *const keys[] = {
+    "host", "port", "dbname", NULL
+  };
+  const char *values[] = {
+    host, "5432", dbname, NULL
+  };
+  impl_->conn = PQconnectdbParams(keys, values, 0);
+  impl_->check();
+}
+
 database::~database()
 {
 }
