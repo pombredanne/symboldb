@@ -49,7 +49,7 @@
 #define URL_CACHE_TABLE "symboldb.url_cache"
 
 // Include the schema.sql file.
-static const char schema[] = {
+const char database::SCHEMA[] = {
 #include "schema.sql.inc"
   , 0
 };
@@ -795,6 +795,6 @@ void
 database::create_schema()
 {
   pgresult_wrapper res;
-  res.raw = PQexec(impl_->conn, schema);
+  res.raw = PQexec(impl_->conn, SCHEMA);
   res.check();
 }

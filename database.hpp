@@ -44,6 +44,9 @@ public:
   // Uses the environment to locate a database.
   database();
   ~database();
+
+  // The database schema, as a sequence of PostgreSQL DDL statements.
+  static const char SCHEMA[];
   
   void txn_begin();
   void txn_commit();
