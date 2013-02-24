@@ -25,46 +25,59 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
+#include <set>
 #include <typeinfo>
 #include <vector>
 
-struct test_case {
-  const char *name;
-  void (*func)();
+namespace {
+  struct test_case {
+    const char *name;
+    void (*func)();
 
-  test_case(const char *n, void(*f)())
-    : name(n), func(f)
+    test_case(const char *n, void(*f)())
+      : name(n), func(f)
+    {
+    }
+  };
+
+  bool
+  operator<(const test_case &left, const test_case &right)
   {
+    return strcmp(left.name, right.name) < 0;
   }
-};
 
-typedef std::vector<test_case> test_suite;
-static test_suite *tests;
+  typedef std::set<test_case> test_suite;
+  static test_suite *tests;
 
-static struct tests_cleanup {
-  ~tests_cleanup()
-  {
-    delete tests;
-  }
-} tests_cleanup_;
+  static struct tests_cleanup {
+    ~tests_cleanup()
+    {
+      delete tests;
+    }
+  } tests_cleanup_;
+
+  const char *current_test;
+  bool first_failure;
+  unsigned exception_count;
+  unsigned success_count;
+  unsigned failure_count;
+}
 
 test_register::test_register(const char *name, void(*func)())
 {
   if (tests == 0) {
     tests = new test_suite;
   }
-  tests->push_back(test_case(name, func));
+  if (!tests->insert(test_case(name, func)).second) {
+    ++failure_count;
+    fprintf(stderr, "error: duplicate test case name: %s\n", name);
+  }
 }
 
 test_register::~test_register()
 {
 }
-
-static const char *current_test;
-static bool first_failure;
-static unsigned exception_count;
-static unsigned success_count;
-static unsigned failure_count;
 
 static void
 test_header()
