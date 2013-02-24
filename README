@@ -12,6 +12,7 @@ development packages:
 - gawk (for /usr/bin/awk)
 - nss-devel
 - postgresql-devel
+- postgresql-server
 - rpm-devel
 - vim-common (for /usr/bin/xxd)
 - w3c-libwww-devel

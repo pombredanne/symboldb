@@ -37,6 +37,5 @@
   sets.  This also relies on better logging/diagnostics and improved
   error recovery.
 
-* More test cases, including a test driver which spawns a temporary
-  PostgreSQL installation which can be used to validate the schema
-  (and load sample RPMs).
+* More test cases, including loading of sample RPMs.
+
