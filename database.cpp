@@ -24,6 +24,7 @@
 #include "elf_symbol_reference.hpp"
 #include "symboldb_config.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <libpq-fe.h>
@@ -371,6 +372,7 @@ database::file_id
 database::add_file(package_id pkg, const rpm_file_info &info)
 {
   // FIXME: This needs a transaction.
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char pkgstr[32];
   snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
   char mtimestr[32];
@@ -403,6 +405,7 @@ database::add_elf_image(file_id file, const elf_image &image,
   if (fallback_arch == NULL) {
     throw std::logic_error("fallback_arch");
   }
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
 
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
@@ -439,6 +442,7 @@ void
 database::add_elf_symbol_definition(file_id file,
 				    const elf_symbol_definition &def)
 {
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {
@@ -465,6 +469,7 @@ void
 database::add_elf_symbol_reference(file_id file,
 				   const elf_symbol_reference &ref)
 {
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {
@@ -489,6 +494,7 @@ void
 database::add_elf_needed(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {filestr, name};
@@ -504,6 +510,7 @@ void
 database::add_elf_rpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {filestr, name};
@@ -519,6 +526,7 @@ void
 database::add_elf_runpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {filestr, name};
@@ -534,6 +542,7 @@ void
 database::add_elf_error(file_id file, const char *message)
 {
   // FIXME: This needs a transaction.
+  assert(PQtransactionStatus(impl_->conn) == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file);
   const char *params[] = {filestr, message};
