@@ -81,6 +81,7 @@ add_library (SymbolDB
   sink.cpp
   source.cpp
   source_sink.cpp
+  string_sink.cpp
   string_source.cpp
   string_support.cpp
   tee_sink.cpp
