@@ -89,6 +89,7 @@ add_library (SymbolDB
   string_source.cpp
   string_support.cpp
   subprocess.cpp
+  symboldb_options.cpp
   tee_sink.cpp
   url.cpp
   utf8.cpp

@@ -53,66 +53,22 @@
 #include "tee_sink.hpp"
 #include "source_sink.hpp"
 #include "pg_exception.hpp"
+#include "symboldb_options.hpp"
 
 #include <set>
 #include <sstream>
-
-namespace {
-  struct options {
-    enum {
-      standard, verbose, quiet
-    } output;
-
-    const char *arch;
-    bool no_net;
-    const char *set_name;
-    std::string cache_path;
-
-    options()
-      : output(standard), arch(NULL), no_net(false), set_name(NULL)
-    {
-    }
-
-    download_options download() const;
-
-    std::string rpm_cache_path() const;
-  };
-
-  download_options
-  options::download() const
-  {
-    download_options d;
-    if (no_net) {
-      d.cache_mode = download_options::only_cache;
-    }
-    return d;
-  }
-
-  std::string
-  options::rpm_cache_path() const
-  {
-    std::string path;
-    if (cache_path.empty()) {
-      path = home_directory();
-      path += "/.cache/symboldb";
-    } else {
-      path = cache_path;
-    }
-    path += "/rpms";
-    return path;
-  }
-}
 
 static const char *elf_path; // FIXME
 static database::file_id fid;
 
 static void
-dump_def(const options &opt, database &db, const elf_symbol_definition &def)
+dump_def(const symboldb_options &opt, database &db,
+	 const elf_symbol_definition &def)
 {
   if (def.symbol_name.empty()) {
     return;
   }
-  if (opt.output == options::verbose) {
+  if (opt.output == symboldb_options::verbose) {
     fprintf(stderr, "%s DEF %s %s 0x%llx%s\n",
 	    elf_path, def.symbol_name.c_str(), def.vda_name.c_str(),
 	    def.value, def.default_version ? " [default]" : "");
@@ -121,12 +77,13 @@ dump_def(const options &opt, database &db, const elf_symbol_definition &def)
 }
 
 static void
-dump_ref(const options &opt, database &db, const elf_symbol_reference &ref)
+dump_ref(const symboldb_options &opt, database &db,
+	 const elf_symbol_reference &ref)
 {
   if (ref.symbol_name.empty()) {
     return;
   }
-  if (opt.output == options::verbose) {
+  if (opt.output == symboldb_options::verbose) {
     fprintf(stderr, "%s REF %s %s\n",
 	    elf_path, ref.symbol_name.c_str(), ref.vna_name.c_str());
   }
@@ -170,7 +127,7 @@ lock_rpm(database &db, const rpm_package_info &info)
 }
 
 static database::package_id
-load_rpm_internal(const options &opt, database &db,
+load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &info)
 {
   try {
@@ -183,19 +140,19 @@ load_rpm_internal(const options &opt, database &db,
 
     database::package_id pkg;
     if (!db.intern_package(rpmst.package(), pkg)) {
-      if (opt.output != options::quiet) {
+      if (opt.output != symboldb_options::quiet) {
 	fprintf(stderr, "info: skipping %s from %s\n",
 		rpmst.nevra(), rpm_path);
       }
       return pkg;
     }
 
-    if (opt.output != options::quiet) {
+    if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
     }
 
     while (rpmst.read_file(file)) {
-      if (opt.output == options::verbose) {
+      if (opt.output == symboldb_options::verbose) {
 	fprintf(stderr, "%s %s %s %s %" PRIu32 " 0%o %llu\n",
 		rpmst.nevra(), file.info->name.c_str(),
 		file.info->user.c_str(), file.info->group.c_str(),
@@ -284,7 +241,7 @@ load_rpm_internal(const options &opt, database &db,
 }
 
 static bool
-load_rpm(const options &opt, database &db,
+load_rpm(const symboldb_options &opt, database &db,
 	     const char *path, rpm_package_info &info)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
@@ -319,7 +276,7 @@ load_rpm(const options &opt, database &db,
 }
 
 static bool
-load_rpms(const options &opt, database &db, char **argv,
+load_rpms(const symboldb_options &opt, database &db, char **argv,
 	  package_set_consolidator<database::package_id> &ids)
 {
   rpm_package_info info;
@@ -340,7 +297,7 @@ static int do_create_schema(database &db)
 }
 
 static int
-do_load_rpm(const options &opt, database &db, char **argv)
+do_load_rpm(const symboldb_options &opt, database &db, char **argv)
 {
   package_set_consolidator<database::package_id> ignored;
   if (!load_rpms(opt, db, argv, ignored)) {
@@ -353,21 +310,21 @@ do_load_rpm(const options &opt, database &db, char **argv)
 enum { PACKAGE_SET_LOCK_TAG = 1667369644 };
 
 static void
-finalize_package_set(const options &opt, database &db,
+finalize_package_set(const symboldb_options &opt, database &db,
 		     database::package_set_id set)
 {
-  if (opt.output != options::quiet) {
+  if (opt.output != symboldb_options::quiet) {
     fprintf(stderr, "info: updating package set caches\n");
   }
   db.update_package_set_caches(set);
 }
 
 static int
-do_create_set(const options &opt, database &db, char **argv)
+do_create_set(const symboldb_options &opt, database &db, char **argv)
 {
-  if (db.lookup_package_set(opt.set_name) != 0){
+  if (db.lookup_package_set(opt.set_name.c_str()) != 0){
     fprintf(stderr, "error: package set \"%s\" already exists\n",
-	    opt.set_name);
+	    opt.set_name.c_str());
     return 1;
   }
 
@@ -383,7 +340,7 @@ do_create_set(const options &opt, database &db, char **argv)
 
   db.txn_begin();
   database::package_set_id set =
-    db.create_package_set(opt.set_name, opt.arch);
+    db.create_package_set(opt.set_name.c_str(), opt.arch.c_str());
   {
     database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
     for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
@@ -396,12 +353,12 @@ do_create_set(const options &opt, database &db, char **argv)
 }
 
 static int
-do_update_set(const options &opt, database &db, char **argv)
+do_update_set(const symboldb_options &opt, database &db, char **argv)
 {
-  database::package_set_id set = db.lookup_package_set(opt.set_name);
+  database::package_set_id set = db.lookup_package_set(opt.set_name.c_str());
   if (set == 0) {
     fprintf(stderr, "error: package set \"%s\" does not exist\n",
-	    opt.set_name);
+	    opt.set_name.c_str());
     return 1;
   }
 
@@ -429,7 +386,7 @@ do_update_set(const options &opt, database &db, char **argv)
 }
 
 static int
-do_download(const options &opt, database &db, const char *url)
+do_download(const symboldb_options &opt, database &db, const char *url)
 {
   std::vector<unsigned char> data;
   std::string error;
@@ -446,7 +403,7 @@ do_download(const options &opt, database &db, const char *url)
 }
 
 static int
-do_show_repomd(const options &opt, database &db, const char *base)
+do_show_repomd(const symboldb_options &opt, database &db, const char *base)
 {
   repomd rp;
   std::string error;
@@ -465,7 +422,7 @@ do_show_repomd(const options &opt, database &db, const char *base)
 }
 
 static int
-do_show_primary(const options &opt, database &db, const char *base)
+do_show_primary(const symboldb_options &opt, database &db, const char *base)
 {
   repomd rp;
   std::string error;
@@ -493,13 +450,15 @@ namespace {
 }
 
 static int
-do_download_repo(const options &opt, database &db, char **argv, bool load)
+do_download_repo(const symboldb_options &opt, database &db,
+		 char **argv, bool load)
 {
   database::package_set_id set = 0;
-  if (load && opt.set_name) {
-    set = db.lookup_package_set(opt.set_name);
+  if (load && !opt.set_name.empty()) {
+    set = db.lookup_package_set(opt.set_name.c_str());
     if (set == 0) {
-      fprintf(stderr, "error: unknown package set: %s\n", opt.set_name);
+      fprintf(stderr, "error: unknown package set: %s\n",
+	      opt.set_name.c_str());
       return 1;
     }
   }
@@ -515,7 +474,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 
   for (; *argv; ++ argv) {
     const char *url = *argv;
-    if (opt.output != options::quiet) {
+    if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: processing repository %s\n", url);
     }
     repomd rp;
@@ -553,7 +512,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
   std::string error;
 
   std::vector<rpm_url> urls(pset.values());
-  if (opt.output != options::quiet) {
+  if (opt.output != symboldb_options::quiet) {
     fprintf(stderr, "info: %zu packages in download set\n", urls.size());
   }
   size_t download_count = 0;
@@ -564,7 +523,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
     if (load) {
       database::package_id pid = db.package_by_digest(p->csum.value);
       if (pid != 0) {
-	if (opt.output != options::quiet) {
+	if (opt.output != symboldb_options::quiet) {
 	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());
 	}
 	pids.insert(pid);
@@ -577,7 +536,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       database::advisory_lock lock
 	(lock_digest(db, p->csum.value.begin(), p->csum.value.end()));
       if (!fcache.lookup_path(p->csum, rpm_path)) {
-	if (opt.output != options::quiet) {
+	if (opt.output != symboldb_options::quiet) {
 	  fprintf(stderr, "info: downloading %s\n", p->href.c_str());
 	}
 	++download_count;
@@ -609,7 +568,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
       pids.insert(pid);
     }
   }
-  if (opt.output != options::quiet) {
+  if (opt.output != symboldb_options::quiet) {
     fprintf(stderr, "info: downloaded %zu of %zu packages\n",
 	    download_count, urls.size());
   }
@@ -631,12 +590,12 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 }
 
 static int
-do_show_source_packages(const options &opt, database &db, char **argv)
+do_show_source_packages(const symboldb_options &opt, database &db, char **argv)
 {
   std::set<std::string> source_packages;
   for (; *argv; ++argv) {
     const char *url = *argv;
-    if (opt.output != options::quiet) {
+    if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: processing %s\n", url);
     }
     repomd rp;
@@ -685,14 +644,14 @@ do_show_source_packages(const options &opt, database &db, char **argv)
 }
 
 static int
-do_show_soname_conflicts(const options &opt, database &db)
+do_show_soname_conflicts(const symboldb_options &opt, database &db)
 {
-  database::package_set_id pset = db.lookup_package_set(opt.set_name);
+  database::package_set_id pset = db.lookup_package_set(opt.set_name.c_str());
   if (pset > 0) {
     db.print_elf_soname_conflicts(pset, opt.output == opt.verbose);
     return 0;
   } else {
-    fprintf(stderr, "error: invalid package set: %s\n", opt.set_name);
+    fprintf(stderr, "error: invalid package set: %s\n", opt.set_name.c_str());
     return 1;
   }
 }
@@ -749,7 +708,7 @@ namespace {
 int
 main(int argc, char **argv)
 {
-  options opt;
+  symboldb_options opt;
   command::type cmd = command::undefined;
   {
     static const struct option long_options[] = {
@@ -757,7 +716,7 @@ main(int argc, char **argv)
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
       {"update-set", required_argument, 0, command::update_set},
-      {"update-set-from-repo", required_argument, 0, command::update_set_from_repo},
+      {"update-set-from-repo", required_argument, 0,command::update_set_from_repo},
       {"download", no_argument, 0, command::download},
       {"download-repo", no_argument, 0, command::download_repo},
       {"load-repo", no_argument, 0, command::load_repo},
@@ -778,6 +737,9 @@ main(int argc, char **argv)
     while ((ch = getopt_long(argc, argv, "a:NC:qv", long_options, &index)) != -1) {
       switch (ch) {
       case 'a':
+	if (optarg[0] == '\0') {
+	  usage(argv[0], "invalid architecture name");
+	}
 	opt.arch = optarg;
 	break;
       case 'N':
@@ -787,15 +749,18 @@ main(int argc, char **argv)
 	opt.cache_path = optarg;
 	break;
       case 'q':
-	opt.output = options::quiet;
+	opt.output = symboldb_options::quiet;
 	break;
       case 'v':
-	opt.output = options::verbose;
+	opt.output = symboldb_options::verbose;
 	break;
       case command::create_set:
       case command::update_set:
       case command::update_set_from_repo:
       case command::show_soname_conflicts:
+	if (optarg[0] == '\0') {
+	  usage(argv[0], "invalid package set name");
+	}
 	cmd = static_cast<command::type>(ch);
 	opt.set_name = optarg;
 	break;
@@ -816,12 +781,6 @@ main(int argc, char **argv)
     if (cmd == command::undefined) {
       usage(argv[0]);
     }
-    if (opt.arch != NULL && opt.arch[0] == '\0') {
-      usage(argv[0], "invalid architecture name");
-    }
-    if (opt.set_name != NULL && opt.set_name[0] == '\0') {
-      usage(argv[0], "invalid package set name");
-    }
     switch (cmd) {
     case command::load_rpm:
     case command::show_source_packages:
@@ -832,7 +791,7 @@ main(int argc, char **argv)
       }
       break;
     case command::create_set:
-      if (opt.arch == NULL) {
+      if (opt.arch.empty()) {
 	usage(argv[0]);
       }
       break;
