@@ -69,6 +69,10 @@ add_library (SymbolDB
   os_current_directory.cpp
   os_readlink.cpp
   os_remove_directory_tree.cpp
+  pg_exception.cpp
+  pg_testdb.cpp
+  pgconn_handle.cpp
+  pgresult_handle.cpp
   repomd.cpp
   repomd_primary.cpp
   repomd_primary_xml.cpp
@@ -101,6 +105,7 @@ target_link_libraries (SymbolDB
   -lebl -lelf
   -lexpat
   -lnss3
+  -lpq
   -lrpm -lrpmio
   -lz
 )
@@ -112,7 +117,6 @@ add_executable (symboldb
 target_link_libraries (symboldb
   SymbolDB
   -lcurl
-  -lpq
   -lwwwcore -lwwwutils
 )
 
@@ -130,6 +134,7 @@ add_executable (runtests
   test-gunzip_source.cpp
   test-os.cpp
   test-os_exception.cpp
+  test-pg_testdb.cpp
   test-repomd.cpp
   test-string_source.cpp
   test-string_support.cpp

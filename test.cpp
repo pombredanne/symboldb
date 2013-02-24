@@ -21,6 +21,7 @@
 #include "os.hpp"
 #include "os_exception.hpp"
 #include "string_support.hpp"
+#include "pg_exception.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -182,6 +183,10 @@ run_tests()
     first_failure = true;
     try {
       p->func();
+    } catch (pg_exception &e) {
+      ++exception_count;
+      fprintf(stderr, "error: from PostgreSQL:\n");
+      dump("error: ", e, stderr);
     } catch (std::exception &e) {
       ++exception_count;
       test_header();
