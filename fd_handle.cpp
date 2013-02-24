@@ -113,10 +113,24 @@ fd_handle::close_on_exec() const
 }
 
 void
+fd_handle::close()
+{
+  if (raw < 0) {
+    return;
+  }
+  int fd = raw;
+  // Linux close() always closes the file descriptor, even on error.
+  raw = -1;
+  if (::close(fd) != 0) {
+    throw os_exception().function(::close).fd(fd); // no defaults
+  }
+}
+
+void
 fd_handle::close_nothrow() throw()
 {
   if (raw >= 0) {
-    close(raw);
+    ::close(raw);
     raw = -1;
   }
 }

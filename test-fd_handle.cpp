@@ -60,6 +60,18 @@ test(void)
       CHECK(!h.close_on_exec());
       h.close_on_exec(true);
       CHECK(h.close_on_exec());
+      h.close();
+      CHECK(h.raw == -1);
+      h.close();
+      h.raw = 99999;
+      try {
+	h.close();
+	CHECK(false);
+      } catch (os_exception &e) {
+	CHECK(e.error_code() == EBADF);
+	CHECK(e.fd() == 99999);
+	CHECK(starts_with(e.function_name(), "close["));
+      }
     }
   }
 

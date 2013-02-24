@@ -54,6 +54,9 @@ struct fd_handle {
   // releasing ownership.
   int release() throw();
 
+  // Closes the descriptor and sets RAW to -1, throwing os_exception
+  // on error.
+  void close();
 
   // Closes the descriptor if open, ignoring error return values.
   void close_nothrow() throw();
