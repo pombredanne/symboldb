@@ -104,10 +104,9 @@ namespace {
 
 static const char *elf_path; // FIXME
 static database::file_id fid;
-static std::tr1::shared_ptr<database> db; // FIXME
 
 static void
-dump_def(const options &opt, const elf_symbol_definition &def)
+dump_def(const options &opt, database &db, const elf_symbol_definition &def)
 {
   if (def.symbol_name.empty()) {
     return;
@@ -117,11 +116,11 @@ dump_def(const options &opt, const elf_symbol_definition &def)
 	    elf_path, def.symbol_name.c_str(), def.vda_name.c_str(),
 	    def.value, def.default_version ? " [default]" : "");
   }
-  db->add_elf_symbol_definition(fid, def);
+  db.add_elf_symbol_definition(fid, def);
 }
 
 static void
-dump_ref(const options &opt, const elf_symbol_reference &ref)
+dump_ref(const options &opt, database &db, const elf_symbol_reference &ref)
 {
   if (ref.symbol_name.empty()) {
     return;
@@ -130,11 +129,12 @@ dump_ref(const options &opt, const elf_symbol_reference &ref)
     fprintf(stderr, "%s REF %s %s\n",
 	    elf_path, ref.symbol_name.c_str(), ref.vna_name.c_str());
   }
-  db->add_elf_symbol_reference(fid, ref);
+  db.add_elf_symbol_reference(fid, ref);
 }
 
 static database::package_id
-load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
+load_rpm(const options &opt, database &db,
+	 const char *rpm_path, rpm_package_info &info)
 {
   try {
     rpm_parser_state rpmst(rpm_path);
@@ -142,7 +142,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
     rpm_file_entry file;
 
     database::package_id pkg;
-    if (!db->intern_package(rpmst.package(), pkg)) {
+    if (!db.intern_package(rpmst.package(), pkg)) {
       if (opt.output != options::quiet) {
 	fprintf(stderr, "info: skipping %s from %s\n",
 		rpmst.nevra(), rpm_path);
@@ -163,7 +163,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 		(unsigned long long)file.contents.size());
       }
       file.info->normalize_name();
-      fid = db->add_file(pkg, *file.info); // FIXME
+      fid = db.add_file(pkg, *file.info); // FIXME
       // Check if this is an ELF file.
       if (file.contents.size() > 4
 	  && file.contents.at(0) == '\x7f'
@@ -177,9 +177,9 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 	    elf_image::symbol_range symbols(image);
 	    while (symbols.next()) {
 	      if (symbols.definition()) {
-		dump_def(opt, *symbols.definition());
+		dump_def(opt, db, *symbols.definition());
 	      } else if (symbols.reference()) {
-		dump_ref(opt, *symbols.reference());
+		dump_ref(opt, db, *symbols.reference());
 	      } else {
 		throw std::logic_error("unknown elf_symbol type");
 	      }
@@ -192,7 +192,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 	    while (dyn.next()) {
 	      switch (dyn.type()) {
 	      case elf_image::dynamic_section_range::needed:
-		db->add_elf_needed(fid, dyn.value().c_str());
+		db.add_elf_needed(fid, dyn.value().c_str());
 		break;
 	      case elf_image::dynamic_section_range::soname:
 		if (soname_seen) {
@@ -202,7 +202,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 		    std::ostringstream out;
 		    out << "duplicate soname ignored: " << dyn.value()
 			<< ", previous soname: " << soname;
-		    db->add_elf_error(fid, out.str().c_str());
+		    db.add_elf_error(fid, out.str().c_str());
 		  }
 		} else {
 		  soname = dyn.value();
@@ -210,10 +210,10 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 		}
 		break;
 	      case elf_image::dynamic_section_range::rpath:
-		db->add_elf_rpath(fid, dyn.value().c_str());
+		db.add_elf_rpath(fid, dyn.value().c_str());
 		break;
 	      case elf_image::dynamic_section_range::runpath:
-		db->add_elf_runpath(fid, dyn.value().c_str());
+		db.add_elf_runpath(fid, dyn.value().c_str());
 		break;
 	      }
 	    }
@@ -228,7 +228,7 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 	      }
 	    }
 	  }
-	  db->add_elf_image(fid, image, info.arch.c_str(), soname.c_str());
+	  db.add_elf_image(fid, image, info.arch.c_str(), soname.c_str());
 	} catch (elf_exception e) {
 	  fprintf(stderr, "%s(%s): ELF error: %s\n",
 		  rpm_path, file.info->name.c_str(), e.what());
@@ -244,13 +244,13 @@ load_rpm(const options &opt, const char *rpm_path, rpm_package_info &info)
 }
 
 static bool
-load_rpm(const options &opt, database &db,
-	 const char *path, rpm_package_info &info)
+load_rpm_txn(const options &opt, database &db,
+	     const char *path, rpm_package_info &info)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.
   db.txn_begin();
-  database::package_id pkg = load_rpm(opt, path, info);
+  database::package_id pkg = load_rpm(opt, db, path, info);
 
   hash_sink sha256(hash_sink::sha256);
   hash_sink sha1(hash_sink::sha1);
@@ -279,12 +279,12 @@ load_rpm(const options &opt, database &db,
 }
 
 static bool
-load_rpms(const options &opt, char **argv,
+load_rpms(const options &opt, database &db, char **argv,
 	  package_set_consolidator<database::package_id> &ids)
 {
   rpm_package_info info;
   for (; *argv; ++argv) {
-    database::package_id pkg = load_rpm(opt, *db, *argv, info);
+    database::package_id pkg = load_rpm_txn(opt, db, *argv, info);
     if (pkg == 0) {
       return false;
     }
@@ -293,35 +293,36 @@ load_rpms(const options &opt, char **argv,
   return true;
 }
 
-static int do_create_schema()
+static int do_create_schema(database &db)
 {
-  db->create_schema();
+  db.create_schema();
   return 0;
 }
 
 static int
-do_load_rpm(const options &opt, char **argv)
+do_load_rpm(const options &opt, database &db, char **argv)
 {
   package_set_consolidator<database::package_id> ignored;
-  if (!load_rpms(opt, argv, ignored)) {
+  if (!load_rpms(opt, db, argv, ignored)) {
     return 1;
   }
   return 0;
 }
 
 static void
-finalize_package_set(const options &opt, database::package_set_id set)
+finalize_package_set(const options &opt, database &db,
+		     database::package_set_id set)
 {
   if (opt.output != options::quiet) {
     fprintf(stderr, "info: updating package set caches\n");
   }
-  db->update_package_set_caches(set);
+  db.update_package_set_caches(set);
 }
 
 static int
-do_create_set(const options &opt, char **argv)
+do_create_set(const options &opt, database &db, char **argv)
 {
-  if (db->lookup_package_set(opt.set_name) != 0){
+  if (db.lookup_package_set(opt.set_name) != 0){
     fprintf(stderr, "error: package set \"%s\" already exists\n",
 	    opt.set_name);
     return 1;
@@ -331,27 +332,27 @@ do_create_set(const options &opt, char **argv)
   pset ids;
   {
     package_set_consolidator<database::package_id> psc;
-    if (!load_rpms(opt, argv, psc)) {
+    if (!load_rpms(opt, db, argv, psc)) {
       return 1;
     }
     ids = psc.values();
   }
 
-  db->txn_begin();
+  db.txn_begin();
   database::package_set_id set =
-    db->create_package_set(opt.set_name, opt.arch);
+    db.create_package_set(opt.set_name, opt.arch);
   for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
-    db->add_package_set(set, *p);
+    db.add_package_set(set, *p);
   }
-  finalize_package_set(opt, set);
-  db->txn_commit();
+  finalize_package_set(opt, db, set);
+  db.txn_commit();
   return 0;
 }
 
 static int
-do_update_set(const options &opt, char **argv)
+do_update_set(const options &opt, database &db, char **argv)
 {
-  database::package_set_id set = db->lookup_package_set(opt.set_name);
+  database::package_set_id set = db.lookup_package_set(opt.set_name);
   if (set == 0) {
     fprintf(stderr, "error: package set \"%s\" does not exist\n",
 	    opt.set_name);
@@ -362,19 +363,19 @@ do_update_set(const options &opt, char **argv)
   pset ids;
   {
     package_set_consolidator<database::package_id> psc;
-    if (!load_rpms(opt, argv, psc)) {
+    if (!load_rpms(opt, db, argv, psc)) {
       return 1;
     }
     ids = psc.values();
   }
 
-  db->txn_begin();
-  db->empty_package_set(set);
+  db.txn_begin();
+  db.empty_package_set(set);
   for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
-    db->add_package_set(set, *p);
+    db.add_package_set(set, *p);
   }
-  finalize_package_set(opt, set);
-  db->txn_commit();
+  finalize_package_set(opt, db, set);
+  db.txn_commit();
   return 0;
 }
 
@@ -568,7 +569,7 @@ do_download_repo(const options &opt, database &db, char **argv, bool load)
 	   p = pids.begin(), end = pids.end(); p != end; ++p) {
       db.add_package_set(set, *p);
     }
-    finalize_package_set(opt, set);
+    finalize_package_set(opt, db, set);
     db.txn_commit();
   }
 
@@ -803,33 +804,33 @@ main(int argc, char **argv)
   elf_image_init();
   rpm_parser_init();
 
-  db.reset(new database);
+  database db;
 
   switch (cmd) {
   case command::create_schema:
-    return do_create_schema();
+    return do_create_schema(db);
   case command::load_rpm:
-    do_load_rpm(opt, argv + optind);
+    do_load_rpm(opt, db, argv + optind);
     break;
   case command::create_set:
-    return do_create_set(opt, argv + optind);
+    return do_create_set(opt, db, argv + optind);
   case command::update_set:
-    return do_update_set(opt, argv + optind);
+    return do_update_set(opt, db, argv + optind);
   case command::download:
-    return do_download(opt, *db, argv[optind]);
+    return do_download(opt, db, argv[optind]);
   case command::download_repo:
-    return do_download_repo(opt, *db, argv + optind, false);
+    return do_download_repo(opt, db, argv + optind, false);
   case command::load_repo:
   case command::update_set_from_repo:
-    return do_download_repo(opt, *db, argv + optind, true);
+    return do_download_repo(opt, db, argv + optind, true);
   case command::show_repomd:
-    return do_show_repomd(opt, *db, argv[optind]);
+    return do_show_repomd(opt, db, argv[optind]);
   case command::show_primary:
-    return do_show_primary(opt, *db, argv[optind]);
+    return do_show_primary(opt, db, argv[optind]);
   case command::show_source_packages:
-    return do_show_source_packages(opt, *db, argv + optind);
+    return do_show_source_packages(opt, db, argv + optind);
   case command::show_soname_conflicts:
-    return do_show_soname_conflicts(opt, *db);
+    return do_show_soname_conflicts(opt, db);
   case command::undefined:
   default:
     abort();
