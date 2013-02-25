@@ -261,7 +261,7 @@ elf_image::symbol_range::state::init_section(impl *parent)
   GElf_Shdr *glink = gelf_getshdr (elf_getscn (parent->elf, shdr->sh_link),
 				   &glink_mem);
   if (glink == NULL)
-    elf_exception::raise("invalid sh_link value in section %Zu",
+    elf_exception::raise("invalid sh_link value in section %zu",
 				  elf_ndxscn (scn));
 
   /* Now we can compute the number of entries in the section.  */
