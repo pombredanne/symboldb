@@ -78,6 +78,7 @@ add_library (SymbolDB
   rpm_evr.cpp
   rpm_file_entry.cpp
   rpm_file_info.cpp
+  rpm_load.cpp
   rpm_package_info.cpp
   rpm_parser.cpp
   rpm_parser_exception.cpp
@@ -137,6 +138,7 @@ add_executable (runtests
   test-os_exception.cpp
   test-pg_testdb.cpp
   test-repomd.cpp
+  test-rpm_load.cpp
   test-string_source.cpp
   test-string_support.cpp
   test-subprocess.cpp

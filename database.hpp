@@ -64,6 +64,10 @@ public:
   // concludes.
   advisory_lock lock(int, int);
 
+  // Lock the digest using its first 8 bytes.
+  template <class RandomAccessIterator> advisory_lock
+  lock_digest(RandomAccessIterator first, RandomAccessIterator last);
+
   typedef int package_id;
   typedef int file_id;
 
@@ -130,3 +134,27 @@ public:
   // Debugging functions.
   void print_elf_soname_conflicts(package_set_id, bool include_unreferenced);
 };
+
+template <class RandomAccessIterator> database::advisory_lock
+database::lock_digest(RandomAccessIterator first, RandomAccessIterator last)
+{
+  if (last - first < 8) {
+    throw std::logic_error("lock_digest: digest is too short");
+  }
+  int a = (*first & 0xFF) << 24;
+  ++first;
+  a |= (*first & 0xFF) << 16;
+  ++first;
+  a |= (*first & 0xFF) << 8;
+  ++first;
+  a |= *first & 0xFF;
+  ++first;
+  int b = (*first & 0xFF) << 24;
+  ++first;
+  b |= (*first & 0xFF) << 16;
+  ++first;
+  b |= (*first & 0xFF) << 8;
+  ++first;
+  b |= *first & 0xFF;
+  return lock(a, b);
+}
