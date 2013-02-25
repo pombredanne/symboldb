@@ -46,7 +46,8 @@ test()
   database db(testdb.directory().c_str(), DBNAME);
 
   {
-    static const char RPMDIR[] = "test/data";
+    int last_pkg_id = 0;
+   static const char RPMDIR[] = "test/data";
     std::string rpmdir_prefix(RPMDIR);
     rpmdir_prefix += '/';
     dir_handle rpmdir(RPMDIR);
@@ -54,7 +55,11 @@ test()
       if (ends_with(std::string(e->d_name), ".rpm")
 	  && !ends_with(std::string(e->d_name), ".src.rpm")) {
 	rpm_package_info info;
-	rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info);
+	int pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info);
+	CHECK(pkg > last_pkg_id);
+	last_pkg_id = pkg;
+	pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info);
+	CHECK(pkg == last_pkg_id);
       }
     }
   }

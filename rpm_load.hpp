@@ -24,6 +24,7 @@ class rpm_package_info;
 
 // Loads the RPM file PATH into the database and returns metadata in
 // INFO.  Reports some errors on standard error.  The database must
-// not have an open transaction.
-bool rpm_load(const symboldb_options &opt, database &db,
-	      const char *path, rpm_package_info &info);
+// not have an open transaction.  The return value is the package ID,
+// or 0 on error.
+int rpm_load(const symboldb_options &opt, database &db,
+	     const char *path, rpm_package_info &info);
