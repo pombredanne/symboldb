@@ -106,11 +106,7 @@ do_create_set(const symboldb_options &opt, database &db, char **argv)
   db.txn_begin();
   database::package_set_id set =
     db.create_package_set(opt.set_name.c_str(), opt.arch.c_str());
-  {
-    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
-    for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
-      db.add_package_set(set, *p);
-    }
+  if (db.update_package_set(set, ids)) {
     finalize_package_set(opt, db, set);
   }
   db.txn_commit();
@@ -140,11 +136,9 @@ do_update_set(const symboldb_options &opt, database &db, char **argv)
   db.txn_begin();
   {
     database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
-    db.empty_package_set(set);
-    for (pset::const_iterator p = ids.begin(), end = ids.end(); p != end; ++p) {
-      db.add_package_set(set, *p);
+    if (db.update_package_set(set, ids)) {
+      finalize_package_set(opt, db, set);
     }
-    finalize_package_set(opt, db, set);
   }
   db.txn_commit();
   return 0;
@@ -341,12 +335,9 @@ do_download_repo(const symboldb_options &opt, database &db,
     db.txn_begin();
     database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
     {
-      db.empty_package_set(set);
-      for (std::set<database::package_id>::iterator
-	     p = pids.begin(), end = pids.end(); p != end; ++p) {
-	db.add_package_set(set, *p);
+      if (db.update_package_set(set, pids.begin(), pids.end())) {
+	finalize_package_set(opt, db, set);
       }
-      finalize_package_set(opt, db, set);
     }
     db.txn_commit();
   }

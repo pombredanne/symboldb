@@ -108,10 +108,21 @@ public:
   typedef int package_set_id;
   package_set_id create_package_set(const char *name, const char *arch);
   package_set_id lookup_package_set(const char *name);
+
+  // Adds a single package to the package set.
   void add_package_set(package_set_id, package_id);
+
+  // Removes a single package from the package set.
+  void delete_from_package_set(package_set_id, package_id);
 
   // Remove all members from the package set.
   void empty_package_set(package_set_id);
+
+  // Replaces the contents of the package set with the package IDs in
+  // the vector.  Returns true if there were actual changes.
+  bool update_package_set(package_set_id, const std::vector<package_id> &);
+  template <class InputIterator> bool
+  update_package_set(package_set_id, InputIterator first, InputIterator last);
 
   // Update packet-set-wide helper tables (such as ELF linkage).
   void update_package_set_caches(package_set_id);
@@ -157,4 +168,16 @@ database::lock_digest(RandomAccessIterator first, RandomAccessIterator last)
   ++first;
   b |= *first & 0xFF;
   return lock(a, b);
+}
+
+template <class InputIterator> bool
+database::update_package_set(package_set_id set,
+			     InputIterator first, InputIterator last)
+{
+  std::vector<package_id> pids;
+  while (first != last) {
+    pids.push_back(*first);
+    ++first;
+  }
+  return update_package_set(set, pids);
 }

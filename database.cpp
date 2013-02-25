@@ -31,6 +31,8 @@
 
 #include <libpq-fe.h>
 
+#include <set>
+
 // FIXME: We need to add a transaction runner, so that we can retry
 // transactions on deadlock or update conflict.
 
@@ -545,6 +547,23 @@ database::add_package_set(package_set_id set, package_id pkg)
 }
 
 void
+database::delete_from_package_set(package_set_id set, package_id pkg)
+{
+  char setstr[32];
+  snprintf(setstr, sizeof(setstr), "%d", set);
+  char pkgstr[32];
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+  const char *params[] = {setstr, pkgstr};
+  pgresult_handle res;
+  res.raw = PQexecParams
+    (impl_->conn.raw,
+     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE
+     " WHERE set = $1 AND package = $2",
+     2, NULL, params, NULL, NULL, 0);
+  res.check();
+}
+
+void
 database::empty_package_set(package_set_id set)
 {
   char setstr[32];
@@ -555,6 +574,53 @@ database::empty_package_set(package_set_id set)
     (impl_->conn.raw, "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1",
      1, NULL, params, NULL, NULL, 0);
   res.check();
+}
+
+bool
+database::update_package_set(package_set_id set,
+			     const std::vector<package_id> &pids)
+{
+  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  bool changes = false;
+
+  std::set<package_id> old;
+  {
+    char setstr[32];
+    snprintf(setstr, sizeof(setstr), "%d", set);
+    const char *params[] = {setstr};
+    pgresult_handle res;
+    res.raw = PQexecParams
+      (impl_->conn.raw, "SELECT package FROM " PACKAGE_SET_MEMBER_TABLE
+       " WHERE set = $1",
+       1, NULL, params, NULL, NULL, 0);
+    res.check();
+
+    for (int i = 0, end = PQntuples(res.raw); i < end; ++i) {
+      int pkg = 0;
+      sscanf(PQgetvalue(res.raw, i, 0), "%d", &pkg);
+      assert(pkg != 0);
+      old.insert(pkg);
+    }
+  }
+
+  for (std::vector<package_id>::const_iterator
+	 p = pids.begin(), end = pids.end(); p != end; ++p) {
+    package_id pkg = *p;
+    if (old.erase(pkg) == 0) {
+      // New package set member.
+      add_package_set(set, pkg);
+      changes = true;
+    }
+  }
+
+  // Remaining old entries have to be deleted.
+  for (std::set<package_id>::const_iterator
+	 p = old.begin(), end = old.end(); p != end; ++p) {
+    delete_from_package_set(set, *p);
+    changes = true;
+  }
+
+  return changes;
 }
 
 void
