@@ -288,7 +288,7 @@ do_download_repo(const symboldb_options &opt, database &db,
     if (load) {
       database::package_id pid = db.package_by_digest(p->csum.value);
       if (pid != 0) {
-	if (opt.output != symboldb_options::quiet) {
+	if (opt.output == symboldb_options::verbose) {
 	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());
 	}
 	pids.insert(pid);
