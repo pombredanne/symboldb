@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "tagged.hpp"
+
 #include <stdexcept>
 #include <string>
 #include <tr1/memory>
@@ -68,8 +70,10 @@ public:
   template <class RandomAccessIterator> advisory_lock
   lock_digest(RandomAccessIterator first, RandomAccessIterator last);
 
-  typedef int package_id;
-  typedef int file_id;
+  struct package_id_tag {};
+  typedef tagged<int, package_id_tag> package_id;
+  struct file_id_tag {};
+  typedef tagged<int, file_id_tag> file_id;
 
   // Creates the "symboldb" database schema.
   void create_schema();
@@ -105,7 +109,8 @@ public:
   void add_elf_error(file_id, const char *);
 
   // Package sets.
-  typedef int package_set_id;
+  struct package_set_tag {};
+  typedef tagged<int, package_set_tag> package_set_id;
   package_set_id create_package_set(const char *name, const char *arch);
   package_set_id lookup_package_set(const char *name);
 

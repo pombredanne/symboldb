@@ -220,7 +220,7 @@ database::intern_package(const rpm_package_info &pkg,
        1, NULL, params, NULL, NULL, 0);
     int id = get_id(res);
     if (id > 0) {
-      pkg_id = id;
+      pkg_id = package_id(id);
       return false;
     }
   }
@@ -247,7 +247,7 @@ database::intern_package(const rpm_package_info &pkg,
        " (name, epoch, version, release, arch, hash, source)"
        " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex'), $7) RETURNING id",
        7, NULL, params, NULL, NULL, 0);
-    pkg_id = get_id_force(res);
+    pkg_id = package_id(get_id_force(res));
     return true;
   }
 }
@@ -263,7 +263,7 @@ database::add_package_digest(package_id pkg,
   }
 
   char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
 
   static const Oid paramTypes[] = {23 /* INT4 */, 17 /* BYTEA */};
   const int paramLengths[] = {0, static_cast<int>(digest.size())};
@@ -314,7 +314,7 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
     (impl_->conn.raw,
      "SELECT package FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
      1, paramTypes, params, paramLengths, paramFormats, 0);
-  return get_id(res);
+  return package_id(get_id(res));
 }
 
 database::file_id
@@ -323,7 +323,7 @@ database::add_file(package_id pkg, const rpm_file_info &info)
   // FIXME: This needs a transaction.
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
   char mtimestr[32];
   snprintf(mtimestr, sizeof(mtimestr), "%d", info.mtime);
   char modestr[32];
@@ -344,7 +344,7 @@ database::add_file(package_id pkg, const rpm_file_info &info)
      " (package, name, user_name, group_name, mtime, mode, normalized)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
      7, NULL, params, NULL, NULL, 0);
-  return get_id_force(res);
+  return file_id(get_id_force(res));
 }
 
 void
@@ -357,7 +357,7 @@ database::add_elf_image(file_id file, const elf_image &image,
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
 
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   char ei_class[32];
   snprintf(ei_class, sizeof(ei_class), "%d", image.ei_class());
   char ei_data[32];
@@ -393,7 +393,7 @@ database::add_elf_symbol_definition(file_id file,
 {
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {
     filestr,
     def.symbol_name.c_str(),
@@ -420,7 +420,7 @@ database::add_elf_symbol_reference(file_id file,
 {
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {
     filestr,
     ref.symbol_name.c_str(),
@@ -445,7 +445,7 @@ database::add_elf_needed(file_id file, const char *name)
   // FIXME: This needs a transaction.
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -461,7 +461,7 @@ database::add_elf_rpath(file_id file, const char *name)
   // FIXME: This needs a transaction.
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -477,7 +477,7 @@ database::add_elf_runpath(file_id file, const char *name)
   // FIXME: This needs a transaction.
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -493,7 +493,7 @@ database::add_elf_error(file_id file, const char *message)
   // FIXME: This needs a transaction.
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file);
+  snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, message};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -513,7 +513,7 @@ database::create_package_set(const char *name, const char *arch)
      "INSERT INTO " PACKAGE_SET_TABLE
      " (name, arch) VALUES ($1, $2) RETURNING id",
      2, NULL, params, NULL, NULL, 0);
-  return get_id_force(res);
+  return package_set_id(get_id_force(res));
 }
 
 database::package_set_id
@@ -526,16 +526,16 @@ database::lookup_package_set(const char *name)
      "SELECT id FROM " PACKAGE_SET_TABLE
      " WHERE name = $1",
      1, NULL, params, NULL, NULL, 0);
-  return get_id(res);
+  return package_set_id(get_id(res));
 }
 
 void
 database::add_package_set(package_set_id set, package_id pkg)
 {
   char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set);
+  snprintf(setstr, sizeof(setstr), "%d", set.value());
   char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
   const char *params[] = {setstr, pkgstr};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -550,9 +550,9 @@ void
 database::delete_from_package_set(package_set_id set, package_id pkg)
 {
   char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set);
+  snprintf(setstr, sizeof(setstr), "%d", set.value());
   char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg);
+  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
   const char *params[] = {setstr, pkgstr};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -567,7 +567,7 @@ void
 database::empty_package_set(package_set_id set)
 {
   char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set);
+  snprintf(setstr, sizeof(setstr), "%d", set.value());
   const char *params[] = {setstr};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -586,7 +586,7 @@ database::update_package_set(package_set_id set,
   std::set<package_id> old;
   {
     char setstr[32];
-    snprintf(setstr, sizeof(setstr), "%d", set);
+    snprintf(setstr, sizeof(setstr), "%d", set.value());
     const char *params[] = {setstr};
     pgresult_handle res;
     res.raw = PQexecParams
@@ -599,7 +599,7 @@ database::update_package_set(package_set_id set,
       int pkg = 0;
       sscanf(PQgetvalue(res.raw, i, 0), "%d", &pkg);
       assert(pkg != 0);
-      old.insert(pkg);
+      old.insert(package_id(pkg));
     }
   }
 
@@ -627,7 +627,7 @@ void
 database::update_package_set_caches(package_set_id set)
 {
   char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set);
+  snprintf(setstr, sizeof(setstr), "%d", set.value());
   const char *params[] = {setstr};
   pgresult_handle res;
   res.raw = PQexecParams
@@ -730,7 +730,7 @@ database::print_elf_soname_conflicts(package_set_id set,
 				     bool include_unreferenced)
 {
   char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set);
+  snprintf(setstr, sizeof(setstr), "%d", set.value());
   const char *params[] = {setstr};
   pgresult_handle res;
   if (include_unreferenced) {

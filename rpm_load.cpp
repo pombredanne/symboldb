@@ -192,7 +192,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
   return pkg;
 }
 
-int
+database::package_id
 rpm_load(const symboldb_options &opt, database &db,
 	 const char *path, rpm_package_info &info)
 {
@@ -209,7 +209,7 @@ rpm_load(const symboldb_options &opt, database &db,
     if (handle.raw < 0) {
       fprintf(stderr, "error: opening %s: %s\n", path, error_string().c_str());
       db.txn_rollback();
-      return 0;
+      return database::package_id();
     }
 
     fd_source source(handle.raw);

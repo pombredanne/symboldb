@@ -47,7 +47,7 @@ load_rpms(const symboldb_options &opt, database &db, char **argv,
   rpm_package_info info;
   for (; *argv; ++argv) {
     database::package_id pkg = rpm_load(opt, db, *argv, info);
-    if (pkg == 0) {
+    if (pkg == database::package_id()) {
       return false;
     }
     ids.add(info, pkg);
@@ -87,7 +87,8 @@ finalize_package_set(const symboldb_options &opt, database &db,
 static int
 do_create_set(const symboldb_options &opt, database &db, char **argv)
 {
-  if (db.lookup_package_set(opt.set_name.c_str()) != 0){
+  if (db.lookup_package_set(opt.set_name.c_str())
+      != database::package_set_id()) {
     fprintf(stderr, "error: package set \"%s\" already exists\n",
 	    opt.set_name.c_str());
     return 1;
@@ -117,7 +118,7 @@ static int
 do_update_set(const symboldb_options &opt, database &db, char **argv)
 {
   database::package_set_id set = db.lookup_package_set(opt.set_name.c_str());
-  if (set == 0) {
+  if (set == database::package_set_id()) {
     fprintf(stderr, "error: package set \"%s\" does not exist\n",
 	    opt.set_name.c_str());
     return 1;
@@ -135,7 +136,7 @@ do_update_set(const symboldb_options &opt, database &db, char **argv)
 
   db.txn_begin();
   {
-    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
+    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set.value()));
     if (db.update_package_set(set, ids)) {
       finalize_package_set(opt, db, set);
     }
@@ -212,10 +213,10 @@ static int
 do_download_repo(const symboldb_options &opt, database &db,
 		 char **argv, bool load)
 {
-  database::package_set_id set = 0;
+  database::package_set_id set;;
   if (load && !opt.set_name.empty()) {
     set = db.lookup_package_set(opt.set_name.c_str());
-    if (set == 0) {
+    if (set == database::package_set_id()) {
       fprintf(stderr, "error: unknown package set: %s\n",
 	      opt.set_name.c_str());
       return 1;
@@ -281,7 +282,7 @@ do_download_repo(const symboldb_options &opt, database &db,
        p != end; ++p) {
     if (load) {
       database::package_id pid = db.package_by_digest(p->csum.value);
-      if (pid != 0) {
+      if (pid != database::package_id()) {
 	if (opt.output == symboldb_options::verbose) {
 	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());
 	}
@@ -321,7 +322,7 @@ do_download_repo(const symboldb_options &opt, database &db,
     if (load) {
       rpm_package_info info;
       database::package_id pid = rpm_load(opt, db, rpm_path.c_str(), info);
-      if (pid == 0) {
+      if (pid == database::package_id()) {
 	return 1;
       }
       pids.insert(pid);
@@ -331,9 +332,9 @@ do_download_repo(const symboldb_options &opt, database &db,
     fprintf(stderr, "info: downloaded %zu of %zu packages\n",
 	    download_count, urls.size());
   }
-  if (load && set > 0) {
+  if (load && set > database::package_set_id()) {
     db.txn_begin();
-    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set));
+    database::advisory_lock lock(db.lock(PACKAGE_SET_LOCK_TAG, set.value()));
     {
       if (db.update_package_set(set, pids.begin(), pids.end())) {
 	finalize_package_set(opt, db, set);
@@ -403,7 +404,7 @@ static int
 do_show_soname_conflicts(const symboldb_options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name.c_str());
-  if (pset > 0) {
+  if (pset > database::package_set_id()) {
     db.print_elf_soname_conflicts(pset, opt.output == opt.verbose);
     return 0;
   } else {

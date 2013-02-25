@@ -48,5 +48,3 @@
 * Add some convenience wrapper for PostgreSQL parameterized queries
   and parsing query results.  (This reaches into the territory of
   template metaprogramming, so beware.)
-
-* Introduce type safety for package/file/set IDs.

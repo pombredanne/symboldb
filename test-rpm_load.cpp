@@ -46,7 +46,7 @@ test()
   database db(testdb.directory().c_str(), DBNAME);
 
   {
-    int last_pkg_id = 0;
+    database::package_id last_pkg_id(0);
    static const char RPMDIR[] = "test/data";
     std::string rpmdir_prefix(RPMDIR);
     rpmdir_prefix += '/';
@@ -55,7 +55,8 @@ test()
       if (ends_with(std::string(e->d_name), ".rpm")
 	  && !ends_with(std::string(e->d_name), ".src.rpm")) {
 	rpm_package_info info;
-	int pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info);
+	database::package_id pkg
+	  (rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info));
 	CHECK(pkg > last_pkg_id);
 	last_pkg_id = pkg;
 	pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info);
@@ -117,7 +118,7 @@ test()
 	int pkg = 0;
 	sscanf(PQgetvalue(r1.raw, i, 0), "%d", &pkg);
 	CHECK(pkg > 0);
-	pids.push_back(pkg);
+	pids.push_back(database::package_id(pkg));
       }
       COMPARE_STRING(PQgetvalue(r1.raw, i, 1), "sysvinit-tools");
       COMPARE_STRING(PQgetvalue(r1.raw, i, 2), "2.88");
@@ -154,7 +155,7 @@ test()
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set", "x86_64"));
-    CHECK(pset > 0);
+    CHECK(pset.value() > 0);
     CHECK(!db.update_package_set(pset, pids.begin(), pids.begin()));
     CHECK(db.update_package_set(pset, pids));
     CHECK(!db.update_package_set(pset, pids));
@@ -174,7 +175,7 @@ test()
     r1.check();
     CHECK(PQntuples(r1.raw) == static_cast<int>(pids.size() - 1));
     char pkgstr[32];
-    snprintf(pkgstr, sizeof(pkgstr), "%d", pids.front());
+    snprintf(pkgstr, sizeof(pkgstr), "%d", pids.front().value());
     {
       const char *params[] = {pkgstr};
       r1.reset(PQexecParams(dbh.raw,
