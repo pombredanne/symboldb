@@ -27,6 +27,7 @@
 #include <limits.h>
 
 #include <rpm/rpmlib.h>
+#include <rpm/rpmlog.h>
 #include <rpm/rpmts.h>
 
 #include <map>
@@ -36,6 +37,7 @@ void
 rpm_parser_init()
 {
   rpmReadConfigFiles("", "noarch");
+  rpmSetVerbosity(RPMLOG_ERR);
 }
 
 struct rpm_parser_state::impl {
