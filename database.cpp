@@ -626,6 +626,7 @@ database::update_package_set(package_set_id set,
 void
 database::update_package_set_caches(package_set_id set)
 {
+  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char setstr[32];
   snprintf(setstr, sizeof(setstr), "%d", set.value());
   const char *params[] = {setstr};
