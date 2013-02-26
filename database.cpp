@@ -17,6 +17,7 @@
  */
 
 #include "database.hpp"
+#include "database_elf_closure.hpp"
 #include "rpm_file_info.hpp"
 #include "rpm_package_info.hpp"
 #include "elf_image.hpp"
@@ -626,15 +627,7 @@ database::update_package_set(package_set_id set,
 void
 database::update_package_set_caches(package_set_id set)
 {
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
-  char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set.value());
-  const char *params[] = {setstr};
-  pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw, "SELECT symboldb.elf_closure_update($1)",
-     1, NULL, params, NULL, NULL, 0);
-  res.check();
+  update_elf_closure(impl_->conn.raw, set);
 }
 
 bool

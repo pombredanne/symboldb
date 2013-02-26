@@ -11,11 +11,6 @@
 * Retry failed downloads.  Especially with download.fedoraproject.org,
   some downloads fail initially, but succeed when attempted again.
 
-* Reimplement the ELF ld.so emulation outside PostgreSQL.  The current
-  implementation is rather slow and slightly buggy because it may pick
-  the wrong DSO in case of soname collisions (which are fortunately
-  rare).
-
 * Implement removal of stale RPM cache entries not referenced by any
   package set.
 

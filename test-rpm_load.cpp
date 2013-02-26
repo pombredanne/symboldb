@@ -20,6 +20,7 @@
 #include "rpm_package_info.hpp"
 
 #include "database.hpp"
+#include "database_elf_closure.hpp"
 #include "dir_handle.hpp"
 #include "pg_testdb.hpp"
 #include "pgconn_handle.hpp"
@@ -194,6 +195,24 @@ test()
     r1.check();
     CHECK(PQntuples(r1.raw) == 1);
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 0), pkgstr);
+
+    testdb.exec_test_sql(DBNAME, "DELETE FROM symboldb.package_set_member");
+    char psetstr[32];
+    snprintf(psetstr, sizeof(psetstr), "%d", pset.value());
+    {
+      const char *params[] = {psetstr};
+      r1.reset(PQexecParams(dbh.raw,
+			    "INSERT INTO symboldb.package_set_member"
+			    " SELECT $1, id FROM symboldb.package"
+			    " WHERE arch IN ('x86_64', 'i686')",
+			    1, NULL, params, NULL, NULL, 0));
+      r1.check();
+    }
+    r1.reset(PQexec(dbh.raw, "BEGIN"));
+    r1.check();
+    update_elf_closure(dbh.raw, pset);
+    r1.reset(PQexec(dbh.raw, "COMMIT"));
+    r1.check();
   }
 
   // FIXME: Add more sanity check on database contents.

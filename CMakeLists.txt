@@ -43,6 +43,7 @@ add_library (SymbolDB
   curl_fetch_result.cpp
   curl_handle.cpp
   database.cpp
+  database_elf_closure.cpp
   dir_handle.cpp
   download.cpp
   elf_exception.cpp
