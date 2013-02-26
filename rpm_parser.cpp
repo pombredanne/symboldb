@@ -159,6 +159,10 @@ rpm_parser_state::impl::get_files_from_header()
       return;
     }
   }
+  rpmtd_wrapper sizes;
+  if (!headerGet(header, RPMTAG_LONGFILESIZES, sizes.raw, hflags)) {
+    throw rpm_parser_exception("could not get LONGFILESIZES header");
+  }
   rpmtd_wrapper users;
   if (!headerGet(header, RPMTAG_FILEUSERNAME, users.raw, hflags)) {
     throw rpm_parser_exception("could not get FILEUSERNAME header");
@@ -181,6 +185,10 @@ rpm_parser_state::impl::get_files_from_header()
     if (name == NULL) {
       break;
     }
+    const uint64_t *size = rpmtdNextUint64(sizes.raw);
+    if (size == NULL) {
+      throw rpm_parser_exception("missing entries in LONGFILESIZES header");
+    }
     const char *user = rpmtdNextString(users.raw);
     if (name == NULL) {
       throw rpm_parser_exception("missing entries in FILEUSERNAME header");
@@ -200,6 +208,7 @@ rpm_parser_state::impl::get_files_from_header()
 
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
     p->name = name;
+    p->length = *size;
     p->user = user;
     p->group = group;
     p->mtime = *mtime;
@@ -207,6 +216,10 @@ rpm_parser_state::impl::get_files_from_header()
     files[p->name] = p;
   }
 
+  if (rpmtdNextUint64(sizes.raw) != NULL) {
+    throw rpm_parser_exception
+      ("LONGFILESIZES header contains too many elements");
+  }
   if (rpmtdNextString(users.raw) != NULL) {
     throw rpm_parser_exception
       ("FILEUSERNAME header contains too many elements");

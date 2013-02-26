@@ -99,6 +99,7 @@ CREATE TABLE symboldb.file (
   package INTEGER NOT NULL
     REFERENCES symboldb.package (id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  length BIGINT NOT NULL CHECK(length >= 0),
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0),
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),

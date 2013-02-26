@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 rpm_file_info::rpm_file_info()
-  : mode(0), mtime(0), normalized(false)
+  : length(0), mode(0), mtime(0), normalized(false)
 {
 }
 

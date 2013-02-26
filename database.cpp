@@ -325,6 +325,8 @@ database::add_file(package_id pkg, const rpm_file_info &info)
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
   char pkgstr[32];
   snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
+  char lengthstr[32];
+  snprintf(lengthstr, sizeof(lengthstr), "%llu", info.length);
   char mtimestr[32];
   snprintf(mtimestr, sizeof(mtimestr), "%d", info.mtime);
   char modestr[32];
@@ -332,6 +334,7 @@ database::add_file(package_id pkg, const rpm_file_info &info)
   const char *params[] = {
     pkgstr,
     info.name.c_str(),
+    lengthstr,
     info.user.c_str(),
     info.group.c_str(),
     mtimestr,
@@ -342,9 +345,9 @@ database::add_file(package_id pkg, const rpm_file_info &info)
   res.raw = PQexecParams
     (impl_->conn.raw,
      "INSERT INTO " FILE_TABLE
-     " (package, name, user_name, group_name, mtime, mode, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-     7, NULL, params, NULL, NULL, 0);
+     " (package, name, length, user_name, group_name, mtime, mode, normalized)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+     8, NULL, params, NULL, NULL, 0);
   return file_id(get_id_force(res));
 }
 

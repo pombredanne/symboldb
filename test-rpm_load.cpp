@@ -151,6 +151,38 @@ test()
       }
       CHECK(files[endj] == NULL);
     }
+
+    r1.reset(PQexec(dbh.raw,
+		    "SELECT DISTINCT"
+		    " length, user_name, group_name, mtime, mode "
+		    " FROM symboldb.file f"
+		    " JOIN symboldb.package p ON f.package = p.id"
+		    " WHERE f.name = '/sbin/killall5'"
+		    " AND symboldb.nevra(p)"
+		    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'"));
+    r1.check();
+    CHECK(PQntuples(r1.raw) == 1);
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 0), "23752");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 1), "root");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 2), "root");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 3), "1347551182");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 4), "33261"); // 0100755
+
+    r1.reset(PQexec(dbh.raw,
+		    "SELECT DISTINCT"
+		    " length, user_name, group_name, mtime, mode "
+		    " FROM symboldb.file f"
+		    " JOIN symboldb.package p ON f.package = p.id"
+		    " WHERE f.name = '/usr/bin/wall'"
+		    " AND symboldb.nevra(p)"
+		    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'"));
+    r1.check();
+    CHECK(PQntuples(r1.raw) == 1);
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 0), "15352");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 1), "root");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 2), "tty");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 3), "1347551181");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 4), "34157"); // 0102555
     r1.close();
 
     CHECK(!pids.empty());
