@@ -46,8 +46,8 @@ Running
 ║ NOTE: The database schema is still evolving.  I do not provide     ║
 ║ automated schema migration support at this stage because I do not  ║
 ║ assume that there are any users of this code.  Please drop me a    ║
-║ note if you use this software, and I will be more careful about    ║
-║ database schema changes.                                           ║
+║ note (at <fweimer@redhat.com>) if you use this software, and I     ║
+║ will be more careful about database schema changes.                ║
 ╚════════════════════════════════════════════════════════════════════╝
 
 symboldb honors the PGUSER, PGDATABASE etc. variables generally used
@@ -98,3 +98,6 @@ the package set, Fedora/18/x86_64 in the example, just follows a
 naming convention and is not interpreted by the tool.
 
 Examples for SQL queries are found in the doc/examples directory.
+
+
+  -- Florian Weimer <fweimer@redhat.com>
