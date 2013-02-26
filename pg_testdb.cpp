@@ -176,9 +176,29 @@ pg_testdb::impl::notice_processor(void *arg, const char *message)
   }
 }
 
+// Check that the server has come up.  The socket can be there, but
+// the server still rejects incomming connections.
+static void
+wait_for_server(pg_testdb *db)
+{
+  for (unsigned i = 0; i < 150; ++i) {
+    try {
+      pgconn_handle handle(db->connect("template1"));
+      break;
+    } catch (pg_exception &e) {
+      if (e.message_ == "FATAL:  the database system is starting up") {
+	usleep(100 * 1000);
+	continue;
+      }
+      throw;
+    }
+  }
+}
+
 pg_testdb::pg_testdb()
   : impl_(new impl)
 {
+  wait_for_server(this);
 }
 
 pg_testdb::~pg_testdb()
