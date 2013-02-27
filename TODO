@@ -11,9 +11,6 @@
 * Retry failed downloads.  Especially with download.fedoraproject.org,
   some downloads fail initially, but succeed when attempted again.
 
-* Implement removal of stale RPM cache entries not referenced by any
-  package set.
-
 * Parallelize downloading.
 
 * Store sizes of files inside RPMs.  Handle symbolic links and
