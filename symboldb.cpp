@@ -223,13 +223,7 @@ do_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
-  std::string fcache_path(opt.rpm_cache_path().c_str());
-  if (!make_directory_hierarchy(fcache_path.c_str(), 0700)) {
-    fprintf(stderr, "error: could not create cache directory: %s\n",
-	    fcache_path.c_str());
-    return 1;
-  }
-  file_cache fcache(fcache_path.c_str());
+  std::tr1::shared_ptr<file_cache> fcache(opt.rpm_cache());
   package_set_consolidator<rpm_url> pset;
 
   for (; *argv; ++ argv) {
@@ -295,12 +289,12 @@ do_download_repo(const symboldb_options &opt, database &db,
     try {
       database::advisory_lock lock
 	(db.lock_digest(p->csum.value.begin(), p->csum.value.end()));
-      if (!fcache.lookup_path(p->csum, rpm_path)) {
+      if (!fcache->lookup_path(p->csum, rpm_path)) {
 	if (opt.output != symboldb_options::quiet) {
 	  fprintf(stderr, "info: downloading %s\n", p->href.c_str());
 	}
 	++download_count;
-	file_cache::add_sink sink(fcache, p->csum);
+	file_cache::add_sink sink(*fcache, p->csum);
 	if (!download(dopts_no_cache, db, p->href.c_str(), 
 		      &sink, error)) {
 	  fprintf(stderr, "error: %s: %s\n",
@@ -606,6 +600,9 @@ main(int argc, char **argv)
     default:
       abort();
     }
+  } catch (symboldb_options::usage_error e) {
+    fprintf(stderr, "error: %s\n", e.what());
+    return 1;
   } catch (pg_exception &e) {
     fprintf(stderr, "error: from PostgreSQL:\n");
     dump("error: ", e, stderr);

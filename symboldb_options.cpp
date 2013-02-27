@@ -17,6 +17,7 @@
  */
 
 #include "symboldb_options.hpp"
+#include "file_cache.hpp"
 #include "os.hpp"
 
 symboldb_options::symboldb_options()
@@ -50,4 +51,32 @@ symboldb_options::rpm_cache_path() const
   }
   path += "/rpms";
   return path;
+}
+
+std::tr1::shared_ptr<file_cache>
+symboldb_options::rpm_cache() const
+{
+  std::string fcache_path(rpm_cache_path());
+  if (!make_directory_hierarchy(fcache_path.c_str(), 0700)) {
+    throw usage_error("could not create cache directory: " + rpm_cache_path());
+  }
+  return std::tr1::shared_ptr<file_cache>(new file_cache(fcache_path.c_str()));
+}
+
+//////////////////////////////////////////////////////////////////////
+// symboldb_options::usage_error
+
+symboldb_options::usage_error::usage_error(const std::string &what)
+  : what_(what)
+{
+}
+
+symboldb_options::usage_error::~usage_error() throw()
+{
+}
+
+const char *
+symboldb_options::usage_error::what() const throw()
+{
+  return what_.c_str();
 }

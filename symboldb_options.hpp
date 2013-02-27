@@ -20,7 +20,11 @@
 
 #include "download.hpp"
 
+#include <stdexcept>
 #include <string>
+#include <tr1/memory>
+
+class file_cache;
 
 struct symboldb_options {
   enum {
@@ -36,6 +40,15 @@ struct symboldb_options {
   ~symboldb_options();
 
   download_options download() const;
+  std::tr1::shared_ptr<file_cache> rpm_cache() const;
 
   std::string rpm_cache_path() const;
+
+  class usage_error : public std::exception {
+    std::string what_;
+  public:
+    usage_error(const std::string &);
+    ~usage_error() throw();
+    const char *what() const throw();
+  };
 };
