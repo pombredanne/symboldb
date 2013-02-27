@@ -43,3 +43,7 @@
 * Add some convenience wrapper for PostgreSQL parameterized queries
   and parsing query results.  (This reaches into the territory of
   template metaprogramming, so beware.)
+
+* Use the libpq binary interface for bulk data transfers.  This should
+  lead to a measurable speedup when transferring mostly integer
+  columns (e.g., when computing the ELF closure).
