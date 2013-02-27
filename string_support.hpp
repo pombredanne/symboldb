@@ -55,20 +55,3 @@ ends_with(const std::string &s, const char (&pattern)[N])
   }
   return __builtin_memcmp(s.data() + (s.size() - N + 1), pattern, N - 1) == 0;
 }
-
-
-template <class InputIterator> std::string
-base16_encode(InputIterator first, InputIterator last)
-{
-  std::string result;
-  static const char digits[16] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    'a', 'b', 'c', 'd', 'e', 'f'
-  };
-  for (; first != last; ++first) {
-    unsigned char ch = *first & 0xffU;
-    result += digits[ch >> 4];
-    result += digits[ch & 0x0f];
-  }
-  return result;
-}

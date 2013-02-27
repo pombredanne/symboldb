@@ -19,7 +19,7 @@
 #include "checksum.hpp"
 #include "file_cache.hpp"
 #include "fd_handle.hpp"
-#include "string_support.hpp"
+#include "base16.hpp"
 #include "hash.hpp"
 #include "os.hpp"
 #include "fd_sink.hpp"

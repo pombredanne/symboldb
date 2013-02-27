@@ -20,7 +20,7 @@
 #include "fd_handle.hpp"
 #include "fd_source.hpp"
 #include "rpm_package_info.hpp"
-#include "string_support.hpp"
+#include "base16.hpp"
 
 #include "test.hpp"
 

@@ -18,7 +18,7 @@
 
 #include "file_cache.hpp"
 #include "checksum.hpp"
-#include "string_support.hpp"
+#include "base16.hpp"
 
 #include "os.hpp"
 #include "test.hpp"
