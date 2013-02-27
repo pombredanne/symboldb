@@ -35,6 +35,7 @@ public:
   // Fields from the ELF header.
   unsigned char ei_class() const;
   unsigned char ei_data() const;
+  unsigned short e_type() const;
   unsigned short e_machine() const;
 
   // Architecture from the e_machine field, in RPM-compatible format.

@@ -116,6 +116,7 @@ CREATE TABLE symboldb.elf_file (
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
   ei_class symboldb.elf_byte NOT NULL,
   ei_data symboldb.elf_byte NOT NULL,
+  e_type symboldb.elf_short NOT NULL,
   e_machine symboldb.elf_short NOT NULL,
   arch symboldb.arch NOT NULL,
   soname TEXT NOT NULL

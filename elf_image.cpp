@@ -52,6 +52,7 @@ struct elf_image::impl {
   size_t shnum;
   unsigned char ei_class;
   unsigned char ei_data;
+  unsigned short e_type;
   unsigned short e_machine;
   const char *arch;
 
@@ -75,6 +76,7 @@ struct elf_image::impl {
     }
     ei_class = ehdr->e_ident[EI_CLASS];
     ei_data = ehdr->e_ident[EI_DATA];
+    e_type = ehdr->e_type;
     e_machine = ehdr->e_machine;
     arch = NULL;
     switch (e_machine) {
@@ -138,6 +140,12 @@ unsigned char
 elf_image::ei_data() const
 {
   return impl_->ei_data;
+}
+
+unsigned short
+elf_image::e_type() const
+{
+  return impl_->e_type;
 }
 
 unsigned short

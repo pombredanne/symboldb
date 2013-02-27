@@ -366,6 +366,8 @@ database::add_elf_image(file_id file, const elf_image &image,
   snprintf(ei_class, sizeof(ei_class), "%d", image.ei_class());
   char ei_data[32];
   snprintf(ei_data, sizeof(ei_data), "%d", image.ei_data());
+  char e_type[32];
+  snprintf(e_type, sizeof(e_type), "%d", image.e_type());
   char e_machine[32];
   snprintf(e_machine, sizeof(e_machine), "%d", image.e_machine());
 
@@ -377,6 +379,7 @@ database::add_elf_image(file_id file, const elf_image &image,
     filestr,
     ei_class,
     ei_data,
+    e_type,
     e_machine,
     arch,
     soname,
@@ -385,9 +388,9 @@ database::add_elf_image(file_id file, const elf_image &image,
   res.raw = PQexecParams
     (impl_->conn.raw,
      "INSERT INTO " ELF_FILE_TABLE
-     " (file, ei_class, ei_data, e_machine, arch, soname)"
-     " VALUES ($1, $2, $3, $4, $5, $6)",
-     6, NULL, params, NULL, NULL, 0);
+     " (file, ei_class, ei_data, e_type, e_machine, arch, soname)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
+     7, NULL, params, NULL, NULL, 0);
   res.check();
 }
 
