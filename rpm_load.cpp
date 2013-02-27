@@ -84,7 +84,7 @@ lock_rpm(database &db, const rpm_package_info &info)
 
 // Returns true if the file starts with the ELF magic bytes.
 static bool
-is_elf(const std::vector<char> data)
+is_elf(const std::vector<unsigned char> data)
 {
   return data.size() > 4
     && data.at(0) == '\x7f'

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ void rpm_parser_init();
 
 struct rpm_file_entry {
   std::tr1::shared_ptr<rpm_file_info> info;
-  std::vector<char> contents;
+  std::vector<unsigned char> contents;
 
   rpm_file_entry();
   ~rpm_file_entry();
