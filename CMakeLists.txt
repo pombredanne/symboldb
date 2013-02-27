@@ -39,6 +39,7 @@ add_custom_command (
 
 add_library (SymbolDB
   checksum.cpp
+  base16.cpp
   cpio_reader.cpp
   curl_fetch_result.cpp
   curl_handle.cpp
@@ -126,6 +127,7 @@ install (TARGETS symboldb DESTINATION bin)
 
 add_executable (runtests
   runtests.cpp
+  test-base16.cpp
   test-dir_handle.cpp
   test-download.cpp
   test-fd_handle.cpp
