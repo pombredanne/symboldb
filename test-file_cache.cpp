@@ -48,6 +48,13 @@ test()
     COMPARE_STRING(path, tempdir + '/' +
 		   base16_encode(csum.value.begin(), csum.value.end()));
     CHECK(access(path.c_str(), R_OK) == 0);
+    std::vector<std::vector<unsigned char> > digests;
+    fc.digests(digests);
+    CHECK(digests.size() == 1);
+    COMPARE_STRING(base16_encode(digests.front().begin(),
+				 digests.front().end()),
+		   base16_encode(csum.value.begin(), csum.value.end()));
+
     CHECK(unlink(path.c_str()) == 0);
 
     csum.length = 0;

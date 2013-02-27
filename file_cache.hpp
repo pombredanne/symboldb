@@ -42,6 +42,9 @@ public:
   // file name to PATH.
   bool lookup_path(const checksum &, std::string &path);
 
+  // Adds the digests of the cached files to the vector.
+  void digests(std::vector<std::vector<unsigned char> > &);
+
   // Adds the data to the cache if it does not exist yet (after
   // verifying that the checksum matches).  Updates PATH with the file
   // name.  Returns true on success, false on error (ERROR is

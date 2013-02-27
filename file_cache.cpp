@@ -25,9 +25,11 @@
 #include "fd_sink.hpp"
 #include "tee_sink.hpp"
 #include "os_exception.hpp"
+#include "dir_handle.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -71,6 +73,27 @@ file_cache::lookup_path(const checksum &csum, std::string &path)
     return true;
   }
   return false;
+}
+
+void
+file_cache::digests(std::vector<std::vector<unsigned char> > &digests)
+{
+  int fd_copy = ::dup(impl_->dirfd.raw);
+  if (fd_copy < 0) {
+    throw os_exception().fd(impl_->dirfd.raw).function(dup).defaults();
+  }
+  dir_handle dir(fd_copy);
+  std::vector<unsigned char> decoded;
+  while (dirent *e = dir.readdir()) {
+    decoded.clear();
+    try {
+      base16_decode(e->d_name, e->d_name + strlen(e->d_name),
+		    std::back_inserter(decoded));
+    } catch (base16_decode_exception &e) {
+      continue;
+    }
+    digests.push_back(decoded);
+  }
 }
 
 struct file_cache::add_sink::add_impl {
