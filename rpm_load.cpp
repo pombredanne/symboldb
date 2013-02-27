@@ -82,6 +82,86 @@ lock_rpm(database &db, const rpm_package_info &info)
   return db.lock_digest(info.hash.begin(), info.hash.end());
 }
 
+// Returns true if the file starts with the ELF magic bytes.
+static bool
+is_elf(const std::vector<char> data)
+{
+  return data.size() > 4
+    && data.at(0) == '\x7f'
+    && data.at(1) == 'E'
+    && data.at(2) == 'L'
+    && data.at(3) == 'F';
+}
+
+// Loads an ELF image.
+static void
+load_elf(const symboldb_options &opt, database &db, rpm_package_info &info,
+	 database::file_id fid, rpm_file_entry &file)
+{
+  try {
+    const char *elf_path = file.info->name.c_str();
+    elf_image image(file.contents.data(), file.contents.size());
+    {
+      elf_image::symbol_range symbols(image);
+      while (symbols.next()) {
+	if (symbols.definition()) {
+	  dump_def(opt, db, fid, elf_path, *symbols.definition());
+	} else if (symbols.reference()) {
+	  dump_ref(opt, db, fid, elf_path, *symbols.reference());
+	} else {
+	  throw std::logic_error("unknown elf_symbol type");
+	}
+      }
+    }
+    std::string soname;
+    {
+      elf_image::dynamic_section_range dyn(image);
+      bool soname_seen = false;
+      while (dyn.next()) {
+	switch (dyn.type()) {
+	case elf_image::dynamic_section_range::needed:
+	  db.add_elf_needed(fid, dyn.value().c_str());
+	  break;
+	case elf_image::dynamic_section_range::soname:
+	  if (soname_seen) {
+	    // The linker ignores some subsequent sonames, but
+	    // not all of them.  Multiple sonames are rare.
+	    if (dyn.value() != soname) {
+	      std::ostringstream out;
+	      out << "duplicate soname ignored: " << dyn.value()
+		  << ", previous soname: " << soname;
+	      db.add_elf_error(fid, out.str().c_str());
+	    }
+	  } else {
+	    soname = dyn.value();
+	    soname_seen = true;
+	  }
+	  break;
+	case elf_image::dynamic_section_range::rpath:
+	  db.add_elf_rpath(fid, dyn.value().c_str());
+	  break;
+	case elf_image::dynamic_section_range::runpath:
+	  db.add_elf_runpath(fid, dyn.value().c_str());
+	  break;
+	}
+      }
+      if (!soname_seen) {
+	// The implicit soname is derived from the name of the
+	// binary.
+	size_t slashpos = file.info->name.rfind('/');
+	if (slashpos == std::string::npos) {
+	  soname = file.info->name;
+	} else {
+	  soname = file.info->name.substr(slashpos + 1);
+	}
+      }
+    }
+    db.add_elf_image(fid, image, info.arch.c_str(), soname.c_str());
+  } catch (elf_exception e) {
+    db.add_elf_error(fid, e.what());
+  }
+}
+
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &info)
@@ -116,77 +196,8 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     }
     file.info->normalize_name();
     database::file_id fid = db.add_file(pkg, *file.info);
-    // Check if this is an ELF file.
-    if (file.contents.size() > 4
-	&& file.contents.at(0) == '\x7f'
-	&& file.contents.at(1) == 'E'
-	&& file.contents.at(2) == 'L'
-	&& file.contents.at(3) == 'F') {
-
-      try {
-	const char *elf_path = file.info->name.c_str();
-	elf_image image(file.contents.data(), file.contents.size());
-	{
-	  elf_image::symbol_range symbols(image);
-	  while (symbols.next()) {
-	    if (symbols.definition()) {
-	      dump_def(opt, db, fid, elf_path, *symbols.definition());
-	    } else if (symbols.reference()) {
-	      dump_ref(opt, db, fid, elf_path, *symbols.reference());
-	    } else {
-	      throw std::logic_error("unknown elf_symbol type");
-	    }
-	  }
-	}
-	std::string soname;
-	{
-	  elf_image::dynamic_section_range dyn(image);
-	  bool soname_seen = false;
-	  while (dyn.next()) {
-	    switch (dyn.type()) {
-	    case elf_image::dynamic_section_range::needed:
-	      db.add_elf_needed(fid, dyn.value().c_str());
-	      break;
-	    case elf_image::dynamic_section_range::soname:
-	      if (soname_seen) {
-		// The linker ignores some subsequent sonames, but
-		// not all of them.  Multiple sonames are rare.
-		if (dyn.value() != soname) {
-		  std::ostringstream out;
-		  out << "duplicate soname ignored: " << dyn.value()
-		      << ", previous soname: " << soname;
-		  db.add_elf_error(fid, out.str().c_str());
-		}
-	      } else {
-		soname = dyn.value();
-		soname_seen = true;
-	      }
-	      break;
-	    case elf_image::dynamic_section_range::rpath:
-	      db.add_elf_rpath(fid, dyn.value().c_str());
-	      break;
-	    case elf_image::dynamic_section_range::runpath:
-	      db.add_elf_runpath(fid, dyn.value().c_str());
-	      break;
-	    }
-	  }
-	  if (!soname_seen) {
-	    // The implicit soname is derived from the name of the
-	    // binary.
-	    size_t slashpos = file.info->name.rfind('/');
-	    if (slashpos == std::string::npos) {
-	      soname = file.info->name;
-	    } else {
-	      soname = file.info->name.substr(slashpos + 1);
-	    }
-	  }
-	}
-	db.add_elf_image(fid, image, info.arch.c_str(), soname.c_str());
-      } catch (elf_exception e) {
-	fprintf(stderr, "%s(%s): ELF error: %s\n",
-		rpm_path, file.info->name.c_str(), e.what());
-	continue;
-      }
+    if (is_elf(file.contents)) {
+      load_elf(opt, db, info, fid, file);
     }
   }
   return pkg;
