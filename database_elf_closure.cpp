@@ -180,7 +180,7 @@ update_elf_closure(PGconn *conn, database::package_set_id id)
 		  1, NULL, idParams, NULL, NULL, 0));
   soname_provider_result.check();
 
- arch_soname_map arch_soname;
+  arch_soname_map arch_soname;
   for (int i = 0, end = PQntuples(soname_provider_result.raw); i < end; ++i) {
     const char *arch = PQgetvalue(soname_provider_result.raw, i, 0);
     const char *soname = PQgetvalue(soname_provider_result.raw, i, 1);
