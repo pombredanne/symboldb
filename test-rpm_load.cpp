@@ -155,6 +155,7 @@ test()
     r1.reset(PQexec(dbh.raw,
 		    "SELECT DISTINCT"
 		    " length, user_name, group_name, mtime, mode,"
+		    " encode(digest, 'hex'), encode(contents, 'hex'),"
 		    " e_type, soname"
 		    " FROM symboldb.file f"
 		    " JOIN symboldb.package p ON f.package = p.id"
@@ -169,12 +170,22 @@ test()
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 2), "root");
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 3), "1347551182");
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 4), "33261"); // 0100755
-    COMPARE_STRING(PQgetvalue(r1.raw, 0, 5), "3"); // ET_DYN (sic)
-    COMPARE_STRING(PQgetvalue(r1.raw, 0, 6), "killall5");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 5),
+		   "b75fc6cd2359b0d7d3468be0499ca897"
+		   "87234c72fe5b9cf36e4b28cd9a56025c");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 6),
+		   "7f454c46020101000000000000000000"
+		   "03003e00010000009c1e000000000000"
+		   "40000000000000008855000000000000"
+		   "0000000040003800090040001d001c00");
 
-    r1.reset(PQexec(dbh.raw,
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 7), "3"); // ET_DYN (sic)
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 8), "killall5");
+
+  r1.reset(PQexec(dbh.raw,
 		    "SELECT DISTINCT"
 		    " length, user_name, group_name, mtime, mode,"
+		    " encode(digest, 'hex'), encode(contents, 'hex'),"
 		    " e_type, soname"
 		    " FROM symboldb.file f"
 		    " JOIN symboldb.package p ON f.package = p.id"
@@ -189,8 +200,16 @@ test()
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 2), "tty");
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 3), "1347551181");
     COMPARE_STRING(PQgetvalue(r1.raw, 0, 4), "34157"); // 0102555
-    COMPARE_STRING(PQgetvalue(r1.raw, 0, 5), "3"); // ET_DYN (sic)
-    COMPARE_STRING(PQgetvalue(r1.raw, 0, 6), "wall");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 5),
+		   "36fdb67f4d549c4e13790ad836cb5641"
+		   "af993ff28a3e623da4f95608653dc55a");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 6),
+		   "7f454c46020101000000000000000000"
+		   "03003e0001000000cc18000000000000"
+		   "4000000000000000b834000000000000"
+		   "0000000040003800090040001d001c00");
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 7), "3"); // ET_DYN (sic)
+    COMPARE_STRING(PQgetvalue(r1.raw, 0, 8), "wall");
     r1.close();
 
     CHECK(!pids.empty());

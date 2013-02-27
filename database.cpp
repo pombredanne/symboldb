@@ -319,7 +319,9 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
 }
 
 database::file_id
-database::add_file(package_id pkg, const rpm_file_info &info)
+database::add_file(package_id pkg, const rpm_file_info &info,
+		   std::vector<unsigned char> &digest,
+		   std::vector<unsigned char> &contents)
 {
   // FIXME: This needs a transaction.
   assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
@@ -340,14 +342,37 @@ database::add_file(package_id pkg, const rpm_file_info &info)
     mtimestr,
     modestr,
     info.normalized ? "true" : "false",
+    reinterpret_cast<const char *>(digest.data()),
+    reinterpret_cast<const char *>(contents.data()),
+  };
+  if (params[9] == NULL) {
+    // data() can return a NULL pointer, which is treated differently
+    // by PostgreSQL.
+    params[9] = "";
+  }
+  static const Oid paramTypes[] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    17, /* BYTEA */
+    17, /* BYTEA */
+  };
+  const int paramLengths[] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    static_cast<int>(digest.size()),
+    static_cast<int>(contents.size()),
+  };
+  static const int paramFormats[] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    1,
+    1,
   };
   pgresult_handle res;
   res.raw = PQexecParams
     (impl_->conn.raw,
      "INSERT INTO " FILE_TABLE
-     " (package, name, length, user_name, group_name, mtime, mode, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-     8, NULL, params, NULL, NULL, 0);
+     " (package, name, length, user_name, group_name, mtime, mode, normalized,"
+     " digest, contents)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+     10, paramTypes, params, paramLengths, paramFormats, 0);
   return file_id(get_id_force(res));
 }
 

@@ -91,7 +91,9 @@ public:
   // Returns 0 if the package ID was not found.
   package_id package_by_digest(const std::vector<unsigned char> &digest);
 
-  file_id add_file(package_id, const rpm_file_info &);
+  file_id add_file(package_id, const rpm_file_info &,
+		   std::vector<unsigned char> &digest,
+		   std::vector<unsigned char> &contents);
 
   // Loading ELF-related tables.
 

@@ -186,6 +186,8 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
   }
 
+  // FIXME: We should not read arbitrary files into memory, only ELF
+  // files.
   while (rpmst.read_file(file)) {
     if (opt.output == symboldb_options::verbose) {
       fprintf(stderr, "%s %s %s %s %" PRIu32 " 0%o %llu\n",
@@ -195,7 +197,12 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	      (unsigned long long)file.contents.size());
     }
     file.info->normalize_name();
-    database::file_id fid = db.add_file(pkg, *file.info);
+    std::vector<unsigned char> digest(hash(hash_sink::sha256, file.contents));
+    std::vector<unsigned char> preview
+      (file.contents.begin(),
+       file.contents.begin() + std::min(static_cast<size_t>(64),
+					file.contents.size()));
+    database::file_id fid = db.add_file(pkg, *file.info, digest, preview);
     if (is_elf(file.contents)) {
       load_elf(opt, db, info, fid, file);
     }

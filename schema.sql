@@ -104,10 +104,15 @@ CREATE TABLE symboldb.file (
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
-  normalized BOOLEAN NOT NULL
+  normalized BOOLEAN NOT NULL,
+  digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
+  contents BYTEA NOT NULL
 );
 COMMENT ON COLUMN symboldb.file.normalized IS
   'indicates that the file name has been forced to UTF-8 encoding';
+COMMENT ON COLUMN symboldb.file.digest IS
+  'SHA-256 digest of the file contents';
+COMMENT ON COLUMN symboldb.file.contents IS 'preview of the file contents';
 CREATE INDEX ON symboldb.file (package);
 CREATE INDEX ON symboldb.file (name);
 
