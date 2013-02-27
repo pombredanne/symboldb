@@ -32,12 +32,15 @@
 #include "pg_exception.hpp"
 #include "symboldb_options.hpp"
 #include "os.hpp"
+#include "base16.hpp"
 
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <vector>
 #include <set>
 
 static bool
@@ -395,6 +398,27 @@ do_show_source_packages(const symboldb_options &opt, database &db, char **argv)
 }
 
 static int
+do_show_stale_cached_rpms(const symboldb_options &opt, database &db)
+{
+  typedef std::vector<std::vector<unsigned char> > digvec;
+  std::tr1::shared_ptr<file_cache> fcache(opt.rpm_cache());
+  digvec fcdigests;
+  fcache->digests(fcdigests);
+  std::sort(fcdigests.begin(), fcdigests.end());
+  digvec dbdigests;
+  db.referenced_package_digests(dbdigests);
+  digvec result;
+  std::set_difference(fcdigests.begin(), fcdigests.end(),
+		      dbdigests.begin(), dbdigests.end(),
+		      std::back_inserter(result));
+  for (digvec::iterator p = result.begin(), end = result.end();
+       p != end; ++p) {
+    printf("%s\n", base16_encode(p->begin(), p->end()).c_str());
+  }
+  return 0;
+}
+
+static int
 do_show_soname_conflicts(const symboldb_options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name.c_str());
@@ -425,6 +449,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --show-primary [OPTIONS] URL\n"
 	  "  %1$s --download-repo [OPTIONS] URL...\n"
 	  "  %1$s --show-source-packages [OPTIONS] URL...\n"
+	  "  %1$s --show-stale-cached-rpms [OPTIONS]\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 	  "\nOptions:\n"
 	  "  --arch=ARCH, -a   base architecture\n"
@@ -451,6 +476,7 @@ namespace {
       show_repomd,
       show_primary,
       show_source_packages,
+      show_stale_cached_rpms,
       show_soname_conflicts,
     } type;
   };
@@ -474,6 +500,8 @@ main(int argc, char **argv)
       {"show-repomd", no_argument, 0, command::show_repomd},
       {"show-primary", no_argument, 0, command::show_primary},
       {"show-source-packages", no_argument, 0, command::show_source_packages},
+      {"show-stale-cached-rpms", no_argument, 0,
+       command::show_stale_cached_rpms},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
@@ -523,6 +551,7 @@ main(int argc, char **argv)
       case command::show_repomd:
       case command::show_primary:
       case command::show_source_packages:
+      case command::show_stale_cached_rpms:
 	cmd = static_cast<command::type>(ch);
 	break;
       default:
@@ -555,6 +584,7 @@ main(int argc, char **argv)
     case command::undefined:
     case command::update_set:
     case command::update_set_from_repo:
+    case command::show_stale_cached_rpms:
       break;
     case command::download:
     case command::show_repomd:
@@ -594,6 +624,8 @@ main(int argc, char **argv)
       return do_show_primary(opt, db, argv[optind]);
     case command::show_source_packages:
       return do_show_source_packages(opt, db, argv + optind);
+    case command::show_stale_cached_rpms:
+      return do_show_stale_cached_rpms(opt, db);
     case command::show_soname_conflicts:
       return do_show_soname_conflicts(opt, db);
     case command::undefined:
