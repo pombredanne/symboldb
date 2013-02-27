@@ -720,6 +720,29 @@ database::url_cache_update(const char *url,
 }
 
 void
+database::referenced_package_digests
+  (std::vector<std::vector<unsigned char> > &digests)
+{
+  pgresult_handle res;
+  res.raw = PQexecParams
+    (impl_->conn.raw,
+     "SELECT digest FROM " PACKAGE_SET_MEMBER_TABLE " psm"
+     " JOIN " PACKAGE_DIGEST_TABLE " d ON psm.package = d.package"
+     " ORDER BY digest",
+     0, NULL, NULL, NULL, NULL, 1);
+  res.check();
+  for (int i = 0, end = PQntuples(res.raw); i < end; ++i) {
+    int len = PQgetlength(res.raw, i, 0);
+    if (len != 20 && len != 32) {
+      throw pg_exception("invalid package digest received from database");
+    }
+    const char *first = PQgetvalue(res.raw, i, 0);
+    const char *last = first + len;
+    digests.push_back(std::vector<unsigned char>(first, last));
+  }
+}
+
+void
 database::print_elf_soname_conflicts(package_set_id set,
 				     bool include_unreferenced)
 {

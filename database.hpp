@@ -147,6 +147,8 @@ public:
 			const std::vector<unsigned char> &data,
 			long long time);
 
+  void referenced_package_digests(std::vector<std::vector<unsigned char> > &);
+
   // Debugging functions.
   void print_elf_soname_conflicts(package_set_id, bool include_unreferenced);
 };

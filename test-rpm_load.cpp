@@ -213,6 +213,10 @@ test()
     update_elf_closure(dbh.raw, pset);
     r1.reset(PQexec(dbh.raw, "COMMIT"));
     r1.check();
+
+    std::vector<std::vector<unsigned char> > digests;
+    db.referenced_package_digests(digests);
+    CHECK(digests.size() == 8); // 4 packages with 2 digests each
   }
 
   // FIXME: Add more sanity check on database contents.
