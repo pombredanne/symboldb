@@ -448,6 +448,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  %1$s --show-repomd [OPTIONS] URL\n"
 	  "  %1$s --show-primary [OPTIONS] URL\n"
 	  "  %1$s --download-repo [OPTIONS] URL...\n"
+	  "  %1$s --load-repo [OPTIONS] URL...\n"
 	  "  %1$s --show-source-packages [OPTIONS] URL...\n"
 	  "  %1$s --show-stale-cached-rpms [OPTIONS]\n"
 	  "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
