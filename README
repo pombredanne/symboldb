@@ -16,6 +16,7 @@ development packages:
 - rpm-devel
 - vim-common (for /usr/bin/xxd)
 - w3c-libwww-devel
+- xmlto
 - zlib-devel
 
 Building
@@ -97,6 +98,7 @@ A single package set can cover multiple architectures.  The name of
 the package set, Fedora/18/x86_64 in the example, just follows a
 naming convention and is not interpreted by the tool.
 
+A symboldb.1 manual page will be written to the build directory.
 Examples for SQL queries are found in the doc/examples directory.
 
 

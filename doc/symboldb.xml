@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (C) 2013 Red Hat, Inc.
+Written by Florian Weimer <fweimer@redhat.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+<refentry>
+  <refentryinfo>
+    <date>2013-02-28</date>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>symboldb</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>symboldb</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>
+      <application>symboldb</application>
+    </refname>
+    <refpurpose>ELF symbol database</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <refsynopsisdivinfo>
+      <date>2013-02-28</date>
+    </refsynopsisdivinfo>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--help</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--create-schema</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--create-set=<replaceable>name</replaceable></arg>
+      <arg choice="plain">--arch=<replaceable>arch</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>RPM</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--update-set-from-repo=<replaceable>name</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--update-set=<replaceable>name</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>RPM</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--load-rpm</arg>
+      <arg choice="plain" rep="repeat"><replaceable>RPM</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--show-repomd</arg>
+      <arg choice="plain"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--show-primary</arg>
+      <arg choice="plain"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--download-repo</arg>
+      <arg choice="plain" rep="repeat"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--load-repo</arg>
+      <arg choice="plain" rep="repeat"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--show-stale-cached-rpms</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--show-source-packages</arg>
+      <arg choice="plain" rep="repeat"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--show-soname-conflicts=<replaceable>package-set</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--download</arg>
+      <arg choice="plain"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <refsect1info>
+      <date>2013-02-28</date>
+    </refsect1info>
+    <title>DESCRIPTION</title>
+    <para>
+      The <command>symboldb</command> tool maintains the ELF symbol
+      database table in a PostgreSQL database.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>COMMANDS</title>
+    <variablelist>
+      <varlistentry>
+	<term><command>--create-schema</command></term>
+	<listitem>
+	  <para>
+	    Connects to the PostgreSQL database and creates the
+	    <database>symboldb</database> schema.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--create-set</command>
+	<replaceable class="parameter">set</replaceable>
+	<option>--arch</option>
+	<replaceable class="parameter">base</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    Adds a new package set, with the name <replaceable
+	    class="parameter">set</replaceable> (which is not
+	    interpreted by <command>symboldb</command>).  The main
+	    architecture is <replaceable
+	    class="parameter">base</replaceable>.  The command can be
+	    passed an optional list of RPM files, which are loaded in
+	    to the database and assigned to the new package set.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--update-set-from-repo</command>
+	<replaceable class="parameter">set</replaceable>
+	<replaceable class="parameter">URL</replaceable>…
+	</term>
+	<listitem>
+	  <para>
+	    Sets the contents of the package set to the RPM files in
+	    the repository <replaceable
+	    class="parameter">URL</replaceable>.  Multiple URLs can be
+	    specified.  For each package name/architecture pair, only
+	    the RPM with the most recent version is considered.  RPM
+	    files are downloaded, added to the local RPM cache, and
+	    loaded into the database, as needed.
+	  </para>
+	  <para>
+	    The package set must have been created with
+	    <command>--create-set</command> before invoking
+	    <command>--update-set-from-repo</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--update-set</command>
+	<replaceable class="parameter">set</replaceable>
+	<replaceable class="parameter">RPM</replaceable>…
+	</term>
+	<listitem>
+	  <para>
+	    Sets the contents of the package set to the indicated RPM
+	    files.  These RPM files are loaded into the database if
+	    necessary.  The package set must have been created with
+	    <command>--create-set</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--load-rpm</command>
+	<replaceable class="parameter">RPM</replaceable>…
+	</term>
+	<listitem>
+	  <para>
+	    Loads the RPM files listed on the command line into the
+	    database.  They are not associated with any package set 
+	    or copied into the local RPM cache.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--download-repo</command>
+	<replaceable class="parameter">URL</replaceable>…
+	</term>
+	<listitem>
+	  <para>
+	    Downloads the RPM files in the repository at <replaceable
+	    class="parameter">URL</replaceable> and puts them in the
+	    local RPM cache.  If there are multiple RPMs with the same
+	    package name/architecture combination (possibly under
+	    different repository URLs), only that with the most recent
+	    version is downloaded.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--load-repo</command>
+	<replaceable class="parameter">URL</replaceable>…
+	</term>
+	<listitem>
+	  <para>
+	    Like <command>--download-repo</command>, but loads the
+	    RPMs into the database as well.  The RPMs are not
+	    associated with any package set, see
+	    <command>--update-set-from-repo</command> for that.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--show-repomd</command>
+	<replaceable class="parameter">URL</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    Downloads the <filename>repodata/repomd.xml</filename>
+	    file and parses its contents.  (The local cache is used if
+	    possible.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--show-primary</command>
+	<replaceable class="parameter">URL</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    Obtains the URL to the <filename>primary.xml</filename>
+	    file from the <filename>repodata/repomd.xml</filename>
+	    file, downloads and decompresses it, and writes it to
+	    standard output.  (The local cache is used if possible.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--show-stale-cached-rpms</command>
+	</term>
+	<listitem>
+	  <para>
+	    Prints the hashes (as found in the
+	    <filename>~/.cache/symboldb/rpms</filename> directory) of
+	    locally cached RPMs which are not present in any package
+	    set in the database.  These RPM files can be deleted from
+	    the <filename>~/.cache/symboldb/rpms</filename> to reclaim
+	    disk space.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--show-source-packages</command>
+	<replaceable class="parameter">URL</replaceable>…
+	</term>
+	<listitem>
+	  <para>
+	    Downloads the repositories at the specified URLs, compiles
+	    a combined list of source package names from them, and
+	    prints it to standard output (without version information).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--show-soname-conflicts</command>
+	<replaceable class="parameter">package-set</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    This command prints sonames which are provided by multiple
+	    shared libraries.  Due to such conflicts, the ELF closure
+	    computed by <command>symboldb</command> may not accurately
+	    reflect reality.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--download</command>
+	<replaceable class="parameter">URL</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    Writes the contents of <replaceable
+	    class="parameter">URL</replaceable> to standard output,
+	    after downloading it from the network (or from the local
+	    cache).  This is mainly intended for debugging.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+	<term><option>--cache</option></term>
+	<term><option>-C</option></term>
+	<listitem>
+	  <para>
+	    Identifies the base architecture (for a package set).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--cache</option></term>
+	<term><option>-C</option></term>
+	<listitem>
+	  <para>
+	    Path to the local cache.  This is used to store copies of
+	    RPM files downloaded from the network.  The default is
+	    <filename>~/.cache/symboldb</filename>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--no-net</option></term>
+	<term><option>-N</option></term>
+	<listitem>
+	  <para>
+	    Disable most network access.  Locally cached copies are
+	    not checked for staleness, and operations will fail if the
+	    data has not been downloaded before.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-v</option></term>
+	<term><option>-verbose</option></term>
+	<listitem>
+	  <para>
+	    Shows debugging information in addition to the regular output.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-q</option></term>
+	<term><option>--quiet</option></term>
+	<listitem>
+	  <para>
+	    Suppresses all non-error diagnostics.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>ENVIRONMENT</title>
+    <para>
+      <command>symboldb</command> honors the PostgreSQL environment
+      variables <envar>PGHOST</envar>, <envar>PGDATABASE</envar> etc.
+      to locate the PostgreSQL database with the
+      <database>symboldb</database> schema.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>FILES</title>
+    <para>
+      By default, the directory <filename>~/.cache/symboldb</filename>
+      is used for caches.  In particular, the RPM cache in
+      <filename>~/.cache/symboldb/rpms</filename> contains RPMs which
+      have been downloaded.  These files can be deleted to reclaim
+      disk space, they will simply be downloaded again if needed.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+    <para>
+      <author>
+        <firstname>Florian</firstname>
+        <surname>Weimer</surname>
+	<email>fweimer@redhat.com</email>
+      </author>
+    </para>
+  </refsect1>
+</refentry>

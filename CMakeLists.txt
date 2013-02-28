@@ -152,3 +152,16 @@ add_executable (runtests
 target_link_libraries (runtests
   SymbolDB
 )
+
+add_custom_command (
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/symboldb.1
+  COMMAND xmlto man -o ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/doc/symboldb.xml
+  DEPENDS ${PROJECT_SOURCE_DIR}/doc/symboldb.xml
+)
+
+add_custom_target(symboldb.manpage ALL DEPENDS symboldb.1)
+
+install (
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/symboldb.1
+  DESTINATION share/man/man1
+)
