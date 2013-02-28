@@ -32,6 +32,11 @@
   sets.  This also relies on better logging/diagnostics and improved
   error recovery.
 
+* In the RAII handles, replace the "raw" member with accessors, so
+  that assignment automatically closes the previous raw resource.
+  Also perform error checking on assignment where reasonable
+  (especially pgconn_handle and pgresult_handle).
+
 * More test cases, including loading of sample RPMs.
 
 * Follow the cryptographic chain starting with the repomd.xml file and
