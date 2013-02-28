@@ -8,6 +8,12 @@
 * Better logging, in particular of network activity.  Final URLs after
   redirection should be included in error messages.
 
+* Better XML error handling.  On an Expat error, report the XML
+  fragment immediately before and after the error (which should still
+  be available in the input buffer).  Consider exporting position
+  information in expat_source, and a stack of open tags.  (Hopefully,
+  this will not cause too much of a slowdown.)
+
 * Retry failed downloads.  Especially with download.fedoraproject.org,
   some downloads fail initially, but succeed when attempted again.
 
