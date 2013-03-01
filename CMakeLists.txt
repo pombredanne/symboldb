@@ -93,6 +93,7 @@ add_library (SymbolDB
   string_support.cpp
   subprocess.cpp
   symboldb_options.cpp
+  task.cpp
   tee_sink.cpp
   url.cpp
   utf8.cpp
@@ -145,6 +146,7 @@ add_executable (runtests
   test-string_source.cpp
   test-string_support.cpp
   test-subprocess.cpp
+  test-task.cpp
   test-utf8.cpp
   test.cpp
 )
