@@ -31,6 +31,7 @@
 #include "source_sink.hpp"
 #include "pg_exception.hpp"
 #include "symboldb_options.hpp"
+#include "symboldb_show_source_packages.hpp"
 #include "os.hpp"
 #include "base16.hpp"
 
@@ -344,60 +345,6 @@ do_download_repo(const symboldb_options &opt, database &db,
 }
 
 static int
-do_show_source_packages(const symboldb_options &opt, database &db, char **argv)
-{
-  std::set<std::string> source_packages;
-  for (; *argv; ++argv) {
-    const char *url = *argv;
-    if (opt.output != symboldb_options::quiet) {
-      fprintf(stderr, "info: processing %s\n", url);
-    }
-    repomd rp;
-    std::string error;
-    if (!rp.acquire(opt.download(), db, url, error)) {
-      fprintf(stderr, "error: %s: %s\n", url, error.c_str());
-      return 1;
-    }
-
-    // The metadata URLs include hashes, so we do not have to check
-    // the cache for staleness.  But --no-net overrides that.
-    download_options dopts;
-    if (opt.no_net) {
-      dopts = opt.download();
-    } else {
-      dopts.cache_mode = download_options::always_cache;
-    }
-
-    repomd::primary_xml primary_xml(rp, dopts, db);
-    repomd::primary primary(&primary_xml);
-    while (primary.next()) {
-      std::string src(primary.info().source_rpm);
-      size_t dash = src.rfind('-');
-      if (dash != std::string::npos) {
-	src.resize(dash);	// strip release, architecture
-	dash = src.rfind('-');
-	if (dash != std::string::npos) {
-	  src.resize(dash); // strip version
-	}
-      }
-      if (dash == std::string::npos) {
-	fprintf(stderr, "error: %s (from %s): malformed source RPM element: %s\n",
-		primary_xml.url().c_str(), *argv,
-		primary.info().source_rpm.c_str());
-	return 1;
-      }
-      source_packages.insert(src);
-    }
-  }
-  for (std::set<std::string>::const_iterator
-	 p = source_packages.begin(), end = source_packages.end();
-       p != end; ++p) {
-    printf("%s\n", p->c_str());
-  }
-  return 0;
-}
-
-static int
 do_show_stale_cached_rpms(const symboldb_options &opt, database &db)
 {
   typedef std::vector<std::vector<unsigned char> > digvec;
@@ -624,7 +571,7 @@ main(int argc, char **argv)
     case command::show_primary:
       return do_show_primary(opt, db, argv[optind]);
     case command::show_source_packages:
-      return do_show_source_packages(opt, db, argv + optind);
+      return symboldb_show_source_packages(opt, argv + optind);
     case command::show_stale_cached_rpms:
       return do_show_stale_cached_rpms(opt, db);
     case command::show_soname_conflicts:

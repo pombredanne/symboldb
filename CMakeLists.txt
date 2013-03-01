@@ -93,6 +93,7 @@ add_library (SymbolDB
   string_support.cpp
   subprocess.cpp
   symboldb_options.cpp
+  symboldb_show_source_packages.cpp
   task.cpp
   tee_sink.cpp
   url.cpp
