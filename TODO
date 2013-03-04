@@ -2,9 +2,6 @@
 
 * Check portability of the sources to non-Fedora systems.
 
-* Remove dependency on libwww from W3C.  Apparently, this library is
-  unmaintained upstream and not widely available.
-
 * Better logging, in particular of network activity.  Final URLs after
   redirection should be included in error messages.
 

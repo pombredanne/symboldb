@@ -18,24 +18,22 @@
 
 #include "url.hpp"
 
-#include <cstdlib>
-
-#include <w3c-libwww/wwwsys.h>
-#include <w3c-libwww/HTParse.h>
+#include <cstring>
 
 std::string
-url_combine(const char *base, const char *relative)
+url_combine_yum(const char *base, const char *relative)
 {
-  char *combined = HTParse(relative, base, PARSE_ALL);
-  if (combined == NULL) {
-    throw std::bad_alloc();
+  std::string result(base);
+  if (result.empty()) {
+    result = relative;
+  } else if (relative[0] == '\0') {
+      result = base;
+  } else if (result.at(result.size() - 1) == '/'
+	     || base[0] == '/') {
+    result += relative;
+  } else {
+    result += '/';
+    result += relative;
   }
-  try {
-    std::string result(combined);
-    free(combined);
-    return result;
-  } catch (...) {
-    free(combined);
-    throw;
-  }
+  return result;
 }

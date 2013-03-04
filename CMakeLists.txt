@@ -122,7 +122,6 @@ add_executable (symboldb
 
 target_link_libraries (symboldb
   SymbolDB
-  -lwwwcore -lwwwutils
 )
 
 install (TARGETS symboldb DESTINATION bin)

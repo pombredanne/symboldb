@@ -15,7 +15,6 @@ development packages:
 - postgresql-server
 - rpm-devel
 - vim-common (for /usr/bin/xxd)
-- w3c-libwww-devel
 - xmlto
 - zlib-devel
 

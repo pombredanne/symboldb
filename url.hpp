@@ -20,5 +20,6 @@
 
 #include <string>
 
-// Combine RELATIVE with BASE according to Section 5.2 of RFC 3986.
-std::string url_combine(const char *base, const char *relative);
+// Combine RELATIVE with BASE according to the yum algorithm (which is
+// broken and does not follow Section 5.2 of RFC 3986).
+std::string url_combine_yum(const char *base, const char *relative);
