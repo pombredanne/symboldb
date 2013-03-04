@@ -30,7 +30,7 @@ test_primary()
   fd_handle handle;
   handle.open_read_only("test/data/primary.xml");
   fd_source source(handle.raw);
-  repomd::primary primary(&source);
+  repomd::primary primary(&source, "test/data");
   CHECK(primary.next());
   COMPARE_STRING(primary.info().name, "opensm-libs");
   COMPARE_STRING(primary.info().arch, "x86_64");
@@ -43,7 +43,7 @@ test_primary()
 		 "c2c85a567d1b92dd6131bd326611b162ed485f6f97583e46459b430006908d66");
   CHECK(primary.checksum().length == 62796);
   COMPARE_STRING(primary.href(),
-		 "Packages/o/opensm-libs-3.3.15-3.fc18.x86_64.rpm");
+		 "test/data/Packages/o/opensm-libs-3.3.15-3.fc18.x86_64.rpm");
   COMPARE_STRING(primary.info().source_rpm, "opensm-3.3.15-3.fc18.src.rpm");
 
   CHECK(primary.next());
@@ -58,7 +58,7 @@ test_primary()
 		 "e8914e18e2264100d40a422ba91be6f19a803a96c5a1e464a3fef2248ad1063b");
   CHECK(primary.checksum().length == 2182152);
   COMPARE_STRING(primary.href(),
-		 "Packages/b/bind-9.9.2-5.P1.fc18.x86_64.rpm");
+		 "test/data/Packages/b/bind-9.9.2-5.P1.fc18.x86_64.rpm");
   COMPARE_STRING(primary.info().source_rpm, "bind-9.9.2-5.P1.fc18.src.rpm");
 
   CHECK(primary.next());
@@ -73,7 +73,7 @@ test_primary()
 		 "4e03d256c6aacc905efdb83c7bd16bd452771758d1a0a80cea647cfe0f2c6314");
   CHECK(primary.checksum().length == 133156);
   COMPARE_STRING(primary.href(),
-		 "Packages/o/oniguruma-5.9.2-4.fc18.i686.rpm");
+		 "http://example.com/root/Packages/o/oniguruma-5.9.2-4.fc18.i686.rpm");
   COMPARE_STRING(primary.info().source_rpm, "oniguruma-5.9.2-4.fc18.src.rpm");
 
   CHECK(!primary.next());

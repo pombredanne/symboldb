@@ -60,7 +60,7 @@ entry::callback(const symboldb_options *opt, entry *e) throw()
 
   try {
     repomd::primary_xml primary_xml(rp, dopts, db);
-    repomd::primary primary(&primary_xml);
+    repomd::primary primary(&primary_xml, rp.base_url.c_str());
     e->url2 = primary_xml.url();
     while (primary.next()) {
       std::string src(primary.info().source_rpm);

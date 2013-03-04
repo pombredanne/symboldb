@@ -88,7 +88,9 @@ struct repomd {
     std::tr1::shared_ptr<impl> impl_;
   public:
     // SOURCE is the byte stream with the (uncompressed) XML.
-    primary(source *);
+    // BASE_URL is the URL relative to which non-absolute URLs are
+    // interpreted.
+    primary(source *, const char *base_url);
     ~primary();
 
     // Advances the iterator to the next element.
@@ -97,6 +99,9 @@ struct repomd {
     // Accessors for package attributes.
     const rpm_package_info &info() const; // without hash
     const ::checksum &checksum() const;
+
+    // From <location>, Already combined with the base URL or the
+    // xml:base algorithm, accordingq to the yum algorithm.
     const std::string &href() const;
   };
 };

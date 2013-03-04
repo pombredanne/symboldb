@@ -179,7 +179,7 @@ do_show_repomd(const symboldb_options &opt, database &db, const char *base)
   for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
 	 end = rp.entries.end();
        p != end; ++p) {
-    std::string entry_url(url_combine(rp.base_url.c_str(), p->href.c_str()));
+    std::string entry_url(url_combine_yum(rp.base_url.c_str(), p->href.c_str()));
     printf("entry: %s %s\n", p->type.c_str(), entry_url.c_str());
   }
   return 0;
@@ -254,11 +254,10 @@ do_download_repo(const symboldb_options &opt, database &db,
     }
 
     repomd::primary_xml primary_xml(rp, dopts, db);
-    repomd::primary primary(&primary_xml);
+    repomd::primary primary(&primary_xml, rp.base_url.c_str());
     while (primary.next()) {
       rpm_url rurl;
-      rurl.href = url_combine(rp.base_url.c_str(),
-			      primary.href().c_str());
+      rurl.href = primary.href();
       rurl.csum = primary.checksum();
       pset.add(primary.info(), rurl);
     }

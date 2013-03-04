@@ -21,15 +21,17 @@
 #include "rpm_package_info.hpp"
 #include "string_support.hpp"
 #include "checksum.hpp"
+#include "url.hpp"
 
 struct repomd::primary::impl {
   expat_source source_;
+  std::string base_url_;
   rpm_package_info info_;
   std::string href_;
   ::checksum checksum_;
 
-  impl(source *src)
-    : source_(src)
+  impl(source *src, const char *base_url)
+    : source_(src), base_url_(base_url)
   {
     source_.next();
     if (source_.name() != "metadata") {
@@ -126,7 +128,14 @@ struct repomd::primary::impl {
 				 checksum_.length);
 	source_.skip();
       } else if (tag == "location") {
-	href_ = source_.attribute("href");
+	std::string xmlbase(source_.attribute("xml:base"));
+	if (xmlbase.empty()) {
+	  href_ = url_combine_yum(base_url_.c_str(),
+				  source_.attribute("href").c_str());
+	} else {
+	  href_ = url_combine_yum(xmlbase.c_str(),
+				  source_.attribute("href").c_str());
+	}
 	source_.skip();
       } else if (tag == "format") {
 	process_format();
@@ -191,8 +200,8 @@ repomd::primary::impl::check_attr(const char *name, const std::string &value)
   }
 }
 
-repomd::primary::primary(source *src)
-  : impl_(new impl(src))
+repomd::primary::primary(source *src, const char *base_url)
+  : impl_(new impl(src, base_url))
 {
 }
 
