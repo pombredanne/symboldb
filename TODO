@@ -48,6 +48,9 @@
 * Follow the cryptographic chain starting with the repomd.xml file and
   verify all hashes up to the RPM files along the way.
 
+* Accelerate downloads of re-signed RPMs by combining the new header
+  with the existing compressed cpio data.
+
 * Add some convenience wrapper for PostgreSQL parameterized queries
   and parsing query results.  (This reaches into the territory of
   template metaprogramming, so beware.)
