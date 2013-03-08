@@ -19,12 +19,26 @@
 #include "fd_handle.hpp"
 #include "os_exception.hpp"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 fd_handle::~fd_handle()
 {
   close_nothrow();
+}
+
+void
+fd_handle::reset(int fd)
+{
+  if (raw >= 0 && ::close(raw) < 0) {
+    int err = errno;
+    if (fd >= 0) {
+      ::close(fd);
+    }
+    throw os_exception(err).function(::close).fd(raw);
+  }
+  raw = fd;
 }
 
 void
@@ -132,5 +146,31 @@ fd_handle::close_nothrow() throw()
   if (raw >= 0) {
     ::close(raw);
     raw = -1;
+  }
+}
+
+void
+fd_handle::fsync()
+{
+  if (::fsync(raw) < 0) {
+    throw os_exception().function(::fsync).fd(raw).defaults();
+  }
+}
+
+size_t
+fd_handle::read(void *buffer, size_t length)
+{
+  ssize_t result = ::read(raw, buffer, length);
+  if (result < 0) {
+    throw os_exception().function(::read).fd(raw).count(length).defaults();
+  }
+  return result;
+}
+
+void
+fd_handle::unlinkat(const char *pathname, int flags)
+{
+  if (::unlinkat(raw, pathname, flags) < 0) {
+    throw os_exception().function(::unlinkat).fd(raw).path2(pathname).defaults();
   }
 }

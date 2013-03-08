@@ -110,41 +110,21 @@ hash(hash_sink::type t, const std::vector<unsigned char> &data)
 }
 
 
-bool
+void
 hash_file(hash_sink::type t,
-	       const char *path, std::vector<unsigned char> &digest,
-	       std::string &error)
+	       const char *path, std::vector<unsigned char> &digest)
 {
   hash_sink sink(t);
-
   fd_handle fd;
-  fd.raw = open(path, O_RDONLY | O_CLOEXEC);
-  if (fd.raw < 0) {
-    std::string s(error_string());
-    error = "could not open file ";
-    error += path;
-    error += ": ";
-    error += s;
-    return false;
-  }
+  fd.open_read_only(path);
 
   unsigned char buf[8192];
   while (true) {
-    ssize_t ret = read(fd.raw, buf, sizeof(buf));
+    size_t ret = fd.read(buf, sizeof(buf));
     if (ret == 0) {
       break;
     }
-    if (ret < 0) {
-      std::string s(error_string());
-      error = "could not write to file ";
-      error += path;
-      error += ": ";
-      error += s;
-      return false;
-    }
     sink.write(buf, ret);
   }
-
   sink.digest(digest);
-  return true;
 }

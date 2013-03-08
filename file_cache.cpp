@@ -64,7 +64,7 @@ file_cache::lookup_path(const checksum &csum, std::string &path)
   }
   struct stat64 st;
   std::string hex(base16_encode(csum.value.begin(), csum.value.end()));
-  if( fstatat64(impl_->dirfd.raw, hex.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0
+  if( fstatat64(impl_->dirfd.get(), hex.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0
       && (csum.length == checksum::no_length
 	  || csum.length == static_cast<unsigned long long>(st.st_size))
       && S_ISREG(st.st_mode)) {
@@ -78,9 +78,9 @@ file_cache::lookup_path(const checksum &csum, std::string &path)
 void
 file_cache::digests(std::vector<std::vector<unsigned char> > &digests)
 {
-  int fd_copy = ::dup(impl_->dirfd.raw);
+  int fd_copy = ::dup(impl_->dirfd.get());
   if (fd_copy < 0) {
-    throw os_exception().fd(impl_->dirfd.raw).function(dup).defaults();
+    throw os_exception().fd(impl_->dirfd.get()).function(dup).defaults();
   }
   dir_handle dir(fd_copy);
   std::vector<unsigned char> decoded;
@@ -127,9 +127,9 @@ file_cache::add_sink::add_sink(file_cache &c, const checksum &csum)
   impl_.reset(new add_impl(c.impl_, hash_type));
   impl_->csum = csum;
   impl_->hex = base16_encode(csum.value.begin(), csum.value.end());
-  impl_->handle.openat(c.impl_->dirfd.raw, impl_->hex.c_str(),
+  impl_->handle.openat(c.impl_->dirfd.get(), impl_->hex.c_str(),
 		       O_WRONLY | O_CREAT | O_TRUNC, 0666);
-  impl_->sink.raw = impl_->handle.raw;
+  impl_->sink.raw = impl_->handle.get();
 }
 
 file_cache::add_sink::~add_sink()
@@ -158,13 +158,11 @@ file_cache::add_sink::finish(std::string &path)
       throw checksum_mismatch("digest");
     }
 
-    if (fsync(impl_->handle.raw) != 0) {
-      throw os_exception().fd(impl_->handle.raw).function(fsync).defaults();
-    }
+    impl_->handle.fsync();
   } catch (...) {
     // Clean up broken file, but not if there is a length mismatch
     // because another process might be writing the file.
-    unlinkat(impl_->cache->dirfd.raw, impl_->hex.c_str(), 0);
+    impl_->cache->dirfd.unlinkat(impl_->hex.c_str(), 0);
     // FIXME: There is a race here if the file has the expected
     // length, but the wrong digest.
     throw;

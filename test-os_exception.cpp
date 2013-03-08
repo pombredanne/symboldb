@@ -55,11 +55,11 @@ test(void)
     fd_handle h;
     h.open_read_only("/dev/null");
     std::ostringstream s;
-    s << "fd=" << h.raw << " path=/dev/null";
-    COMPARE_STRING(os_exception(0).fd(h.raw).defaults().what(),
+    s << "fd=" << h.get() << " path=/dev/null";
+    COMPARE_STRING(os_exception(0).fd(h.get()).defaults().what(),
 		   s.str() + " offset=0 length=0");
     os_exception e(0);
-    e.fd(h.raw).offset(1).length(2).count(3).defaults();
+    e.fd(h.get()).offset(1).length(2).count(3).defaults();
     COMPARE_STRING(e.what(), s.str() + " offset=1 length=2 count=3");
     CHECK(e.offset() == 1U);
     CHECK(e.length() == 2U);

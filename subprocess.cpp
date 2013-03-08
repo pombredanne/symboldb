@@ -253,19 +253,19 @@ subprocess::start()
 	    // Direction of the pipe is different.
 	    std::swap(pipe_parent_child[0], pipe_parent_child[1]);
 	  }
-	  impl_->pipes[i].raw = pipe_parent_child[0];
+	  impl_->pipes[i].reset(pipe_parent_child[0]);
 	  assert(pipe_parent_child[1] > 2);
-	  child_pipes[i].raw = pipe_parent_child[1];
+	  child_pipes[i].reset(pipe_parent_child[1]);
 	  child_pipes[i].close_on_exec(false);
 	  if (posix_spawn_file_actions_adddup2(&actions.raw,
-					       child_pipes[i].raw, i) != 0) {
+					       child_pipes[i].get(), i) != 0) {
 	    throw os_exception()
 	      .function(posix_spawn_file_actions_adddup2).fd(i);
 	  }
 	  if (posix_spawn_file_actions_addclose(&actions.raw,
-						child_pipes[i].raw) != 0) {
+						child_pipes[i].get()) != 0) {
 	    throw os_exception().function(posix_spawn_file_actions_addclose)
-	      .fd(child_pipes[i].raw);
+	      .fd(child_pipes[i].get());
 	  }
 	}
 	break;
@@ -296,7 +296,7 @@ subprocess::pipefd(standard_fd fd) const
   if (impl_->activity[fd] != pipe) {
     throw std::logic_error("subprocess: access to non-pipe descriptor");
   }
-  return impl_->pipes[fd].raw;
+  return impl_->pipes[fd].get();
 }
 
 void

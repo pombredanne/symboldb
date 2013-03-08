@@ -29,7 +29,7 @@ test_primary()
 {
   fd_handle handle;
   handle.open_read_only("test/data/primary.xml");
-  fd_source source(handle.raw);
+  fd_source source(handle.get());
   repomd::primary primary(&source, "test/data");
   CHECK(primary.next());
   COMPARE_STRING(primary.info().name, "opensm-libs");

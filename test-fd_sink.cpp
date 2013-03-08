@@ -30,7 +30,7 @@ test(void)
   {
     fd_handle h;
     h.open("/dev/full", O_WRONLY);
-    fd_sink s(h.raw);
+    fd_sink s(h.get());
     unsigned char buf[3] = {65, 66, 67};
     try {
       s.write(buf, sizeof(buf));

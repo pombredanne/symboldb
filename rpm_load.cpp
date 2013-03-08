@@ -223,14 +223,8 @@ rpm_load(const symboldb_options &opt, database &db,
   hash_sink sha1(hash_sink::sha1);
   {
     fd_handle handle;
-    handle.raw = ::open(path, O_RDONLY | O_CLOEXEC);
-    if (handle.raw < 0) {
-      fprintf(stderr, "error: opening %s: %s\n", path, error_string().c_str());
-      db.txn_rollback();
-      return database::package_id();
-    }
-
-    fd_source source(handle.raw);
+    handle.open_read_only(path);
+    fd_source source(handle.get());
     tee_sink tee(&sha256, &sha1);
     copy_source_to_sink(source, tee);
   }

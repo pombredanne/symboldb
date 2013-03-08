@@ -91,9 +91,9 @@ remove_directory_tree(const char *root)
   fd_handle fd;
   fd.open(root, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   DIR_stack stack;
-  stack.push(fdopendir(fd.raw), "");
+  stack.push(fdopendir(fd.get()), "");
   if (stack.top().raw == NULL) {
-    throw os_exception().fd(fd.raw).path(root).function(fdopendir).defaults();
+    throw os_exception().fd(fd.get()).path(root).function(fdopendir).defaults();
   }
   fd.release(); // ownership was taken by DIR_stack
   while (!stack.empty()) {
@@ -102,7 +102,7 @@ remove_directory_tree(const char *root)
     dirent *e = readdir(dirp);
     if (e == NULL) {
       if (errno != 0) {
-	throw os_exception().fd(fd.raw).function(readdir).defaults();
+	throw os_exception().fd(fd.get()).function(readdir).defaults();
       }
       std::string name;
       std::swap(name, stack.top().name);
@@ -129,7 +129,7 @@ remove_directory_tree(const char *root)
       if (errno == EISDIR) {
 	// Descend into subdirectory.
 	fd.openat(dirpfd, e->d_name, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
-	stack.push(fdopendir(fd.raw), e->d_name);
+	stack.push(fdopendir(fd.get()), e->d_name);
 	if (stack.top().raw == NULL) {
 	  throw os_exception().fd(dirpfd).path2(e->d_name)
 	    .function(fdopendir).defaults();

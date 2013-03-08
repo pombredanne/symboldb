@@ -33,7 +33,7 @@ test()
     {
       fd_handle h;
       h.open_read_only("/dev/null");
-      fd = h.raw;
+      fd = h.get();
     }
     {
       dir_handle h("/dev");
@@ -42,7 +42,7 @@ test()
     {
       fd_handle h;
       h.open_read_only("/dev/null");
-      CHECK(h.raw == fd);
+      CHECK(h.get() == fd);
     }
   }
 

@@ -18,17 +18,30 @@
 
 #pragma once
 
+#include <cstddef>
+
 // POSIX file descriptor which is closed on scope exit.
-struct fd_handle {
+class fd_handle {
   int raw;
+  fd_handle(const fd_handle &); // not implemented
+  fd_handle &operator=(const fd_handle &); // not implemented
+public:
+  // Sets the file handle to -1.
+  fd_handle();
 
-  fd_handle()
-    : raw(-1)
-  {
-  }
+  // Takes ownership of the file descriptor.
+  explicit fd_handle(int);
 
-  // Closes RAW if it is not negative.
+  // Closes the file descriptor if it is not negative.
   ~fd_handle();
+
+  // Returns the file descriptor.
+  int get() throw();
+
+  // Replaces the file descriptor with the specified one, taking
+  // ownership.  If closing the old descriptor results an error, the
+  // new descriptor is closed as well.
+  void reset(int);
 
   // Opens the file with the indicated flags.  Throws os_exception on
   // error.
@@ -50,21 +63,44 @@ struct fd_handle {
   void close_on_exec(bool);
   bool close_on_exec() const;
 
-  // Returns the current value of RAW and sets it to -1, effectively
-  // releasing ownership.
+  // Returns the current value of the file descriptor and sets it to
+  // -1, effectively releasing ownership.
   int release() throw();
 
-  // Closes the descriptor and sets RAW to -1, throwing os_exception
-  // on error.
+  // Closes the descriptor and sets the file descriptor to -1,
+  // throwing os_exception on error.
   void close();
+
+  // Calls read(int, void *, size_t).  Throws os_exception on error.
+  size_t read(void *, size_t);
 
   // Closes the descriptor if open, ignoring error return values.
   void close_nothrow() throw();
 
-private:
-  fd_handle(const fd_handle &); // not implemented
-  fd_handle &operator=(const fd_handle &); // not implemented
+  // Calls fsync(int).  Throws os_exception on error.
+  void fsync();
+
+  // Calls unlinkat(int, const char *, int).  Throws os_exception on error.
+  void unlinkat(const char *pathname, int flags);
 };
+
+inline
+fd_handle::fd_handle()
+  : raw(-1)
+{
+}
+
+inline
+fd_handle::fd_handle(int fd)
+  : raw(fd)
+{
+}
+
+inline int
+fd_handle::get() throw()
+{
+  return raw;
+}
 
 inline int
 fd_handle::release() throw()

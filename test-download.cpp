@@ -47,7 +47,7 @@ test()
   {
     fd_handle h;
     h.open_read_only(FILE);
-    fd_source src(h.raw);
+    fd_source src(h.get());
     vector_sink vsink;
     copy_source_to_sink(src, vsink);
     reference.swap(vsink.data);

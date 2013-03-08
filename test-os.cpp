@@ -35,7 +35,7 @@ test(void)
   {
     fd_handle h;
     h.open_read_only("/dev/null");
-    fd_baseline = h.raw;
+    fd_baseline = h.get();
   }
 
   CHECK(is_directory("."));
@@ -108,7 +108,7 @@ test(void)
   {
     fd_handle h;
     h.open_read_only("/dev/null");
-    CHECK(h.raw == fd_baseline);
+    CHECK(h.get() == fd_baseline);
   }
 }
 

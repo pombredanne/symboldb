@@ -32,38 +32,38 @@ test(void)
     {
       fd_handle h;
       h.open_read_only("/dev/null");
-      fd = h.raw;
+      fd = h.get();
       CHECK(h.release() == fd);
-      CHECK(h.raw == -1);
-      h.raw = fd;
+      CHECK(h.get() == -1);
+      h.reset(fd);
     }
     CHECK(fd > 2);
     {
       fd_handle h;
       h.open_read_only("/dev/null");
-      CHECK(h.raw == fd);
+      CHECK(h.get() == fd);
     }
     {
       fd_handle h;
       h.open_read_only("/dev/null");
-      CHECK(h.raw == fd);
+      CHECK(h.get() == fd);
       h.open_read_only("/dev/null");
-      CHECK(h.raw == fd + 1);
+      CHECK(h.get() == fd + 1);
       h.close_nothrow();
-      CHECK(h.raw == -1);
+      CHECK(h.get() == -1);
       h.open_read_only("/dev/null");
-      CHECK(h.raw == fd);
+      CHECK(h.get() == fd);
       h.open_read_only("/dev/null");
-      CHECK(h.raw == fd + 1);
+      CHECK(h.get() == fd + 1);
       CHECK(h.close_on_exec());
       h.close_on_exec(false);
       CHECK(!h.close_on_exec());
       h.close_on_exec(true);
       CHECK(h.close_on_exec());
       h.close();
-      CHECK(h.raw == -1);
+      CHECK(h.get() == -1);
       h.close();
-      h.raw = 99999;
+      h.reset(99999);
       try {
 	h.close();
 	CHECK(false);
@@ -78,16 +78,16 @@ test(void)
   {
     fd_handle dir;
     dir.open("/dev", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
-    CHECK(dir.raw == 3);
+    CHECK(dir.get() == 3);
     {
       fd_handle h;
-      h.openat(dir.raw, "null", O_RDONLY | O_CLOEXEC);
-      CHECK(h.raw == 4);
+      h.openat(dir.get(), "null", O_RDONLY | O_CLOEXEC);
+      CHECK(h.get() == 4);
     }
 
     try {
       fd_handle h;
-      h.openat(dir.raw, "#does-not-exist#", O_RDONLY);
+      h.openat(dir.get(), "#does-not-exist#", O_RDONLY);
     } catch (os_exception &e) {
       CHECK(starts_with(e.function_name(), "openat["));
       CHECK(e.error_code() == ENOENT);

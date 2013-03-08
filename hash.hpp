@@ -52,9 +52,8 @@ public:
 std::vector<unsigned char> hash(hash_sink::type,
 				const std::vector<unsigned char> &data);
 
-// Reads the file at PATH and writes its SHA-256 hash to DIGEST.
-// ERROR is updated in case of file system errors, and the function
-// returns false.  On NSS errors, an exception is thrown.
-bool hash_file(hash_sink::type, const char *path,
-	       std::vector<unsigned char> &digest,
-	       std::string &error);
+// Reads the file at PATH and writes its SHA-256 hash to DIGEST.  On
+// NSS errors, an exception is thrown.  File system access errors
+// result in os_exception.
+void hash_file(hash_sink::type, const char *path,
+	       std::vector<unsigned char> &digest);

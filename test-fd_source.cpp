@@ -26,7 +26,7 @@ test(void)
   {
     fd_handle h;
     h.open_read_only("/dev/null");
-    fd_source s(h.raw);
+    fd_source s(h.get());
     unsigned char buf[3] = {65, 66, 67};
     CHECK(s.read(buf, sizeof(buf)) == 0);
     COMPARE_STRING(std::string(buf, buf + sizeof(buf)), "ABC");
@@ -34,7 +34,7 @@ test(void)
   {
     fd_handle h;
     h.open_read_only("/dev/zero");
-    fd_source s(h.raw);
+    fd_source s(h.get());
     unsigned char buf[3] = {65, 66, 67};
     CHECK(s.read(buf, sizeof(buf)) == 3);
     COMPARE_STRING(std::string(buf, buf + sizeof(buf)),
