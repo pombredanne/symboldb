@@ -44,18 +44,13 @@ struct repomd::primary_xml::impl {
 repomd::primary_xml::primary_xml(const repomd &rp,
 				 const download_options &opt, database &db)
 {
-  std::string error;
   for (std::vector<repomd::entry>::const_iterator p = rp.entries.begin(),
 	 end = rp.entries.end(); p != end; ++p) {
     if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
       std::string entry_url(url_combine_yum(rp.base_url.c_str(), p->href.c_str()));
       std::tr1::shared_ptr<std::vector<unsigned char> > compressed
 	(new std::vector<unsigned char>());
-      if (!download(opt, db, entry_url.c_str(), *compressed, error)) {
-	// FIXME: use a more specific exception
-	throw std::runtime_error(entry_url + " (from "
-				 + rp.base_url + "): " + error);
-      }
+      download(opt, db, entry_url.c_str(), *compressed);
       impl_.reset(new impl(entry_url, compressed));
       return;
     }

@@ -57,8 +57,7 @@ struct repomd {
   // URL.  (A slash is appended to it if it is missng.)  Parses the
   // result.  An error message is written to ERROR, and false is
   // returned on failure.
-  bool acquire(const download_options &, database &,
-	       const char *url, std::string &error);
+  void acquire(const download_options &, database &, const char *url);
 
   // Source which provides access to the primary.XML file for the
   // repository.

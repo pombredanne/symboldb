@@ -22,6 +22,7 @@
 #include "expat_minidom.hpp"
 #include "string_support.hpp"
 #include "download.hpp"
+#include "curl_exception.hpp"
 
 #include <cerrno>
 #include <cstdlib>
@@ -139,9 +140,8 @@ repomd::parse(const unsigned char *buffer, size_t length,
   return true;
 }
 
-bool
-repomd::acquire(const download_options &opt, database &db,
-	       const char *url, std::string &error)
+void
+repomd::acquire(const download_options &opt, database &db, const char *url)
 {
   std::string base_canon(url);
   if (!base_canon.empty() && base_canon.at(base_canon.size() - 1) != '/') {
@@ -150,16 +150,13 @@ repomd::acquire(const download_options &opt, database &db,
   std::string mdurl(base_canon);
   mdurl += "repodata/repomd.xml";
   std::vector<unsigned char> data;
-  if (!download(opt, db, mdurl.c_str(), data, error)) {
-    return false;
-  }
+  download(opt, db, mdurl.c_str(), data);
   if (data.empty()) {
-    error = "empty document";
-    return false;
+    throw curl_exception("empty document").url(url);
   }
+  std::string error;		// FIXME
   if (!parse(data.data(), data.size(), error)) {
-    return false;
+    return throw curl_exception(error.c_str()).url(url);
   }
   base_url.swap(base_canon);
-  return true;
 }

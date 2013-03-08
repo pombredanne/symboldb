@@ -18,6 +18,7 @@
 
 #include "download.hpp"
 #include "database.hpp"
+#include "curl_exception.hpp"
 #include "curl_fetch_result.hpp"
 #include "vector_sink.hpp"
 
@@ -26,9 +27,9 @@ download_options::download_options()
 {
 }
 
-bool
+void
 download(const download_options &opt, database &db,
-	 const char *url, sink *target, std::string &error)
+	 const char *url, sink *target)
 {
   switch (opt.cache_mode) {
   case download_options::only_cache:
@@ -37,11 +38,11 @@ download(const download_options &opt, database &db,
       std::vector<unsigned char> data;
       if (db.url_cache_fetch(url, data)) {
 	target->write(data.data(), data.size());
-	return true;
+	return;
       }
       if (opt.cache_mode == download_options::only_cache) {
-	error = "URL not in cache and network access disabled";
-	return false;
+	throw curl_exception("URL not in cache and network access disabled")
+	  .url(url);
       }
     }
     break;
@@ -52,38 +53,30 @@ download(const download_options &opt, database &db,
       vector_sink vsink;
       curl_fetch_result r(&vsink);
       r.head(url);
-      if (r.error.empty()
-	  && r.http_date > 0 && r.http_size >= 0
+      if (r.http_date > 0 && r.http_size >= 0
 	  && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
 				r.http_date, vsink.data)) {
 	target->write(vsink.data.data(), vsink.data.size());
-	return true;
+	return;
       }
     }
   }
 
   curl_fetch_result r(target);
   r.get(url);
-  if (!r.error.empty()) {
-    error.swap(r.error);
-    return false;
-  }
   if (opt.cache_mode != download_options::no_cache) {
     if (vector_sink *vsink = dynamic_cast<vector_sink *>(target)) {
       db.url_cache_update(url, vsink->data, r.http_date);
     }
   }
-  return true;
 }
 
-bool
+void
 download(const download_options &opt, database &db,
-	 const char *url, std::vector<unsigned char> &result,
-	 std::string &error)
+	 const char *url, std::vector<unsigned char> &result)
 {
   vector_sink target;
   target.data.swap(result);
-  bool ret = download(opt, db, url, &target, error);
+  download(opt, db, url, &target);
   target.data.swap(result);
-  return ret;
 }

@@ -27,6 +27,7 @@
 #include "pgresult_handle.hpp"
 #include "source_sink.hpp"
 #include "vector_sink.hpp"
+#include "curl_exception.hpp"
 
 #include "test.hpp"
 
@@ -61,22 +62,24 @@ test()
   url += '/';
   url += FILE;
   std::vector<unsigned char> result;
-  std::string error;
-  CHECK(!download(opt, db, url.c_str(), result, error));
-  CHECK(result.empty());
-  COMPARE_STRING(error, "URL not in cache and network access disabled");
+  try {
+    download(opt, db, url.c_str(), result);
+    CHECK(false);
+  } catch (curl_exception &e) {
+    CHECK(result.empty());
+    COMPARE_STRING(e.message(), "URL not in cache and network access disabled");
+    COMPARE_STRING(e.url(), url);
+  }
 
   opt = download_options();
-  error.clear();
-  CHECK(download(opt, db, url.c_str(), result, error));
+  download(opt, db, url.c_str(), result);
   CHECK(result == reference);
 
   // FIXME: We should check somehow that this does not hit the
   // original file:/// URL.
   opt.cache_mode = download_options::only_cache;
   result.clear();
-  error.clear();
-  CHECK(download(opt, db, url.c_str(), result, error));
+  download(opt, db, url.c_str(), result);
   CHECK(result == reference);
 
   // Make sure that we do not hit the database.
@@ -84,8 +87,7 @@ test()
 
   opt.cache_mode = download_options::no_cache;
   result.clear();
-  error.clear();
-  CHECK(download(opt, db, url.c_str(), result, error));
+  download(opt, db, url.c_str(), result);
   CHECK(result == reference);
 }
 

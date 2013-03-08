@@ -23,9 +23,11 @@ class sink;
 #include <string>
 #include <vector>
 
+class curl_handle;
+
 struct curl_fetch_result {
+  std::string effective_url;
   sink *target;	             // receives the data
-  std::string error;	     // error message, empty if successful
   long http_date;	     // last modification date, -1 if not available
   long long http_size;	     // file size on the server, -1 if not available
 
@@ -41,4 +43,10 @@ struct curl_fetch_result {
   // May throw std::bad_alloc.  Other errors are indicated through
   // the http_status/error fields.
   void head(const char *url);
+
+private:
+  std::string error;		// records errors from the callback
+  static size_t write_function(char *, size_t, size_t, void *userdata);
+  void init(curl_handle &, const char *url);
+  void perform(curl_handle &, const char *url);
 };

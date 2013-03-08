@@ -34,6 +34,7 @@
 #include "symboldb_show_source_packages.hpp"
 #include "os.hpp"
 #include "base16.hpp"
+#include "curl_exception.hpp"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -153,11 +154,7 @@ static int
 do_download(const symboldb_options &opt, database &db, const char *url)
 {
   std::vector<unsigned char> data;
-  std::string error;
-  if (!download(opt.download(), db, url, data, error)) {
-    fprintf(stderr, "error: %s: %s\n", url, error.c_str());
-    return 1;
-  }
+  download(opt.download(), db, url, data);
   if (!data.empty()
       && fwrite(data.data(), data.size(), 1, stdout) != 1) {
     perror("fwrite");
@@ -170,11 +167,7 @@ static int
 do_show_repomd(const symboldb_options &opt, database &db, const char *base)
 {
   repomd rp;
-  std::string error;
-  if (!rp.acquire(opt.download(), db, base, error)) {
-    fprintf(stderr, "error: %s: %s\n", base, error.c_str());
-    return 1;
-  }
+  rp.acquire(opt.download(), db, base);
   printf("revision: %s\n", rp.revision.c_str());
   for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
 	 end = rp.entries.end();
@@ -189,11 +182,7 @@ static int
 do_show_primary(const symboldb_options &opt, database &db, const char *base)
 {
   repomd rp;
-  std::string error;
-  if (!rp.acquire(opt.download(), db, base, error)) {
-    fprintf(stderr, "error: %s: %s\n", base, error.c_str());
-    return 1;
-  }
+  rp.acquire(opt.download(), db, base);
   download_options dopts;
   if (opt.no_net) {
     dopts = opt.download();
@@ -236,11 +225,7 @@ do_download_repo(const symboldb_options &opt, database &db,
       fprintf(stderr, "info: processing repository %s\n", url);
     }
     repomd rp;
-    std::string error;
-    if (!rp.acquire(opt.download(), db, url, error)) {
-      fprintf(stderr, "error: %s: %s\n", url, error.c_str());
-      return 1;
-    }
+    rp.acquire(opt.download(), db, url);
 
     // FIXME: consolidate with do_show_source_packages() below.
 
@@ -298,12 +283,7 @@ do_download_repo(const symboldb_options &opt, database &db,
 	}
 	++download_count;
 	file_cache::add_sink sink(*fcache, p->csum);
-	if (!download(dopts_no_cache, db, p->href.c_str(), 
-		      &sink, error)) {
-	  fprintf(stderr, "error: %s: %s\n",
-		  p->href.c_str(), error.c_str());
-	  return 1;
-	}
+	download(dopts_no_cache, db, p->href.c_str(), &sink);
 	sink.finish(rpm_path);
       }
     } catch (file_cache::unsupported_hash &e) {
@@ -578,6 +558,19 @@ main(int argc, char **argv)
     case command::undefined:
     default:
       abort();
+    }
+  } catch(curl_exception &e) {
+    fprintf(stderr, "error: download failed");
+    if (e.status() != 0) {
+      fprintf(stderr, " with status code %d\n", e.status());
+    } else {
+      fprintf(stderr, "\n");
+    }
+    if (!e.url().empty()) {
+      fprintf(stderr, "error:  URL: %s\n", e.url().c_str());
+    }
+    if (!e.original_url().empty()) {
+      fprintf(stderr, "error:  starting at: %s\n", e.original_url().c_str());
     }
   } catch (symboldb_options::usage_error e) {
     fprintf(stderr, "error: %s\n", e.what());
