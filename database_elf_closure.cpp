@@ -160,7 +160,7 @@ namespace {
 void
 update_elf_closure(pgconn_handle &conn, database::package_set_id id)
 {
-  assert(PQtransactionStatus(conn.raw) == PQTRANS_INTRANS);
+  assert(conn.transactionStatus() == PQTRANS_INTRANS);
   bool debug = false;
 
   char idstr[32];
@@ -278,20 +278,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
       upload.insert(upload.end(), needed, needed_end);
       upload.push_back('\n');
       if (upload.size() > 128 * 1024) {
-	if (PQputCopyData(conn.raw, upload.data(), upload.size()) < 0) {
-	  throw pg_exception(conn.raw);
-	}
+	conn.putCopyData(upload.data(), upload.size());
 	upload.clear();
       }
     }
   }
   if (!upload.empty()) {
-    if (PQputCopyData(conn.raw, upload.data(), upload.size()) < 0) {
-      throw pg_exception(conn.raw);
-    }
+    conn.putCopyData(upload.data(), upload.size());
   }
-  if (PQputCopyEnd(conn.raw, NULL) < 0) {
-    throw pg_exception(conn.raw);
-  }
+  conn.putCopyEnd();
   copy.getresult(conn);
 }

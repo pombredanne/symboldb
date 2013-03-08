@@ -233,13 +233,7 @@ pg_testdb::connect(const char *dbname)
     impl_->directory.c_str(), "5432", dbname, NULL
   };
   pgconn_handle handle(PQconnectdbParams(keys, values, 0));
-  if (handle.raw == NULL) {
-    throw std::bad_alloc();
-  }
-  if (PQstatus(handle.raw) != CONNECTION_OK) {
-    throw pg_exception(handle.raw);
-  }
-  PQsetNoticeProcessor(handle.raw, impl::notice_processor, impl_.get());
+  PQsetNoticeProcessor(handle.get(), impl::notice_processor, impl_.get());
   return handle.release();
 }
 
@@ -247,7 +241,6 @@ void
 pg_testdb::exec_test_sql(const char *dbname, const char *sql)
 {
   pgconn_handle conn(connect(dbname));
-  conn.check();
   pgresult_handle res;
   res.exec(conn, sql);
 }

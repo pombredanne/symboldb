@@ -38,7 +38,8 @@ test()
   {
     // Run this directly, to suppress notices.
     pgconn_handle db(testdb.connect(DBNAME));
-    pgresult_handle res(PQexec(db.raw, database::SCHEMA));
+    pgresult_handle res;
+    res.exec(db, database::SCHEMA);
   }
 
   symboldb_options opt;

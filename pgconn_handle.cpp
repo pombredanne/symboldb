@@ -19,10 +19,56 @@
 #include "pgconn_handle.hpp"
 #include "pg_exception.hpp"
 
-void
-pgconn_handle::check()
+#include <algorithm>
+#include <climits>
+
+static void
+do_check(PGconn *raw)
 {
   if (raw == NULL || PQstatus(raw) != CONNECTION_OK) {
+    throw pg_exception(raw);
+  }
+}
+
+pgconn_handle::pgconn_handle(PGconn *c)
+{
+  do_check(c);
+  raw = c;
+}
+
+void
+pgconn_handle::reset(PGconn *c)
+{
+  do_check(c);
+  close();
+  raw = c;
+}
+
+void
+pgconn_handle::putCopyData(const char *p, size_t len)
+{
+  while (len) {
+    size_t to_copy = std::min(len, static_cast<size_t>(INT_MAX));
+    int result = PQputCopyData(raw, p, to_copy);
+    if (result < 0) {
+      throw pg_exception(raw);
+    }
+    p += to_copy;
+    len -= to_copy;
+  }
+}
+
+void
+pgconn_handle::putCopyEnd()
+{
+  putCopyEndError(NULL);
+}
+
+void
+pgconn_handle::putCopyEndError(const char *errormsg)
+{
+  int result = PQputCopyEnd(raw, errormsg);
+  if (result < 0) {
     throw pg_exception(raw);
   }
 }

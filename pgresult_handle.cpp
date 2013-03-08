@@ -79,13 +79,13 @@ pgresult_handle::reset(PGresult *newraw)
 void
 pgresult_handle::getresult(pgconn_handle &h)
 {
-  reset(PQgetResult(h.raw));
+  reset(PQgetResult(h.get()));
 }
 
 void
 pgresult_handle::exec(pgconn_handle &conn, const char *command)
 {
-  PGresult *newraw = PQexec(conn.raw, command);
+  PGresult *newraw = PQexec(conn.get(), command);
   reset(newraw);
 }
 
@@ -99,7 +99,7 @@ pgresult_handle::execParamsCustom(pgconn_handle &conn,
 			const int *paramFormats,
 			int resultFormat)
 {
-  PGresult *newraw = PQexecParams(conn.raw, command, nParams, paramTypes,
+  PGresult *newraw = PQexecParams(conn.get(), command, nParams, paramTypes,
 				  paramValues, paramLengths, paramFormats,
 				  resultFormat);
   reset(newraw);

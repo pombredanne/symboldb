@@ -28,9 +28,7 @@ test()
 {
   pg_testdb db;
   pgconn_handle h(db.connect("template1"));
-  h.check();
   h.reset(db.connect("template1"));
-  h.check();
   CHECK(db.notices().empty());
   db.exec_test_sql("template1", "CREATE TABLE abc(data TEXT)");
   db.exec_test_sql("template1", "INSERT INTO abc VALUES ('abc')");
@@ -39,7 +37,7 @@ test()
     r.exec(h, "SELECT * FROM abc");
     CHECK(r.ntuples() == 1);
     COMPARE_STRING(r.getvalue(0, 0), "abc");
-    r.reset(PQexec(h.raw, "CREATE TABLE test_table (pk TEXT PRIMARY KEY)"));
+    r.exec(h, "CREATE TABLE test_table (pk TEXT PRIMARY KEY)");
     CHECK(db.notices().size() == 1);
     COMPARE_STRING(db.notices().at(0),
 		   "NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit"

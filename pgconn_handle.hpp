@@ -24,29 +24,50 @@
 class pgconn_handle {
   pgconn_handle(const pgconn_handle &); // not implemented
   pgconn_handle &operator=(const pgconn_handle &); // not implemented
-public:
   PGconn *raw;
-
-  // Initializes RAW with NULL.
+public:
+  // Initializes the raw pointer with NULL.
   pgconn_handle() throw();
 
-  // Initiales RAW with PGCONN, taking ownership.
-  explicit pgconn_handle(PGconn *) throw();
+  // Initiales the raw pointer with PGCONN, taking ownership.  Throws
+  // pg_exception and frees the connection if it reflects an error
+  // value.
+  explicit pgconn_handle(PGconn *);
 
-  // Deallocates RAW if it is not NULL.
+  // Deallocates the raw pointer if it is not NULL.
   ~pgconn_handle() throw();
 
-  // Returns the connection handle and sets RAW to NULL, releasing
-  // ownership of the handle.
+  // Returns the raw pointer.
+  PGconn *get() throw();
+
+  // Returns the connection handle and sets the raw pointer to NULL,
+  // releasing ownership of the handle.
   PGconn *release() throw();
 
-  // Replaces RAW with PGCONN, closing RAW first if necessary.
-  void reset(PGconn *) throw();
+  // Replaces the raw pointer with PGCONN, closing the raw pointer
+  // first if necessary.  Throws pg_exception and frees the new
+  // connection if it reflects an error, retaining the old one.
+  void reset(PGconn *);
 
-  // Closes the connection handle and sets RAW to NULL.
+  // Closes the connection handle and sets the raw pointer to NULL.
   void close() throw();
 
-  // Throws pg_exception if RAW is NULL or in an error state.
+  // Calls PQtransactionStatus
+  PGTransactionStatusType transactionStatus() const;
+
+  // Calls PQputCopyData().  Throws pg_exception on error.
+  void putCopyData(const char *buffer, size_t nbytes);
+
+  // Calls PQputCopyEnd().  Throws pg_exception on error.  Use
+  // pgresult_handle::getresult() to obtain the server status.
+  void putCopyEnd();
+
+  // Calls PQputCopyEnd().  Throws pg_exception on error.  Use
+  // pgresult_handle::getresult() to obtain the server status.
+  void putCopyEndError(const char *errormsg);
+
+  // Throws pg_exception if the raw pointer is NULL or in an error
+  // state.
   void check();
 };
 
@@ -57,15 +78,15 @@ pgconn_handle::pgconn_handle() throw()
 }
 
 inline
-pgconn_handle::pgconn_handle(PGconn *c) throw()
-  : raw(c)
-{
-}
-
-inline
 pgconn_handle::~pgconn_handle() throw()
 {
   PQfinish(raw);
+}
+
+inline PGconn *
+pgconn_handle::get() throw()
+{
+  return raw;
 }
 
 inline PGconn *
@@ -77,15 +98,14 @@ pgconn_handle::release() throw()
 }
 
 inline void
-pgconn_handle::reset(PGconn *conn) throw()
-{
-  PQfinish(raw);
-  raw = conn;
-}
-
-inline void
 pgconn_handle::close() throw()
 {
   PQfinish(raw);
   raw = NULL;
+}
+
+inline PGTransactionStatusType
+pgconn_handle::transactionStatus() const
+{
+  return PQtransactionStatus(raw);
 }

@@ -66,8 +66,7 @@ struct database::impl {
 database::database()
   : impl_(new impl)
 {
-  impl_->conn.raw = PQconnectdb("");
-  impl_->conn.check();
+  impl_->conn.reset(PQconnectdb(""));
 }
 
 database::database(const char *host, const char *dbname)
@@ -79,8 +78,7 @@ database::database(const char *host, const char *dbname)
   const char *values[] = {
     host, "5432", dbname, NULL
   };
-  impl_->conn.raw = PQconnectdbParams(keys, values, 0);
-  impl_->conn.check();
+  impl_->conn.reset(PQconnectdbParams(keys, values, 0));
 }
 
 database::~database()
@@ -147,7 +145,7 @@ database::lock(int a, int b)
   const char *params[] = {astr, bstr};
   pgresult_handle res;
 
-  if (PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS) {
+  if (impl_->conn.transactionStatus() == PQTRANS_INTRANS) {
     res.execParams(impl_->conn, "SELECT pg_advisory_xact_lock($1, $2)", params);
     // As this is a NOP, we do not have to guard against exceptions
     // from the object allocation.
@@ -308,7 +306,7 @@ database::add_file(package_id pkg, const rpm_file_info &info,
 		   std::vector<unsigned char> &contents)
 {
   // FIXME: This needs a transaction.
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char pkgstr[32];
   snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
   char lengthstr[32];
@@ -367,7 +365,7 @@ database::add_elf_image(file_id file, const elf_image &image,
   if (fallback_arch == NULL) {
     throw std::logic_error("fallback_arch");
   }
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
 
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
@@ -405,7 +403,7 @@ void
 database::add_elf_symbol_definition(file_id file,
 				    const elf_symbol_definition &def)
 {
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {
@@ -430,7 +428,7 @@ void
 database::add_elf_symbol_reference(file_id file,
 				   const elf_symbol_reference &ref)
 {
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {
@@ -453,7 +451,7 @@ void
 database::add_elf_needed(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
@@ -468,7 +466,7 @@ void
 database::add_elf_rpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
@@ -482,7 +480,7 @@ void
 database::add_elf_runpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
@@ -496,7 +494,7 @@ void
 database::add_elf_error(file_id file, const char *message)
 {
   // FIXME: This needs a transaction.
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, message};
@@ -576,7 +574,7 @@ bool
 database::update_package_set(package_set_id set,
 			     const std::vector<package_id> &pids)
 {
-  assert(PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS);
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   bool changes = false;
 
   std::set<package_id> old;
