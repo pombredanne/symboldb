@@ -39,6 +39,20 @@ symboldb_options::download() const
   return d;
 }
 
+download_options
+symboldb_options::download_always_cache() const
+{
+  // The metadata URLs include hashes, so we do not have to check the
+  // cache for staleness.  But --no-net overrides that.
+  download_options d;
+  if (no_net) {
+    d.cache_mode = download_options::only_cache;
+  } else {
+    d.cache_mode = download_options::always_cache;
+  }
+  return d;
+}
+
 std::string
 symboldb_options::rpm_cache_path() const
 {

@@ -40,6 +40,10 @@ struct symboldb_options {
   ~symboldb_options();
 
   download_options download() const;
+
+  // cache_only or always_cache, depending on no_net.
+  download_options download_always_cache() const;
+
   std::tr1::shared_ptr<file_cache> rpm_cache() const;
 
   std::string rpm_cache_path() const;
