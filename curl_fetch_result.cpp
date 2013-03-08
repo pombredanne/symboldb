@@ -109,7 +109,7 @@ curl_fetch_result::perform(curl_handle &h, const char *url)
       throw curl_exception(curl_easy_strerror(ret)).url(url).status(status);
     } else {
       throw curl_exception(curl_easy_strerror(ret)).url(effective_url)
-	.original_url(url).status();
+	.original_url(url).status(status);
     }
   }
   curl_easy_getinfo(h.raw, CURLINFO_FILETIME, &http_date);
