@@ -46,17 +46,7 @@ entry::callback(const symboldb_options *opt, entry *e) throw()
 
     repomd rp;
     rp.acquire(opt->download(), db, e->url.c_str());
-
-    // The metadata URLs include hashes, so we do not have to check
-    // the cache for staleness.  But --no-net overrides that.
-    download_options dopts;
-    if (opt->no_net) {
-      dopts = opt->download();
-    } else {
-      dopts.cache_mode = download_options::always_cache;
-    }
-
-    repomd::primary_xml primary_xml(rp, dopts, db);
+    repomd::primary_xml primary_xml(rp, opt->download_always_cache(), db);
     repomd::primary primary(&primary_xml, rp.base_url.c_str());
     e->url2 = primary_xml.url();
     while (primary.next()) {

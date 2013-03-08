@@ -183,13 +183,7 @@ do_show_primary(const symboldb_options &opt, database &db, const char *base)
 {
   repomd rp;
   rp.acquire(opt.download(), db, base);
-  download_options dopts;
-  if (opt.no_net) {
-    dopts = opt.download();
-  } else {
-    dopts.cache_mode = download_options::always_cache;
-  }
-  repomd::primary_xml primary(rp, dopts, db);
+  repomd::primary_xml primary(rp, opt.download_always_cache(), db);
   fd_sink out(STDOUT_FILENO);
   copy_source_to_sink(primary, out);
   return 0;
@@ -226,19 +220,7 @@ do_download_repo(const symboldb_options &opt, database &db,
     }
     repomd rp;
     rp.acquire(opt.download(), db, url);
-
-    // FIXME: consolidate with do_show_source_packages() below.
-
-    // The metadata URLs include hashes, so we do not have to check
-    // the cache for staleness.  But --no-net overrides that.
-    download_options dopts;
-    if (opt.no_net) {
-      dopts = opt.download();
-    } else {
-      dopts.cache_mode = download_options::always_cache;
-    }
-
-    repomd::primary_xml primary_xml(rp, dopts, db);
+    repomd::primary_xml primary_xml(rp, opt.download_always_cache(), db);
     repomd::primary primary(&primary_xml, rp.base_url.c_str());
     while (primary.next()) {
       rpm_url rurl;
