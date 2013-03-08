@@ -21,10 +21,13 @@
 #include <dirent.h>
 
 // Wrapper around DIR pointers.
-struct dir_handle {
+class dir_handle {
   DIR *raw;
+  dir_handle(const dir_handle &); // not implemented
+  dir_handle &operator=(const dir_handle &); // not implemented
+public:
 
-  // Initialises RAW to NULL.
+  // Initialises the raw pointer to NULL.
   dir_handle()
     : raw(0)
   {
@@ -35,16 +38,16 @@ struct dir_handle {
   // NOTE: This takes ownership of the descriptor, even on exceptions.
   explicit dir_handle(int);
 
-  // Calls opendir().
+  // Calls opendir().  Throws os_exception on error.
   explicit dir_handle(const char *);
 
-  // Invokes closedir() if RAW is not NULL.
+  // Invokes closedir() if the raw pointer is not NULL.
   ~dir_handle();
 
-  // Returns the DIR pointer and sets RAW to NULL.
+  // Returns the DIR pointer and sets the raw pointer to NULL.
   DIR *release() throw();
 
-  // Calls closedir() and sets RAW to NULL.
+  // Calls closedir() and sets the raw pointer to NULL.
   void close();
 
   // Calls readdir(), but skips over "." and "...  Throws os_exception
