@@ -108,7 +108,12 @@ namespace {
 	(db_.lock_digest(rurl.csum.value.begin(), rurl.csum.value.end()));
       if (!fcache_->lookup_path(rurl.csum, rpm_path)) {
 	if (opt_.output != symboldb_options::quiet) {
-	  fprintf(stderr, "info: downloading %s\n", rurl.href.c_str());
+	  if (rurl.csum.length != checksum::no_length) {
+	    fprintf(stderr, "info: downloading %s (%llu bytes)\n",
+		    rurl.href.c_str(), rurl.csum.length);
+	  } else {
+	    fprintf(stderr, "info: downloading %s\n", rurl.href.c_str());
+	  }
 	}
 	++count_;
 	file_cache::add_sink sink(*fcache_, rurl.csum);
@@ -126,18 +131,21 @@ namespace {
       }
       return true;
     } catch (curl_exception &e) {
-      fprintf(stderr, "error: %s: download failed", rurl.href.c_str());
+      fprintf(stderr, "error: %s", rurl.href.c_str());
+      if (!e.remote_ip().empty()) {
+	fprintf(stderr, " [%s]:%u", e.remote_ip().c_str(), e.remote_port());
+      }
       if (e.status() != 0) {
-	fprintf(stderr, " with status code %d\n", e.status());
+	fprintf(stderr, " status %d\n", e.status());
       } else {
 	fprintf(stderr, "\n");
       }
       if (!e.url().empty() && e.url() != rurl.href) {
-	fprintf(stderr, "error:  URL: %s\n", e.url().c_str());
+	fprintf(stderr, "error:   URL: %s\n", e.url().c_str());
       }
       if (!e.original_url().empty()
 	  && e.original_url() != rurl.href && e.original_url() != e.url()) {
-	fprintf(stderr, "error:  starting at: %s\n", e.original_url().c_str());
+	fprintf(stderr, "error:   starting at: %s\n", e.original_url().c_str());
       }
       return false;
     } catch (file_cache::unsupported_hash &e) {
