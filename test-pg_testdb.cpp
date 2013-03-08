@@ -35,10 +35,10 @@ test()
   db.exec_test_sql("template1", "CREATE TABLE abc(data TEXT)");
   db.exec_test_sql("template1", "INSERT INTO abc VALUES ('abc')");
   {
-    pgresult_handle r(PQexec(h.raw, "SELECT * FROM abc"));
-    r.check();
-    CHECK(PQntuples(r.raw) == 1);
-    COMPARE_STRING(PQgetvalue(r.raw, 0, 0), "abc");
+    pgresult_handle r;
+    r.exec(h, "SELECT * FROM abc");
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "abc");
     r.reset(PQexec(h.raw, "CREATE TABLE test_table (pk TEXT PRIMARY KEY)"));
     CHECK(db.notices().size() == 1);
     COMPARE_STRING(db.notices().at(0),
@@ -46,9 +46,9 @@ test()
 		   " index \"test_table_pkey\" for table \"test_table\"\n");
   }
   {
-    pgresult_handle r(PQexec(h.raw, "garbage"));
+    pgresult_handle r;
     try {
-      r.check();
+      r.exec(h, "garbage");
       CHECK(false);
     } catch (pg_exception &e) {
       COMPARE_STRING(e.severity_, "ERROR");

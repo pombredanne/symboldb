@@ -17,12 +17,13 @@
  */
 
 #include "pgresult_handle.hpp"
+#include "pgconn_handle.hpp"
 #include "pg_exception.hpp"
 
 #include "symboldb_config.h"
 
-void
-pgresult_handle::check()
+static void
+do_check(PGresult *raw)
 {
   if (raw == NULL) {
     throw pg_exception(raw);
@@ -43,4 +44,69 @@ pgresult_handle::check()
   case PGRES_FATAL_ERROR:
     throw pg_exception(raw);
   }
+}
+
+pgresult_handle::pgresult_handle(PGresult *newraw)
+{
+  try {
+    do_check(newraw);
+  } catch (...) {
+    PQclear(newraw);
+    throw;
+  }
+  raw = newraw;
+}
+
+void
+pgresult_handle::check()
+{
+  do_check(raw);
+}
+
+void
+pgresult_handle::reset(PGresult *newraw)
+{
+  try {
+    do_check(newraw);
+  } catch (...) {
+    PQclear(newraw);
+    throw;
+  }
+  PQclear(raw);
+  raw = newraw;
+}
+
+void
+pgresult_handle::getresult(pgconn_handle &h)
+{
+  reset(PQgetResult(h.raw));
+}
+
+void
+pgresult_handle::exec(pgconn_handle &conn, const char *command)
+{
+  PGresult *newraw = PQexec(conn.raw, command);
+  reset(newraw);
+}
+
+void
+pgresult_handle::execParamsCustom(pgconn_handle &conn,
+			const char *command,
+			int nParams,
+			const Oid *paramTypes,
+			const char *const * paramValues,
+			const int *paramLengths,
+			const int *paramFormats,
+			int resultFormat)
+{
+  PGresult *newraw = PQexecParams(conn.raw, command, nParams, paramTypes,
+				  paramValues, paramLengths, paramFormats,
+				  resultFormat);
+  reset(newraw);
+}
+
+void
+pgresult_handle::execBinary(pgconn_handle &conn, const char *command)
+{
+  execParamsCustom(conn, command, 0, NULL, NULL, NULL, NULL, 1);
 }

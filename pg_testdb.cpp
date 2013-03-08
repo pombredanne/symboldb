@@ -248,6 +248,6 @@ pg_testdb::exec_test_sql(const char *dbname, const char *sql)
 {
   pgconn_handle conn(connect(dbname));
   conn.check();
-  pgresult_handle res(PQexec(conn.raw, sql));
-  res.check();
+  pgresult_handle res;
+  res.exec(conn, sql);
 }

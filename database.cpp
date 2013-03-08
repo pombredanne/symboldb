@@ -91,24 +91,21 @@ void
 database::txn_begin()
 {
   pgresult_handle res;
-  res.raw = PQexec(impl_->conn.raw, "BEGIN");
-  res.check();
+  res.exec(impl_->conn, "BEGIN");
 }
 
 void
 database::txn_commit()
 {
   pgresult_handle res;
-  res.raw = PQexec(impl_->conn.raw, "COMMIT");
-  res.check();
+  res.exec(impl_->conn, "COMMIT");
 }
 
 void
 database::txn_rollback()
 {
   pgresult_handle res;
-  res.raw = PQexec(impl_->conn.raw, "ROLLBACK");
-  res.check();
+  res.exec(impl_->conn, "ROLLBACK");
 }
 
 database::advisory_lock_guard::~advisory_lock_guard()
@@ -132,11 +129,9 @@ database::advisory_lock_impl::~advisory_lock_impl()
 
   try {
     pgresult_handle res;
-    res.raw = PQexecParams
-      (impl_->conn.raw,
-       "SELECT pg_advisory_unlock($1, $2)",
-       2, NULL, params, NULL, NULL, 0);
-    res.check();
+    res.execParams(impl_->conn,
+		   "SELECT pg_advisory_unlock($1, $2)",
+		   params);
   } catch(...) {
     // TODO: Not much we can do here.  Logging would be useful.
   }
@@ -153,11 +148,7 @@ database::lock(int a, int b)
   pgresult_handle res;
 
   if (PQtransactionStatus(impl_->conn.raw) == PQTRANS_INTRANS) {
-    res.raw = PQexecParams
-      (impl_->conn.raw,
-       "SELECT pg_advisory_xact_lock($1, $2)",
-       2, NULL, params, NULL, NULL, 0);
-    res.check();
+    res.execParams(impl_->conn, "SELECT pg_advisory_xact_lock($1, $2)", params);
     // As this is a NOP, we do not have to guard against exceptions
     // from the object allocation.
     return advisory_lock(new advisory_lock_guard);
@@ -165,11 +156,7 @@ database::lock(int a, int b)
     // Allocate beforehand to avoid exceptions after acquiring the
     // lock.
     std::tr1::shared_ptr<advisory_lock_impl> lock(new advisory_lock_impl);
-    res.raw = PQexecParams
-      (impl_->conn.raw,
-       "SELECT pg_advisory_lock($1, $2)",
-       2, NULL, params, NULL, NULL, 0);
-    res.check();
+    res.execParams(impl_->conn, "SELECT pg_advisory_lock($1, $2)", params);
     lock->impl_ = impl_;
     lock->a = a;
     lock->b = b;
@@ -181,9 +168,8 @@ database::lock(int a, int b)
 static int
 get_id(pgresult_handle &res)
 {
-  res.check();
-  if (PQntuples(res.raw) > 0) {
-    char *val = PQgetvalue(res.raw, 0, 0);
+  if (res.ntuples() > 0) {
+    const char *val = res.getvalue(0, 0);
     int id = atoi(val);
     if (id <= 0) {
       throw pg_exception("database returned invalid ID");
@@ -215,10 +201,10 @@ database::intern_package(const rpm_package_info &pkg,
     const char *params[] = {
       pkg.hash.c_str(),
     };
-    res.raw = PQexecParams
-      (impl_->conn.raw,
+    res.execParams
+      (impl_->conn,
        "SELECT id FROM " PACKAGE_TABLE " WHERE hash = decode($1, 'hex')",
-       1, NULL, params, NULL, NULL, 0);
+       params);
     int id = get_id(res);
     if (id > 0) {
       pkg_id = package_id(id);
@@ -242,12 +228,12 @@ database::intern_package(const rpm_package_info &pkg,
       pkg.source_rpm.c_str(),
     };
     pgresult_handle res;
-    res.raw = PQexecParams
-      (impl_->conn.raw,
+    res.execParams
+      (impl_->conn,
        "INSERT INTO " PACKAGE_TABLE
        " (name, epoch, version, release, arch, hash, source)"
        " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex'), $7) RETURNING id",
-       7, NULL, params, NULL, NULL, 0);
+       params);
     pkg_id = package_id(get_id_force(res));
     return true;
   }
@@ -277,25 +263,23 @@ database::add_package_digest(package_id pkg,
   // Try to locate existing row.
   {
     pgresult_handle res;
-    res.raw = PQexecParams
-      (impl_->conn.raw,
+    res.execTypedParams
+      (impl_->conn,
        "SELECT 1 FROM " PACKAGE_DIGEST_TABLE
        " WHERE package = $1 AND digest = $2",
-       2, paramTypes, params, paramLengths, paramFormats, 0);
-    res.check();
-    if (PQntuples(res.raw) > 0) {
+       paramTypes, params, paramLengths, paramFormats);
+    if (res.ntuples() > 0) {
       return;
     }
   }
 
   // Insert new row.
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execTypedParams
+    (impl_->conn,
      "INSERT INTO " PACKAGE_DIGEST_TABLE " (package, digest)"
      " VALUES ($1, $2)",
-     2, paramTypes, params, paramLengths, paramFormats, 0);
-  res.check();
+     paramTypes, params, paramLengths, paramFormats);
 }
 
 database::package_id
@@ -311,10 +295,10 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
   };
   static const int paramFormats[] = {1};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execTypedParams
+    (impl_->conn,
      "SELECT package FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
-     1, paramTypes, params, paramLengths, paramFormats, 0);
+     paramTypes, params, paramLengths, paramFormats);
   return package_id(get_id(res));
 }
 
@@ -366,13 +350,13 @@ database::add_file(package_id pkg, const rpm_file_info &info,
     1,
   };
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execTypedParams
+    (impl_->conn,
      "INSERT INTO " FILE_TABLE
      " (package, name, length, user_name, group_name, mtime, mode, normalized,"
      " digest, contents)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-     10, paramTypes, params, paramLengths, paramFormats, 0);
+     paramTypes, params, paramLengths, paramFormats);
   return file_id(get_id_force(res));
 }
 
@@ -410,13 +394,11 @@ database::add_elf_image(file_id file, const elf_image &image,
     soname,
   };
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "INSERT INTO " ELF_FILE_TABLE
      " (file, ei_class, ei_data, e_type, e_machine, arch, soname)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
-     7, NULL, params, NULL, NULL, 0);
-  res.check();
+     " VALUES ($1, $2, $3, $4, $5, $6, $7)", params);
 }
 
 void
@@ -436,14 +418,12 @@ database::add_elf_symbol_definition(file_id file,
     def.visibility(),
   };
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "INSERT INTO " ELF_DEFINITION_TABLE
      " (file, name, version, primary_version, symbol_type, binding,"
      " visibility)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
-     7, NULL, params, NULL, NULL, 0);
-  res.check();
+     " VALUES ($1, $2, $3, $4, $5, $6, $7)", params);
 }
 
 void
@@ -462,13 +442,11 @@ database::add_elf_symbol_reference(file_id file,
     ref.visibility(),
   };
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "INSERT INTO " ELF_REFERENCE_TABLE
      " (file, name, version, symbol_type, binding, visibility)"
-     " VALUES ($1, $2, $3, $4, $5, $6)",
-     6, NULL, params, NULL, NULL, 0);
-  res.check();
+     " VALUES ($1, $2, $3, $4, $5, $6)", params);
 }
 
 void
@@ -480,11 +458,10 @@ database::add_elf_needed(file_id file, const char *name)
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "INSERT INTO " ELF_NEEDED_TABLE " (file, name) VALUES ($1, $2)",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
+     params);
 }
 
 void
@@ -496,11 +473,9 @@ database::add_elf_rpath(file_id file, const char *name)
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
-     "INSERT INTO " ELF_RPATH_TABLE " (file, path) VALUES ($1, $2)",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
+  res.execParams
+    (impl_->conn,
+     "INSERT INTO " ELF_RPATH_TABLE " (file, path) VALUES ($1, $2)", params);
 }
 
 void
@@ -512,11 +487,9 @@ database::add_elf_runpath(file_id file, const char *name)
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, name};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
-     "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
+  res.execParams
+    (impl_->conn,
+     "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)", params);
 }
 
 void
@@ -528,11 +501,9 @@ database::add_elf_error(file_id file, const char *message)
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   const char *params[] = {filestr, message};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
-     "INSERT INTO " ELF_ERROR_TABLE " (file, message) VALUES ($1, $2)",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
+  res.execParams
+    (impl_->conn,
+     "INSERT INTO " ELF_ERROR_TABLE " (file, message) VALUES ($1, $2)", params);
 }
 
 database::package_set_id
@@ -540,11 +511,10 @@ database::create_package_set(const char *name, const char *arch)
 {
   const char *params[] = {name, arch};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "INSERT INTO " PACKAGE_SET_TABLE
-     " (name, arch) VALUES ($1, $2) RETURNING id",
-     2, NULL, params, NULL, NULL, 0);
+     " (name, arch) VALUES ($1, $2) RETURNING id", params);
   return package_set_id(get_id_force(res));
 }
 
@@ -553,11 +523,10 @@ database::lookup_package_set(const char *name)
 {
   const char *params[] = {name};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "SELECT id FROM " PACKAGE_SET_TABLE
-     " WHERE name = $1",
-     1, NULL, params, NULL, NULL, 0);
+     " WHERE name = $1", params);
   return package_set_id(get_id(res));
 }
 
@@ -570,12 +539,10 @@ database::add_package_set(package_set_id set, package_id pkg)
   snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
   const char *params[] = {setstr, pkgstr};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "INSERT INTO " PACKAGE_SET_MEMBER_TABLE
-     " (set, package) VALUES ($1, $2)",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
+     " (set, package) VALUES ($1, $2)", params);
 }
 
 void
@@ -587,12 +554,10 @@ database::delete_from_package_set(package_set_id set, package_id pkg)
   snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
   const char *params[] = {setstr, pkgstr};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execParams
+    (impl_->conn,
      "DELETE FROM " PACKAGE_SET_MEMBER_TABLE
-     " WHERE set = $1 AND package = $2",
-     2, NULL, params, NULL, NULL, 0);
-  res.check();
+     " WHERE set = $1 AND package = $2", params);
 }
 
 void
@@ -602,10 +567,9 @@ database::empty_package_set(package_set_id set)
   snprintf(setstr, sizeof(setstr), "%d", set.value());
   const char *params[] = {setstr};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw, "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1",
-     1, NULL, params, NULL, NULL, 0);
-  res.check();
+  res.execParams
+    (impl_->conn, "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1",
+     params);
 }
 
 bool
@@ -621,15 +585,13 @@ database::update_package_set(package_set_id set,
     snprintf(setstr, sizeof(setstr), "%d", set.value());
     const char *params[] = {setstr};
     pgresult_handle res;
-    res.raw = PQexecParams
-      (impl_->conn.raw, "SELECT package FROM " PACKAGE_SET_MEMBER_TABLE
-       " WHERE set = $1",
-       1, NULL, params, NULL, NULL, 0);
-    res.check();
+    res.execParams
+      (impl_->conn, "SELECT package FROM " PACKAGE_SET_MEMBER_TABLE
+       " WHERE set = $1", params);
 
-    for (int i = 0, end = PQntuples(res.raw); i < end; ++i) {
+    for (int i = 0, end = res.ntuples(); i < end; ++i) {
       int pkg = 0;
-      sscanf(PQgetvalue(res.raw, i, 0), "%d", &pkg);
+      sscanf(res.getvalue(i, 0), "%d", &pkg);
       assert(pkg != 0);
       old.insert(package_id(pkg));
     }
@@ -658,7 +620,7 @@ database::update_package_set(package_set_id set,
 void
 database::update_package_set_caches(package_set_id set)
 {
-  update_elf_closure(impl_->conn.raw, set);
+  update_elf_closure(impl_->conn, set);
 }
 
 bool
@@ -672,17 +634,15 @@ database::url_cache_fetch(const char *url, size_t expected_length,
   snprintf(timestr, sizeof(timestr), "%lld", expected_time);
   const char *params[] = {url, lenstr, timestr};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw, "SELECT data FROM " URL_CACHE_TABLE
-     " WHERE url = $1 AND LENGTH(data) = $2 AND http_time = $3",
-     3, NULL, params, NULL, NULL, 1);
-  res.check();
-  if (PQntuples(res.raw) != 1) {
+  res.execParamsBinary
+    (impl_->conn, "SELECT data FROM " URL_CACHE_TABLE
+     " WHERE url = $1 AND LENGTH(data) = $2 AND http_time = $3", params);
+  if (res.ntuples() != 1) {
     return false;
   }
   data.clear();
-  const char *ptr = PQgetvalue(res.raw, 0, 0);
-  data.assign(ptr, ptr + PQgetlength(res.raw, 0, 0));
+  const char *ptr = res.getvalue(0, 0);
+  data.assign(ptr, ptr + res.getlength(0, 0));
   return true;
 }
 
@@ -692,16 +652,15 @@ database::url_cache_fetch(const char *url,
 {
   const char *params[] = {url};
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw, "SELECT data FROM " URL_CACHE_TABLE " WHERE url = $1",
-     1, NULL, params, NULL, NULL, 1);
-  res.check();
-  if (PQntuples(res.raw) != 1) {
+  res.execParamsBinary
+    (impl_->conn, "SELECT data FROM " URL_CACHE_TABLE " WHERE url = $1",
+     params);
+  if (res.ntuples() != 1) {
     return false;
   }
   data.clear();
-  const char *ptr = PQgetvalue(res.raw, 0, 0);
-  data.assign(ptr, ptr + PQgetlength(res.raw, 0, 0));
+  const char *ptr = res.getvalue(0, 0);
+  data.assign(ptr, ptr + res.getlength(0, 0));
   return true;
 }
 
@@ -726,27 +685,26 @@ database::url_cache_update(const char *url,
   bool found;
   {
     pgresult_handle res;
-    res.raw = PQexecParams
-      (impl_->conn.raw, "SELECT 1 FROM " URL_CACHE_TABLE " WHERE url = $1 FOR UPDATE",
-       1, NULL, params, NULL, NULL, 0);
-    res.check();
-    found = PQntuples(res.raw) == 1;
+    const char *params1[] = {url};
+    res.execParams
+      (impl_->conn,
+       "SELECT 1 FROM " URL_CACHE_TABLE " WHERE url = $1 FOR UPDATE",
+       params1);
+    found = res.ntuples() == 1;
   }
   pgresult_handle res;
   if (found) {
-    res.raw = PQexecParams
-      (impl_->conn.raw, "UPDATE " URL_CACHE_TABLE
+    res.execTypedParams
+      (impl_->conn, "UPDATE " URL_CACHE_TABLE
        " SET http_time = $2, data = $3, last_change = NOW() AT TIME ZONE 'UTC'"
        " WHERE url = $1",
-       3, paramTypes, params, paramLengths, paramFormats, 0);
-    res.check();
+       paramTypes, params, paramLengths, paramFormats);
   } else {
-    res.raw = PQexecParams
-      (impl_->conn.raw, "INSERT INTO " URL_CACHE_TABLE
+    res.execTypedParams
+      (impl_->conn, "INSERT INTO " URL_CACHE_TABLE
        " (url, http_time, data, last_change)"
        " VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC')",
-       3, paramTypes, params, paramLengths, paramFormats, 0);
-    res.check();
+       paramTypes, params, paramLengths, paramFormats);
   }
 }
 
@@ -755,19 +713,17 @@ database::referenced_package_digests
   (std::vector<std::vector<unsigned char> > &digests)
 {
   pgresult_handle res;
-  res.raw = PQexecParams
-    (impl_->conn.raw,
+  res.execBinary
+    (impl_->conn,
      "SELECT digest FROM " PACKAGE_SET_MEMBER_TABLE " psm"
      " JOIN " PACKAGE_DIGEST_TABLE " d ON psm.package = d.package"
-     " ORDER BY digest",
-     0, NULL, NULL, NULL, NULL, 1);
-  res.check();
-  for (int i = 0, end = PQntuples(res.raw); i < end; ++i) {
-    int len = PQgetlength(res.raw, i, 0);
+     " ORDER BY digest");
+  for (int i = 0, end = res.ntuples(); i < end; ++i) {
+    int len = res.getlength(i, 0);
     if (len != 20 && len != 32) {
       throw pg_exception("invalid package digest received from database");
     }
-    const char *first = PQgetvalue(res.raw, i, 0);
+    const char *first = res.getvalue(i, 0);
     const char *last = first + len;
     digests.push_back(std::vector<unsigned char>(first, last));
   }
@@ -782,19 +738,18 @@ database::print_elf_soname_conflicts(package_set_id set,
   const char *params[] = {setstr};
   pgresult_handle res;
   if (include_unreferenced) {
-    res.raw = PQexecParams
-      (impl_->conn.raw,
+    res.execParams
+      (impl_->conn,
        "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
        " FROM (SELECT arch, soname, UNNEST(files) AS file"
        "  FROM symboldb.elf_soname_provider"
        "  WHERE package_set = $1 AND array_length(files, 1) > 1) c"
        " JOIN symboldb.file f ON c.file = f.id"
        " JOIN symboldb.package p ON f.package = p.id"
-       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name",
-       1, NULL, params, NULL, NULL, 0);
+       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", params);
   } else {
-    res.raw = PQexecParams
-      (impl_->conn.raw,
+    res.execParams
+      (impl_->conn,
        "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
        " FROM (SELECT arch, soname, UNNEST(files) AS file"
        "  FROM symboldb.elf_soname_provider"
@@ -807,24 +762,22 @@ database::print_elf_soname_conflicts(package_set_id set,
        "    WHERE psm.set = $1)) c"
        " JOIN symboldb.file f ON c.file = f.id"
        " JOIN symboldb.package p ON f.package = p.id"
-       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name",
-       1, NULL, params, NULL, NULL, 0);
+       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", params);
   }
-  res.check();
 
   std::string arch;
   std::string soname;
-  int rows = PQntuples(res.raw);
+  int rows = res.ntuples();
   if (rows == 0) {
     printf("No soname conflicts detected.");
     return;
   }
   bool first = true;
   for (int row = 0; row < rows; ++row) {
-    const char *current_arch = PQgetvalue(res.raw, row, 0);
-    const char *current_soname = PQgetvalue(res.raw, row, 1);
-    const char *file = PQgetvalue(res.raw, row, 2);
-    const char *pkg = PQgetvalue(res.raw, row, 3);
+    const char *current_arch = res.getvalue(row, 0);
+    const char *current_soname = res.getvalue(row, 1);
+    const char *file = res.getvalue(row, 2);
+    const char *pkg = res.getvalue(row, 3);
     bool primary = false;
     if (current_arch != arch) {
       if (first) {
@@ -856,6 +809,5 @@ void
 database::create_schema()
 {
   pgresult_handle res;
-  res.raw = PQexec(impl_->conn.raw, SCHEMA);
-  res.check();
+  res.exec(impl_->conn, SCHEMA);
 }

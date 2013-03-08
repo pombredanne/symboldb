@@ -40,7 +40,6 @@ test()
     pgconn_handle db(testdb.connect(DBNAME));
     db.check();
     pgresult_handle res(PQexec(db.raw, database::SCHEMA));
-    res.check();
   }
 
   static const char FILE[] = "test/data/primary.xml";

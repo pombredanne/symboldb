@@ -20,34 +20,109 @@
 
 #include <libpq-fe.h>
 
+class pgconn_handle;
+
 // Wrapper around a PostgreSQL result object (PGresult).
 class pgresult_handle {
   pgresult_handle(const pgresult_handle &); // not implemented
   pgresult_handle &operator=(const pgresult_handle &); // not implemented
-public:
   PGresult *raw;
+public:
 
-  // Initializes RAW with NULL.
+  // Initializes the raw pointer to NULL.
   pgresult_handle() throw();
 
-  // Initiales RAW with PGRESULT, taking ownership.
-  explicit pgresult_handle(PGresult *) throw();
+  // Initializes the raw pointer with PGRESULT, taking ownership.
+  // Throws pg_exception on error, freeing the result.
+  explicit pgresult_handle(PGresult *);
 
-  // Deallocates RAW if it is not NULL.
+  // Deallocates the raw pointer (if it is not NULL).
   ~pgresult_handle() throw();
 
-  // Returns the connection handle and sets RAW to NULL, releasing
-  // ownership of the handle.
+  // Throws pg_exception if the raw pointer is NULL or in an error
+  // state.
+  void check();
+
+  // Returns the raw pointer.
+  PGresult *get() throw();
+
+  // Returns the connection handle and sets the raw pointer to NULL,
+  // releasing ownership of the handle.
   PGresult *release() throw();
 
-  // Replaces RAW with PGRESULT, closing RAW first if necessary.
-  void reset(PGresult *) throw();
+  // Replaces the raw pointer with PGRESULT, closing it first if
+  // necessary.  Throws pg_exception on error, freeing the new result
+  // (and preserving the old one).
+  void reset(PGresult *);
 
-  // Closes the connection handle and sets RAW to NULL.
+  // Calls PQgetresult and resets the raw pointer on success.  Throws
+  // pg_exception on error.
+  void getresult(pgconn_handle &);
+
+  // Closes the connection handle and sets the raw pointer to NULL.
   void close() throw();
 
-  // Throws pg_exception if RAW is NULL or in an error state.
-  void check();
+  // Calls PQntuples().
+  int ntuples() const throw();
+
+  // Calls PQgetvalue().  Counting of rows and columns starts at 0.
+  const char *getvalue(int row, int column) const throw();
+
+   // Calls PQgetlength().  Counting of rows and columns starts at 0.
+  int getlength(int row, int column) const throw();
+
+  // Calls PQresultStatus().
+  ExecStatusType resultStatus() const throw();
+
+  // Calls PQexec().  Throws pg_exception on error.  Uses text mode
+  // for the output.
+  void exec(pgconn_handle &, const char *command);
+
+  // Calls PQexec().  Throws pg_exception on error.  Uses binary mode
+  // for the output.
+  void execBinary(pgconn_handle &, const char *command);
+
+  // Calls PQexecParam().  Throws pg_exception on error.  Uses text
+  // mode for the output.
+  template <unsigned N>
+  void execParams(pgconn_handle &,
+		  const char *command, const char *(&paramValues)[N]);
+
+  // Calls PQexecParam().  Throws pg_exception on error.  Uses binary
+  // mode for the output.
+  template <unsigned N>
+  void execParamsBinary(pgconn_handle &,
+			const char *command, const char *(&paramValues)[N]);
+
+  // Calls PQexecParam().  Throws pg_exception on error.  Uses text
+  // mode for the output.
+  template <unsigned N>
+  void execTypedParams(pgconn_handle &,
+		       const char *command,
+		       const Oid (&paramTypes)[N],
+		       const char *(&paramValues)[N],
+		       const int (&paramLengths)[N],
+		       const int (&paramFormats)[N]);
+
+  // Calls PQexecParam().  Throws pg_exception on error.  Uses binary
+  // mode for the output.
+  template <unsigned N>
+  void execTypedParamsBinary(pgconn_handle &,
+			     const char *command,
+			     const Oid (&paramTypes)[N],
+			     const char *(&paramValues)[N],
+			     const int (&paramLengths)[N],
+			     const int (&paramFormats)[N]);
+
+  // Calls PQexecParam().  Throws pg_exception on error.
+  void execParamsCustom(pgconn_handle &,
+			const char *command,
+			int nParams,
+			const Oid *paramTypes,
+			const char *const * paramValues,
+			const int *paramLengths,
+			const int *paramFormats,
+			int resultFormat);
 };
 
 inline
@@ -57,15 +132,15 @@ pgresult_handle::pgresult_handle() throw()
 }
 
 inline
-pgresult_handle::pgresult_handle(PGresult *c) throw()
-  : raw(c)
-{
-}
-
-inline
 pgresult_handle::~pgresult_handle() throw()
 {
   PQclear(raw);
+}
+
+inline PGresult *
+pgresult_handle::get() throw ()
+{
+  return raw;
 }
 
 inline PGresult *
@@ -77,16 +152,70 @@ pgresult_handle::release() throw()
 }
 
 inline void
-pgresult_handle::reset(PGresult *res) throw()
-{
-  PQclear(raw);
-  raw = res;
-}
-
-inline void
 pgresult_handle::close() throw()
 {
   PQclear(raw);
   raw = NULL;
 }
 
+inline int
+pgresult_handle::ntuples() const throw ()
+{
+  return PQntuples(raw);
+}
+
+inline const char *
+pgresult_handle::getvalue(int row, int column) const throw ()
+{
+  return PQgetvalue(raw, row, column);
+}
+
+inline int
+pgresult_handle::getlength(int row, int column) const throw ()
+{
+  return PQgetlength(raw, row, column);
+}
+
+inline ExecStatusType
+pgresult_handle::resultStatus() const throw ()
+{
+  return PQresultStatus(raw);
+}
+
+template <unsigned N> void inline
+pgresult_handle::execTypedParams(pgconn_handle &conn,
+		  const char *command,
+		  const Oid (&paramTypes)[N],
+		  const char *(&paramValues)[N],
+		  const int (&paramLengths)[N],
+		  const int (&paramFormats)[N])
+{
+  execParamsCustom(conn, command, N,
+		   paramTypes, paramValues, paramLengths, paramFormats, 0);
+}
+
+template <unsigned N> void inline
+pgresult_handle::execTypedParamsBinary(pgconn_handle &conn,
+		  const char *command,
+		  const Oid (&paramTypes)[N],
+		  const char *(&paramValues)[N],
+		  const int (&paramLengths)[N],
+		  const int (&paramFormats)[N])
+{
+  execParamsCustom(conn, command, N,
+		   paramTypes, paramValues, paramLengths, paramFormats, 1);
+}
+
+template <unsigned N> void
+pgresult_handle::execParams(pgconn_handle &conn,
+			   const char *command, const char *(&paramValues)[N])
+{
+  execParamsCustom(conn, command, N, NULL, paramValues, NULL, NULL, 0);
+}
+
+template <unsigned N> void
+pgresult_handle::execParamsBinary(pgconn_handle &conn,
+			   const char *command, const char *(&paramValues)[N])
+{
+  execParamsCustom(conn, command, N, NULL, paramValues, NULL, NULL, 1);
+}

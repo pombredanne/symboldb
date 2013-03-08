@@ -18,6 +18,7 @@
 
 #include "database_elf_closure.hpp"
 #include "pgresult_handle.hpp"
+#include "pgconn_handle.hpp"
 #include "pg_exception.hpp"
 
 #include <map>
@@ -47,9 +48,9 @@ namespace {
   struct file_ref {
     file_id id;
     const char *name;
-    file_ref(PGresult *res, int row)
-      : id(PQgetvalue(res, row, 2)),
-	name(PQgetvalue(res, row, 3))
+    file_ref(const pgresult_handle &res, int row)
+      : id(res.getvalue(row, 2)),
+	name(res.getvalue(row, 3))
     {
     }
 
@@ -157,9 +158,9 @@ namespace {
  }
 
 void
-update_elf_closure(PGconn *conn, database::package_set_id id)
+update_elf_closure(pgconn_handle &conn, database::package_set_id id)
 {
-  assert(PQtransactionStatus(conn) == PQTRANS_INTRANS);
+  assert(PQtransactionStatus(conn.raw) == PQTRANS_INTRANS);
   bool debug = false;
 
   char idstr[32];
@@ -170,42 +171,38 @@ update_elf_closure(PGconn *conn, database::package_set_id id)
   // which have the sane SONAME.
   // FIXME: Providers should be restricted to DYN ELF images.
   pgresult_handle soname_provider_result;
-  soname_provider_result.reset
-    (PQexecParams(conn,
-		  "SELECT ef.arch, ef.soname, f.id, f.name"
-		  " FROM symboldb.package_set_member psm"
-		  " JOIN symboldb.file f ON psm.package = f.package"
-		  " JOIN symboldb.elf_file ef ON f.id = ef.file"
-		  " WHERE psm.set = $1",
-		  1, NULL, idParams, NULL, NULL, 0));
-  soname_provider_result.check();
+  soname_provider_result.execParams
+    (conn,
+     "SELECT ef.arch, ef.soname, f.id, f.name"
+     " FROM symboldb.package_set_member psm"
+     " JOIN symboldb.file f ON psm.package = f.package"
+     " JOIN symboldb.elf_file ef ON f.id = ef.file"
+     " WHERE psm.set = $1", idParams);
 
   arch_soname_map arch_soname;
-  for (int i = 0, end = PQntuples(soname_provider_result.raw); i < end; ++i) {
-    const char *arch = PQgetvalue(soname_provider_result.raw, i, 0);
-    const char *soname = PQgetvalue(soname_provider_result.raw, i, 1);
+  for (int i = 0, end = soname_provider_result.ntuples(); i < end; ++i) {
+    const char *arch = soname_provider_result.getvalue(i, 0);
+    const char *soname = soname_provider_result.getvalue(i, 1);
     arch_soname[arch].insert(std::make_pair
-			     (soname, file_ref(soname_provider_result.raw, i)));
+			     (soname, file_ref(soname_provider_result, i)));
   }
 
   dependency_map closure;
   pgresult_handle needed_result;
-  needed_result.reset
-    (PQexecParams(conn,
-		  "SELECT ef.arch, en.name, f.id, f.name"
-		  " FROM symboldb.package_set_member psm"
-		  " JOIN symboldb.file f ON psm.package = f.package"
-		  " JOIN symboldb.elf_file ef ON f.id = ef.file"
-		  " JOIN symboldb.elf_needed en ON f.id = en.file"
-		  " WHERE psm.set = $1",
-		  1, NULL, idParams, NULL, NULL, 0));
-  needed_result.check();
+  needed_result.execParams
+    (conn,
+     "SELECT ef.arch, en.name, f.id, f.name"
+     " FROM symboldb.package_set_member psm"
+     " JOIN symboldb.file f ON psm.package = f.package"
+     " JOIN symboldb.elf_file ef ON f.id = ef.file"
+     " JOIN symboldb.elf_needed en ON f.id = en.file"
+     " WHERE psm.set = $1", idParams);
   size_t elements = 0;
-  for (int i = 0, end = PQntuples(needed_result.raw); i < end; ++i) {
-    const char *arch = PQgetvalue(needed_result.raw, i, 0);
-    const char *needed_name = PQgetvalue(needed_result.raw, i, 1);
-    file_id needing_file(PQgetvalue(needed_result.raw, i, 2));
-    const char *needing_path = PQgetvalue(needed_result.raw, i, 3);
+  for (int i = 0, end = needed_result.ntuples(); i < end; ++i) {
+    const char *arch = needed_result.getvalue(i, 0);
+    const char *needed_name = needed_result.getvalue(i, 1);
+    file_id needing_file(needed_result.getvalue(i, 2));
+    const char *needing_path = needed_result.getvalue(i, 3);
     file_id library = lookup(arch_soname, arch, needed_name, needing_path);
     if (library != file_id()) {
       elements += closure[needing_file].insert(library).second;
@@ -256,14 +253,11 @@ update_elf_closure(PGconn *conn, database::package_set_id id)
   // Load the closure into the database.
   char *idstrend = idstr + strlen(idstr);
   std::vector<char> upload;
-  pgresult_handle copy
-    (PQexecParams(conn,
-		  "DELETE FROM symboldb.elf_closure WHERE package_set = $1",
-		  1, NULL, idParams, NULL, NULL, 0));
-  copy.check();
-  copy.reset(PQexec(conn, "COPY symboldb.elf_closure FROM STDIN"));
-  copy.check();
-  assert(PQresultStatus(copy.raw) == PGRES_COPY_IN);
+  pgresult_handle copy;
+  copy.execParams
+    (conn, "DELETE FROM symboldb.elf_closure WHERE package_set = $1", idParams);
+  copy.exec(conn, "COPY symboldb.elf_closure FROM STDIN");
+  assert(copy.resultStatus() == PGRES_COPY_IN);
   for (dependency_map::iterator
 	 needing = closure.begin(), needing_end = closure.end();
        needing != needing_end; ++needing) {
@@ -284,21 +278,20 @@ update_elf_closure(PGconn *conn, database::package_set_id id)
       upload.insert(upload.end(), needed, needed_end);
       upload.push_back('\n');
       if (upload.size() > 128 * 1024) {
-	if (PQputCopyData(conn, upload.data(), upload.size()) < 0) {
-	  throw pg_exception(conn);
+	if (PQputCopyData(conn.raw, upload.data(), upload.size()) < 0) {
+	  throw pg_exception(conn.raw);
 	}
 	upload.clear();
       }
     }
   }
   if (!upload.empty()) {
-    if (PQputCopyData(conn, upload.data(), upload.size()) < 0) {
-      throw pg_exception(conn);
+    if (PQputCopyData(conn.raw, upload.data(), upload.size()) < 0) {
+      throw pg_exception(conn.raw);
     }
   }
-  if (PQputCopyEnd(conn, NULL) < 0) {
-    throw pg_exception(conn);
+  if (PQputCopyEnd(conn.raw, NULL) < 0) {
+    throw pg_exception(conn.raw);
   }
-  copy.reset(PQgetResult(conn));
-  copy.check();
+  copy.getresult(conn);
 }

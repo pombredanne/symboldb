@@ -19,6 +19,7 @@
 #pragma once
 
 #include "database.hpp"
-#include <libpq-fe.h>
 
-void update_elf_closure(PGconn *, database::package_set_id);
+class pgconn_handle;
+
+void update_elf_closure(pgconn_handle &, database::package_set_id);
