@@ -19,8 +19,11 @@
 #include "expat_source.hpp"
 #include "expat_handle.hpp"
 #include "source.hpp"
+#include "string_support.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <cstdio>
 #include <cstring>
 #include <vector>
 
@@ -53,6 +56,7 @@ enum {
 struct expat_source::impl {
   expat_handle handle_;
   source *source_;
+  size_t consumed_bytes_;
   std::vector<char> upcoming_;
   size_t upcoming_pos_;
 
@@ -92,7 +96,7 @@ struct expat_source::impl {
   void feed();
 
   // Throws an exception if an error occured.
-  void check_error(enum XML_Status status);
+  void check_error(enum XML_Status status, const char *, size_t);
 
   // Expat callback functions.
   static void EntityDeclHandler(void *userData,
@@ -110,7 +114,8 @@ struct expat_source::impl {
 
 inline
 expat_source::impl::impl(source *src)
-  : source_(src), upcoming_pos_(0), state_(INIT), bad_alloc_(false)
+  : source_(src), consumed_bytes_(0),
+    upcoming_pos_(0), state_(INIT), bad_alloc_(false)
 {
   XML_SetUserData(handle_.raw, this);
   XML_SetEntityDeclHandler(handle_.raw, EntityDeclHandler);
@@ -166,7 +171,9 @@ expat_source::impl::feed()
   do {
     size_t ret = source_->read(reinterpret_cast<unsigned char *>(buf),
 			       sizeof(buf));
-    check_error(XML_Parse(handle_.raw, buf, ret, /* isFinal */ ret == 0));
+    check_error(XML_Parse(handle_.raw, buf, ret, /* isFinal */ ret == 0),
+		buf, ret);
+    consumed_bytes_ += ret;
     if (ret == 0) {
       upcoming_.push_back(ENC_EOD);
     }
@@ -174,7 +181,8 @@ expat_source::impl::feed()
 }
 
 void
-expat_source::impl::check_error(enum XML_Status status)
+expat_source::impl::check_error(enum XML_Status status,
+				const char *buf, size_t len)
 {
   if (bad_alloc_) {
     throw std::bad_alloc();
@@ -183,7 +191,30 @@ expat_source::impl::check_error(enum XML_Status status)
     throw std::runtime_error(error_); // FIXME
   }
   if (status != XML_STATUS_OK) {
-    throw std::runtime_error(XML_ErrorString(XML_GetErrorCode(handle_.raw))); // FIXME
+    const char *xmlerr = XML_ErrorString(XML_GetErrorCode(handle_.raw));
+    unsigned long long line = XML_GetCurrentLineNumber(handle_.raw);
+    unsigned long long column = XML_GetCurrentColumnNumber(handle_.raw);
+    unsigned long long index = XML_GetCurrentByteIndex(handle_.raw)
+      - consumed_bytes_;
+    size_t before = std::min(index, 50ULL);
+    size_t after = std::min(len - index, 50ULL);
+    char *msg;
+    int ret = asprintf(&msg, "error=\"%s\" line=%llu column=%llu"
+		       " before=\"%s\" after=\"%s\"",
+		       quote(xmlerr).c_str(), line, column,
+		       quote(std::string(buf + index - before,
+					 buf + index)).c_str(),
+		       quote(std::string(buf + index,
+					 buf + index + after)).c_str());
+    if (ret < 0) {
+      throw std::bad_alloc();
+    }
+    try {
+      throw std::runtime_error(msg); // FIXME
+    } catch (...) {
+      free(msg);
+      throw;
+    }
   }
 }
 
