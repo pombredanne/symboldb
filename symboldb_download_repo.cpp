@@ -24,6 +24,7 @@
 #include "file_cache.hpp"
 #include "rpm_load.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <set>
 #include <vector>
@@ -33,6 +34,37 @@ namespace {
     std::string href;
     checksum csum;
   };
+
+  struct database_filter {
+    const symboldb_options &opt_;
+    database &db_;
+    std::set<database::package_id> &pids_;
+
+    database_filter(const symboldb_options &, database &,
+		    std::set<database::package_id> &);
+    bool operator()(const rpm_url &);
+  };
+
+  inline
+  database_filter::database_filter(const symboldb_options &opt, database &db,
+				   std::set<database::package_id> &pids)
+    : opt_(opt), db_(db), pids_(pids)
+  {
+  }
+
+  inline bool
+  database_filter::operator()(const rpm_url &rurl)
+  {
+    database::package_id pid = db_.package_by_digest(rurl.csum.value);
+    if (pid != database::package_id()) {
+      if (opt_.output == symboldb_options::verbose) {
+	fprintf(stderr, "info: skipping %s\n", rurl.href.c_str());
+      }
+      pids_.insert(pid);
+      return true;
+    }
+    return false;
+  }
 }
 
 int
@@ -81,19 +113,20 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
   size_t download_count = 0;
   std::set<database::package_id> pids;
 
+  if (load) {
+    database_filter filter(opt, db, pids);
+    std::vector<rpm_url>::iterator p = std::remove_if
+      (urls.begin(), urls.end(), filter);
+    urls.erase(p, urls.end());
+    if (opt.output != symboldb_options::quiet) {
+      fprintf(stderr,
+	      "info: %zu packages to download after database comparison\n",
+	      urls.size());
+    }
+  }
+
   for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
        p != end; ++p) {
-    if (load) {
-      database::package_id pid = db.package_by_digest(p->csum.value);
-      if (pid != database::package_id()) {
-	if (opt.output == symboldb_options::verbose) {
-	  fprintf(stderr, "info: skipping %s\n", p->href.c_str());
-	}
-	pids.insert(pid);
-	continue;
-      }
-    }
-
     std::string rpm_path;
     try {
       database::advisory_lock lock
