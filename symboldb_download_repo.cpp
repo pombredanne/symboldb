@@ -35,6 +35,9 @@ namespace {
     checksum csum;
   };
 
+  //////////////////////////////////////////////////////////////////////
+  // database_filter
+
   struct database_filter {
     const symboldb_options &opt_;
     database &db_;
@@ -65,6 +68,72 @@ namespace {
     }
     return false;
   }
+
+  //////////////////////////////////////////////////////////////////////
+  // download_filter
+
+  struct download_filter {
+    const symboldb_options &opt_;
+    database &db_;
+    std::set<database::package_id> &pids_;
+    std::tr1::shared_ptr<file_cache> fcache_;
+    size_t count_;
+    bool load_;
+
+    // Cache bypass for RPM downloads.
+    download_options dopts_no_cache_;
+
+    download_filter(const symboldb_options &, database &,
+		    std::set<database::package_id> &, bool load);
+    bool operator()(const rpm_url &);
+  };
+
+  inline
+  download_filter::download_filter(const symboldb_options &opt, database &db,
+				   std::set<database::package_id> &pids,
+				   bool load)
+    : opt_(opt), db_(db), pids_(pids), fcache_(opt.rpm_cache()),
+      count_(0), load_(load)
+  {
+    dopts_no_cache_.cache_mode = download_options::no_cache;
+  }
+
+  inline bool
+  download_filter::operator()(const rpm_url &rurl)
+  {
+    try {
+      std::string rpm_path;
+      database::advisory_lock lock
+	(db_.lock_digest(rurl.csum.value.begin(), rurl.csum.value.end()));
+      if (!fcache_->lookup_path(rurl.csum, rpm_path)) {
+	if (opt_.output != symboldb_options::quiet) {
+	  fprintf(stderr, "info: downloading %s\n", rurl.href.c_str());
+	}
+	++count_;
+	file_cache::add_sink sink(*fcache_, rurl.csum);
+	download(dopts_no_cache_, db_, rurl.href.c_str(), &sink);
+	sink.finish(rpm_path);
+      }
+
+      if (load_) {
+	rpm_package_info info;
+	database::package_id pid = rpm_load(opt_, db_, rpm_path.c_str(), info);
+	if (pid == database::package_id()) {
+	  return 1;
+	}
+	pids_.insert(pid);
+      }
+      return true;
+    } catch (file_cache::unsupported_hash &e) {
+      fprintf(stderr, "error: unsupported hash for %s: %s\n",
+	      rurl.href.c_str(), e.what());
+      return false;
+    } catch (file_cache::checksum_mismatch &e) {
+      fprintf(stderr, "error: checksum mismatch for %s: %s\n",
+	      rurl.href.c_str(), e.what());
+      return false;
+    }
+  }
 }
 
 int
@@ -81,7 +150,6 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
-  std::tr1::shared_ptr<file_cache> fcache(opt.rpm_cache());
   package_set_consolidator<rpm_url> pset;
 
   for (; *argv; ++ argv) {
@@ -101,16 +169,10 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
-  // Cache bypass for RPM downloads.
-  download_options dopts_no_cache;
-  dopts_no_cache.cache_mode = download_options::no_cache;
-  std::string error;
-
   std::vector<rpm_url> urls(pset.values());
   if (opt.output != symboldb_options::quiet) {
     fprintf(stderr, "info: %zu packages in download set\n", urls.size());
   }
-  size_t download_count = 0;
   std::set<database::package_id> pids;
 
   if (load) {
@@ -125,44 +187,27 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
-  for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
-       p != end; ++p) {
-    std::string rpm_path;
-    try {
-      database::advisory_lock lock
-	(db.lock_digest(p->csum.value.begin(), p->csum.value.end()));
-      if (!fcache->lookup_path(p->csum, rpm_path)) {
-	if (opt.output != symboldb_options::quiet) {
-	  fprintf(stderr, "info: downloading %s\n", p->href.c_str());
-	}
-	++download_count;
-	file_cache::add_sink sink(*fcache, p->csum);
-	download(dopts_no_cache, db, p->href.c_str(), &sink);
-	sink.finish(rpm_path);
-      }
-    } catch (file_cache::unsupported_hash &e) {
-      fprintf(stderr, "error: unsupported hash for %s: %s\n",
-	      p->href.c_str(), e.what());
-      return 1;
-    } catch (file_cache::checksum_mismatch &e) {
-      fprintf(stderr, "error: checksum mismatch for %s: %s\n",
-	      p->href.c_str(), e.what());
-      return 1;
+  if (!urls.empty()) {
+    size_t start_count = urls.size();
+    download_filter filter(opt, db, pids, load);
+    std::vector<rpm_url>::iterator p = std::remove_if
+      (urls.begin(), urls.end(), filter);
+    urls.erase(p, urls.end());
+    if (opt.output != symboldb_options::quiet) {
+      fprintf(stderr, "info: downloaded %zu of %zu packages\n",
+	      filter.count_, start_count);
     }
+ }
 
-    if (load) {
-      rpm_package_info info;
-      database::package_id pid = rpm_load(opt, db, rpm_path.c_str(), info);
-      if (pid == database::package_id()) {
-	return 1;
-      }
-      pids.insert(pid);
+  if (!urls.empty()) {
+    fprintf(stderr, "error: %zu packages failed download:\n", urls.size());
+    for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
+	 p != end; ++p) {
+      fprintf(stderr, "error:   %s\n", p->href.c_str());
     }
+    return 1;
   }
-  if (opt.output != symboldb_options::quiet) {
-    fprintf(stderr, "info: downloaded %zu of %zu packages\n",
-	    download_count, urls.size());
-  }
+
   if (load && set > database::package_set_id()) {
     db.txn_begin();
     {
