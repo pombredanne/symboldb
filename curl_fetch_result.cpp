@@ -105,11 +105,16 @@ curl_fetch_result::perform(curl_handle &h, const char *url)
   // A response code of 0 is used if the protocol does not support
   // response codes.
   if (ret != CURLE_OK || (status != 200 && status != 0)) {
+    char *primary_ip = NULL;
+    curl_easy_getinfo(h.raw, CURLINFO_PRIMARY_IP, &primary_ip);
+    long primary_port = 0;
+    curl_easy_getinfo(h.raw, CURLINFO_PRIMARY_PORT, &primary_port);
     if (effective_url.empty()) {
-      throw curl_exception(curl_easy_strerror(ret)).url(url).status(status);
+      throw curl_exception(curl_easy_strerror(ret)).url(url).status(status)
+	.remote(primary_ip, primary_port);
     } else {
       throw curl_exception(curl_easy_strerror(ret)).url(effective_url)
-	.original_url(url).status(status);
+	.original_url(url).status(status).remote(primary_ip, primary_port);
     }
   }
   curl_easy_getinfo(h.raw, CURLINFO_FILETIME, &http_date);
