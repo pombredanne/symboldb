@@ -70,6 +70,9 @@ public:
   template <class RandomAccessIterator> advisory_lock
   lock_digest(RandomAccessIterator first, RandomAccessIterator last);
 
+  // Lock namespace for package sets.
+  enum { PACKAGE_SET_LOCK_TAG = 1667369644 };
+
   struct package_id_tag {};
   typedef tagged<int, package_id_tag> package_id;
   struct file_id_tag {};

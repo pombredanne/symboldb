@@ -93,6 +93,7 @@ add_library (SymbolDB
   string_source.cpp
   string_support.cpp
   subprocess.cpp
+  symboldb_download_repo.cpp
   symboldb_options.cpp
   symboldb_show_source_packages.cpp
   task.cpp
