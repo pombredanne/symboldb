@@ -119,11 +119,10 @@ make_temporary_directory(const char *prefix)
 std::string
 realpath(const char *path)
 {
-  malloc_handle<char> handle;
-  handle.raw = realpath(path, NULL);
-  if (handle.raw == NULL) {
+  malloc_handle<char> handle(realpath(path, NULL));
+  if (handle.get() == NULL) {
     throw os_exception().function<char *(const char *, char *)>(realpath)
       .path(path);
   }
-  return handle.raw;
+  return std::string(handle.get());
 }

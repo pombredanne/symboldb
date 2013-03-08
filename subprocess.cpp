@@ -143,16 +143,14 @@ subprocess::~subprocess()
 subprocess &
 subprocess::command(const char *cmd)
 {
-  char *dup = xstrdup(cmd);
-  free(impl_->image.raw);
-  impl_->image.raw = dup;
+  impl_->image.reset(xstrdup(cmd));
   return command_name(cmd);
 }
 
 const char *
 subprocess::command() const
 {
-  return impl_->image.raw;
+  return impl_->image.get();
 }
 
 subprocess &
@@ -276,11 +274,11 @@ subprocess::start()
       }
     }
 
-    int ret = posix_spawn(&impl_->pid, impl_->image.raw,
+    int ret = posix_spawn(&impl_->pid, impl_->image.get(),
 			  &actions.raw, &attr.raw,
 			  impl_->argv.data(), impl_->envv.data());
     if (ret != 0) {
-      throw os_exception().function(posix_spawn).path(impl_->image.raw);
+      throw os_exception().function(posix_spawn).path(impl_->image.get());
     }
   } catch (...) {
     impl_->close_pipes();
@@ -328,7 +326,7 @@ subprocess::wait()
   if (ret == -1) {
     // FIXME: pid()?
     throw os_exception(err).function(::waitpid).offset(impl_->pid)
-      .path(impl_->image.raw);
+      .path(impl_->image.get());
   }
   if (WIFEXITED(status)) {
     return WEXITSTATUS(status);
@@ -338,7 +336,7 @@ subprocess::wait()
     // FIXME: pid()?
     throw os_exception(0).function(::waitpid)
       .message("unknown status (see count)").offset(impl_->pid).count(status)
-      .path(impl_->image.raw);
+      .path(impl_->image.get());
   }
 }
 
@@ -357,7 +355,7 @@ subprocess::kill(int signo)
   if (::kill(impl_->pid, signo) != 0) {
     // FIXME: pid?
     throw os_exception().function(::kill).offset(impl_->pid)
-      .path(impl_->image.raw);
+      .path(impl_->image.get());
   }
 }
 

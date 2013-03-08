@@ -26,21 +26,59 @@ template <class T>
 class malloc_handle {
   malloc_handle(const malloc_handle &); // not implemented
   malloc_handle &operator=(const malloc_handle &); // not implemented
-public:
   T *raw;
-  
+public:
   malloc_handle()
     : raw(0)
   {
   }
 
-  explicit malloc_handle(T *p)
-    : raw(p)
-  {
-  }
+  // Takes ownership of the raw pointer.
+  explicit malloc_handle(T *p);
 
-  ~malloc_handle()
-  {
-    free(raw);
-  }
+  // Frees the raw pointer.
+  ~malloc_handle();
+
+  // Returns the value of the raw pointer.
+  T *get();
+
+  // Releases ownership of the raw pointer and returns it.
+  T *release();
+
+  // Changes the raw pointer (taking ownership) and frees the old
+  // pointer if necessary.
+  void reset(T *);
 };
+
+template <class T> inline
+malloc_handle<T>::malloc_handle(T *p)
+  : raw(p)
+{
+}
+
+template <class T> inline
+malloc_handle<T>::~malloc_handle()
+{
+  free(raw);
+}
+
+template <class T> inline T *
+malloc_handle<T>::get()
+{
+  return raw;
+}
+
+template <class T> inline T *
+malloc_handle<T>::release()
+{
+  T *r = raw;
+  raw = NULL;
+  return r;
+}
+
+template <class T> inline void
+malloc_handle<T>::reset(T *p)
+{
+  free(raw);
+  raw = p;
+}
