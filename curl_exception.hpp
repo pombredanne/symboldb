@@ -27,7 +27,9 @@ class curl_exception : public std::exception {
   std::string message_;
   std::string original_url_;
   std::string url_;
+  std::string remote_ip_;
   int status_;
+  unsigned remote_port_;
   bool bad_alloc_;
 public:
   explicit curl_exception(const char *message) throw();
@@ -48,6 +50,11 @@ public:
   const std::string &original_url() const throw();
   curl_exception &original_url(const char *) throw();
   curl_exception &original_url(const std::string &) throw();
+
+  // The remote IP address and port.
+  const std::string &remote_ip() const throw();
+  unsigned remote_port() const throw();
+  curl_exception &remote(const char *ip, unsigned port) throw();
 
   const char *what() const throw();
 };
@@ -81,4 +88,16 @@ inline const std::string &
 curl_exception::original_url() const throw()
 {
   return original_url_;
+}
+
+inline const std::string &
+curl_exception::remote_ip() const throw()
+{
+  return remote_ip_;
+}
+
+inline unsigned
+curl_exception::remote_port() const throw()
+{
+  return remote_port_;
 }

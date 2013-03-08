@@ -24,7 +24,7 @@
 static const char oom_message[] = "out of memory";
 
 curl_exception::curl_exception(const char *message) throw()
-  : status_(0), bad_alloc_(false)
+  : status_(0), remote_port_(0), bad_alloc_(false)
 {
   try {
     message_ = message;
@@ -81,6 +81,18 @@ curl_exception::original_url(const std::string &str) throw()
   return *this;
 }
 
+curl_exception &
+curl_exception::remote(const char *ip, unsigned port) throw()
+{
+  try {
+    remote_ip_ = ip;
+    remote_port_ = port;
+  } catch (std::bad_alloc &) {
+    bad_alloc_ = true;
+  }
+  return *this;
+}
+
 const char *
 curl_exception::what() const throw()
 {
@@ -105,6 +117,12 @@ curl_exception::what() const throw()
 	what_ += " url=\"";
 	what_ += quote(url_);
 	what_ += '"';
+      }
+      if (!remote_ip_.empty()) {
+	char buf[128];
+	snprintf(buf, sizeof(buf), " remote=[%s]:%u",
+		 remote_ip_.c_str(), remote_port_);
+	what_ += buf;
       }
       if (!original_url_.empty()) {
 	what_ += " original=\"";
