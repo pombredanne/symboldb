@@ -414,11 +414,15 @@ main(int argc, char **argv)
       abort();
     }
   } catch(curl_exception &e) {
-    fprintf(stderr, "error: download failed");
+    fprintf(stderr, "error: download");
+    if (!e.remote_ip().empty()) {
+      fprintf(stderr, " from [%s]:%u",
+	      e.remote_ip().c_str(), e.remote_port());
+    }
     if (e.status() != 0) {
-      fprintf(stderr, " with status code %d\n", e.status());
+      fprintf(stderr, " failed with status code %d\n", e.status());
     } else {
-      fprintf(stderr, "\n");
+      fprintf(stderr, " failed\n");
     }
     if (!e.url().empty()) {
       fprintf(stderr, "error:  URL: %s\n", e.url().c_str());
