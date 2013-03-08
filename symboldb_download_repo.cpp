@@ -23,6 +23,7 @@
 #include "repomd.hpp"
 #include "file_cache.hpp"
 #include "rpm_load.hpp"
+#include "curl_exception.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -124,6 +125,21 @@ namespace {
 	pids_.insert(pid);
       }
       return true;
+    } catch (curl_exception &e) {
+      fprintf(stderr, "error: %s: download failed", rurl.href.c_str());
+      if (e.status() != 0) {
+	fprintf(stderr, " with status code %d\n", e.status());
+      } else {
+	fprintf(stderr, "\n");
+      }
+      if (!e.url().empty() && e.url() != rurl.href) {
+	fprintf(stderr, "error:  URL: %s\n", e.url().c_str());
+      }
+      if (!e.original_url().empty()
+	  && e.original_url() != rurl.href && e.original_url() != e.url()) {
+	fprintf(stderr, "error:  starting at: %s\n", e.original_url().c_str());
+      }
+      return false;
     } catch (file_cache::unsupported_hash &e) {
       fprintf(stderr, "error: unsupported hash for %s: %s\n",
 	      rurl.href.c_str(), e.what());
@@ -187,17 +203,20 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
-  if (!urls.empty()) {
+  {
     size_t start_count = urls.size();
     download_filter filter(opt, db, pids, load);
-    std::vector<rpm_url>::iterator p = std::remove_if
-      (urls.begin(), urls.end(), filter);
-    urls.erase(p, urls.end());
+    for (unsigned iteration = 1;
+	 iteration <= 3 && !urls.empty(); ++iteration) {
+      std::vector<rpm_url>::iterator p = std::remove_if
+	(urls.begin(), urls.end(), filter);
+      urls.erase(p, urls.end());
+    }
     if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: downloaded %zu of %zu packages\n",
 	      filter.count_, start_count);
     }
- }
+  }
 
   if (!urls.empty()) {
     fprintf(stderr, "error: %zu packages failed download:\n", urls.size());

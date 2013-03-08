@@ -11,9 +11,6 @@
   information in expat_source, and a stack of open tags.  (Hopefully,
   this will not cause too much of a slowdown.)
 
-* Retry failed downloads.  Especially with download.fedoraproject.org,
-  some downloads fail initially, but succeed when attempted again.
-
 * Parallelize downloading.
 
 * Store sizes of files inside RPMs.  Handle symbolic links and
