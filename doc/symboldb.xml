@@ -348,6 +348,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>--ignore-download-errors</option></term>
+	<listitem>
+	  <para>
+	    When constructing package sets from repositories, treat
+	    packages which cannot be obtained due to a download error
+	    as if they were not part of the package set.  Use this
+	    option with care because it can produce a misleading view
+	    of the repository.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-v</option></term>
 	<term><option>-verbose</option></term>
 	<listitem>

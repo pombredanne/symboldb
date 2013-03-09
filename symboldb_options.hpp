@@ -40,6 +40,10 @@ public:
   std::string set_name;
   std::string cache_path;
 
+  // If true, incomplete package sets with download errors are still
+  // processed.
+  bool ignore_download_errors;
+
   symboldb_options();
   ~symboldb_options();
 

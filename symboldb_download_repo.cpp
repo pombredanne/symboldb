@@ -271,16 +271,26 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
+  bool do_pset_update = load && set != database::package_set_id();
+
   if (!urls.empty()) {
     fprintf(stderr, "error: %zu packages failed download:\n", urls.size());
     for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
 	 p != end; ++p) {
       fprintf(stderr, "error:   %s\n", p->href.c_str());
     }
-    return 1;
+    if (opt.ignore_download_errors && do_pset_update) {
+      if (pids.empty()) {
+	fprintf(stderr, "error: no packages left in download set\n");
+      } else {
+	fprintf(stderr, "warning: download errors ignored, continuing\n");
+      }
+    } else {
+      return 1;
+    }
   }
 
-  if (load && set > database::package_set_id()) {
+  if (do_pset_update) {
     db.txn_begin();
     {
       database::advisory_lock lock

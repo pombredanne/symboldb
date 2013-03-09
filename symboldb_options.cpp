@@ -23,7 +23,7 @@
 #include "string_support.hpp"
 
 symboldb_options::symboldb_options()
-  : output(standard), no_net(false)
+  : output(standard), no_net(false), ignore_download_errors(false)
 {
 }
 

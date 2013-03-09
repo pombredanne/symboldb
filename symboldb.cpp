@@ -236,6 +236,7 @@ usage(const char *progname, const char *error = NULL)
 	  "  --arch=ARCH, -a   base architecture\n"
 	  "  --quiet, -q       less output\n"
 	  "  --cache=DIR, -C   path to the cache (default: ~/.cache/symboldb)\n"
+	  "  --ignore-download-errors   process repositories with download errors\n"
 	  "  --no-net, -N      disable most network access\n"
 	  "  --verbose, -v     more verbose output\n\n",
 	  progname);
@@ -265,6 +266,7 @@ namespace {
     typedef enum {
       undefined = 2000,
       exclude_name,
+      ignore_download_errors,
     } type;
   }
 }
@@ -295,6 +297,8 @@ main(int argc, char **argv)
       {"exclude-name", required_argument, 0, options::exclude_name},
       {"cache", required_argument, 0, 'C'},
       {"no-net", no_argument, 0, 'N'},
+      {"ignore-download-errors", no_argument, 0,
+       options::ignore_download_errors},
       {"verbose", no_argument, 0, 'v'},
       {"quiet", no_argument, 0, 'q'},
       {0, 0, 0, 0}
@@ -344,6 +348,9 @@ main(int argc, char **argv)
 	break;
       case options::exclude_name:
 	opt.add_exclude_name(optarg);
+	break;
+      case options::ignore_download_errors:
+	opt.ignore_download_errors = true;
 	break;
       default:
 	usage(argv[0]);
