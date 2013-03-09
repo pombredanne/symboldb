@@ -216,8 +216,10 @@ rpm_load(const symboldb_options &opt, database &db,
 	 const char *path, rpm_package_info &info)
 {
   // Unreferenced RPMs should not be visible to analyzers, so we can
-  // load each RPM in a separate transaction.
-  db.txn_begin();
+  // load each RPM in a separate transaction.  We make a synchronous
+  // commit when referencing the RPM data, so a non-synchronous commit
+  // is sufficient here.
+  db.txn_begin_no_sync();
   database::package_id pkg = load_rpm_internal(opt, db, path, info);
 
   hash_sink sha256(hash_sink::sha256);
