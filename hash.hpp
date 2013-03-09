@@ -45,6 +45,9 @@ public:
   // Finalizes the hash computation and writes the 32 bytes of digest
   // to its argument.
   void digest(std::vector<unsigned char> &);
+
+  // Returns the number of octets written so far.
+  unsigned long long octets() const;
 };
 
 // Computes the 32-byte SHA-256 hash of the argument.

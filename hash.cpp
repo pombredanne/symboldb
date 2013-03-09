@@ -33,8 +33,10 @@
 struct hash_sink::impl {
   PK11Context *raw;
   size_t digest_length;
+  unsigned long long octets;
 
   impl(type t)
+    : octets(0)
   {
     SECOidTag oid;
     switch (t) {
@@ -81,6 +83,7 @@ hash_sink::write(const unsigned char *buf, size_t len)
     if (PK11_DigestOp(impl_->raw, buf, to_hash) != SECSuccess) {
       throw std::runtime_error("PK11_DigestOp");
     }
+    impl_->octets += to_hash;
     buf += to_hash;
     len -= to_hash;
   }
@@ -95,6 +98,12 @@ hash_sink::digest(std::vector<unsigned char> &d)
     throw std::runtime_error("PK11_DigestFinal");
   }
   assert(len == d.size());
+}
+
+unsigned long long
+hash_sink::octets() const
+{
+  return impl_->octets;
 }
 
 //////////////////////////////////////////////////////////////////////
