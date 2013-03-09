@@ -72,6 +72,7 @@ CREATE INDEX ON symboldb.package (symboldb.nevra(package));
 CREATE TABLE symboldb.package_digest (
   digest BYTEA NOT NULL PRIMARY KEY
     CHECK (LENGTH(digest) IN (20, 32)),
+  length BIGINT NOT NULL CHECK (length > 0),
   package INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE
 );

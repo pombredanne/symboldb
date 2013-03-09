@@ -37,6 +37,7 @@
 
 #include <sstream>
 
+#include <cassert>
 #include <cstdio>
 
 #include <inttypes.h>
@@ -228,12 +229,13 @@ rpm_load(const symboldb_options &opt, database &db,
     tee_sink tee(&sha256, &sha1);
     copy_source_to_sink(source, tee);
   }
+  assert(sha256.octets() == sha1.octets());
 
   std::vector<unsigned char> digest;
   sha256.digest(digest);
-  db.add_package_digest(pkg, digest);
+  db.add_package_digest(pkg, digest, sha256.octets());
   sha1.digest(digest);
-  db.add_package_digest(pkg, digest);
+  db.add_package_digest(pkg, digest, sha1.octets());
 
   db.txn_commit();
   return pkg;

@@ -88,7 +88,9 @@ public:
   // Adds a digest of the file representation.  A single RPM with
   // identical contents can have multiple representations due to
   // different signatures and compression (and different digest).
-  void add_package_digest(package_id, const std::vector<unsigned char> &digest);
+  // LENGTH is the size (on octets) of the RPM file.
+  void add_package_digest(package_id, const std::vector<unsigned char> &digest,
+			  unsigned long long length);
 
   // Looks up a package ID by the external SHA-1 or SHA-256 digest.
   // Returns 0 if the package ID was not found.

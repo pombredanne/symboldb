@@ -109,6 +109,23 @@ test()
     };
 
     pgconn_handle dbh(testdb.connect(DBNAME));
+    {
+      pgresult_handle res;
+      res.exec(dbh, "SELECT digest, length FROM symboldb.package_digest"
+	       " JOIN symboldb.package p ON package = id"
+	       " WHERE symboldb.nevra(p)"
+	       " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'"
+	       " ORDER BY length(digest)");
+      CHECK(res.ntuples() == 2);
+      COMPARE_STRING(res.getvalue(0, 0),
+		     "\\x44dfb48a42bf902c3e57b844d032642668bcb638");
+      COMPARE_STRING(res.getvalue(0, 1), "63824");
+      COMPARE_STRING(res.getvalue(1, 0),
+		     "\\x800c58cb4760a42c310dbb450455dac8"
+		     "3e673598db83d7daefdeb94fce652a62");
+      COMPARE_STRING(res.getvalue(1, 1), "63824");
+    }
+
     std::vector<database::package_id> pids;
     pgresult_handle r1;
     r1.exec(dbh, "SELECT id, name, version, release FROM symboldb.package");

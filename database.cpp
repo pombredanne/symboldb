@@ -239,7 +239,8 @@ database::intern_package(const rpm_package_info &pkg,
 
 void
 database::add_package_digest(package_id pkg,
-			     const std::vector<unsigned char> &digest)
+			     const std::vector<unsigned char> &digest,
+			     unsigned long long length)
 {
   // FIXME: This needs a transaction and locking.
 
@@ -249,14 +250,17 @@ database::add_package_digest(package_id pkg,
 
   char pkgstr[32];
   snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
+  char lenstr[32];
+  snprintf(lenstr, sizeof(lenstr), "%llu", length);
 
-  static const Oid paramTypes[] = {23 /* INT4 */, 17 /* BYTEA */};
-  const int paramLengths[] = {0, static_cast<int>(digest.size())};
+  static const Oid paramTypes[] = {23 /* INT4 */, 17 /* BYTEA */, 20 /* INT */};
+  const int paramLengths[] = {0, static_cast<int>(digest.size()), 0};
   const char *params[] = {
     pkgstr,
     reinterpret_cast<const char *>(digest.data()),
+    lenstr,
   };
-  static const int paramFormats[] = {0, 1};
+  static const int paramFormats[] = {0, 1, 0};
 
   // Try to locate existing row.
   {
@@ -264,7 +268,7 @@ database::add_package_digest(package_id pkg,
     res.execTypedParams
       (impl_->conn,
        "SELECT 1 FROM " PACKAGE_DIGEST_TABLE
-       " WHERE package = $1 AND digest = $2",
+       " WHERE package = $1 AND digest = $2 AND length = $3",
        paramTypes, params, paramLengths, paramFormats);
     if (res.ntuples() > 0) {
       return;
@@ -275,8 +279,8 @@ database::add_package_digest(package_id pkg,
   pgresult_handle res;
   res.execTypedParams
     (impl_->conn,
-     "INSERT INTO " PACKAGE_DIGEST_TABLE " (package, digest)"
-     " VALUES ($1, $2)",
+     "INSERT INTO " PACKAGE_DIGEST_TABLE " (package, digest, length)"
+     " VALUES ($1, $2, $3)",
      paramTypes, params, paramLengths, paramFormats);
 }
 
