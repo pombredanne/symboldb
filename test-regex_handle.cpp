@@ -26,6 +26,7 @@ test()
 {
   regex_handle rx("^foo$");
   CHECK(rx.match("foo"));
+  CHECK(!rx.match("Foo"));
   CHECK(!rx.match("foo\n"));
   try {
     regex_handle("(foo");
@@ -33,6 +34,11 @@ test()
   } catch (regex_handle::error &e) {
     CHECK(e.code() == REG_EPAREN);
   }
+
+  rx = regex_handle("(.*foo$)");
+  CHECK(rx.match("foo"));
+  CHECK(rx.match("abcfoo"));
+  CHECK(!rx.match("foo\n"));
 }
 
 static test_register t("regex", test);
