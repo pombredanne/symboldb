@@ -261,6 +261,12 @@ namespace {
       show_soname_conflicts,
     } type;
   };
+  namespace options {
+    typedef enum {
+      undefined = 2000,
+      exclude_name,
+    } type;
+  }
 }
 
 int
@@ -286,6 +292,7 @@ main(int argc, char **argv)
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
+      {"exclude-name", required_argument, 0, options::exclude_name},
       {"cache", required_argument, 0, 'C'},
       {"no-net", no_argument, 0, 'N'},
       {"verbose", no_argument, 0, 'v'},
@@ -334,6 +341,9 @@ main(int argc, char **argv)
       case command::show_source_packages:
       case command::show_stale_cached_rpms:
 	cmd = static_cast<command::type>(ch);
+	break;
+      case options::exclude_name:
+	opt.add_exclude_name(optarg);
 	break;
       default:
 	usage(argv[0]);

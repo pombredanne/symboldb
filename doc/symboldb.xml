@@ -303,6 +303,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <title>OPTIONS</title>
     <variablelist>
       <varlistentry>
+	<term><option>--exclude-name</option>
+	<replaceable class="parameter">regexp</replaceable></term>
+	<listitem>
+	  <para>
+	    When constructing a package set from a repository, exclude
+	    all packages whose name matches <replaceable
+	    class="parameter">regexp</replaceable>, a POSIX extend
+	    regular expression which is matched in a case-insensitive
+	    manner and anchored at both ends.  This option can be
+	    repeated multiple times.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>--cache</option></term>
 	<term><option>-C</option></term>
 	<listitem>

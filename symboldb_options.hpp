@@ -19,14 +19,18 @@
 #pragma once
 
 #include "download.hpp"
+#include "regex_handle.hpp"
 
 #include <stdexcept>
 #include <string>
 #include <tr1/memory>
+#include <vector>
 
 class file_cache;
 
-struct symboldb_options {
+class symboldb_options {
+  std::vector<std::string> exclude_names_;
+public:
   enum {
     standard, verbose, quiet
   } output;
@@ -38,6 +42,16 @@ struct symboldb_options {
 
   symboldb_options();
   ~symboldb_options();
+
+  // Adds a regular expression to exclude_name.  Throws usage_error if
+  // the expresion is invalid.
+  void add_exclude_name(const char *);
+
+  // Returns a regular expression combining all excluded names.
+  regex_handle exclude_name() const;
+
+  // Returns true if add_exclude_name has been called.
+  bool exclude_name_present() const;
 
   download_options download() const;
 

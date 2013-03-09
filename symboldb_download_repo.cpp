@@ -24,6 +24,7 @@
 #include "file_cache.hpp"
 #include "rpm_load.hpp"
 #include "curl_exception.hpp"
+#include "regex_handle.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -32,9 +33,38 @@
 
 namespace {
   struct rpm_url {
+    std::string name;
     std::string href;
     checksum csum;
   };
+
+  //////////////////////////////////////////////////////////////////////
+  // name_filter
+
+  struct name_filter {
+    regex_handle rx_;
+    size_t &count_;
+
+    name_filter(const symboldb_options &, size_t &count);
+    bool operator()(const rpm_url &);
+  };
+
+  inline
+  name_filter::name_filter(const symboldb_options &opt, size_t &count)
+    : rx_(opt.exclude_name()), count_(count)
+  {
+  }
+
+  inline bool
+  name_filter::operator()(const rpm_url &rurl)
+  {
+    if (rx_.match(rurl.name.c_str())) {
+      ++count_;
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   //////////////////////////////////////////////////////////////////////
   // database_filter
@@ -188,6 +218,7 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     repomd::primary primary(&primary_xml, rp.base_url.c_str());
     while (primary.next()) {
       rpm_url rurl;
+      rurl.name = primary.info().name;
       rurl.href = primary.href();
       rurl.csum = primary.checksum();
       pset.add(primary.info(), rurl);
@@ -199,6 +230,18 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     fprintf(stderr, "info: %zu packages in download set\n", urls.size());
   }
   std::set<database::package_id> pids;
+
+  if (opt.exclude_name_present()) {
+    size_t count = 0;
+    name_filter filter(opt, count);
+    std::vector<rpm_url>::iterator p = std::remove_if
+      (urls.begin(), urls.end(), filter);
+    urls.erase(p, urls.end());
+    if (opt.output != symboldb_options::quiet) {
+      fprintf(stderr, "info: package name filter excluded %zu packages\n",
+	      count);
+    }
+  }
 
   {
     database_filter filter(opt, db, pids);

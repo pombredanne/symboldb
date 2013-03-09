@@ -34,9 +34,6 @@
 
 * More test cases, including loading of sample RPMs.
 
-* Add a filter based on package names to repository updates.  This
-  would be helpful for excluding ^.*-debuginfo$ packages.
-
 * Follow the cryptographic chain starting with the repomd.xml file and
   verify all hashes up to the RPM files along the way.
 

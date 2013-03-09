@@ -19,6 +19,8 @@
 #include "symboldb_options.hpp"
 #include "file_cache.hpp"
 #include "os.hpp"
+#include "regex_handle.hpp"
+#include "string_support.hpp"
 
 symboldb_options::symboldb_options()
   : output(standard), no_net(false)
@@ -27,6 +29,45 @@ symboldb_options::symboldb_options()
 
 symboldb_options::~symboldb_options()
 {
+}
+
+void
+symboldb_options::add_exclude_name(const char *pattern)
+{
+  try {
+    static_cast<void>(regex_handle(pattern));
+  } catch (regex_handle::error &e) {
+    throw usage_error("invalid --exclude-name regexp \"" + quote(pattern)
+		      + "\": " + e.what());
+  }
+  exclude_names_.push_back(pattern);
+}
+
+regex_handle
+symboldb_options::exclude_name() const
+{
+  std::string regexp("^(");
+  bool first = true;
+  for (std::vector<std::string>::const_iterator
+	 p = exclude_names_.begin(), end = exclude_names_.end();
+       p != end; ++p) {
+    if (first) {
+      first = false;
+    } else {
+      regexp += '|';
+    }
+    regexp += '(';
+    regexp += *p;
+    regexp += ')';
+  }
+  regexp += ")$";
+  return regex_handle(regexp.c_str());
+}
+
+bool
+symboldb_options::exclude_name_present() const
+{
+  return !exclude_names_.empty();
 }
 
 download_options
