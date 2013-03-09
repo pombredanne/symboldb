@@ -28,6 +28,8 @@ checksum::~checksum()
 {
 }
 
+const unsigned long long checksum::no_length;
+
 namespace {
   int hexdigit(char ch)
   {
