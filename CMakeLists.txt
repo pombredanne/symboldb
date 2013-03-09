@@ -75,6 +75,7 @@ add_library (SymbolDB
   pg_testdb.cpp
   pgconn_handle.cpp
   pgresult_handle.cpp
+  regex_handle.cpp
   repomd.cpp
   repomd_primary.cpp
   repomd_primary_xml.cpp
@@ -143,6 +144,7 @@ add_executable (runtests
   test-os.cpp
   test-os_exception.cpp
   test-pg_testdb.cpp
+  test-regex_handle.cpp
   test-repomd.cpp
   test-rpm_load.cpp
   test-string_source.cpp
