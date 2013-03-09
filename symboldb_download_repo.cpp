@@ -78,23 +78,24 @@ namespace {
     database &db_;
     std::set<database::package_id> &pids_;
     std::tr1::shared_ptr<file_cache> fcache_;
-    size_t count_;
+    size_t &count_;
     bool load_;
 
     // Cache bypass for RPM downloads.
     download_options dopts_no_cache_;
 
     download_filter(const symboldb_options &, database &,
-		    std::set<database::package_id> &, bool load);
+		    std::set<database::package_id> &,
+		    size_t &count, bool load);
     bool operator()(const rpm_url &);
   };
 
   inline
   download_filter::download_filter(const symboldb_options &opt, database &db,
 				   std::set<database::package_id> &pids,
-				   bool load)
+				   size_t &count, bool load)
     : opt_(opt), db_(db), pids_(pids), fcache_(opt.rpm_cache()),
-      count_(0), load_(load)
+      count_(count), load_(load)
   {
     dopts_no_cache_.cache_mode = download_options::no_cache;
   }
@@ -213,7 +214,8 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
 
   {
     size_t start_count = urls.size();
-    download_filter filter(opt, db, pids, load);
+    size_t download_count = 0;
+    download_filter filter(opt, db, pids, download_count, load);
     for (unsigned iteration = 1;
 	 iteration <= 3 && !urls.empty(); ++iteration) {
       std::vector<rpm_url>::iterator p = std::remove_if
@@ -222,7 +224,7 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
     if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: downloaded %zu of %zu packages\n",
-	      filter.count_, start_count);
+	      download_count, start_count);
     }
   }
 
