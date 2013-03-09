@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 fd_handle::~fd_handle()
@@ -171,6 +172,15 @@ fd_handle::read(void *buffer, size_t length)
     throw os_exception().function(::read).fd(raw).count(length).defaults();
   }
   return result;
+}
+
+void
+fd_handle::mkdirat(const char *pathname, unsigned mode)
+{
+  if (::mkdirat(raw, pathname, mode) < 0) {
+    throw os_exception().function(::mkdirat).fd(raw).path2(pathname)
+      .defaults();
+  }
 }
 
 void

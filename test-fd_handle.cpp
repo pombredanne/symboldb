@@ -20,6 +20,7 @@
 #include "fd_handle.hpp"
 #include "os_exception.hpp"
 #include "string_support.hpp"
+#include "os.hpp"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -118,6 +119,21 @@ test(void)
     } catch (os_exception &e) {
       CHECK(e.error_code() == ENOTDIR);
     }
+  }
+  {
+    std::string root(make_temporary_directory("/tmp/test-fd_handle-"));
+    try {
+      fd_handle fd;
+      fd.open_directory(root.c_str());
+      fd.mkdirat("first", 0777);
+      fd.mkdirat("second", 0777);
+      CHECK(is_directory((root + "/first").c_str()));
+      CHECK(is_directory((root + "/second").c_str()));
+    } catch (...) {
+      remove_directory_tree(root.c_str());
+      throw;
+    }
+    remove_directory_tree(root.c_str());
   }
 }
 

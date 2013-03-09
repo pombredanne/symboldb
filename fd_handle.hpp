@@ -83,6 +83,9 @@ public:
   // Calls fsync(int).  Throws os_exception on error.
   void fsync();
 
+  // Calls mkdirat(int, const char *, mode_t).
+  void mkdirat(const char *name, unsigned mode);
+
   // Calls unlinkat(int, const char *, int).  Throws os_exception on error.
   void unlinkat(const char *pathname, int flags);
 };
