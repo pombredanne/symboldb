@@ -199,7 +199,7 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
   }
   std::set<database::package_id> pids;
 
-  if (load) {
+  {
     database_filter filter(opt, db, pids);
     std::vector<rpm_url>::iterator p = std::remove_if
       (urls.begin(), urls.end(), filter);
