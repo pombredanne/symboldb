@@ -37,7 +37,6 @@ void
 rpm_parser_init()
 {
   rpmReadConfigFiles("", "noarch");
-  rpmSetVerbosity(RPMLOG_ERR);
 }
 
 struct rpm_parser_state::impl {
@@ -274,6 +273,7 @@ rpm_parser_state::rpm_parser_state(const char *path)
 
   // Load header.
   rpmts ts = rpmtsCreate();
+  rpmtsSetVSFlags(ts, _RPMVSF_NOSIGNATURES);
   int rc = rpmReadPackageFile(ts, impl_->fd, "symboldb", &impl_->header);
   ts = rpmtsFree(ts);
   switch (rc) {
