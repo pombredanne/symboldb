@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -188,5 +189,17 @@ fd_handle::unlinkat(const char *pathname, int flags)
 {
   if (::unlinkat(raw, pathname, flags) < 0) {
     throw os_exception().function(::unlinkat).fd(raw).path2(pathname).defaults();
+  }
+}
+
+void
+renameat(fd_handle &from, const char *from_name,
+	 fd_handle &to, const char *to_name)
+{
+  if (renameat(from.get(), from_name, to.get(), to_name) < 0) {
+    throw os_exception()
+      .function(static_cast<int(*)(int, const char *,
+				   int, const char *)>(::renameat))
+      .fd(from.get()).path2(from_name).message(to_name).defaults();
   }
 }

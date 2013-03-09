@@ -127,8 +127,18 @@ test(void)
       fd.open_directory(root.c_str());
       fd.mkdirat("first", 0777);
       fd.mkdirat("second", 0777);
-      CHECK(is_directory((root + "/first").c_str()));
-      CHECK(is_directory((root + "/second").c_str()));
+      fd_handle first;
+      first.openat(fd.get(), "first", O_RDONLY| O_DIRECTORY | O_CLOEXEC);
+      fd_handle second;
+      second.openat(fd.get(), "second", O_RDONLY| O_DIRECTORY | O_CLOEXEC);
+      {
+	fd_handle file;
+	file.openat(first.get(), "abc", O_WRONLY | O_CREAT | O_CLOEXEC, 0777);
+      }
+      CHECK(path_exists((root + "/first/abc").c_str()));
+      renameat(first, "abc", second, "xyzt");
+      CHECK(!path_exists((root + "/first/abc").c_str()));
+      CHECK(path_exists((root + "/second/xyzt").c_str()));
     } catch (...) {
       remove_directory_tree(root.c_str());
       throw;
