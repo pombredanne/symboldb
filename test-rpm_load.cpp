@@ -48,7 +48,7 @@ test()
 
   {
     database::package_id last_pkg_id(0);
-   static const char RPMDIR[] = "test/data";
+    static const char RPMDIR[] = "test/data";
     std::string rpmdir_prefix(RPMDIR);
     rpmdir_prefix += '/';
     dir_handle rpmdir(RPMDIR);
