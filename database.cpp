@@ -106,6 +106,13 @@ database::txn_rollback()
   res.exec(impl_->conn, "ROLLBACK");
 }
 
+void
+database::txn_begin_no_sync()
+{
+  pgresult_handle res;
+  res.exec(impl_->conn, "BEGIN; SET LOCAL synchronous_commit TO OFF");
+}
+
 database::advisory_lock_guard::~advisory_lock_guard()
 {
 }

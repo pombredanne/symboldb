@@ -53,6 +53,9 @@ public:
   void txn_commit();
   void txn_rollback();
 
+  // Transaction with synchronous_commit = off.
+  void txn_begin_no_sync();
+
   struct advisory_lock_guard {
     virtual ~advisory_lock_guard();
   };
