@@ -100,6 +100,7 @@ struct file_cache::add_sink::add_impl {
   std::tr1::shared_ptr<file_cache::impl> cache;
   checksum csum;
   std::string hex;		// part of the file name
+  std::string temp_file;
   fd_handle handle;
   fd_sink sink;
   hash_sink hash;
@@ -110,6 +111,18 @@ struct file_cache::add_sink::add_impl {
 	   hash_sink::type hash_type)
     : cache(c), handle(), sink(), hash(hash_type), tee(&sink, &hash), length(0)
   {
+  }
+
+  ~add_impl()
+  {
+    // Clean up the temporary file.
+    if (!temp_file.empty()) {
+      try {
+	cache->dirfd.unlinkat(temp_file.c_str(), 0);
+      } catch (...) {
+	// Swallow the exception.
+      }
+    }
   }
 };
 
@@ -127,8 +140,10 @@ file_cache::add_sink::add_sink(file_cache &c, const checksum &csum)
   impl_.reset(new add_impl(c.impl_, hash_type));
   impl_->csum = csum;
   impl_->hex = base16_encode(csum.value.begin(), csum.value.end());
-  impl_->handle.openat(c.impl_->dirfd.get(), impl_->hex.c_str(),
-		       O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  impl_->temp_file = impl_->hex;
+  impl_->temp_file += ".tmp";
+  impl_->handle.openat(c.impl_->dirfd.get(), impl_->temp_file.c_str(),
+		       O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0666);
   impl_->sink.raw = impl_->handle.get();
 }
 
@@ -151,22 +166,16 @@ file_cache::add_sink::finish(std::string &path)
     throw checksum_mismatch("length");
   }
 
-  try {
-    std::vector<unsigned char> digest;
-    impl_->hash.digest(digest);
-    if (digest != impl_->csum.value) {
-      throw checksum_mismatch("digest");
-    }
-
-    impl_->handle.fsync();
-  } catch (...) {
-    // Clean up broken file, but not if there is a length mismatch
-    // because another process might be writing the file.
-    impl_->cache->dirfd.unlinkat(impl_->hex.c_str(), 0);
-    // FIXME: There is a race here if the file has the expected
-    // length, but the wrong digest.
-    throw;
+  std::vector<unsigned char> digest;
+  impl_->hash.digest(digest);
+  if (digest != impl_->csum.value) {
+    throw checksum_mismatch("digest");
   }
+  impl_->handle.fsync();
+  impl_->handle.close();
+  renameat(impl_->cache->dirfd, impl_->temp_file.c_str(),
+	   impl_->cache->dirfd, impl_->hex.c_str());
+  impl_->temp_file.clear();	// do not delete it
 
   path = impl_->cache->root;
   path += impl_->hex;

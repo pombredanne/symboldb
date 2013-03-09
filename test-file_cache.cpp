@@ -23,6 +23,7 @@
 #include "os.hpp"
 #include "test.hpp"
 
+#include <errno.h>
 #include <unistd.h>
 
 static void
@@ -54,7 +55,7 @@ test()
     COMPARE_STRING(base16_encode(digests.front().begin(),
 				 digests.front().end()),
 		   base16_encode(csum.value.begin(), csum.value.end()));
-
+    CHECK(access((path + ".tmp").c_str(), R_OK) == -1 && errno == ENOENT);
     CHECK(unlink(path.c_str()) == 0);
 
     csum.length = 0;
@@ -68,8 +69,8 @@ test()
       COMPARE_STRING(e.what(), "length");
     }
     COMPARE_STRING(path, "abc");
-    CHECK(access(old_path.c_str(), R_OK) == 0);
-    CHECK(unlink(old_path.c_str()) == 0);
+    CHECK(access(old_path.c_str(), R_OK) == -1 && errno == ENOENT);
+    CHECK(access((old_path + ".tmp").c_str(), R_OK) == -1 && errno == ENOENT);
 
     ++csum.value.front();
     csum.length = sizeof(valid);
@@ -80,7 +81,8 @@ test()
       COMPARE_STRING(e.what(), "digest");
     }
     COMPARE_STRING(path, "abc");
-    CHECK(access(old_path.c_str(), R_OK) != 0);
+    CHECK(access(old_path.c_str(), R_OK) == -1 && errno == ENOENT);
+    CHECK(access((old_path + ".tmp").c_str(), R_OK) == -1 && errno == ENOENT);
   } catch (...) {
     remove_directory_tree(tempdir.c_str());
     throw;
