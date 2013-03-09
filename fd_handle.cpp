@@ -100,6 +100,12 @@ fd_handle::open_read_only(const char *path)
 }
 
 void
+fd_handle::open_directory(const char *path)
+{
+  open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+}
+
+void
 fd_handle::close_on_exec(bool flag)
 {
   int flags = fcntl(raw, F_GETFD, 0);

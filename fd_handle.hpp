@@ -54,6 +54,9 @@ public:
   // Opens the file for reading.  Throws os_exception on error.
   void open_read_only(const char *path);
 
+  // Opens PATH as a directory.  Throws os_exception on error.
+  void open_directory(const char *path);
+
   // Opens this descriptor relative to the passed-in descriptor.
   // Throws os_exception on error.
   void openat(int fd, const char *path, int flags);

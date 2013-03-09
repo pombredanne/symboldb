@@ -106,6 +106,19 @@ test(void)
     CHECK(ends_with(e.what(),
 		    "] error=ENOENT path=#does-not-exist#"));
   }
+
+  {
+    fd_handle dir;
+    dir.open_directory("/dev");
+    fd_handle null;
+    null.openat(dir.get(), "null", O_RDONLY);
+    try {
+      dir.open_directory("/dev/null");
+      CHECK(false);
+    } catch (os_exception &e) {
+      CHECK(e.error_code() == ENOTDIR);
+    }
+  }
 }
 
 static test_register t("fd_handle", test);
