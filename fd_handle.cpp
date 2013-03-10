@@ -128,7 +128,7 @@ fd_handle::mkstemp(const char *prefix)
 void
 fd_handle::dup(int fd)
 {
-  int newfd = ::dup(fd);
+  int newfd = ::fcntl(fd, F_DUPFD_CLOEXEC, 0);
   if (newfd < 0) {
     throw os_exception().function(::dup).fd(fd).defaults();
   }

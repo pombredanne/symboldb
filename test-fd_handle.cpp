@@ -113,6 +113,7 @@ test(void)
     dir.open_directory("/dev");
     fd_handle dir2;
     dir2.dup(dir.get());
+    CHECK(dir2.close_on_exec());
     CHECK(dir2.get() == dir.get() + 1);
     dir.swap(dir2);
     CHECK(dir2.get() == dir.get() - 1);

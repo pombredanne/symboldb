@@ -70,8 +70,9 @@ public:
   // and returns the actual file name.
   std::string mkstemp(const char *prefix);
 
-  // Assigns this fd_handle a duplicate of the descriptor.  Throws
-  // os_exception on error.
+  // Assigns this fd_handle a duplicate of the descriptor.  The new
+  // descriptor has the O_CLOEXEC flag set.  Throws os_exception on
+  // error.
   void dup(int fd);
 
   // Changes or returns the status of the FD_CLOEXEC flag.
