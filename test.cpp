@@ -22,6 +22,7 @@
 #include "os_exception.hpp"
 #include "string_support.hpp"
 #include "pg_exception.hpp"
+#include "fd_handle.hpp"
 #include "elf_image.hpp"
 #include "rpm_parser.hpp"
 
@@ -192,8 +193,16 @@ run_tests()
     report_descriptors("warning:   ", start_fds, true);
   }
 
-  elf_image_init();
-  rpm_parser_init();
+  {
+    // Reserve low file descriptors so that those are available for
+    // test cases.  Otherwise, some NSS version may occupy them.
+    fd_handle reservation[5];
+    for (unsigned i = 0; i < 5; ++i) {
+      reservation[i].open_read_only("/dev/null");
+    }
+    elf_image_init();
+    rpm_parser_init();
+  }
 
   for (test_suite::iterator p = tests->begin(), end = tests->end();
        p != end; ++p) {
