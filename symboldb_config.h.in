@@ -18,4 +18,4 @@
 
 #pragma once
 
-#define HAVE_PG_SINGLE_TUPLE @HAVE_PG_SINGLE_TUPLE@
+#cmakedefine HAVE_PG_SINGLE_TUPLE
