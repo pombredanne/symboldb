@@ -43,11 +43,10 @@
 #include "elf_exception.hpp"
 
 #include <libelf.h>
-#include <elfutils/libebl.h>
+#include <gelf.h>
 
 struct elf_image::impl {
   Elf *elf;
-  Ebl *ebl;
   size_t phnum;
   size_t shnum;
   unsigned char ei_class;
@@ -57,16 +56,12 @@ struct elf_image::impl {
   const char *arch;
 
   impl(const void *start, size_t size)
-    : elf(NULL), ebl(NULL)
+    : elf(NULL)
   {
     char *p = const_cast<char *>(static_cast<const char *>(start));
     elf = elf_memory(p, size);
     if (elf == NULL) {
       throw elf_exception();
-    }
-    ebl = ebl_openbackend (elf);
-    if (ebl == NULL) {
-      elf_exception::raise("cannot create EBL handle");
     }
 
     GElf_Ehdr ehdr_mem;
@@ -109,7 +104,6 @@ struct elf_image::impl {
 
   ~impl()
   {
-    ebl_closebackend(ebl);
     elf_end(elf);
   }
 };

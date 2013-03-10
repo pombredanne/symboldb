@@ -111,7 +111,7 @@ add_library (SymbolDB
 target_link_libraries (SymbolDB
   -lcurl
   -ldl
-  -lebl -lelf
+  -lelf
   -lexpat
   -lnss3
   -lpq
