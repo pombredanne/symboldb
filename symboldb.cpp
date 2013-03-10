@@ -234,6 +234,7 @@ usage(const char *progname, const char *error = NULL)
 "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 "\nOptions:\n"
 "  --arch=ARCH, -a        base architecture\n"
+"  --exclude-name=REGEXP  exclude packages whose name matches REGEXP\n"
 "  --quiet, -q            less output\n"
 "  --cache=DIR, -C        path to the cache (default: ~/.cache/symboldb)\n"
 "  --ignore-download-errors   process repositories with download errors\n"
