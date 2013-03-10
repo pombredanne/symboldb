@@ -314,6 +314,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>--randomize</option></term>
+	<listitem>
+	  <para>
+	    Reorder downloads randomly.  This increases parallelism
+	    when <command>symboldb</command> is run in parallel.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>--exclude-name</option>
 	<replaceable class="parameter">regexp</replaceable></term>
 	<listitem>

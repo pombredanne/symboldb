@@ -36,13 +36,16 @@ public:
   } output;
 
   std::string arch;
-  bool no_net;
   std::string set_name;
   std::string cache_path;
+  bool no_net;
 
   // If true, incomplete package sets with download errors are still
   // processed.
   bool ignore_download_errors;
+
+  // Randomize the download order.
+  bool randomize;
 
   symboldb_options();
   ~symboldb_options();

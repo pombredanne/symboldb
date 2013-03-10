@@ -234,6 +234,7 @@ usage(const char *progname, const char *error = NULL)
 "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 "\nOptions:\n"
 "  --arch=ARCH, -a        base architecture\n"
+"  --randomize            perform downloads in random order\n"
 "  --exclude-name=REGEXP  exclude packages whose name matches REGEXP\n"
 "  --quiet, -q            less output\n"
 "  --cache=DIR, -C        path to the cache (default: ~/.cache/symboldb)\n"
@@ -268,6 +269,7 @@ namespace {
       undefined = 2000,
       exclude_name,
       ignore_download_errors,
+      randomize,
     } type;
   }
 }
@@ -296,6 +298,7 @@ main(int argc, char **argv)
        command::show_soname_conflicts},
       {"arch", required_argument, 0, 'a'},
       {"exclude-name", required_argument, 0, options::exclude_name},
+      {"randomize", no_argument, 0, options::randomize},
       {"cache", required_argument, 0, 'C'},
       {"no-net", no_argument, 0, 'N'},
       {"ignore-download-errors", no_argument, 0,
@@ -349,6 +352,9 @@ main(int argc, char **argv)
 	break;
       case options::exclude_name:
 	opt.add_exclude_name(optarg);
+	break;
+      case options::randomize:
+	opt.randomize = true;
 	break;
       case options::ignore_download_errors:
 	opt.ignore_download_errors = true;

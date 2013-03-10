@@ -261,6 +261,9 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     download_filter filter(opt, db, pids, download_count, load);
     for (unsigned iteration = 1;
 	 iteration <= 3 && !urls.empty(); ++iteration) {
+      if (opt.randomize) {
+	std::random_shuffle(urls.begin(), urls.end());
+      }
       std::vector<rpm_url>::iterator p = std::remove_if
 	(urls.begin(), urls.end(), filter);
       urls.erase(p, urls.end());
