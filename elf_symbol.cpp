@@ -24,7 +24,7 @@
 #include <assert.h>
 
 elf_symbol::elf_symbol()
-  : other(0)
+  : type(0), other(0)
 {
 }
 
