@@ -200,6 +200,8 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     file.info->normalize_name();
     if (file.info->is_directory()) {
       db.add_directory(pkg, *file.info);
+    } else if (file.info->is_symlink()) {
+      db.add_symlink(pkg, *file.info, file.contents);
     } else {
       // FIXME: deal with symlinks and special files.
       std::vector<unsigned char> digest(hash(hash_sink::sha256, file.contents));

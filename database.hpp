@@ -106,6 +106,10 @@ public:
   // Adds the directory to the database.
   void add_directory(package_id, const rpm_file_info &);
 
+  // Adds the symlink to the database.
+  void add_symlink(package_id, const rpm_file_info &,
+		   const std::vector<unsigned char> &contents);
+
   // Loading ELF-related tables.
 
   // Populates the elf_file table.  Uses fallback_arch (from the RPM

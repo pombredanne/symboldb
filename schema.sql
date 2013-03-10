@@ -120,6 +120,22 @@ COMMENT ON COLUMN symboldb.file.contents IS 'preview of the file contents';
 CREATE INDEX ON symboldb.file (package);
 CREATE INDEX ON symboldb.file (name);
 
+CREATE TABLE symboldb.symlink (
+  package INTEGER NOT NULL
+    REFERENCES symboldb.package (id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  target TEXT NOT NULL CHECK (LENGTH(target) > 0),
+  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0),
+  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
+  mtime NUMERIC NOT NULL CHECK (mtime >= 0),
+  normalized BOOLEAN NOT NULL,
+  PRIMARY KEY(package, name)
+);
+COMMENT ON COLUMN symboldb.symlink.normalized IS
+  'indicates that the symlink name has been forced to UTF-8 encoding';
+CREATE INDEX ON symboldb.symlink (name);
+CREATE INDEX ON symboldb.symlink (target);
+
 CREATE TABLE symboldb.directory (
   package INTEGER NOT NULL
     REFERENCES symboldb.package (id) ON DELETE CASCADE,

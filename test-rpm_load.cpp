@@ -69,10 +69,8 @@ test()
   {
     static const char *const sysvinit_files_6[] = {
       "/sbin/killall5",
-      "/sbin/pidof",
       "/sbin/sulogin",
       "/usr/bin/last",
-      "/usr/bin/lastb",
       "/usr/bin/mesg",
       "/usr/bin/utmpdump",
       "/usr/bin/wall",
@@ -90,9 +88,7 @@ test()
     };
     static const char *const sysvinit_files_9[] = {
       "/sbin/killall5",
-      "/sbin/pidof",
       "/usr/bin/last",
-      "/usr/bin/lastb",
       "/usr/bin/mesg",
       "/usr/bin/wall",
       "/usr/share/doc/sysvinit-tools-2.88/Changelog",
