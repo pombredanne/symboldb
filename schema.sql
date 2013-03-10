@@ -31,8 +31,8 @@ CREATE DOMAIN symboldb.elf_short AS INTEGER
 
 CREATE DOMAIN symboldb.elf_symbol_type AS SMALLINT
   CHECK (VALUE BETWEEN 0 AND 15);
-CREATE DOMAIN symboldb.elf_binding_type AS TEXT
-  CHECK (LENGTH(VALUE) > 1);
+CREATE DOMAIN symboldb.elf_binding_type AS SMALLINT
+  CHECK (VALUE BETWEEN 0 AND 15);
 
 -- The actual value is unsigned, but we want to save space.
 CREATE DOMAIN symboldb.elf_section_type AS SMALLINT;
@@ -139,9 +139,9 @@ CREATE TABLE symboldb.elf_definition (
   version TEXT CHECK (LENGTH(version) > 0),
   primary_version BOOLEAN NOT NULL,
   symbol_type symboldb.elf_symbol_type NOT NULL,
+  binding symboldb.elf_binding_type NOT NULL,
   section symboldb.elf_section_type NOT NULL,
   xsection INTEGER,
-  binding symboldb.elf_binding_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL,
   CHECK (CASE WHEN version IS NULL THEN NOT primary_version ELSE TRUE END),
   -- xsection is only present when section is SHN_XINDEX.

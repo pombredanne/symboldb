@@ -303,8 +303,6 @@ elf_image::symbol_range::state::next(impl *parent)
     ++cnt;
   }
 
-  char bindbuf[64];
-
   /* Determine the real section index.  */
   if (sym->st_shndx != SHN_XINDEX)
     xndx = sym->st_shndx;
@@ -442,9 +440,7 @@ elf_image::symbol_range::state::next(impl *parent)
     psymbol = ref.get();
   }
   psymbol->type = GELF_ST_TYPE (sym->st_info);
-  psymbol->binding_name =
-    ebl_symbol_binding_name (parent->ebl, GELF_ST_BIND (sym->st_info),
-			     bindbuf, sizeof (bindbuf));
+  psymbol->binding = GELF_ST_BIND (sym->st_info);
   psymbol->symbol_name =
     elf_strptr (parent->elf, shdr->sh_link, sym->st_name);
   psymbol->other = sym->st_other;

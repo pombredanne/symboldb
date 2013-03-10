@@ -21,9 +21,9 @@
 #include <string>
 
 struct elf_symbol {
-  std::string binding_name;
   std::string symbol_name;
   unsigned char type;		// between 0 and 15
+  unsigned char binding;	// between 0 and 15
   unsigned char other;		// st_other field, visibility
   elf_symbol();
   ~elf_symbol();

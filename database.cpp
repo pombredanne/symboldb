@@ -423,23 +423,25 @@ database::add_elf_symbol_definition(file_id file,
   snprintf(xsectionstr, sizeof(xsectionstr), "%d", (int)def.xsection);
   char symboltypestr[32];
   snprintf(symboltypestr, sizeof(symboltypestr), "%d", (int)def.type);
+  char bindingstr[32];
+  snprintf(bindingstr, sizeof(bindingstr), "%d", (int)def.binding);
   const char *params[] = {
     filestr,
     def.symbol_name.c_str(),
     def.vda_name.empty() ? NULL : def.vda_name.c_str(),
     def.default_version ? "t" : "f",
     symboltypestr,
+    bindingstr,
     sectionstr,
     def.has_xsection() ? xsectionstr : NULL,
-    def.binding_name.c_str(),
     def.visibility(),
   };
   pgresult_handle res;
   res.execParams
     (impl_->conn,
      "INSERT INTO " ELF_DEFINITION_TABLE
-     " (file, name, version, primary_version, symbol_type, section, xsection,"
-     " binding, visibility)"
+     " (file, name, version, primary_version, symbol_type, binding,"
+     " section, xsection, visibility)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", params);
 }
 
@@ -452,12 +454,14 @@ database::add_elf_symbol_reference(file_id file,
   snprintf(filestr, sizeof(filestr), "%d", file.value());
   char symboltypestr[32];
   snprintf(symboltypestr, sizeof(symboltypestr), "%d", (int)ref.type);
+  char bindingstr[32];
+  snprintf(bindingstr, sizeof(bindingstr), "%d", (int)ref.type);
   const char *params[] = {
     filestr,
     ref.symbol_name.c_str(),
     ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
     symboltypestr,
-    ref.binding_name.c_str(),
+    bindingstr,
     ref.visibility(),
   };
   pgresult_handle res;
