@@ -19,6 +19,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 
 // POSIX file descriptor which is closed on scope exit.
 class fd_handle {
@@ -64,6 +65,10 @@ public:
   // Throws os_exception on error.
   void openat(int fd, const char *path, int flags);
   void openat(int fd, const char *path, int flags, unsigned mode);
+
+  // Calls ::mkostemp(char *, O_CLOEXEC).  Appends "XXXXXX" to PREFIX
+  // and returns the actual file name.
+  std::string mkstemp(const char *prefix);
 
   // Assigns this fd_handle a duplicate of the descriptor.  Throws
   // os_exception on error.

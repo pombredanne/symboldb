@@ -150,6 +150,15 @@ test(void)
     }
     remove_directory_tree(root.c_str());
   }
+  {
+    fd_handle fd;
+    std::string prefix("/tmp/test-fd_handle-");
+    std::string path(fd.mkstemp(prefix.c_str()));
+    CHECK(path.size() > prefix.size());
+    path.resize(prefix.size());
+    COMPARE_STRING(path, prefix);
+    CHECK(fd.close_on_exec());
+  }
 }
 
 static test_register t("fd_handle", test);

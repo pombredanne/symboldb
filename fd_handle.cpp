@@ -19,9 +19,13 @@
 #include "fd_handle.hpp"
 #include "os_exception.hpp"
 
+#include <vector>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -105,6 +109,20 @@ void
 fd_handle::open_directory(const char *path)
 {
   open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+}
+
+std::string
+fd_handle::mkstemp(const char *prefix)
+{
+  std::vector<char> templ(prefix, prefix + strlen(prefix));
+  static const char placeholder[7] = "XXXXXX";
+  templ.insert(templ.end(), placeholder, placeholder + sizeof(placeholder));
+  int newfd = ::mkostemp(templ.data(), O_CLOEXEC);
+  if (newfd < 0) {
+    throw os_exception().function(::mkstemp).path(prefix);
+  }
+  reset(newfd);
+  return templ.data();
 }
 
 void
