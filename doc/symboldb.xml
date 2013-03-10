@@ -303,6 +303,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <title>OPTIONS</title>
     <variablelist>
       <varlistentry>
+	<term><option>--arch</option> <replaceable
+	class="parameter">arch</replaceable></term>
+	<term><option>-a</option> <replaceable
+	class="parameter">arch</replaceable></term>
+	<listitem>
+	  <para>
+	    Identifies the base architecture (for a package set).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>--exclude-name</option>
 	<replaceable class="parameter">regexp</replaceable></term>
 	<listitem>
@@ -313,17 +324,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    regular expression which is matched in a case-insensitive
 	    manner and anchored at both ends.  This option can be
 	    repeated multiple times.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>--arch</option> <replaceable
-	class="parameter">arch</replaceable></term>
-	<term><option>-a</option> <replaceable
-	class="parameter">arch</replaceable></term>
-	<listitem>
-	  <para>
-	    Identifies the base architecture (for a package set).
 	  </para>
 	</listitem>
       </varlistentry>
