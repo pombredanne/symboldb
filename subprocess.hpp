@@ -61,6 +61,9 @@ public:
   // default is to inherit it.
   subprocess &redirect(standard_fd, fd_activity);
 
+  // Redirect a standard descriptor to a an existing file descriptor.
+  subprocess &redirect_to(standard_fd, int fd);
+
   // Returns the pipe associated with a standard file descriptor.
   // Only valid if the matching activity() function has been called.
   // Ownership rests with this subprocess object, and calling wait()

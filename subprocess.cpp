@@ -102,6 +102,7 @@ struct subprocess::impl {
   std::vector<char *> argv;
   std::vector<char *> envv;
   fd_activity activity[3];
+  fd_handle redirect_to[3];
   fd_handle pipes[3];
   pid_t pid;
 
@@ -205,6 +206,22 @@ subprocess::redirect(standard_fd fd, fd_activity act)
   assert(fd == in || fd == out || fd == err);
   assert(act == inherit || act == null || act == pipe);
   impl_->activity[fd] = act;
+  impl_->redirect_to[fd].close();
+  return *this;
+}
+
+subprocess &
+subprocess::redirect_to(standard_fd stdfd, int targetfd)
+{
+  assert(stdfd == in || stdfd == out || stdfd == err);
+  fd_handle target;
+  target.dup(targetfd);
+  if (target.close_on_exec()) {
+    throw std::logic_error
+      ("subprocess::redirect_to descriptor O_CLOEXEC");
+  }
+  impl_->activity[stdfd] = null;
+  impl_->redirect_to[stdfd].swap(target);
   return *this;
 }
 
@@ -234,7 +251,14 @@ subprocess::start()
       case inherit:
 	break;
       case null:
-	{
+	if (impl_->redirect_to[i].get() >= 0) {
+	  int fd = impl_->redirect_to[i].get();
+	  int ret = posix_spawn_file_actions_adddup2(&actions.raw, fd, i);
+	  if (ret != 0) {
+	    throw os_exception(ret).function(posix_spawn_file_actions_adddup2)
+	      .fd(fd).defaults();
+	  }
+	} else {
 	  int flags = i == subprocess::in ? O_RDONLY : O_WRONLY;
 	  if (posix_spawn_file_actions_addopen(&actions.raw, i,
 					       "/dev/null", flags, 0) != 0) {

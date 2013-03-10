@@ -21,8 +21,10 @@
 #include "fd_sink.hpp"
 #include "string_sink.hpp"
 #include "source_sink.hpp"
+#include "fd_handle.hpp"
 
 #include <signal.h>
+#include <unistd.h>
 
 #include "test.hpp"
 
@@ -161,6 +163,55 @@ test()
     copy_source_to_sink(source, sink);
     CHECK(proc.wait() == 0);
     COMPARE_STRING(sink.data, "/does-not-exist\n");
+  }
+  {
+    fd_handle tempfile;
+    std::string path(tempfile.mkstemp("/tmp/test-subprocess-"));
+    {
+      subprocess proc;
+      proc.command("/bin/sh").arg("-c").arg("echo abc");
+      proc.redirect_to(subprocess::out, tempfile.get());
+      proc.start();
+      CHECK(proc.wait() == 0);
+      tempfile.open_read_only(path.c_str());
+      fd_source source(tempfile.get());
+      string_sink sink;
+      copy_source_to_sink(source, sink);
+      COMPARE_STRING(sink.data, "abc\n");
+    }
+
+    {
+      subprocess proc;
+      proc.command("/bin/cat").arg("--").arg(path.c_str());
+      tempfile.open_read_only(path.c_str());
+      proc.redirect_to(subprocess::in, tempfile.get());
+      tempfile.close();
+      proc.redirect(subprocess::out, subprocess::pipe);
+      proc.start();
+      int fd = proc.pipefd(subprocess::out);
+      fd_source source(fd);
+      string_sink sink;
+      copy_source_to_sink(source, sink);
+      CHECK(proc.wait() == 0);
+      COMPARE_STRING(sink.data, "abc\n");
+    }
+
+    CHECK(unlink(path.c_str()) == 0);
+  }
+  {
+    fd_handle tempfile;
+    std::string path(tempfile.mkstemp("/tmp/test-subprocess-"));
+    subprocess proc;
+    proc.command("/bin/sh").arg("-c").arg("echo abc 1>&2");
+    proc.redirect_to(subprocess::err, tempfile.get());
+    proc.start();
+    CHECK(proc.wait() == 0);
+    tempfile.open_read_only(path.c_str());
+    fd_source source(tempfile.get());
+    string_sink sink;
+    copy_source_to_sink(source, sink);
+    COMPARE_STRING(sink.data, "abc\n");
+    CHECK(unlink(path.c_str()) == 0);
   }
 }
 
