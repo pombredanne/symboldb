@@ -22,6 +22,8 @@
 #include "os_exception.hpp"
 #include "string_support.hpp"
 #include "pg_exception.hpp"
+#include "elf_image.hpp"
+#include "rpm_parser.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -190,6 +192,9 @@ run_tests()
     report_descriptors("warning:   ", start_fds, true);
   }
 
+  elf_image_init();
+  rpm_parser_init();
+
   for (test_suite::iterator p = tests->begin(), end = tests->end();
        p != end; ++p) {
     current_test = p->name;
@@ -216,6 +221,8 @@ run_tests()
 	    failure_count, failure_count + success_count, exception_count);
     return 1;
   }
+
+  rpm_parser_deinit();
 
   if (file_descriptors_valid(start_fds)) {
     std::vector<int> end_fds(file_descriptors());

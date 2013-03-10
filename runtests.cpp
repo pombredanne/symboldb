@@ -18,14 +18,8 @@
 
 #include "test.hpp"
 
-#include "elf_image.hpp"
-#include "rpm_parser.hpp"
-
 int
 main()
 {
-  elf_image_init();
-  rpm_parser_init();
-
   return run_tests();
 }
