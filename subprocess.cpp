@@ -216,10 +216,6 @@ subprocess::redirect_to(standard_fd stdfd, int targetfd)
   assert(stdfd == in || stdfd == out || stdfd == err);
   fd_handle target;
   target.dup(targetfd);
-  if (target.close_on_exec()) {
-    throw std::logic_error
-      ("subprocess::redirect_to descriptor O_CLOEXEC");
-  }
   impl_->activity[stdfd] = null;
   impl_->redirect_to[stdfd].swap(target);
   return *this;
@@ -280,7 +276,6 @@ subprocess::start()
 	  impl_->pipes[i].reset(pipe_parent_child[0]);
 	  assert(pipe_parent_child[1] > 2);
 	  child_pipes[i].reset(pipe_parent_child[1]);
-	  child_pipes[i].close_on_exec(false);
 	  if (posix_spawn_file_actions_adddup2(&actions.raw,
 					       child_pipes[i].get(), i) != 0) {
 	    throw os_exception()
