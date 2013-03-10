@@ -25,6 +25,7 @@
 #include "fd_handle.hpp"
 #include "elf_image.hpp"
 #include "rpm_parser.hpp"
+#include "curl_fetch_result.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -195,13 +196,15 @@ run_tests()
 
   {
     // Reserve low file descriptors so that those are available for
-    // test cases.  Otherwise, some NSS version may occupy them.
+    // test cases.  Otherwise, some crypto libraries may pick file
+    // descriptors there.
     fd_handle reservation[5];
     for (unsigned i = 0; i < 5; ++i) {
       reservation[i].open_read_only("/dev/null");
     }
     elf_image_init();
     rpm_parser_init();
+    curl_fetch_result::global_init();
   }
 
   for (test_suite::iterator p = tests->begin(), end = tests->end();
@@ -232,6 +235,7 @@ run_tests()
   }
 
   rpm_parser_deinit();
+  curl_fetch_result::global_deinit();
 
   if (file_descriptors_valid(start_fds)) {
     std::vector<int> end_fds(file_descriptors());
