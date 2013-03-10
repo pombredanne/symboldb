@@ -161,7 +161,7 @@ test()
     copy_source_to_sink(source, sink);
     CHECK(proc.wait() == 0);
     COMPARE_STRING(sink.data, "/does-not-exist\n");
- }
+  }
 }
 
 static test_register t("subprocess", test);
