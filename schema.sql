@@ -247,7 +247,7 @@ COMMENT ON TABLE symboldb.url_cache IS 'cache for URL downloads';
 
 CREATE FUNCTION symboldb.file_mode_internal
   (mode INTEGER, mask INTEGER, ch TEXT) RETURNS TEXT AS $$
-  SELECT CASE WHEN (mode & mask) <> 0 THEN ch ELSE '-' END;
+  SELECT CASE WHEN ($1 & $2) <> 0 THEN $3 ELSE '-' END;
 $$ IMMUTABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.file_mode_internal
   (INTEGER, INTEGER, TEXT) IS 'internal helper function';
@@ -256,9 +256,9 @@ CREATE FUNCTION symboldb.file_mode_internal
   (mode INTEGER, mask1 INTEGER, mask2 INTEGER,
    ch1 TEXT, ch2 TEXT, ch3 TEXT) RETURNS TEXT AS $$
   SELECT CASE
-    WHEN (mode & mask1) <> 0 AND (mode & mask2) = 0 THEN ch1
-    WHEN (mode & mask1) = 0 AND (mode & mask2) <> 0 THEN ch2
-    WHEN (mode & mask1) <> 0 AND (mode & mask2) <> 0 THEN ch3
+    WHEN ($1 & $2) <> 0 AND ($1 & $3) = 0 THEN $4
+    WHEN ($1 & $2) = 0 AND ($1 & $3) <> 0 THEN $5
+    WHEN ($1 & $2) <> 0 AND ($1 & $3) <> 0 THEN $6
     ELSE '-'
   END;
 $$ IMMUTABLE STRICT LANGUAGE SQL;
