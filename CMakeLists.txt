@@ -18,9 +18,15 @@ find_path (
   PATH_SUFFIXES include/nspr include/nspr4
 )
 
+find_path (
+  PQ_INCLUDE_DIR libpq-fe.h
+  PATH_SUFFIXES include include/postgresql
+)
+
 include_directories (
   ${NSS_INCLUDE_DIR}
   ${NSPR_INCLUDE_DIR}
+  ${PQ_INCLUDE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
