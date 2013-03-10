@@ -28,8 +28,10 @@
 #include "string_sink.hpp"
 #include "subprocess.hpp"
 #include "dir_handle.hpp"
+#include "fd_handle.hpp"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -220,11 +222,15 @@ pg_testdb::impl::configure()
 void
 pg_testdb::impl::start()
 {
-  // FIXME: redirect output to a file
+  fd_handle logfile;
+  logfile.open((directory + "/server.log").c_str(),
+	       O_WRONLY | O_APPEND | O_CREAT | O_TRUNC, 0600);
   server.command((program_prefix + POSTMASTER).c_str())
     .arg("-D").arg(directory.c_str())
     .arg("-h").arg("") // no TCP socket
-    .arg("-F"); // disable fsync()
+    .arg("-F")  // disable fsync()
+    .redirect_to(subprocess::out, logfile.get())
+    .redirect_to(subprocess::err, logfile.get());
   server.start();
 }
 
