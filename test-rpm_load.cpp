@@ -157,6 +157,19 @@ test()
 	COMPARE_STRING(r2.getvalue(j, 0), files[j]);
       }
       CHECK(files[endj] == NULL);
+
+      r2.execParams(dbh, "SELECT name FROM symboldb.directory"
+		    " WHERE package = $1 ORDER BY name", params);
+      CHECK(r2.ntuples() == 1);
+      COMPARE_STRING(r2.getvalue(0, 0), "/usr/share/doc/sysvinit-tools-2.88");
+
+      r2.execParams(dbh, "SELECT name, target FROM symboldb.symlink"
+		    " WHERE package = $1 ORDER BY name", params);
+      CHECK(r2.ntuples() == 2);
+      COMPARE_STRING(r2.getvalue(0, 0), "/sbin/pidof");
+      COMPARE_STRING(r2.getvalue(0, 1), "killall5");
+      COMPARE_STRING(r2.getvalue(1, 0), "/usr/bin/lastb");
+      COMPARE_STRING(r2.getvalue(1, 1), "last");
     }
 
     r1.exec(dbh,
