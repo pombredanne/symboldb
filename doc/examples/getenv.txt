@@ -4,62 +4,63 @@ Detecting potentially unsafe uses of getenv
 Indirect references to getenv from SUID/SGID programs can be found
 using:
 
-SELECT DISTINCT symboldb.nevra(p) AS package,
-    base.name AS program, f.name AS library
-  FROM (SELECT f.id, f.name, f.package
-    FROM symboldb.package_set_member psm
-    JOIN symboldb.file f ON psm.package = f.package
-    JOIN symboldb.elf_file ef ON f.id = ef.file
-    WHERE psm.set = 1 AND (f.mode & 3072) <> 0) base
-  JOIN symboldb.elf_closure ec ON ec.file = base.id
-  JOIN symboldb.elf_reference er ON ec.needed = er.file
-  JOIN symboldb.file f ON f.id = er.file
-  JOIN symboldb.package p ON base.package = p.id
-  WHERE ec.package_set = 1 AND er.name = 'getenv'
-  ORDER BY package, program, library;
+    SELECT DISTINCT symboldb.nevra(p) AS package,
+        base.name AS program, f.name AS library
+      FROM (SELECT f.id, f.name, f.package
+        FROM symboldb.package_set_member psm
+        JOIN symboldb.file f ON psm.package = f.package
+        JOIN symboldb.elf_file ef ON f.id = ef.file
+        WHERE psm.set = symboldb.package_set('Fedora/18/x86_64')
+	AND (f.mode & 3072) <> 0) base
+      JOIN symboldb.elf_closure ec ON ec.file = base.id
+      JOIN symboldb.elf_reference er ON ec.needed = er.file
+      JOIN symboldb.file f ON f.id = er.file
+      JOIN symboldb.package p ON base.package = p.id
+      WHERE ec.package_set = symboldb.package_set('Fedora/18/x86_64')
+      AND er.name = 'getenv'
+      ORDER BY package, program, library;
 
 The magic constant 3072 corresponds to the SGID/SUID bits.
-Replace 1 with the package set of interest (twice).
 
 Indirect references to getenv from PAM modules can be found using:
 
-SELECT DISTINCT symboldb.nevra(p) AS package,
-    base.name AS module, f.name AS library
-  FROM (SELECT f.id, f.name, f.package
-    FROM symboldb.package_set_member psm
-    JOIN symboldb.file f ON psm.package = f.package
-    JOIN symboldb.elf_definition ed ON f.id = ed.file
-    WHERE psm.set = 1 AND ed.name IN (
-      'pam_sm_acct_mgmt',
-      'pam_sm_authentication',
-      'pam_sm_chauthtok',
-      'pam_sm_close_session',
-      'pam_sm_open_ssession',
-      'pam_sm_setcred')) base
-  JOIN symboldb.elf_closure ec ON ec.file = base.id
-  JOIN symboldb.elf_reference er ON ec.needed = er.file
-  JOIN symboldb.file f ON f.id = er.file
-  JOIN symboldb.package p ON base.package = p.id
-  WHERE ec.package_set = 1 AND er.name = 'getenv'
-  ORDER BY package, module, library;
-
-Replace 1 with the package set of interest (twice).
+    SELECT DISTINCT symboldb.nevra(p) AS package,
+        base.name AS module, f.name AS library
+      FROM (SELECT f.id, f.name, f.package
+        FROM symboldb.package_set_member psm
+        JOIN symboldb.file f ON psm.package = f.package
+        JOIN symboldb.elf_definition ed ON f.id = ed.file
+        WHERE psm.set = symboldb.package_set('Fedora/18/x86_64')
+        AND ed.name IN (
+          'pam_sm_acct_mgmt',
+          'pam_sm_authentication',
+          'pam_sm_chauthtok',
+          'pam_sm_close_session',
+          'pam_sm_open_ssession',
+          'pam_sm_setcred')) base
+      JOIN symboldb.elf_closure ec ON ec.file = base.id
+      JOIN symboldb.elf_reference er ON ec.needed = er.file
+      JOIN symboldb.file f ON f.id = er.file
+      JOIN symboldb.package p ON base.package = p.id
+      WHERE ec.package_set = symboldb.package_set('Fedora/18/x86_64')
+      AND er.name = 'getenv'
+      ORDER BY package, module, library;
 
 Indirect references to getenv from NSS modules can be found using:
 
-SELECT DISTINCT symboldb.nevra(p) AS package,
-    base.name AS module, f.name AS library
-  FROM (SELECT f.id, f.name, f.package
-    FROM symboldb.package_set_member psm
-    JOIN symboldb.file f ON psm.package = f.package
-    JOIN symboldb.elf_definition ed ON f.id = ed.file
-    WHERE psm.set = 1 AND ed.name ~ '^_nss_(.*)_((set|end)(gr|host|proto|pw|serv)ent|get(grgid|grnam|protobyname|protobynumber|pwnam|pwuid|servybname|servbyport)(_r)?)$'
-    ) base
-  JOIN symboldb.elf_closure ec ON ec.file = base.id
-  JOIN symboldb.elf_reference er ON ec.needed = er.file
-  JOIN symboldb.file f ON f.id = er.file
-  JOIN symboldb.package p ON base.package = p.id
-  WHERE ec.package_set = 1 AND er.name = 'getenv'
-  ORDER BY package, module, library;
-
-Replace 1 with the package set of interest (twice).
+    SELECT DISTINCT symboldb.nevra(p) AS package,
+        base.name AS module, f.name AS library
+      FROM (SELECT f.id, f.name, f.package
+        FROM symboldb.package_set_member psm
+        JOIN symboldb.file f ON psm.package = f.package
+        JOIN symboldb.elf_definition ed ON f.id = ed.file
+        WHERE psm.set = symboldb.package_set('Fedora/18/x86_64')
+        AND ed.name ~ '^_nss_(.*)_((set|end)(gr|host|proto|pw|serv)ent|get(grgid|grnam|protobyname|protobynumber|pwnam|pwuid|servybname|servbyport)(_r)?)$'
+        ) base
+      JOIN symboldb.elf_closure ec ON ec.file = base.id
+      JOIN symboldb.elf_reference er ON ec.needed = er.file
+      JOIN symboldb.file f ON f.id = er.file
+      JOIN symboldb.package p ON base.package = p.id
+      WHERE ec.package_set = symboldb.package_set('Fedora/18/x86_64')
+      AND er.name = 'getenv'
+      ORDER BY package, module, library;
