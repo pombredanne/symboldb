@@ -1,7 +1,5 @@
 * Write some documentation, including a manual page.
 
-* Check portability of the sources to non-Fedora systems.
-
 * Better logging, in particular of network activity.  Final URLs after
   redirection should be included in error messages.
 
