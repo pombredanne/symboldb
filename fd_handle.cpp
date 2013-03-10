@@ -108,6 +108,16 @@ fd_handle::open_directory(const char *path)
 }
 
 void
+fd_handle::dup(int fd)
+{
+  int newfd = ::dup(fd);
+  if (newfd < 0) {
+    throw os_exception().function(::dup).fd(fd).defaults();
+  }
+  reset(newfd);
+}
+
+void
 fd_handle::close_on_exec(bool flag)
 {
   int flags = fcntl(raw, F_GETFD, 0);

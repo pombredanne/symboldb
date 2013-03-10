@@ -62,6 +62,10 @@ public:
   void openat(int fd, const char *path, int flags);
   void openat(int fd, const char *path, int flags, unsigned mode);
 
+  // Assigns this fd_handle a duplicate of the descriptor.  Throws
+  // os_exception on error.
+  void dup(int fd);
+
   // Changes or returns the status of the FD_CLOEXEC flag.
   void close_on_exec(bool);
   bool close_on_exec() const;

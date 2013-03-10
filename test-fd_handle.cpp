@@ -111,8 +111,11 @@ test(void)
   {
     fd_handle dir;
     dir.open_directory("/dev");
+    fd_handle dir2;
+    dir2.dup(dir.get());
+    CHECK(dir2.get() > dir.get());
     fd_handle null;
-    null.openat(dir.get(), "null", O_RDONLY);
+    null.openat(dir2.get(), "null", O_RDONLY);
     try {
       dir.open_directory("/dev/null");
       CHECK(false);
