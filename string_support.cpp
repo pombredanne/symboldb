@@ -20,6 +20,7 @@
 
 #include <cerrno>
 #include <cstdlib>
+#include <cstring>
 #include <sstream>
 
 std::string
@@ -128,4 +129,29 @@ strip(const std::string &s)
   std::string r(s);
   strip_inplace(r);
   return r;
+}
+
+unsigned
+fnv(const unsigned char *p, size_t len)
+{
+  unsigned hash = 0x243f6a88;
+  while (len) {
+    hash ^= *p;
+    hash *= 0x9e3779b9;
+    --len;
+    ++p;
+  }
+  return hash;
+}
+
+unsigned
+fnv(const std::string &str)
+{
+  return fnv(reinterpret_cast<const unsigned char *>(str.data()), str.size());
+}
+
+unsigned
+fnv(const char *str)
+{
+  return fnv(reinterpret_cast<const unsigned char *>(str), strlen(str));
 }

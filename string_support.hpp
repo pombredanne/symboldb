@@ -55,3 +55,9 @@ ends_with(const std::string &s, const char (&pattern)[N])
   }
   return __builtin_memcmp(s.data() + (s.size() - N + 1), pattern, N - 1) == 0;
 }
+
+// A simple hash function.  Use this for locking only, but not for
+// hash tables.
+unsigned fnv(const std::string &);
+unsigned fnv(const char *);
+unsigned fnv(const unsigned char *, size_t);

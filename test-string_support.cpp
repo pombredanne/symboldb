@@ -33,6 +33,10 @@ test()
   COMPARE_STRING(quote("a\177b"), "a\\x7fb");
   COMPARE_STRING(quote("a\200b"), "a\\x80b");
   COMPARE_STRING(quote(std::string("a\000b\377c", 6)), "a\\x00b\\xffc\\x00");
+
+  CHECK(fnv("abc") == fnv(std::string("abc")));
+  CHECK(fnv("abc") != fnv(std::string("abc", 4)));
+  CHECK((fnv("abc") & 7) != (fnv(std::string("abd", 4)) & 7));
 }
 
 static test_register t("string_support", test);
