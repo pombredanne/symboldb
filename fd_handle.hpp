@@ -35,6 +35,9 @@ public:
   // Closes the file descriptor if it is not negative.
   ~fd_handle();
 
+  // Swaps the descriptors.
+  void swap(fd_handle &) throw();
+
   // Returns the file descriptor.
   int get() throw();
 
@@ -104,6 +107,14 @@ inline
 fd_handle::fd_handle(int fd)
   : raw(fd)
 {
+}
+
+inline void
+fd_handle::swap(fd_handle &other) throw()
+{
+  int tmp = other.raw;
+  other.raw = raw;
+  raw = tmp;
 }
 
 inline int
