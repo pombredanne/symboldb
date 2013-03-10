@@ -317,8 +317,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>--cache</option></term>
-	<term><option>-C</option></term>
+	<term><option>--arch</option> <replaceable
+	class="parameter">arch</replaceable></term>
+	<term><option>-a</option> <replaceable
+	class="parameter">arch</replaceable></term>
 	<listitem>
 	  <para>
 	    Identifies the base architecture (for a package set).
