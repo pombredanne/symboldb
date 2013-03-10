@@ -28,6 +28,7 @@
 
 #include <rpm/rpmlib.h>
 #include <rpm/rpmlog.h>
+#include <rpm/rpmpgp.h>
 #include <rpm/rpmts.h>
 
 #include <map>
@@ -37,6 +38,13 @@ void
 rpm_parser_init()
 {
   rpmReadConfigFiles("", "noarch");
+}
+
+void
+rpm_parser_deinit()
+{
+  rpmInitCrypto();
+  rpmFreeCrypto();
 }
 
 struct rpm_parser_state::impl {

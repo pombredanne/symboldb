@@ -30,6 +30,9 @@ class rpm_package_info;
 // objects.
 void rpm_parser_init();
 
+// Attempts to clean up the RPM library.
+void rpm_parser_deinit();
+
 struct rpm_file_entry {
   std::tr1::shared_ptr<rpm_file_info> info;
   std::vector<unsigned char> contents;
