@@ -29,6 +29,8 @@
 #include "subprocess.hpp"
 #include "dir_handle.hpp"
 
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 namespace {
@@ -76,6 +78,42 @@ namespace {
       throw pg_exception("could not locate PostgreSQL server binaries");
     }
     return candidate;
+  }
+
+
+  // Checks if the configuration file mentions
+  // "unix_socket_directories".
+  bool
+  uses_unix_socket_directories(const char *confpath)
+  {
+    FILE *conf = fopen(confpath, "r");
+    if (conf == NULL) {
+      throw os_exception().function(fopen).path(confpath);
+    }
+    bool found = false;
+    try {
+      char *line = NULL;
+      size_t linesize = 0;
+      while (true) {
+	errno = 0;
+	if (getline(&line, &linesize, conf) < 0) {
+	  if (errno == 0) {
+	    break;
+	  } else {
+	    throw os_exception().function(getline).fd(fileno(conf)).defaults();
+	  }
+	}
+	found = strstr(line, "unix_socket_directories") != NULL;
+	if (found) {
+	  break;
+	}
+      }
+    } catch(...) {
+      fclose(conf);
+      throw;
+    }
+    fclose(conf);
+    return found;
   }
 }
 
@@ -155,12 +193,19 @@ pg_testdb::impl::configure()
 {
   std::string confpath(directory);
   confpath += "/postgresql.conf";
+
+  // Older PostgreSQL versions use "unix_socket_directory", but 9.2
+  // and later use "unix_socket_directories" (and recognize only this
+  // variant).
+  bool sockdir_plural = uses_unix_socket_directories(confpath.c_str());
+
   FILE *conf = fopen(confpath.c_str(), "a");
   if (conf == NULL) {
     throw os_exception().function(fopen).path(confpath.c_str());
   }
   try {
-    fprintf(conf, "unix_socket_directories = '%s'\n", directory.c_str());
+    fprintf(conf, "unix_socket_director%s = '%s'\n",
+	    sockdir_plural ? "ies" : "y", directory.c_str());
     fprintf(conf, "unix_socket_permissions = 0700\n");
     if (ferror(conf)) {
       throw os_exception().function(fprintf).fd(fileno(conf)).defaults();
