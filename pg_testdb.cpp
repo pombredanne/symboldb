@@ -27,6 +27,7 @@
 #include "source_sink.hpp"
 #include "string_sink.hpp"
 #include "subprocess.hpp"
+#include "dir_handle.hpp"
 
 #include <unistd.h>
 
@@ -34,16 +35,47 @@ namespace {
   static const char INITDB[] = "initdb";
   static const char POSTMASTER[] = "postgres";
 
+  bool
+  check_path(const std::string &path)
+  {
+    return is_executable((path + INITDB).c_str())
+      && is_executable((path + INITDB).c_str());
+  }
+
   std::string
   postgresql_prefix()
   {
     std::string candidate("/usr/bin/");
-    if (is_executable((candidate + INITDB).c_str())
-	&& is_executable((candidate + INITDB).c_str())) {
+    if (check_path(candidate)) {
       return candidate;
-    } else {
+    }
+    static const char pgpath[] = "/usr/lib/postgresql";
+    if (is_directory(pgpath)) {
+      dir_handle pgdir(pgpath);
+      candidate = pgpath;
+      candidate += '/';
+      std::string best_candidate;
+      double best_ver = 0.0;
+      while (dirent *d = pgdir.readdir()) {
+	double ver = 0.0;
+	if ((sscanf(d->d_name, "%lf", &ver) != 1 && ver <= 0)
+	    || ver < best_ver) {
+	  continue;
+	}
+	candidate.resize(sizeof(pgpath));
+	candidate += d->d_name;
+	candidate += "/bin/";
+	if (check_path(candidate)) {
+	  best_candidate = candidate;
+	  best_ver = ver;
+	}
+      }
+      candidate = best_candidate;
+    }
+    if (candidate.empty()) {
       throw pg_exception("could not locate PostgreSQL server binaries");
     }
+    return candidate;
   }
 }
 
