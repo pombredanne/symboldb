@@ -311,4 +311,12 @@ $$ IMMUTABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
   'format the integer as a file permission string';
 
+-- Convenience functions.
+
+CREATE FUNCTION symboldb.package_set (TEXT) RETURNS INTEGER AS $$
+  SELECT id FROM symboldb.package_set WHERE name = $1
+$$ STABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
+  'return the ID of the named package set';
+
 COMMIT;
