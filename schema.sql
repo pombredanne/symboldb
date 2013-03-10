@@ -34,6 +34,9 @@ CREATE DOMAIN symboldb.elf_symbol_type AS TEXT
 CREATE DOMAIN symboldb.elf_binding_type AS TEXT
   CHECK (LENGTH(VALUE) > 1);
 
+-- The actual value is unsigned, but we want to save space.
+CREATE DOMAIN symboldb.elf_section_type AS INT2;
+
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0),
@@ -135,10 +138,14 @@ CREATE TABLE symboldb.elf_definition (
   name TEXT NOT NULL CHECK(length(name) > 0),
   version TEXT CHECK (LENGTH(version) > 0),
   primary_version BOOLEAN NOT NULL,
+  section symboldb.elf_section_type NOT NULL,
+  xsection INTEGER,
   symbol_type symboldb.elf_symbol_type NOT NULL,
   binding symboldb.elf_binding_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL,
-  CHECK (CASE WHEN version IS NULL THEN NOT primary_version ELSE TRUE END)
+  CHECK (CASE WHEN version IS NULL THEN NOT primary_version ELSE TRUE END),
+  -- xsection is only present when section is SHN_XINDEX.
+  CHECK ((xsection IS NOT NULL) = (section = -1))
 );
 CREATE INDEX ON symboldb.elf_definition (file);
 CREATE INDEX ON symboldb.elf_definition (name, version);

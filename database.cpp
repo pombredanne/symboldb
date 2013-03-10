@@ -417,11 +417,17 @@ database::add_elf_symbol_definition(file_id file,
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   char filestr[32];
   snprintf(filestr, sizeof(filestr), "%d", file.value());
+  char sectionstr[32];
+  snprintf(sectionstr, sizeof(sectionstr), "%hd", (signed short)def.section);
+  char xsectionstr[32];
+  snprintf(xsectionstr, sizeof(xsectionstr), "%d", (int)def.xsection);
   const char *params[] = {
     filestr,
     def.symbol_name.c_str(),
     def.vda_name.empty() ? NULL : def.vda_name.c_str(),
     def.default_version ? "t" : "f",
+    sectionstr,
+    def.has_xsection() ? xsectionstr : NULL,
     def.type_name.c_str(),
     def.binding_name.c_str(),
     def.visibility(),
@@ -430,9 +436,9 @@ database::add_elf_symbol_definition(file_id file,
   res.execParams
     (impl_->conn,
      "INSERT INTO " ELF_DEFINITION_TABLE
-     " (file, name, version, primary_version, symbol_type, binding,"
-     " visibility)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)", params);
+     " (file, name, version, primary_version, section, xsection,"
+     " symbol_type, binding, visibility)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", params);
 }
 
 void

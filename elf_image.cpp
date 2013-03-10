@@ -305,7 +305,6 @@ elf_image::symbol_range::state::next(impl *parent)
 
   char typebuf[64];
   char bindbuf[64];
-  char scnbuf[64];
 
   /* Determine the real section index.  */
   if (sym->st_shndx != SHN_XINDEX)
@@ -435,9 +434,8 @@ elf_image::symbol_range::state::next(impl *parent)
 
   elf_symbol *psymbol;
   if (check_def) {
-    def_new.section_name = 
-      ebl_section_name (parent->ebl, sym->st_shndx, xndx, scnbuf,
-			sizeof (scnbuf), NULL, parent->shnum);
+    def_new.section = sym->st_shndx;
+    def_new.xsection = xndx;
     def.reset(new elf_symbol_definition(def_new));
     psymbol = def.get();
   } else {

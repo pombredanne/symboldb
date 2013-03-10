@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,19 @@
 
 #include "elf_symbol_definition.hpp"
 
+#include <elf.h>
+
 elf_symbol_definition::elf_symbol_definition()
-  : value(0ULL), default_version(false)
+  : value(0ULL), section(0), xsection(0), default_version(false)
 {
 }
 
 elf_symbol_definition::~elf_symbol_definition()
 {
+}
+
+bool
+elf_symbol_definition::has_xsection() const
+{
+  return section == SHN_XINDEX;
 }

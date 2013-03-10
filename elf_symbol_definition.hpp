@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,10 +21,15 @@
 #include "elf_symbol.hpp"
 
 struct elf_symbol_definition : elf_symbol {
-  std::string section_name;
   std::string vda_name;
   unsigned long long value;
+  unsigned short section;
+  unsigned xsection;
   bool default_version;
+
+  // Returns true if xsection is actually present.
+  bool has_xsection() const;
+
   elf_symbol_definition();
   ~elf_symbol_definition();
 };
