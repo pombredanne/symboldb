@@ -19,7 +19,7 @@ BEGIN;
 CREATE SCHEMA symboldb;
 
 CREATE TYPE symboldb.arch AS ENUM
-  ('noarch', 'i686', 'x86_64', 'ppc', 'ppc64', 's390', 's390x');
+  ('noarch', 'i686', 'x86_64', 'ppc', 'ppc64', 'ppc64p7', 's390', 's390x');
 
 CREATE TYPE symboldb.elf_visibility AS ENUM
   ('default', 'internal', 'hidden', 'protected');
