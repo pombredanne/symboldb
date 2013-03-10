@@ -103,6 +103,9 @@ public:
 		   std::vector<unsigned char> &digest,
 		   std::vector<unsigned char> &contents);
 
+  // Adds the directory to the database.
+  void add_directory(package_id, const rpm_file_info &);
+
   // Loading ELF-related tables.
 
   // Populates the elf_file table.  Uses fallback_arch (from the RPM

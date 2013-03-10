@@ -37,6 +37,9 @@ struct rpm_file_info {
   rpm_file_info();
   ~rpm_file_info();
 
+  // Returns true if this entry refers to a directory.
+  bool is_directory() const;
+
   // Some of the names are not encoded as UTF-8.  We pamper over that
   // by re-encoding from ISO-8859-1 to UTF-8.  Sets normalized to
   // true.

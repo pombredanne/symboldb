@@ -20,6 +20,7 @@
 #include "utf8.hpp"
 
 #include <stdlib.h>
+#include <sys/stat.h>
 
 rpm_file_info::rpm_file_info()
   : length(0), mode(0), mtime(0), normalized(false)
@@ -28,6 +29,12 @@ rpm_file_info::rpm_file_info()
 
 rpm_file_info::~rpm_file_info()
 {
+}
+
+bool
+rpm_file_info::is_directory() const
+{
+  return S_ISDIR(mode);
 }
 
 void

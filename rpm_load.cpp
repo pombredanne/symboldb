@@ -198,14 +198,19 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	      (unsigned long long)file.contents.size());
     }
     file.info->normalize_name();
-    std::vector<unsigned char> digest(hash(hash_sink::sha256, file.contents));
-    std::vector<unsigned char> preview
-      (file.contents.begin(),
-       file.contents.begin() + std::min(static_cast<size_t>(64),
-					file.contents.size()));
-    database::file_id fid = db.add_file(pkg, *file.info, digest, preview);
-    if (is_elf(file.contents)) {
-      load_elf(opt, db, info, fid, file);
+    if (file.info->is_directory()) {
+      db.add_directory(pkg, *file.info);
+    } else {
+      // FIXME: deal with symlinks and special files.
+      std::vector<unsigned char> digest(hash(hash_sink::sha256, file.contents));
+      std::vector<unsigned char> preview
+	(file.contents.begin(),
+	 file.contents.begin() + std::min(static_cast<size_t>(64),
+					  file.contents.size()));
+      database::file_id fid = db.add_file(pkg, *file.info, digest, preview);
+      if (is_elf(file.contents)) {
+	load_elf(opt, db, info, fid, file);
+      }
     }
   }
   return pkg;
