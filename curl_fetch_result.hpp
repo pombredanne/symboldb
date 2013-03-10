@@ -44,6 +44,10 @@ struct curl_fetch_result {
   // the http_status/error fields.
   void head(const char *url);
 
+  // Initialize and deinitialze libcurl.
+  static void global_init();
+  static void global_deinit();
+
 private:
   std::string error;		// records errors from the callback
   static size_t write_function(char *, size_t, size_t, void *userdata);

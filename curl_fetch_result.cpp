@@ -158,3 +158,17 @@ curl_fetch_result::head(const char *url)
   }
   perform(h, url);
 }
+
+void
+curl_fetch_result::global_init()
+{
+  if (curl_global_init(CURL_GLOBAL_ALL) != 0) {
+    throw std::runtime_error("libcurl initialization failed");
+  }
+}
+
+void
+curl_fetch_result::global_deinit()
+{
+  curl_global_cleanup();
+}
