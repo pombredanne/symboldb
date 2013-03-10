@@ -146,10 +146,10 @@ namespace {
 	    fprintf(stderr, "info: downloading %s\n", rurl.href.c_str());
 	  }
 	}
-	++count_;
 	file_cache::add_sink sink(*fcache_, rurl.csum);
 	download(dopts_no_cache_, db_, rurl.href.c_str(), &sink);
 	sink.finish(rpm_path);
+	++count_;
       }
 
       if (load_) {
