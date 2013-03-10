@@ -72,7 +72,7 @@ database::database()
 database::database(const char *host, const char *dbname)
   : impl_(new impl)
 {
-  static const char *const keys[] = {
+  static const char *keys[] = {
     "host", "port", "dbname", NULL
   };
   const char *values[] = {

@@ -226,7 +226,7 @@ pg_testdb::logfile()
 PGconn *
 pg_testdb::connect(const char *dbname)
 {
-  static const char *const keys[] = {
+  static const char *keys[] = {
     "host", "port", "dbname", NULL
   };
   const char *values[] = {
