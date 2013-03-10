@@ -448,6 +448,7 @@ main(int argc, char **argv)
     if (!e.original_url().empty()) {
       fprintf(stderr, "error:  starting at: %s\n", e.original_url().c_str());
     }
+    return 1;
   } catch (symboldb_options::usage_error e) {
     fprintf(stderr, "error: %s\n", e.what());
     return 1;
