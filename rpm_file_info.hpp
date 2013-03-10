@@ -40,6 +40,10 @@ struct rpm_file_info {
   // Returns true if this entry refers to a directory.
   bool is_directory() const;
 
+  // Returns true if this entry refers to a symlink.  (The target has
+  // to be extracted from the CPIO archive.)
+  bool is_symlink() const;
+
   // Some of the names are not encoded as UTF-8.  We pamper over that
   // by re-encoding from ISO-8859-1 to UTF-8.  Sets normalized to
   // true.

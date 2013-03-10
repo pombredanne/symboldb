@@ -37,6 +37,12 @@ rpm_file_info::is_directory() const
   return S_ISDIR(mode);
 }
 
+bool
+rpm_file_info::is_symlink() const
+{
+  return S_ISLNK(mode);
+}
+
 void
 rpm_file_info::normalize_name()
 {
