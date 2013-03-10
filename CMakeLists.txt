@@ -8,9 +8,19 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_EXE_LINKER_FLAGS "-g")
 endif()
 
+find_path (
+  NSS_INCLUDE_DIR pk11pub.h
+  PATH_SUFFIXES include/nss include/nss3
+)
+
+find_path (
+  NSPR_INCLUDE_DIR prtypes.h
+  PATH_SUFFIXES include/nspr include/nspr4
+)
+
 include_directories (
-  /usr/include/nss3
-  /usr/include/nspr4
+  ${NSS_INCLUDE_DIR}
+  ${NSPR_INCLUDE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
