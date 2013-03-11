@@ -20,6 +20,7 @@
 #include "pgconn_handle.hpp"
 #include "pgresult_handle.hpp"
 #include "pg_exception.hpp"
+#include "pg_query.hpp"
 
 #include "test.hpp"
 
@@ -56,6 +57,93 @@ test()
       CHECK(e.status_ == PGRES_FATAL_ERROR);
       COMPARE_STRING(PQresStatus(e.status_), "PGRES_FATAL_ERROR");
     }
+  }
+
+  {
+    pgresult_handle r;
+    {
+      // All type dispatchers.
+      short t1 = 0x0102;
+      int t2 = 0x03040506;
+      long long t3 = 0xa1a2a3a4a5a6a7a8LL;
+      const char *t4 = "const char *";
+      std::string t5 = "std::string";
+      bool t6 = false;
+
+      pg_query(h, r, "SELECT $1, $2, $3, $4, $5, $6", t1, t2, t3, t4, t5, t6);
+      CHECK(r.ntuples() == 1);
+      COMPARE_STRING(r.getvalue(0, 0), "258");
+      COMPARE_STRING(r.getvalue(0, 1), "50595078");
+      COMPARE_STRING(r.getvalue(0, 2), "-6799692559826901080");
+      COMPARE_STRING(r.getvalue(0, 3), "const char *");
+      COMPARE_STRING(r.getvalue(0, 4), "std::string");
+      COMPARE_STRING(r.getvalue(0, 5), "f");
+
+      r.exec(h, "SELECT 1");
+      pg_query(h, r, "SELECT $1, $2, $3, $4", &t1, &t2, &t3, &t6);
+      CHECK(r.ntuples() == 1);
+      COMPARE_STRING(r.getvalue(0, 0), "258");
+      COMPARE_STRING(r.getvalue(0, 1), "50595078");
+      COMPARE_STRING(r.getvalue(0, 2), "-6799692559826901080");
+      COMPARE_STRING(r.getvalue(0, 3), "f");
+
+      t1 = 0xF1F2;
+      t2 = 0xF3F4F5F6;
+      t3 = 0x0102030405060708;
+      t6 = true;
+      pg_query(h, r, "SELECT $1, $2, $3, $4", t1, t2, t3, t6);
+      CHECK(r.ntuples() == 1);
+      COMPARE_STRING(r.getvalue(0, 0), "-3598");
+      COMPARE_STRING(r.getvalue(0, 1), "-202050058");
+      COMPARE_STRING(r.getvalue(0, 2), "72623859790382856");
+      COMPARE_STRING(r.getvalue(0, 3), "t");
+
+      t1 = 0xF1F2;
+      t2 = 0xF3F4F5F6;
+      t3 = 0x0102030405060708;
+      t6 = true;
+      pg_query(h, r, "SELECT $1, $2, $3, $4", &t1, &t2, &t3, &t6);
+      CHECK(r.ntuples() == 1);
+      COMPARE_STRING(r.getvalue(0, 0), "-3598");
+      COMPARE_STRING(r.getvalue(0, 1), "-202050058");
+      COMPARE_STRING(r.getvalue(0, 2), "72623859790382856");
+      COMPARE_STRING(r.getvalue(0, 3), "t");
+    }
+
+    // Parameter order.
+    pg_query(h, r, "SELECT ARRAY[$1]", 1);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2]", 1, 2);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3]", 1, 2, 3);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4]", 1, 2, 3, 4);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5]", 1, 2, 3, 4, 5);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5]", 1, 2, 3, 4, 5);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6]", 1, 2, 3, 4, 5, 6);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7]",
+	     1, 2, 3, 4, 5, 6, 7);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7, $8]",
+	     1, 2, 3, 4, 5, 6, 7, 8);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8}");
+    pg_query(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7, $8, $9]",
+	     1, 2, 3, 4, 5, 6, 7, 8, 9);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9}");
   }
 }
 
