@@ -19,6 +19,7 @@
 #include "pg_testdb.hpp"
 
 #include "fd_source.hpp"
+#include "fd_sink.hpp"
 #include "os.hpp"
 #include "os_exception.hpp"
 #include "pg_exception.hpp"
@@ -140,7 +141,7 @@ struct pg_testdb::impl {
 pg_testdb::impl::impl()
   : program_prefix(postgresql_prefix()),
     directory(make_temporary_directory("/tmp/pg_testdb-")),
-    logfile(directory + "log")
+    logfile(directory + "/server.log")
 {
   try {
     initdb();
@@ -209,6 +210,8 @@ pg_testdb::impl::configure()
     fprintf(conf, "unix_socket_director%s = '%s'\n",
 	    sockdir_plural ? "ies" : "y", directory.c_str());
     fprintf(conf, "unix_socket_permissions = 0700\n");
+    fprintf(conf, "log_directory = '.'\n");
+    fprintf(conf, "log_filename = 'server.log'\n");
     if (ferror(conf)) {
       throw os_exception().function(fprintf).fd(fileno(conf)).defaults();
     }
@@ -222,15 +225,14 @@ pg_testdb::impl::configure()
 void
 pg_testdb::impl::start()
 {
-  fd_handle logfile;
-  logfile.open((directory + "/server.log").c_str(),
-	       O_WRONLY | O_APPEND | O_CREAT | O_TRUNC, 0600);
+  fd_handle fd;
+  fd.open(logfile.c_str(), O_WRONLY | O_APPEND | O_CREAT | O_TRUNC, 0600);
   server.command((program_prefix + POSTMASTER).c_str())
     .arg("-D").arg(directory.c_str())
     .arg("-h").arg("") // no TCP socket
     .arg("-F")  // disable fsync()
-    .redirect_to(subprocess::out, logfile.get())
-    .redirect_to(subprocess::err, logfile.get());
+    .redirect_to(subprocess::out, fd.get())
+    .redirect_to(subprocess::err, fd.get());
   server.start();
 }
 
@@ -286,6 +288,13 @@ pg_testdb::pg_testdb()
 
 pg_testdb::~pg_testdb()
 {
+  if (std::uncaught_exception()) {
+    try {
+      dump_logs();
+    } catch(...) {
+      fprintf(stderr, "warning: exception while dupming PostgreSQL logs\n");
+    }
+  }
 }
 
 const std::vector<std::string> &
@@ -326,4 +335,16 @@ pg_testdb::exec_test_sql(const char *dbname, const char *sql)
   pgconn_handle conn(connect(dbname));
   pgresult_handle res;
   res.exec(conn, sql);
+}
+
+void
+pg_testdb::dump_logs()
+{
+  fprintf(stderr, "* PostgreSQL server log:\n");
+  fflush(stderr);
+  fd_handle fd;
+  fd.open_read_only(impl_->logfile.c_str());
+  fd_source source(fd.get());
+  fd_sink sink(STDERR_FILENO);
+  copy_source_to_sink(source, sink);
 }

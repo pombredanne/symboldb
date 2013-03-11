@@ -51,4 +51,8 @@ public:
   // to make sure that this isn't issue against a production database
   // by accident.
   void exec_test_sql(const char *dbname, const char *sql);
+
+  // Writes out the collected log information.  Useful in case of
+  // errors.
+  void dump_logs();
 };
