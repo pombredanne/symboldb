@@ -20,6 +20,7 @@
 #include "pgresult_handle.hpp"
 #include "pgconn_handle.hpp"
 #include "pg_exception.hpp"
+#include "pg_query.hpp"
 
 #include <map>
 #include <set>
@@ -163,21 +164,16 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   assert(conn.transactionStatus() == PQTRANS_INTRANS);
   bool debug = false;
 
-  char idstr[32];
-  snprintf(idstr, sizeof(idstr), "%d", id.value());
-  const char *idParams[] = {idstr};
-
   // Obtain the list of SONAME providers.  There can be multiple DSOs
   // which have the sane SONAME.
   // FIXME: Providers should be restricted to DYN ELF images.
   pgresult_handle soname_provider_result;
-  soname_provider_result.execParams
-    (conn,
-     "SELECT ef.arch, ef.soname, f.id, f.name"
-     " FROM symboldb.package_set_member psm"
-     " JOIN symboldb.file f ON psm.package = f.package"
-     " JOIN symboldb.elf_file ef ON f.id = ef.file"
-     " WHERE psm.set = $1", idParams);
+  pg_query(conn, soname_provider_result,
+	   "SELECT ef.arch, ef.soname, f.id, f.name"
+	   " FROM symboldb.package_set_member psm"
+	   " JOIN symboldb.file f ON psm.package = f.package"
+	   " JOIN symboldb.elf_file ef ON f.id = ef.file"
+	   " WHERE psm.set = $1", id.value());
 
   arch_soname_map arch_soname;
   for (int i = 0, end = soname_provider_result.ntuples(); i < end; ++i) {
@@ -189,14 +185,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
 
   dependency_map closure;
   pgresult_handle needed_result;
-  needed_result.execParams
-    (conn,
+  pg_query
+    (conn, soname_provider_result,
      "SELECT ef.arch, en.name, f.id, f.name"
      " FROM symboldb.package_set_member psm"
      " JOIN symboldb.file f ON psm.package = f.package"
      " JOIN symboldb.elf_file ef ON f.id = ef.file"
      " JOIN symboldb.elf_needed en ON f.id = en.file"
-     " WHERE psm.set = $1", idParams);
+     " WHERE psm.set = $1", id.value());
   size_t elements = 0;
   for (int i = 0, end = needed_result.ntuples(); i < end; ++i) {
     const char *arch = needed_result.getvalue(i, 0);
@@ -251,11 +247,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   arch_soname.clear();
 
   // Load the closure into the database.
+  char idstr[32];
+  snprintf(idstr, sizeof(idstr), "%d", id.value());
   char *idstrend = idstr + strlen(idstr);
   std::vector<char> upload;
   pgresult_handle copy;
-  copy.execParams
-    (conn, "DELETE FROM symboldb.elf_closure WHERE package_set = $1", idParams);
+  pg_query
+    (conn, copy, "DELETE FROM symboldb.elf_closure WHERE package_set = $1",
+     id.value());
   copy.exec(conn, "COPY symboldb.elf_closure FROM STDIN");
   assert(copy.resultStatus() == PGRES_COPY_IN);
   for (dependency_map::iterator
