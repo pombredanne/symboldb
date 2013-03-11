@@ -46,6 +46,11 @@ struct gunzip_source::impl {
     }
   }
 
+  ~impl()
+  {
+    inflateEnd(&stream_);
+  }
+
   size_t read(unsigned char *buf, size_t length)
   {
     if (end_seen_ || length == 0) {
