@@ -73,3 +73,27 @@ cpu_to_be_64(unsigned long long val)
     return __builtin_bswap64(val);
   }
 }
+
+inline unsigned
+le_to_cpu_32(unsigned val)
+{
+  return cpu_to_le_32(val);
+}
+
+inline unsigned long long
+le_to_cpu_64(unsigned long long val)
+{
+  return cpu_to_le_64(val);
+}
+
+inline unsigned
+be_to_cpu_32(unsigned val)
+{
+  return cpu_to_be_32(val);
+}
+
+inline unsigned long long
+be_to_cpu_64(unsigned long long val)
+{
+  return cpu_to_be_64(val);
+}
