@@ -26,8 +26,18 @@ void test_check(bool expr, const char *str, const char *file, unsigned line);
 
 #define COMPARE_STRING(left, right) \
   test_compare_string((left), (right), #left, #right, __FILE__, __LINE__)
+// Multiple definitions to deal with NULL arguments.
 void test_compare_string(const std::string &left, const std::string &right,
-			 const char *left_str, const char *rihgt_str,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line);
+void test_compare_string(const char *left, const char *right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line);
+void test_compare_string(const char *left, const std::string &right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line);
+void test_compare_string(const std::string &left, const char *right,
+			 const char *left_str, const char *right_str,
 			 const char *file, unsigned line);
 
 // Registers a test case in the test suite.  This is supposed to be

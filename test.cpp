@@ -104,24 +104,69 @@ test_check(bool expr, const char *str, const char *file, unsigned line)
   fprintf(stderr, "%s:%u: failed check: %s\n", file, line, str);
 }
 
-void
-test_compare_string(const std::string &left, const std::string &right,
+static void
+test_compare_string(const std::string &left, bool left_null,
+		    const std::string &right, bool right_null,
 		    const char *left_str, const char *right_str,
 		    const char *file, unsigned line)
 {
-  if (left == right) {
+  if (left == right && !left_null && !right_null) {
     ++success_count;
     return;
   }
   ++failure_count;
   test_header();
   fprintf(stderr, "%s:%u: string comparison failure\n", file, line);
-  fprintf(stderr, "%s:%u:   left:  \"%s\"\n", 
-	  file, line, quote(left).c_str());
+  if (left_null) {
+    fprintf(stderr, "%s:%u:   left:  (null)\n", file, line);
+  } else {
+    fprintf(stderr, "%s:%u:   left:  \"%s\"\n",
+	    file, line, quote(left).c_str());
+  }
   fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, left_str);
-  fprintf(stderr, "%s:%u:   right: \"%s\"\n",
-	  file, line, quote(right).c_str());
+  if (right_null) {
+    fprintf(stderr, "%s:%u:  right:  (null)\n", file, line);
+  } else {
+    fprintf(stderr, "%s:%u:   right: \"%s\"\n",
+	    file, line, quote(right).c_str());
+  }
   fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, right_str);
+}
+
+void test_compare_string(const std::string &left, const std::string &right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line)
+{
+  test_compare_string(left, false,
+		      right, false,
+		      left_str, right_str, file, line);
+}
+
+void test_compare_string(const char *left, const char *right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line)
+{
+  test_compare_string(left == NULL ? "" : left, left == NULL,
+		      right == NULL ? "" : right, right == NULL,
+		      left_str, right_str, file, line);
+}
+
+void test_compare_string(const char *left, const std::string &right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line)
+{
+  test_compare_string(left == NULL ? "" : left, left == NULL,
+		      right, false,
+		      left_str, right_str, file, line);
+}
+
+void test_compare_string(const std::string &left, const char *right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line)
+{
+  test_compare_string(left, false,
+		      right == NULL ? "" : right, right == NULL,
+		      left_str, right_str, file, line);
 }
 
 static std::vector<int>
@@ -145,6 +190,7 @@ file_descriptors()
   std::sort(result.begin(), result.end());
   return result;
 }
+
 
 static bool
 file_descriptors_valid(const std::vector<int> &fd)
