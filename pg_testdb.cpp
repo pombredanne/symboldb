@@ -33,6 +33,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -89,13 +90,13 @@ namespace {
   bool
   uses_unix_socket_directories(const char *confpath)
   {
+    char *line = NULL;
     FILE *conf = fopen(confpath, "r");
     if (conf == NULL) {
       throw os_exception().function(fopen).path(confpath);
     }
     bool found = false;
     try {
-      char *line = NULL;
       size_t linesize = 0;
       while (true) {
 	errno = 0;
@@ -113,9 +114,11 @@ namespace {
       }
     } catch(...) {
       fclose(conf);
+      free(line);
       throw;
     }
     fclose(conf);
+    free(line);
     return found;
   }
 }
