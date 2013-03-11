@@ -69,8 +69,15 @@ test()
       const char *t4 = "const char *";
       std::string t5 = "std::string";
       bool t6 = false;
+      std::vector<unsigned char> t7;
+      t7.push_back(0);
+      t7.push_back(64);
+      t7.push_back(127);
+      t7.push_back(128);
+      t7.push_back(255);
 
-      pg_query(h, r, "SELECT $1, $2, $3, $4, $5, $6", t1, t2, t3, t4, t5, t6);
+      pg_query(h, r, "SELECT $1, $2, $3, $4, $5, $6, $7",
+	       t1, t2, t3, t4, t5, t6, t7);
       CHECK(r.ntuples() == 1);
       COMPARE_STRING(r.getvalue(0, 0), "258");
       COMPARE_STRING(r.getvalue(0, 1), "50595078");
@@ -78,6 +85,7 @@ test()
       COMPARE_STRING(r.getvalue(0, 3), "const char *");
       COMPARE_STRING(r.getvalue(0, 4), "std::string");
       COMPARE_STRING(r.getvalue(0, 5), "f");
+      COMPARE_STRING(r.getvalue(0, 6), "\\x00407f80ff");
 
       r.exec(h, "SELECT 1");
       pg_query(h, r, "SELECT $1, $2, $3, $4", &t1, &t2, &t3, &t6);

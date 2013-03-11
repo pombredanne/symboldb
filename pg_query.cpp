@@ -50,3 +50,24 @@ pg_query_private::dispatch<std::string>::length(const std::string &str)
 {
   return length_check(str.size());
 }
+
+
+const char *
+pg_query_private::dispatch<std::vector<unsigned char> >::store
+  (char *, const std::vector<unsigned char> &vec)
+{
+  if (vec.empty()) {
+    // vec.data() could be a null pointer, which would be interpreted
+    // by PostgreSQL as a NULL value.
+    return "";
+  } else {
+    return reinterpret_cast<const char *>(vec.data());
+  }
+}
+
+int
+pg_query_private::dispatch<std::vector<unsigned char> >::length
+  (const std::vector<unsigned char> &vec)
+{
+  return length_check(vec.size());
+}
