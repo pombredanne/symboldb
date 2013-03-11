@@ -103,10 +103,7 @@ namespace {
   //////////////////////////////////////////////////////////////////////
   // download_filter
 
-  struct download_filter {
-    const symboldb_options &opt_;
-    database &db_;
-    std::set<database::package_id> &pids_;
+  struct download_filter : database_filter {
     std::tr1::shared_ptr<file_cache> fcache_;
     size_t &count_;
     bool load_;
@@ -124,8 +121,8 @@ namespace {
   download_filter::download_filter(const symboldb_options &opt, database &db,
 				   std::set<database::package_id> &pids,
 				   size_t &count, bool load)
-    : opt_(opt), db_(db), pids_(pids), fcache_(opt.rpm_cache()),
-      count_(count), load_(load)
+    : database_filter(opt, db, pids),
+      fcache_(opt.rpm_cache()), count_(count), load_(load)
   {
     dopts_no_cache_.cache_mode = download_options::no_cache;
   }
@@ -137,7 +134,9 @@ namespace {
       std::string rpm_path;
       database::advisory_lock lock
 	(db_.lock_digest(rurl.csum.value.begin(), rurl.csum.value.end()));
-      if (!fcache_->lookup_path(rurl.csum, rpm_path)) {
+      if (database_filter::operator()(rurl)) {
+	return true;
+      } else if (!fcache_->lookup_path(rurl.csum, rpm_path)) {
 	if (opt_.output != symboldb_options::quiet) {
 	  if (rurl.csum.length != checksum::no_length) {
 	    fprintf(stderr, "info: downloading %s (%llu bytes)\n",
