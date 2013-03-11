@@ -156,7 +156,7 @@ namespace {
 	rpm_package_info info;
 	database::package_id pid = rpm_load(opt_, db_, rpm_path.c_str(), info);
 	if (pid == database::package_id()) {
-	  return 1;
+	  return false;
 	}
 	pids_.insert(pid);
       }
