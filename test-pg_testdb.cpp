@@ -152,6 +152,402 @@ test()
 	     1, 2, 3, 4, 5, 6, 7, 8, 9);
     CHECK(r.ntuples() == 1);
     COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9}");
+
+    ////////////////////////////////////////////////////////////////////
+    // Response decoding
+
+    // bool
+    {
+      bool t = true;
+      r.exec(h, "SELECT 0 = 1");
+      pg_response(r, 0, t);
+      CHECK(!t);
+      r.exec(h, "SELECT 1 = 1");
+      pg_response(r, 0, t);
+      CHECK(t);
+
+      r.execBinary(h, "SELECT 0 = 1");
+      pg_response(r, 0, t);
+      CHECK(!t);
+      r.execBinary(h, "SELECT 1 = 1");
+      pg_response(r, 0, t);
+      CHECK(t);
+    }
+
+    // short
+    {
+      short t = 1;
+      r.exec(h, "SELECT 0");
+      pg_response(r, 0, t);
+      CHECK(t == 0);
+      r.exec(h, "SELECT 1");
+      pg_response(r, 0, t);
+      CHECK(t == 1);
+      r.exec(h, "SELECT 258");
+      pg_response(r, 0, t);
+      CHECK(t == 258);
+      r.exec(h, "SELECT -8001");
+      pg_response(r, 0, t);
+      CHECK(t == -8001);
+      r.exec(h, "SELECT 32767");
+      pg_response(r, 0, t);
+      CHECK(t == 32767);
+      r.exec(h, "SELECT -32768");
+      pg_response(r, 0, t);
+      CHECK(t == -32768);
+
+      r.execBinary(h, "SELECT 0::int2");
+      pg_response(r, 0, t);
+      CHECK(t == 0);
+      r.execBinary(h, "SELECT 1::int2");
+      pg_response(r, 0, t);
+      CHECK(t == 1);
+      r.execBinary(h, "SELECT 258::int2");
+      pg_response(r, 0, t);
+      CHECK(t == 258);
+      r.execBinary(h, "SELECT (-8001)::int2");
+      pg_response(r, 0, t);
+      CHECK(t == -8001);
+      r.execBinary(h, "SELECT 32767::int2");
+      pg_response(r, 0, t);
+      CHECK(t == 32767);
+      r.execBinary(h, "SELECT (-32768)::int2");
+      pg_response(r, 0, t);
+      CHECK(t == -32768);
+    }
+
+    // int
+    {
+      int t = 1;
+      r.exec(h, "SELECT 0");
+      pg_response(r, 0, t);
+      CHECK(t == 0);
+      r.exec(h, "SELECT 1");
+      pg_response(r, 0, t);
+      CHECK(t == 1);
+      r.exec(h, "SELECT 258");
+      pg_response(r, 0, t);
+      CHECK(t == 258);
+      r.exec(h, "SELECT 16909060");
+      pg_response(r, 0, t);
+      CHECK(t == 16909060);
+      r.exec(h, "SELECT -16909060");
+      pg_response(r, 0, t);
+      CHECK(t == -16909060);
+      r.exec(h, "SELECT -8001");
+      pg_response(r, 0, t);
+      CHECK(t == -8001);
+      r.exec(h, "SELECT 32767");
+      pg_response(r, 0, t);
+      CHECK(t == 32767);
+      r.exec(h, "SELECT -32768");
+      pg_response(r, 0, t);
+      CHECK(t == -32768);
+      r.exec(h, "SELECT (2^31 - 1)");
+      pg_response(r, 0, t);
+      CHECK(t == (1U << 31) - 1);
+      r.exec(h, "SELECT (- 2^31)");
+      pg_response(r, 0, t);
+      CHECK(t == static_cast<int>(-(1U << 31)));
+
+      r.execBinary(h, "SELECT 0::int4");
+      pg_response(r, 0, t);
+      CHECK(t == 0);
+      r.execBinary(h, "SELECT 1::int4");
+      pg_response(r, 0, t);
+      CHECK(t == 1);
+      r.execBinary(h, "SELECT 258::int4");
+      pg_response(r, 0, t);
+      CHECK(t == 258);
+      r.execBinary(h, "SELECT 16909060::int4");
+      pg_response(r, 0, t);
+      CHECK(t == 16909060);
+      r.execBinary(h, "SELECT (-16909060)::int4");
+      pg_response(r, 0, t);
+      CHECK(t == -16909060);
+      r.execBinary(h, "SELECT (-8001)::int4");
+      pg_response(r, 0, t);
+      CHECK(t == -8001);
+      r.execBinary(h, "SELECT 32767::int4");
+      pg_response(r, 0, t);
+      CHECK(t == 32767);
+      r.execBinary(h, "SELECT (-32768)::int4");
+      pg_response(r, 0, t);
+      CHECK(t == -32768);
+      r.execBinary(h, "SELECT (2^31 - 1)::int4");
+      pg_response(r, 0, t);
+      CHECK(t == (1U << 31) - 1);
+      r.execBinary(h, "SELECT (- 2^31)::int4");
+      pg_response(r, 0, t);
+      CHECK(t == static_cast<int>(-(1U << 31)));
+    }
+
+    // long long
+    {
+      long long t = 1;
+      r.exec(h, "SELECT 0");
+      pg_response(r, 0, t);
+      CHECK(t == 0);
+      r.exec(h, "SELECT 1");
+      pg_response(r, 0, t);
+      CHECK(t == 1);
+      r.exec(h, "SELECT 258");
+      pg_response(r, 0, t);
+      CHECK(t == 258);
+      r.exec(h, "SELECT 16909060");
+      pg_response(r, 0, t);
+      CHECK(t == 16909060);
+      r.exec(h, "SELECT -16909060");
+      pg_response(r, 0, t);
+      CHECK(t == -16909060);
+      r.exec(h, "SELECT -8001");
+      pg_response(r, 0, t);
+      CHECK(t == -8001);
+      r.exec(h, "SELECT 32767");
+      pg_response(r, 0, t);
+      CHECK(t == 32767);
+      r.exec(h, "SELECT -32768");
+      pg_response(r, 0, t);
+      CHECK(t == -32768);
+      r.exec(h, "SELECT (2^31 - 1)");
+      pg_response(r, 0, t);
+      CHECK(t == (1U << 31) - 1);
+      r.exec(h, "SELECT (- 2^31)");
+      pg_response(r, 0, t);
+      CHECK(t == -(1LL << 31));
+      r.exec(h, "SELECT (2::numeric^63 - 1)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == (1ULL << 63) - 1);
+      r.exec(h, "SELECT (- 2::numeric^63)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == static_cast<long long>(-(1ULL << 63)));
+
+      r.execBinary(h, "SELECT 0::int8");
+      pg_response(r, 0, t);
+      CHECK(t == 0);
+      r.execBinary(h, "SELECT 1::int8");
+      pg_response(r, 0, t);
+      CHECK(t == 1);
+      r.execBinary(h, "SELECT 258::int8");
+      pg_response(r, 0, t);
+      CHECK(t == 258);
+      r.execBinary(h, "SELECT 16909060::int8");
+      pg_response(r, 0, t);
+      CHECK(t == 16909060);
+      r.execBinary(h, "SELECT (-16909060)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == -16909060);
+      r.execBinary(h, "SELECT (-8001)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == -8001);
+      r.execBinary(h, "SELECT 32767::int8");
+      pg_response(r, 0, t);
+      CHECK(t == 32767);
+      r.execBinary(h, "SELECT (-32768)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == -32768);
+      r.execBinary(h, "SELECT (2^31 - 1)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == (1U << 31) - 1);
+      r.execBinary(h, "SELECT (- 2^31)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == -(1LL << 31));
+      r.execBinary(h, "SELECT (2::numeric^63 - 1)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == (1ULL << 63) - 1);
+      r.execBinary(h, "SELECT (- 2::numeric^63)::int8");
+      pg_response(r, 0, t);
+      CHECK(t == static_cast<long long>(-(1ULL << 63)));
+    }
+
+    // std::string
+    {
+      std::string t = "t";
+      r.exec(h, "SELECT ''");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "");
+      t = "t";
+      r.exec(h, "SELECT ''::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "");
+      t = "t";
+      r.execBinary(h, "SELECT ''::text");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "");
+      t = "t";
+      r.execBinary(h, "SELECT ''::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "");
+
+      r.exec(h, "SELECT 'a'");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "a");
+      t = "t";
+      r.exec(h, "SELECT 'ab'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "ab");
+      t = "t";
+      r.execBinary(h, "SELECT 'abc'::text");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "abc");
+      t = "t";
+      r.execBinary(h, "SELECT 'abcd'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "abcd");
+
+      r.exec(h, "SELECT '\\x00407f80ff'");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "\\x00407f80ff");
+      t = "t";
+      r.exec(h, "SELECT '\\x00407f80ff'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, std::string("\x00\x40\x7f\x80\xff", 5));
+      t = "t";
+      r.execBinary(h, "SELECT '\\x00407f80ff'::text");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, "\\x00407f80ff");
+      t = "t";
+      r.execBinary(h, "SELECT '\\x00407f80ff'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(t, std::string("\x00\x40\x7f\x80\xff", 5));
+    }
+
+    // std::vector<unsigned char>
+    {
+      char buf[1] = {'t'};
+      std::vector<unsigned char> t;
+      t.assign(buf, buf + 1);
+      r.exec(h, "SELECT ''");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "");
+      t.assign(buf, buf + 1);
+      r.exec(h, "SELECT ''::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "");
+      t.assign(buf, buf + 1);
+      r.execBinary(h, "SELECT ''::text");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "");
+      t.assign(buf, buf + 1);
+      r.execBinary(h, "SELECT ''::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "");
+
+      r.exec(h, "SELECT 'a'");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "a");
+      t.assign(buf, buf + 1);
+      r.exec(h, "SELECT 'ab'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "ab");
+      t.assign(buf, buf + 1);
+      r.execBinary(h, "SELECT 'abc'::text");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "abc");
+      t.assign(buf, buf + 1);
+      r.execBinary(h, "SELECT 'abcd'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "abcd");
+
+      r.exec(h, "SELECT '\\x00407f80ff'");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "\\x00407f80ff");
+      t.assign(buf, buf + 1);
+      r.exec(h, "SELECT '\\x00407f80ff'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()),
+		     std::string("\x00\x40\x7f\x80\xff", 5));
+      t.assign(buf, buf + 1);
+      r.execBinary(h, "SELECT '\\x00407f80ff'::text");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()), "\\x00407f80ff");
+      t.assign(buf, buf + 1);
+      r.execBinary(h, "SELECT '\\x00407f80ff'::bytea");
+      pg_response(r, 0, t);
+      COMPARE_STRING(std::string(t.begin(), t.end()),
+		     std::string("\x00\x40\x7f\x80\xff", 5));
+    }
+
+    // Result order.
+    {
+      int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+
+      r.exec(h, "SELECT 1, 2");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+
+      r.exec(h, "SELECT 1, 2, 3");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+
+      r.exec(h, "SELECT 1, 2, 3, 4");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3, t4);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+
+      r.exec(h, "SELECT 1, 2, 3, 4, 5");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3, t4, t5);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+      CHECK(t5 == 5);
+
+      r.exec(h, "SELECT 1, 2, 3, 4, 5, 6");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3, t4, t5, t6);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+      CHECK(t5 == 5);
+      CHECK(t6 == 6);
+
+      r.exec(h, "SELECT 1, 2, 3, 4, 5, 6, 7");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3, t4, t5, t6, t7);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+      CHECK(t5 == 5);
+      CHECK(t6 == 6);
+      CHECK(t7 == 7);
+
+      r.exec(h, "SELECT 1, 2, 3, 4, 5, 6, 7, 8");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3, t4, t5, t6, t7, t8);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+      CHECK(t5 == 5);
+      CHECK(t6 == 6);
+      CHECK(t7 == 7);
+      CHECK(t8 == 8);
+
+      r.exec(h, "SELECT 1, 2, 3, 4, 5, 6, 7, 8, 9");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
+      pg_response(r, 0, t1, t2, t3, t4, t5, t6, t7, t8, t9);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+      CHECK(t5 == 5);
+      CHECK(t6 == 6);
+      CHECK(t7 == 7);
+      CHECK(t8 == 8);
+      CHECK(t9 == 9);
+    }
   }
 }
 

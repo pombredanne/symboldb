@@ -33,17 +33,19 @@ namespace pg_query_private {
   template <>
   struct dispatch<bool> {
     static const Oid oid = 16;
-    static const unsigned storage = 1;
+    static const int storage = 1;
     static const char *store(char *, bool);
     static int length(bool) { return storage; }
+    static void load(PGresult *, int row, int col, bool &);
   };
 
   template <>
   struct dispatch<short> {
     static const Oid oid = 21;
-    static const unsigned storage = 2;
+    static const int storage = 2;
     static const char *store(char *, short);
     static int length(short) { return storage; }
+    static void load(PGresult *, int row, int col, short &);
   };
 
   template <>
@@ -53,9 +55,10 @@ namespace pg_query_private {
   template <>
   struct dispatch<int> {
     static const Oid oid = 23;
-    static const unsigned storage = 4;
+    static const int storage = 4;
     static const char *store(char *, int);
     static int length(int) { return storage; }
+    static void load(PGresult *, int row, int col, int &);
   };
 
   template <>
@@ -66,9 +69,10 @@ namespace pg_query_private {
   template <>
   struct dispatch<long long> {
     static const Oid oid = 20;
-    static const unsigned storage = 8;
+    static const int storage = 8;
     static const char *store(char *, long long);
     static int length(long long) { return storage; }
+    static void load(PGresult *, int row, int col, long long &);
   };
 
   template <>
@@ -78,7 +82,7 @@ namespace pg_query_private {
   template <>
   struct dispatch<const char *> {
     static const Oid oid = 25;
-    static const unsigned storage = 0;
+    static const int storage = 0;
     static const char *store(char *, const char *);
     static int length(const char *);
   };
@@ -86,23 +90,26 @@ namespace pg_query_private {
   template <>
   struct dispatch<std::string> {
     static const Oid oid = 25;
-    static const unsigned storage = 0;
+    static const int storage = 0;
     static const char *store(char *, const std::string &);
     static int length(const std::string &);
+    static void load(PGresult *, int row, int col, std::string &);
   };
 
   template <>
   struct dispatch<std::vector<unsigned char> > {
     static const Oid oid = 17; // BYTEA
-    static const unsigned storage = 0;
+    static const int storage = 0;
     static const char *store(char *, const std::vector<unsigned char> &);
     static int length(const std::vector<unsigned char> &);
+    static void load(PGresult *, int row, int col,
+		     std::vector<unsigned char> &);
   };
 
   template <class T>
   struct dispatch<T *> {
     static const Oid oid = dispatch<T>::oid;
-    static const unsigned storage = dispatch<T>::storage;
+    static const int storage = dispatch<T>::storage;
     static const char *store(char *, const T *);
     static int length(const T *);
   };
@@ -165,7 +172,7 @@ namespace pg_query_private {
   }
 
   template <class T> const Oid dispatch<T *>::oid;
-  template <class T> const unsigned dispatch<T *>::storage;
+  template <class T> const int dispatch<T *>::storage;
 
   template <class T>
   inline int
@@ -187,6 +194,9 @@ namespace pg_query_private {
     return 0;
   }
 }
+
+//////////////////////////////////////////////////////////////////////
+// pg_query
 
 template <class T1> inline void
 pg_query(pgconn_handle &conn, pgresult_handle &res, const char *command,
@@ -563,4 +573,115 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *command,
   };
   res.execTypedParams
     (conn, command, paramTypes, paramValues, paramLengths, paramFormats);
+}
+
+//////////////////////////////////////////////////////////////////////
+// pg_response
+
+template <class T1> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, 0, row, t1);
+}
+
+template <class T1, class T2> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+}
+
+template <class T1, class T2, class T3> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+}
+
+template <class T1, class T2, class T3, class T4> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_query_private::dispatch<T1>::load(r, row, 3, t4);
+}
+
+template <class T1, class T2, class T3, class T4, class T5> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
+	    T5 &t5)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_query_private::dispatch<T1>::load(r, row, 3, t4);
+  pg_query_private::dispatch<T1>::load(r, row, 4, t5);
+}
+
+template <class T1, class T2, class T3, class T4, class T5, class T6>
+inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
+	    T5 &t5, T6 &t6)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_query_private::dispatch<T1>::load(r, row, 3, t4);
+  pg_query_private::dispatch<T1>::load(r, row, 4, t5);
+  pg_query_private::dispatch<T1>::load(r, row, 5, t6);
+}
+
+template <class T1, class T2, class T3, class T4, class T5, class T6, class T7>
+inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
+	    T5 &t5, T6 &t6, T7 &t7)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_query_private::dispatch<T1>::load(r, row, 3, t4);
+  pg_query_private::dispatch<T1>::load(r, row, 4, t5);
+  pg_query_private::dispatch<T1>::load(r, row, 5, t6);
+  pg_query_private::dispatch<T1>::load(r, row, 6, t7);
+}
+
+template <class T1, class T2, class T3, class T4, class T5, class T6, class T7,
+	  class T8> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
+	    T5 &t5, T6 &t6, T7 &t7, T8 &t8)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_query_private::dispatch<T1>::load(r, row, 3, t4);
+  pg_query_private::dispatch<T1>::load(r, row, 4, t5);
+  pg_query_private::dispatch<T1>::load(r, row, 5, t6);
+  pg_query_private::dispatch<T1>::load(r, row, 6, t7);
+  pg_query_private::dispatch<T1>::load(r, row, 7, t8);
+}
+
+template <class T1, class T2, class T3, class T4, class T5, class T6, class T7,
+	  class T8, class T9> inline void
+pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
+	    T5 &t5, T6 &t6, T7 &t7, T8 &t8, T9 &t9)
+{
+  PGresult *r = res.get();
+  pg_query_private::dispatch<T1>::load(r, row, 0, t1);
+  pg_query_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_query_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_query_private::dispatch<T1>::load(r, row, 3, t4);
+  pg_query_private::dispatch<T1>::load(r, row, 4, t5);
+  pg_query_private::dispatch<T1>::load(r, row, 5, t6);
+  pg_query_private::dispatch<T1>::load(r, row, 6, t7);
+  pg_query_private::dispatch<T1>::load(r, row, 7, t8);
+  pg_query_private::dispatch<T1>::load(r, row, 8, t9);
 }

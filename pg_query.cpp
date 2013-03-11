@@ -18,23 +18,26 @@
 
 #include "pg_query.hpp"
 #include "pg_exception.hpp"
+#include "string_support.hpp"
 
+#include <cerrno>
 #include <climits>
+#include <cstdlib>
 
 const Oid pg_query_private::dispatch<short>::oid;
-const unsigned pg_query_private::dispatch<short>::storage;
+const int pg_query_private::dispatch<short>::storage;
 
 const Oid pg_query_private::dispatch<int>::oid;
-const unsigned pg_query_private::dispatch<int>::storage;
+const int pg_query_private::dispatch<int>::storage;
 
 const Oid pg_query_private::dispatch<long long>::oid;
-const unsigned pg_query_private::dispatch<long long>::storage;
+const int pg_query_private::dispatch<long long>::storage;
 
 const Oid pg_query_private::dispatch<const char *>::oid;
-const unsigned pg_query_private::dispatch<const char *>::storage;
+const int pg_query_private::dispatch<const char *>::storage;
 
 const Oid pg_query_private::dispatch<std::string>::oid;
-const unsigned pg_query_private::dispatch<std::string>::storage;
+const int pg_query_private::dispatch<std::string>::storage;
 
 int
 pg_query_private::length_check(size_t len)
@@ -43,6 +46,168 @@ pg_query_private::length_check(size_t len)
     throw pg_exception("argument string length exceeds maximum");
   }
   return len;
+}
+
+static inline bool
+is_binary(PGresult *res, int col)
+{
+  switch (PQfformat(res, col)) {
+  case 0:
+    return false;
+    break;
+  case 1:
+    return true;
+    break;
+  default:
+    throw pg_exception("invalid format type");
+  }
+}
+
+void
+pg_query_private::dispatch<bool>::load(PGresult *res, int row, int col,
+				       bool &val)
+{
+  bool binary = is_binary(res, col);
+  if (binary && (PQftype(res, col) != oid
+		 || PQgetlength(res, row, col) != storage)) {
+    throw pg_exception("format mismatch for boolean column");
+  }
+  if (PQgetisnull(res, row, col)) {
+    throw pg_exception("NULL value in non-null boolean column");
+  }
+  const char *ptr =PQgetvalue(res, row, col);
+  if (binary) {
+    switch (*ptr) {
+    case 0:
+      val = false;
+      break;
+    case 1:
+      val = true;
+      break;
+    default:
+      throw pg_exception("invalid binary value in boolean column");
+    }
+  } else {
+    switch (*ptr) {
+    case 'f':
+      val = false;
+      break;
+    case 't':
+      val = true;
+      break;
+    default:
+      throw pg_exception("invalid value in boolean column");
+    }
+  }
+}
+
+
+template <class T> static inline void
+load_integer(PGresult *res, int row, int col, T &val)
+{
+  using namespace pg_query_private;
+  bool binary = is_binary(res, col);
+  if (binary && (PQftype(res, col) != dispatch<T>::oid
+		 || PQgetlength(res, row, col) != dispatch<T>::storage)) {
+    throw pg_exception("format mismatch for integer column");
+  }
+  if (PQgetisnull(res, row, col)) {
+    throw pg_exception("NULL value in non-null integer column");
+  }
+  if (binary) {
+    const unsigned char *ptr =
+      reinterpret_cast<const unsigned char *>(PQgetvalue(res, row, col));
+    if (sizeof(T) == 2) {
+      val = (static_cast<T>(ptr[0]) << 8) | ptr[1];
+    } else if (sizeof(T) == 4) {
+      memcpy(&val, ptr, dispatch<T>::storage);
+      val = be_to_cpu_32(val);
+    } else if (sizeof(T) == 8) {
+      memcpy(&val, ptr, dispatch<T>::storage);
+      val = be_to_cpu_64(val);
+    }
+  } else {
+    long long llval;
+    char *endptr;
+    errno = 0;
+    const char *ptr = PQgetvalue(res, row, col);
+    llval = strtoll(ptr, &endptr, 10);
+    if ((llval == 0 && errno != 0)
+	|| static_cast<long long>(static_cast<T>(llval)) != llval) {
+      std::string msg("conversion failure for INT");
+      msg += static_cast<char>('0' + sizeof(T));
+      msg += " column: \"";
+      msg += quote(ptr);
+      msg += '"';
+      throw pg_exception(msg.c_str());
+    }
+    val = llval;
+  }
+}
+
+void
+pg_query_private::dispatch<short>::load(PGresult *res, int row, int col,
+					short &val)
+{
+  load_integer<short>(res, row, col, val);
+}
+
+void
+pg_query_private::dispatch<int>::load(PGresult *res, int row, int col, int &val)
+{
+  load_integer<int>(res, row, col, val);
+}
+
+void
+pg_query_private::dispatch<long long>::load(PGresult *res, int row, int col,
+					    long long &val)
+{
+  load_integer<long long>(res, row, col, val);
+}
+
+template <class T>
+static inline void
+load_text(PGresult *res, int row, int col, T &val)
+{
+  using namespace pg_query_private;
+  bool binary = is_binary(res, col);
+  Oid colid = PQftype(res, col);
+  bool bytea = colid == dispatch<std::vector<unsigned char> >::oid;
+  if (binary && (colid != dispatch<std::string>::oid && !bytea)) {
+    throw pg_exception("format mismatch for string column");
+  }
+  const char *ptr = PQgetvalue(res, row, col);
+  if (binary || !bytea) {
+    val.assign(ptr, ptr + PQgetlength(res, row, col));
+  } else {
+    size_t len;
+    unsigned char *blob =
+      PQunescapeBytea(reinterpret_cast<const unsigned char *>(ptr), &len);
+    if (blob == NULL) {
+      throw std::bad_alloc();
+    }
+    try {
+      val.assign(blob, blob + len);
+    } catch (...) {
+      PQfreemem(blob);
+      throw;
+    }
+    PQfreemem(blob);
+  }
+}
+
+void
+pg_query_private::dispatch<std::string>::load(PGresult *res, int row, int col,
+					      std::string &val)
+{
+  load_text<std::string>(res, row, col, val);
+}
+
+void
+pg_query_private::dispatch<std::vector<unsigned char> >::load
+  (PGresult *res, int row, int col, std::vector<unsigned char> &val)
+{
+  load_text<std::vector<unsigned char> >(res, row, col, val);
 }
 
 int
