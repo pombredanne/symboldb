@@ -339,27 +339,16 @@ database::add_directory(package_id pkg, const rpm_file_info &info)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
-  char mtimestr[32];
-  snprintf(mtimestr, sizeof(mtimestr), "%d", info.mtime);
-  char modestr[32];
-  snprintf(modestr, sizeof(modestr), "%d", info.mode);
-  const char *params[] = {
-    pkgstr,
-    info.name.c_str(),
-    info.user.c_str(),
-    info.group.c_str(),
-    mtimestr,
-    modestr,
-    info.normalized ? "true" : "false",
-  };
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " DIRECTORY_TABLE
      " (package, name, user_name, group_name, mtime, mode, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)", params);
+     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
+     pkg.value(), info.name, info.user, info.group,
+     static_cast<long long>(info.mtime),
+     static_cast<long long>(info.mode),
+     info.normalized);
 }
 
 void
