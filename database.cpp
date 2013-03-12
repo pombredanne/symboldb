@@ -26,6 +26,8 @@
 #include "pgconn_handle.hpp"
 #include "pgresult_handle.hpp"
 #include "pg_exception.hpp"
+#include "pg_query.hpp"
+#include "pg_response.hpp"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -713,39 +715,34 @@ database::url_cache_fetch(const char *url, size_t expected_length,
 			  long long expected_time,
 			  std::vector<unsigned char> &data)
 {
-  char lenstr[32];
-  snprintf(lenstr, sizeof(lenstr), "%zu", expected_length);
-  char timestr[32];
-  snprintf(timestr, sizeof(timestr), "%lld", expected_time);
-  const char *params[] = {url, lenstr, timestr};
-  pgresult_handle res;
-  res.execParamsBinary
-    (impl_->conn, "SELECT data FROM " URL_CACHE_TABLE
-     " WHERE url = $1 AND LENGTH(data) = $2 AND http_time = $3", params);
-  if (res.ntuples() != 1) {
+  if (expected_length > 1U << 30) {
     return false;
   }
-  data.clear();
-  const char *ptr = res.getvalue(0, 0);
-  data.assign(ptr, ptr + res.getlength(0, 0));
-  return true;
+  pgresult_handle res;
+  pg_query_binary
+    (impl_->conn, res, "SELECT data FROM " URL_CACHE_TABLE
+     " WHERE url = $1 AND LENGTH(data) = $2 AND http_time = $3",
+     url, static_cast<int>(expected_length), expected_time);
+  if (res.ntuples() != 1) {
+    return false;
+  } else {
+    pg_response(res, 0, data);
+    return true;
+  }
 }
 
 bool
 database::url_cache_fetch(const char *url,
 			  std::vector<unsigned char> &data)
 {
-  const char *params[] = {url};
   pgresult_handle res;
-  res.execParamsBinary
-    (impl_->conn, "SELECT data FROM " URL_CACHE_TABLE " WHERE url = $1",
-     params);
+  pg_query_binary
+    (impl_->conn, res,
+     "SELECT data FROM " URL_CACHE_TABLE " WHERE url = $1", url);
   if (res.ntuples() != 1) {
     return false;
   }
-  data.clear();
-  const char *ptr = res.getvalue(0, 0);
-  data.assign(ptr, ptr + res.getlength(0, 0));
+  pg_response(res, 0, data);
   return true;
 }
 
@@ -754,42 +751,21 @@ database::url_cache_update(const char *url,
 			   const std::vector<unsigned char> &data,
 			   long long time)
 {
-  char timestr[32];
-  snprintf(timestr, sizeof(timestr), "%lld", time);
-  const char *params[] = {
-    url,
-    timestr,
-    reinterpret_cast<const char *>(data.data()),
-  };
-  static const Oid paramTypes[] = {25 /* TEXT */, 20 /* INT8 */, 17 /* BYTEA */};
-  const int paramLengths[] = {0, 0, static_cast<int>(data.size())};
-  if (static_cast<size_t>(paramLengths[2]) != data.size()) {
-    throw std::runtime_error("data length out of range");
-  }
-  static const int paramFormats[] = {0, 0, 1};
-  bool found;
-  {
-    pgresult_handle res;
-    const char *params1[] = {url};
-    res.execParams
-      (impl_->conn,
-       "SELECT 1 FROM " URL_CACHE_TABLE " WHERE url = $1 FOR UPDATE",
-       params1);
-    found = res.ntuples() == 1;
-  }
   pgresult_handle res;
-  if (found) {
-    res.execTypedParams
-      (impl_->conn, "UPDATE " URL_CACHE_TABLE
+  pg_query
+    (impl_->conn, res,
+     "SELECT 1 FROM " URL_CACHE_TABLE " WHERE url = $1 FOR UPDATE", url);
+
+  if (res.ntuples() == 1) {
+    pg_query
+      (impl_->conn, res, "UPDATE " URL_CACHE_TABLE
        " SET http_time = $2, data = $3, last_change = NOW() AT TIME ZONE 'UTC'"
-       " WHERE url = $1",
-       paramTypes, params, paramLengths, paramFormats);
+       " WHERE url = $1", url, time, data);
   } else {
-    res.execTypedParams
-      (impl_->conn, "INSERT INTO " URL_CACHE_TABLE
+    pg_query
+      (impl_->conn, res, "INSERT INTO " URL_CACHE_TABLE
        " (url, http_time, data, last_change)"
-       " VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC')",
-       paramTypes, params, paramLengths, paramFormats);
+       " VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC')", url, time, data);
   }
 }
 
