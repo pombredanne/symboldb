@@ -362,25 +362,15 @@ database::add_symlink(package_id pkg, const rpm_file_info &info,
   if (target.empty() || target.find('\0') != std::string::npos) {
     throw std::runtime_error("symlink with invalid target");
   }
-  char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
-  char mtimestr[32];
-  snprintf(mtimestr, sizeof(mtimestr), "%d", info.mtime);
-  const char *params[] = {
-    pkgstr,
-    info.name.c_str(),
-    target.c_str(),
-    info.user.c_str(),
-    info.group.c_str(),
-    mtimestr,
-    info.normalized ? "true" : "false",
-  };
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " SYMLINK_TABLE
      " (package, name, target, user_name, group_name, mtime, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)", params);
+     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
+     pkg.value(), info.name, target, info.user, info.group,
+     static_cast<long long>(info.mtime),
+     info.normalized);
 }
 
 void
