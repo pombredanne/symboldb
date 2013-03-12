@@ -45,3 +45,7 @@
 * Use the libpq binary interface for bulk data transfers.  This should
   lead to a measurable speedup when transferring mostly integer
   columns (e.g., when computing the ELF closure).
+
+* Set the appropriate parameters in libcurl to terminate connections
+  which have transferred very little data for extended periods of
+  time.
