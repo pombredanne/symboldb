@@ -88,7 +88,7 @@ add_library (SymbolDB
   os_readlink.cpp
   os_remove_directory_tree.cpp
   pg_exception.cpp
-  pg_query.cpp
+  pg_private.cpp
   pg_testdb.cpp
   pgconn_handle.cpp
   pgresult_handle.cpp

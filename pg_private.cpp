@@ -24,23 +24,23 @@
 #include <climits>
 #include <cstdlib>
 
-const Oid pg_query_private::dispatch<short>::oid;
-const int pg_query_private::dispatch<short>::storage;
+const Oid pg_private::dispatch<short>::oid;
+const int pg_private::dispatch<short>::storage;
 
-const Oid pg_query_private::dispatch<int>::oid;
-const int pg_query_private::dispatch<int>::storage;
+const Oid pg_private::dispatch<int>::oid;
+const int pg_private::dispatch<int>::storage;
 
-const Oid pg_query_private::dispatch<long long>::oid;
-const int pg_query_private::dispatch<long long>::storage;
+const Oid pg_private::dispatch<long long>::oid;
+const int pg_private::dispatch<long long>::storage;
 
-const Oid pg_query_private::dispatch<const char *>::oid;
-const int pg_query_private::dispatch<const char *>::storage;
+const Oid pg_private::dispatch<const char *>::oid;
+const int pg_private::dispatch<const char *>::storage;
 
-const Oid pg_query_private::dispatch<std::string>::oid;
-const int pg_query_private::dispatch<std::string>::storage;
+const Oid pg_private::dispatch<std::string>::oid;
+const int pg_private::dispatch<std::string>::storage;
 
 int
-pg_query_private::length_check(size_t len)
+pg_private::length_check(size_t len)
 {
   if (len >= INT_MAX) {
     throw pg_exception("argument string length exceeds maximum");
@@ -64,7 +64,7 @@ is_binary(PGresult *res, int col)
 }
 
 void
-pg_query_private::dispatch<bool>::load(PGresult *res, int row, int col,
+pg_private::dispatch<bool>::load(PGresult *res, int row, int col,
 				       bool &val)
 {
   bool binary = is_binary(res, col);
@@ -105,7 +105,7 @@ pg_query_private::dispatch<bool>::load(PGresult *res, int row, int col,
 template <class T> static inline void
 load_integer(PGresult *res, int row, int col, T &val)
 {
-  using namespace pg_query_private;
+  using namespace pg_private;
   bool binary = is_binary(res, col);
   if (binary && (PQftype(res, col) != dispatch<T>::oid
 		 || PQgetlength(res, row, col) != dispatch<T>::storage)) {
@@ -146,20 +146,20 @@ load_integer(PGresult *res, int row, int col, T &val)
 }
 
 void
-pg_query_private::dispatch<short>::load(PGresult *res, int row, int col,
+pg_private::dispatch<short>::load(PGresult *res, int row, int col,
 					short &val)
 {
   load_integer<short>(res, row, col, val);
 }
 
 void
-pg_query_private::dispatch<int>::load(PGresult *res, int row, int col, int &val)
+pg_private::dispatch<int>::load(PGresult *res, int row, int col, int &val)
 {
   load_integer<int>(res, row, col, val);
 }
 
 void
-pg_query_private::dispatch<long long>::load(PGresult *res, int row, int col,
+pg_private::dispatch<long long>::load(PGresult *res, int row, int col,
 					    long long &val)
 {
   load_integer<long long>(res, row, col, val);
@@ -169,7 +169,7 @@ template <class T>
 static inline void
 load_text(PGresult *res, int row, int col, T &val)
 {
-  using namespace pg_query_private;
+  using namespace pg_private;
   bool binary = is_binary(res, col);
   Oid colid = PQftype(res, col);
   bool bytea = colid == dispatch<std::vector<unsigned char> >::oid;
@@ -197,28 +197,28 @@ load_text(PGresult *res, int row, int col, T &val)
 }
 
 void
-pg_query_private::dispatch<std::string>::load(PGresult *res, int row, int col,
+pg_private::dispatch<std::string>::load(PGresult *res, int row, int col,
 					      std::string &val)
 {
   load_text<std::string>(res, row, col, val);
 }
 
 void
-pg_query_private::dispatch<std::vector<unsigned char> >::load
+pg_private::dispatch<std::vector<unsigned char> >::load
   (PGresult *res, int row, int col, std::vector<unsigned char> &val)
 {
   load_text<std::vector<unsigned char> >(res, row, col, val);
 }
 
 int
-pg_query_private::dispatch<std::string>::length(const std::string &str)
+pg_private::dispatch<std::string>::length(const std::string &str)
 {
   return length_check(str.size());
 }
 
 
 const char *
-pg_query_private::dispatch<std::vector<unsigned char> >::store
+pg_private::dispatch<std::vector<unsigned char> >::store
   (char *, const std::vector<unsigned char> &vec)
 {
   if (vec.empty()) {
@@ -231,7 +231,7 @@ pg_query_private::dispatch<std::vector<unsigned char> >::store
 }
 
 int
-pg_query_private::dispatch<std::vector<unsigned char> >::length
+pg_private::dispatch<std::vector<unsigned char> >::length
   (const std::vector<unsigned char> &vec)
 {
   return length_check(vec.size());
