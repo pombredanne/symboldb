@@ -21,6 +21,7 @@
 #include "pgconn_handle.hpp"
 #include "pg_exception.hpp"
 #include "pg_query.hpp"
+#include "pg_response.hpp"
 
 #include <map>
 #include <set>
@@ -29,29 +30,11 @@
 #include <cstring>
 
 namespace {
-  struct less_than_str {
-    bool operator()(const char *left, const char *right) const
-    {
-      return strcmp(left, right) < 0;
-    }
-  };
-
-  struct string_file_id {};
-  typedef tagged<const char *, string_file_id> file_id;
-
-  struct less_than_file {
-    bool operator()(file_id left, file_id right) const
-    {
-      return strcmp(left.value(), right.value()) < 0;
-    }
-  };
-
   struct file_ref {
-    file_id id;
-    const char *name;
-    file_ref(const pgresult_handle &res, int row)
-      : id(res.getvalue(row, 2)),
-	name(res.getvalue(row, 3))
+    database::file_id id;
+    std::string name;
+    file_ref(int fid, const std::string &file_name)
+      : id(fid), name(file_name)
     {
     }
 
@@ -82,13 +65,13 @@ namespace {
       directory_prio = 10000
     };
     // The standard library directories are strongly preferred.
-    if (strncmp(name, "/lib/", 5) == 0
-	|| strncmp(name, "/lib64/", 7) == 0
-	|| strncmp(name, "/usr/lib/", 9) == 0
-	|| strncmp(name, "/usr/lib64/", 11) == 0) {
+    if (strncmp(name.c_str(), "/lib/", 5) == 0
+	|| strncmp(name.c_str(), "/lib64/", 7) == 0
+	|| strncmp(name.c_str(), "/usr/lib/", 9) == 0
+	|| strncmp(name.c_str(), "/usr/lib64/", 11) == 0) {
 	prio += lib_prio;
     }
-    if (same_directory(name, needed_path)) {
+    if (same_directory(name.c_str(), needed_path)) {
       prio += directory_prio;
     }
     // Prefer libraries in the same file system area, with a shared
@@ -97,29 +80,29 @@ namespace {
       prio += 2;
     }
     // Deeply nested libraries are less prefered.
-    prio -= strlen(name);
+    prio -= name.size();
     return prio;
   }
 
-  typedef std::multimap<const char *, file_ref, less_than_str> soname_map;
-  typedef std::map<const char *, soname_map, less_than_str> arch_soname_map;
-  typedef std::map<file_id, std::set<file_id, less_than_file>, less_than_file >
+  typedef std::multimap<std::string, file_ref> soname_map;
+  typedef std::map<std::string, soname_map> arch_soname_map;
+  typedef std::map<database::file_id, std::set<database::file_id> >
     dependency_map;
 
   // Find the most suitable library for a particular SONAME reference.
-  file_id
+  database::file_id
   lookup(const arch_soname_map &arch_soname,
-	 const char *arch, const char *needed_name, const char *needing_path,
-	 bool debug = false)
+	 const std::string &arch, const std::string &needed_name,
+	 const char *needing_path, bool debug = false)
   {
     arch_soname_map::const_iterator soname(arch_soname.find(arch));
     if (soname == arch_soname.end()) {
-      return file_id();
+      return database::file_id();
     }
     std::pair<soname_map::const_iterator, soname_map::const_iterator> providers
       (soname->second.equal_range(needed_name));
     if (providers.first == providers.second) {
-      return file_id();
+      return database::file_id();
     }
 
     soname_map::const_iterator &p(providers.first);
@@ -136,13 +119,15 @@ namespace {
     int best_priority = best->priority(needing_path);
     if (debug) {
       fprintf(stderr, "info: closure: resolving %s %s\n",
-	      needing_path, needed_name);
-      fprintf(stderr, "info: closure:     %s %d\n", best->name, best_priority);
+	      needing_path, needed_name.c_str());
+      fprintf(stderr, "info: closure:     %s %d\n",
+	      best->name.c_str(), best_priority);
     }
     do {
       int prio = p->second.priority(needing_path);
       if (debug) {
-	fprintf(stderr, "info: closure:     %s %d\n", p->second.name, prio);
+	fprintf(stderr, "info: closure:     %s %d\n",
+		p->second.name.c_str(), prio);
       }
       if (prio > best_priority) {
 	best = &p->second;
@@ -152,7 +137,7 @@ namespace {
     } while (p != providers.second);
     if (debug) {
       fprintf(stderr, "info: closure:   winner: %s %d\n",
-	      best->name, best_priority);
+	      best->name.c_str(), best_priority);
     }
     return best->id;
   }
@@ -167,41 +152,51 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   // Obtain the list of SONAME providers.  There can be multiple DSOs
   // which have the sane SONAME.
   // FIXME: Providers should be restricted to DYN ELF images.
-  pgresult_handle soname_provider_result;
-  pg_query(conn, soname_provider_result,
-	   "SELECT ef.arch, ef.soname, f.id, f.name"
-	   " FROM symboldb.package_set_member psm"
-	   " JOIN symboldb.file f ON psm.package = f.package"
-	   " JOIN symboldb.elf_file ef ON f.id = ef.file"
-	   " WHERE psm.set = $1", id.value());
+  pgresult_handle res;
+  pg_query_binary(conn, res,
+		  "SELECT ef.arch::text, ef.soname, f.id, f.name"
+		  " FROM symboldb.package_set_member psm"
+		  " JOIN symboldb.file f ON psm.package = f.package"
+		  " JOIN symboldb.elf_file ef ON f.id = ef.file"
+		  " WHERE psm.set = $1", id.value());
 
   arch_soname_map arch_soname;
-  for (int i = 0, end = soname_provider_result.ntuples(); i < end; ++i) {
-    const char *arch = soname_provider_result.getvalue(i, 0);
-    const char *soname = soname_provider_result.getvalue(i, 1);
-    arch_soname[arch].insert(std::make_pair
-			     (soname, file_ref(soname_provider_result, i)));
+  {
+    std::string arch;
+    std::string soname;
+    int fid;
+    std::string file_name;
+    for (int row = 0, end = res.ntuples(); row < end; ++row) {
+      pg_response(res, row, arch, soname, fid, file_name);
+      arch_soname[arch].insert(std::make_pair(soname,
+					      file_ref(fid, file_name)));
+    }
   }
 
   dependency_map closure;
-  pgresult_handle needed_result;
-  pg_query
-    (conn, soname_provider_result,
-     "SELECT ef.arch, en.name, f.id, f.name"
+  pg_query_binary
+    (conn, res,
+     "SELECT ef.arch::text, en.name, f.id, f.name"
      " FROM symboldb.package_set_member psm"
      " JOIN symboldb.file f ON psm.package = f.package"
      " JOIN symboldb.elf_file ef ON f.id = ef.file"
      " JOIN symboldb.elf_needed en ON f.id = en.file"
      " WHERE psm.set = $1", id.value());
   size_t elements = 0;
-  for (int i = 0, end = needed_result.ntuples(); i < end; ++i) {
-    const char *arch = needed_result.getvalue(i, 0);
-    const char *needed_name = needed_result.getvalue(i, 1);
-    file_id needing_file(needed_result.getvalue(i, 2));
-    const char *needing_path = needed_result.getvalue(i, 3);
-    file_id library = lookup(arch_soname, arch, needed_name, needing_path);
-    if (library != file_id()) {
-      elements += closure[needing_file].insert(library).second;
+  {
+    std::string arch;
+    std::string needed_name;
+    int fid;
+    std::string needing_path;
+    for (int row = 0, end = res.ntuples(); row < end; ++row) {
+      pg_response(res, row,
+		  arch, needed_name, fid, needing_path);
+      database::file_id needing_file(fid);
+      database::file_id library =
+	lookup(arch_soname, arch, needed_name, needing_path.c_str());
+      if (library != database::file_id()) {
+	elements += closure[needing_file].insert(library).second;
+      }
     }
   }
 
@@ -220,14 +215,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
     for (dependency_map::iterator
 	   needing = closure.begin(), needing_end = closure.end();
 	 needing != needing_end; ++needing) {
-      std::set<file_id, less_than_file> &needing_deps(needing->second);
-      for (std::set<file_id>::const_iterator
+      std::set<database::file_id> &needing_deps(needing->second);
+      for (std::set<database::file_id>::const_iterator
 	     needing_dep = needing_deps.begin(),
 	     needing_dep_end = needing_deps.end();
 	   needing_dep != needing_dep_end; ++needing_dep) {
 	dependency_map::const_iterator dep(closure.find(*needing_dep));
 	if (dep != closure.end()) {
-	  for (std::set<file_id>::const_iterator
+	  for (std::set<database::file_id>::const_iterator
 		 depdep = dep->second.begin(), depdep_end = dep->second.end();
 	       depdep != depdep_end; ++depdep) {
 	    bool new_element = needing_deps.insert(*depdep).second;
@@ -241,10 +236,9 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   if (debug) {
     fprintf(stderr, "info: closure: finished\n");
   }
-
-  // No longer needed.  We need to keep the pgresult_handles around
-  // because we have pointers into their data.
   arch_soname.clear();
+  res.close();
+
 
   // Load the closure into the database.
   char idstr[32];
@@ -260,21 +254,24 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   for (dependency_map::iterator
 	 needing = closure.begin(), needing_end = closure.end();
        needing != needing_end; ++needing) {
-    const char *file = needing->first.value();
-    const char *file_end = file + strlen(file);
-    std::set<file_id, less_than_file> &needing_deps(needing->second);
-    for (std::set<file_id>::const_iterator
+    char filebuf[32];
+    snprintf(filebuf, sizeof(filebuf), "%d", needing->first.value());
+    char *fileend = filebuf + strlen(filebuf);
+    std::set<database::file_id> &needing_deps(needing->second);
+    for (std::set<database::file_id>::const_iterator
 	   needing_dep = needing_deps.begin(),
 	   needing_dep_end = needing_deps.end();
 	 needing_dep != needing_dep_end; ++needing_dep) {
-      const char *needed = needing_dep->value();
-      const char *needed_end = needed + strlen(needed);
+      database::file_id needed(needing_dep->value());
+      char neededbuf[32];
+      snprintf(neededbuf, sizeof(neededbuf), "%d", needed.value());
+      char *neededend = neededbuf + strlen(neededbuf);
 
       upload.insert(upload.end(), idstr, idstrend);
       upload.push_back('\t');
-      upload.insert(upload.end(), file, file_end);
+      upload.insert(upload.end(), filebuf, fileend);
       upload.push_back('\t');
-      upload.insert(upload.end(), needed, needed_end);
+      upload.insert(upload.end(), neededbuf, neededend);
       upload.push_back('\n');
       if (upload.size() > 128 * 1024) {
 	conn.putCopyData(upload.data(), upload.size());
