@@ -24,6 +24,7 @@
 #include "fd_handle.hpp"
 
 #include <signal.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "test.hpp"
@@ -163,6 +164,19 @@ test()
     copy_source_to_sink(source, sink);
     CHECK(proc.wait() == 0);
     COMPARE_STRING(sink.data, "/does-not-exist\n");
+  }
+  {
+    subprocess proc;
+    proc.command("/bin/sh").arg("-c").arg("echo $PATH");
+    proc.inherit_environ();
+    proc.redirect(subprocess::out, subprocess::pipe);
+    proc.start();
+    int fd = proc.pipefd(subprocess::out);
+    fd_source source(fd);
+    string_sink sink;
+    copy_source_to_sink(source, sink);
+    CHECK(proc.wait() == 0);
+    COMPARE_STRING(sink.data, std::string(getenv("PATH")) + "\n");
   }
   {
     fd_handle tempfile;

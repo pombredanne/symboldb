@@ -201,6 +201,18 @@ subprocess::env(const char *key, const char *value)
 }
 
 subprocess &
+subprocess::inherit_environ()
+{
+  char **p = environ;
+  while (*p) {
+    impl_->envv.back() = xstrdup(*p);
+    impl_->envv.push_back(NULL);
+    ++p;
+  }
+  return *this;
+}
+
+subprocess &
 subprocess::redirect(standard_fd fd, fd_activity act)
 {
   assert(fd == in || fd == out || fd == err);
