@@ -283,54 +283,20 @@ database::add_file(package_id pkg, const rpm_file_info &info,
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
-  char lengthstr[32];
-  snprintf(lengthstr, sizeof(lengthstr), "%llu", info.length);
-  char mtimestr[32];
-  snprintf(mtimestr, sizeof(mtimestr), "%d", info.mtime);
-  char modestr[32];
-  snprintf(modestr, sizeof(modestr), "%d", info.mode);
-  const char *params[] = {
-    pkgstr,
-    info.name.c_str(),
-    lengthstr,
-    info.user.c_str(),
-    info.group.c_str(),
-    mtimestr,
-    modestr,
-    info.normalized ? "true" : "false",
-    reinterpret_cast<const char *>(digest.data()),
-    reinterpret_cast<const char *>(contents.data()),
-  };
-  if (params[9] == NULL) {
-    // data() can return a NULL pointer, which is treated differently
-    // by PostgreSQL.
-    params[9] = "";
+  long long length = info.length;
+  if (length < 0) {
+    std::runtime_error("file length out of range");
   }
-  static const Oid paramTypes[] = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    17, /* BYTEA */
-    17, /* BYTEA */
-  };
-  const int paramLengths[] = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    static_cast<int>(digest.size()),
-    static_cast<int>(contents.size()),
-  };
-  static const int paramFormats[] = {
-    0, 0, 0, 0, 0, 0, 0, 0,
-    1,
-    1,
-  };
   pgresult_handle res;
-  res.execTypedParams
-    (impl_->conn,
+  pg_query_binary
+    (impl_->conn, res,
      "INSERT INTO " FILE_TABLE
      " (package, name, length, user_name, group_name, mtime, mode, normalized,"
      " digest, contents)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
-     paramTypes, params, paramLengths, paramFormats);
+     pkg.value(), info.name, length,  info.user, info.group,
+     static_cast<long long>(info.mtime), static_cast<long long>(info.mode),
+     info.normalized, digest, contents);
   return file_id(get_id_force(res));
 }
 
