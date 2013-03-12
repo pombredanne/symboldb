@@ -382,7 +382,7 @@ namespace pg_private {
       pg_private::dispatch<T4>::length(t4),
       pg_private::dispatch<T5>::length(t5),
       pg_private::dispatch<T6>::length(t6),
-      pg_private::dispatch<T7>::length(t8),
+      pg_private::dispatch<T7>::length(t7),
       pg_private::dispatch<T8>::length(t8),
       pg_private::dispatch<T9>::length(t9),
     };
