@@ -39,7 +39,7 @@ CREATE DOMAIN symboldb.elf_section_type AS SMALLINT;
 
 CREATE TABLE symboldb.package (
   id SERIAL NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   epoch INTEGER CHECK (epoch >= 0),
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
@@ -85,8 +85,8 @@ COMMENT ON table symboldb.package_digest IS
 
 CREATE TABLE symboldb.package_set (
   id SERIAL NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  arch TEXT NOT NULL CHECK (LENGTH(arch) > 0)
+  name TEXT NOT NULL UNIQUE COLLATE "C",
+  arch TEXT NOT NULL CHECK (LENGTH(arch) > 0) COLLATE "C"
 );
 COMMENT ON COLUMN symboldb.package_set.arch IS 'main architecture';
 
@@ -102,10 +102,10 @@ CREATE TABLE symboldb.file (
   id SERIAL NOT NULL PRIMARY KEY,
   package INTEGER NOT NULL
     REFERENCES symboldb.package (id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   length BIGINT NOT NULL CHECK(length >= 0),
-  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0),
-  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
+  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
+  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
   normalized BOOLEAN NOT NULL,
@@ -123,10 +123,10 @@ CREATE INDEX ON symboldb.file (name);
 CREATE TABLE symboldb.symlink (
   package INTEGER NOT NULL
     REFERENCES symboldb.package (id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
-  target TEXT NOT NULL CHECK (LENGTH(target) > 0),
-  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0),
-  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
+  target TEXT NOT NULL CHECK (LENGTH(target) > 0) COLLATE "C",
+  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
+  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   normalized BOOLEAN NOT NULL,
   PRIMARY KEY(package, name)
@@ -139,9 +139,9 @@ CREATE INDEX ON symboldb.symlink (target);
 CREATE TABLE symboldb.directory (
   package INTEGER NOT NULL
     REFERENCES symboldb.package (id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
-  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0),
-  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0),
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
+  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
+  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
   normalized BOOLEAN NOT NULL,
@@ -159,15 +159,15 @@ CREATE TABLE symboldb.elf_file (
   e_type symboldb.elf_short NOT NULL,
   e_machine symboldb.elf_short NOT NULL,
   arch symboldb.arch NOT NULL,
-  soname TEXT NOT NULL
+  soname TEXT NOT NULL COLLATE "C"
 );
 CREATE INDEX ON symboldb.elf_file (soname);
 
 CREATE TABLE symboldb.elf_definition (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK(length(name) > 0),
-  version TEXT CHECK (LENGTH(version) > 0),
+  name TEXT NOT NULL CHECK(length(name) > 0) COLLATE "C",
+  version TEXT CHECK (LENGTH(version) > 0) COLLATE "C",
   primary_version BOOLEAN NOT NULL,
   symbol_type symboldb.elf_symbol_type NOT NULL,
   binding symboldb.elf_binding_type NOT NULL,
@@ -184,8 +184,8 @@ CREATE INDEX ON symboldb.elf_definition (name, version);
 CREATE TABLE symboldb.elf_reference (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK(length(name) > 0),
-  version TEXT CHECK (LENGTH(version) > 0),
+  name TEXT NOT NULL CHECK(length(name) > 0) COLLATE "C",
+  version TEXT CHECK (LENGTH(version) > 0) COLLATE "C",
   symbol_type symboldb.elf_symbol_type NOT NULL,
   binding symboldb.elf_binding_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL
@@ -196,7 +196,7 @@ CREATE INDEX ON symboldb.elf_reference (name, version);
 CREATE TABLE symboldb.elf_needed (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL COLLATE "C",
   PRIMARY KEY (file, name)
 );
 CREATE INDEX ON symboldb.elf_needed (name);
@@ -204,14 +204,14 @@ CREATE INDEX ON symboldb.elf_needed (name);
 CREATE TABLE symboldb.elf_rpath (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
-  path TEXT NOT NULL,
+  path TEXT NOT NULL COLLATE "C",
   PRIMARY KEY (file, path)
 );
 
 CREATE TABLE symboldb.elf_runpath (
   file INTEGER NOT NULL
     REFERENCES symboldb.file (id) ON DELETE CASCADE,
-  path TEXT NOT NULL,
+  path TEXT NOT NULL COLLATE "C",
   PRIMARY KEY (file, path)
 );
 
@@ -267,7 +267,7 @@ CREATE INDEX ON symboldb.elf_closure (needed);
 -- URL cache (mainly for raw repository metadata).
 
 CREATE TABLE symboldb.url_cache (
-  url TEXT NOT NULL PRIMARY KEY CHECK (url LIKE '%:%'),
+  url TEXT NOT NULL PRIMARY KEY CHECK (url LIKE '%:%') COLLATE "C",
   http_time BIGINT NOT NULL,
   data BYTEA,
   last_change TIMESTAMP WITHOUT TIME ZONE

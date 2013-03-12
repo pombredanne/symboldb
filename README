@@ -59,7 +59,11 @@ To create a database for your user account (named "USER"), run the
 following commands as the "postgres" user:
 
   createuser USER
-  createdb USER
+  createdb --lc-collate=C USER
+
+(The symboldb SQL schema contains COLLATE "C" annotations in many
+places, so re-using an existing database with another collation scheme
+is possible without a performance loss.)
 
 Afterwards, as "USER", run "psql" to check if you can access the
 database.  The following commands have to be invoked as "USER", too.
