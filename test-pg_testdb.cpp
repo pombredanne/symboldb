@@ -319,6 +319,12 @@ test()
       r.execBinary(h, "SELECT (- 2^31)::int4");
       pg_response(r, 0, t);
       CHECK(t == static_cast<int>(-(1U << 31)));
+
+      r.exec(h, "SELECT generate_series(0, 100)");
+      for (int i = 0; i <= 10; ++i) {
+	pg_response(r, i, t);
+	CHECK(t == i);
+      }
     }
 
     // long long

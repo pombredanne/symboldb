@@ -25,7 +25,7 @@ template <class T1> inline void
 pg_response(pgresult_handle &res, int row, T1 &t1)
 {
   PGresult *r = res.get();
-  pg_private::dispatch<T1>::load(r, 0, row, t1);
+  pg_private::dispatch<T1>::load(r, row, 0, t1);
 }
 
 template <class T1, class T2> inline void
