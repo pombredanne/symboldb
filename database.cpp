@@ -596,67 +596,51 @@ database::add_elf_error(file_id file, const char *message)
 database::package_set_id
 database::create_package_set(const char *name)
 {
-  const char *params[] = {name};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query_binary
+    (impl_->conn, res,
      "INSERT INTO " PACKAGE_SET_TABLE
-     " (name) VALUES ($1) RETURNING id", params);
+     " (name) VALUES ($1) RETURNING id", name);
   return package_set_id(get_id_force(res));
 }
 
 database::package_set_id
 database::lookup_package_set(const char *name)
 {
-  const char *params[] = {name};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
-     "SELECT id FROM " PACKAGE_SET_TABLE
-     " WHERE name = $1", params);
+  pg_query_binary
+    (impl_->conn, res,
+     "SELECT id FROM " PACKAGE_SET_TABLE " WHERE name = $1", name);
   return package_set_id(get_id(res));
 }
 
 void
 database::add_package_set(package_set_id set, package_id pkg)
 {
-  char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set.value());
-  char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
-  const char *params[] = {setstr, pkgstr};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " PACKAGE_SET_MEMBER_TABLE
-     " (set, package) VALUES ($1, $2)", params);
+     " (set, package) VALUES ($1, $2)", set.value(), pkg.value());
 }
 
 void
 database::delete_from_package_set(package_set_id set, package_id pkg)
 {
-  char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set.value());
-  char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
-  const char *params[] = {setstr, pkgstr};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
-     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE
-     " WHERE set = $1 AND package = $2", params);
+  pg_query
+    (impl_->conn, res,
+     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1 AND package = $2",
+     set.value(), pkg.value());
 }
 
 void
 database::empty_package_set(package_set_id set)
 {
-  char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set.value());
-  const char *params[] = {setstr};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn, "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1",
-     params);
+  pg_query
+    (impl_->conn, res,
+     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1", set.value());
 }
 
 bool
@@ -668,17 +652,14 @@ database::update_package_set(package_set_id set,
 
   std::set<package_id> old;
   {
-    char setstr[32];
-    snprintf(setstr, sizeof(setstr), "%d", set.value());
-    const char *params[] = {setstr};
     pgresult_handle res;
-    res.execParams
-      (impl_->conn, "SELECT package FROM " PACKAGE_SET_MEMBER_TABLE
-       " WHERE set = $1", params);
+    pg_query_binary
+      (impl_->conn, res, "SELECT package FROM " PACKAGE_SET_MEMBER_TABLE
+       " WHERE set = $1", set.value());
 
-    for (int i = 0, end = res.ntuples(); i < end; ++i) {
-      int pkg = 0;
-      sscanf(res.getvalue(i, 0), "%d", &pkg);
+    for (int row = 0, end = res.ntuples(); row < end; ++row) {
+      int pkg;
+      pg_response(res, row, pkg);
       assert(pkg != 0);
       old.insert(package_id(pkg));
     }
