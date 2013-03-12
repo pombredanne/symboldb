@@ -21,6 +21,7 @@
 #include "pgresult_handle.hpp"
 #include "pg_exception.hpp"
 #include "pg_query.hpp"
+#include "pg_response.hpp"
 
 #include "test.hpp"
 
