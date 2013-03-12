@@ -178,8 +178,8 @@ static int
 get_id(pgresult_handle &res)
 {
   if (res.ntuples() > 0) {
-    const char *val = res.getvalue(0, 0);
-    int id = atoi(val);
+    int id;
+    pg_response(res, 0, id);
     if (id <= 0) {
       throw pg_exception("database returned invalid ID");
     }
