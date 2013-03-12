@@ -402,37 +402,23 @@ database::add_elf_image(file_id file, const elf_image &image,
     throw std::logic_error("fallback_arch");
   }
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  char ei_class[32];
-  snprintf(ei_class, sizeof(ei_class), "%d", image.ei_class());
-  char ei_data[32];
-  snprintf(ei_data, sizeof(ei_data), "%d", image.ei_data());
-  char e_type[32];
-  snprintf(e_type, sizeof(e_type), "%d", image.e_type());
-  char e_machine[32];
-  snprintf(e_machine, sizeof(e_machine), "%d", image.e_machine());
-
   const char *arch = image.arch();
   if (arch == NULL) {
     arch = fallback_arch;
   }
-  const char *params[] = {
-    filestr,
-    ei_class,
-    ei_data,
-    e_type,
-    e_machine,
-    arch,
-    soname,
-  };
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " ELF_FILE_TABLE
      " (file, ei_class, ei_data, e_type, e_machine, arch, soname)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)", params);
+     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.arch, $7)",
+     file.value(),
+     static_cast<int>(image.ei_class()),
+     static_cast<int>(image.ei_data()),
+     static_cast<int>(image.e_type()),
+     static_cast<int>(image.e_machine()),
+     arch,
+     soname);
 }
 
 void
@@ -440,34 +426,23 @@ database::add_elf_symbol_definition(file_id file,
 				    const elf_symbol_definition &def)
 {
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  char sectionstr[32];
-  snprintf(sectionstr, sizeof(sectionstr), "%hd", (signed short)def.section);
-  char xsectionstr[32];
-  snprintf(xsectionstr, sizeof(xsectionstr), "%d", (int)def.xsection);
-  char symboltypestr[32];
-  snprintf(symboltypestr, sizeof(symboltypestr), "%d", (int)def.type);
-  char bindingstr[32];
-  snprintf(bindingstr, sizeof(bindingstr), "%d", (int)def.binding);
-  const char *params[] = {
-    filestr,
-    def.symbol_name.c_str(),
-    def.vda_name.empty() ? NULL : def.vda_name.c_str(),
-    def.default_version ? "t" : "f",
-    symboltypestr,
-    bindingstr,
-    sectionstr,
-    def.has_xsection() ? xsectionstr : NULL,
-    def.visibility(),
-  };
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  int xsection = def.xsection;
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " ELF_DEFINITION_TABLE
      " (file, name, version, primary_version, symbol_type, binding,"
      " section, xsection, visibility)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", params);
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::symboldb.elf_visibility)",
+     file.value(),
+     def.symbol_name.c_str(),
+     def.vda_name.empty() ? NULL : def.vda_name.c_str(),
+     def.default_version,
+     static_cast<int>(def.type),
+     static_cast<int>(def.binding),
+     static_cast<short>(def.section),
+     def.has_xsection() ? &xsection : NULL,
+     def.visibility());
 }
 
 void
@@ -475,26 +450,18 @@ database::add_elf_symbol_reference(file_id file,
 				   const elf_symbol_reference &ref)
 {
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  char symboltypestr[32];
-  snprintf(symboltypestr, sizeof(symboltypestr), "%d", (int)ref.type);
-  char bindingstr[32];
-  snprintf(bindingstr, sizeof(bindingstr), "%d", (int)ref.type);
-  const char *params[] = {
-    filestr,
-    ref.symbol_name.c_str(),
-    ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
-    symboltypestr,
-    bindingstr,
-    ref.visibility(),
-  };
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " ELF_REFERENCE_TABLE
      " (file, name, version, symbol_type, binding, visibility)"
-     " VALUES ($1, $2, $3, $4, $5, $6)", params);
+     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_visibility)",
+     file.value(),
+     ref.symbol_name,
+     ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
+     static_cast<int>(ref.type),
+     static_cast<int>(ref.binding),
+     ref.visibility());
 }
 
 void
@@ -502,14 +469,11 @@ database::add_elf_needed(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  const char *params[] = {filestr, name};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " ELF_NEEDED_TABLE " (file, name) VALUES ($1, $2)",
-     params);
+     file.value(), name);
 }
 
 void
@@ -517,13 +481,11 @@ database::add_elf_rpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  const char *params[] = {filestr, name};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
-     "INSERT INTO " ELF_RPATH_TABLE " (file, path) VALUES ($1, $2)", params);
+  pg_query
+    (impl_->conn, res,
+     "INSERT INTO " ELF_RPATH_TABLE " (file, path) VALUES ($1, $2)",
+     file.value(), name);
 }
 
 void
@@ -531,13 +493,11 @@ database::add_elf_runpath(file_id file, const char *name)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  const char *params[] = {filestr, name};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
-     "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)", params);
+  pg_query
+    (impl_->conn, res,
+     "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)",
+     file.value(), name);
 }
 
 void
@@ -545,13 +505,11 @@ database::add_elf_error(file_id file, const char *message)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  char filestr[32];
-  snprintf(filestr, sizeof(filestr), "%d", file.value());
-  const char *params[] = {filestr, message};
   pgresult_handle res;
-  res.execParams
-    (impl_->conn,
-     "INSERT INTO " ELF_ERROR_TABLE " (file, message) VALUES ($1, $2)", params);
+  pg_query
+    (impl_->conn, res,
+     "INSERT INTO " ELF_ERROR_TABLE " (file, message) VALUES ($1, $2)",
+     file.value(), message);
 }
 
 database::package_set_id
