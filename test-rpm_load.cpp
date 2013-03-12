@@ -232,7 +232,7 @@ test()
 
     CHECK(!pids.empty());
     db.txn_begin();
-    database::package_set_id pset(db.create_package_set("test-set", "x86_64"));
+    database::package_set_id pset(db.create_package_set("test-set"));
     CHECK(pset.value() > 0);
     CHECK(!db.update_package_set(pset, pids.begin(), pids.begin()));
     CHECK(db.update_package_set(pset, pids));

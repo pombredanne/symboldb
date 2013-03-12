@@ -35,7 +35,6 @@ public:
     standard, verbose, quiet
   } output;
 
-  std::string arch;
   std::string set_name;
   std::string cache_path;
   bool no_net;

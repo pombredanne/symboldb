@@ -47,7 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <cmdsynopsis>
       <command>symboldb</command>
       <arg choice="plain">--create-set=<replaceable>name</replaceable></arg>
-      <arg choice="plain">--arch=<replaceable>arch</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>RPM</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis>
@@ -129,18 +128,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <varlistentry>
 	<term><command>--create-set</command>
 	<replaceable class="parameter">set</replaceable>
-	<option>--arch</option>
-	<replaceable class="parameter">base</replaceable>
 	</term>
 	<listitem>
 	  <para>
 	    Adds a new package set, with the name <replaceable
 	    class="parameter">set</replaceable> (which is not
-	    interpreted by <command>symboldb</command>).  The main
-	    architecture is <replaceable
-	    class="parameter">base</replaceable>.  The command can be
-	    passed an optional list of RPM files, which are loaded in
-	    to the database and assigned to the new package set.
+	    interpreted by <command>symboldb</command>).  The command
+	    can be passed an optional list of RPM files, which are
+	    loaded in to the database and assigned to the new package
+	    set.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -302,17 +298,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <refsect1>
     <title>OPTIONS</title>
     <variablelist>
-      <varlistentry>
-	<term><option>--arch</option> <replaceable
-	class="parameter">arch</replaceable></term>
-	<term><option>-a</option> <replaceable
-	class="parameter">arch</replaceable></term>
-	<listitem>
-	  <para>
-	    Identifies the base architecture (for a package set).
-	  </para>
-	</listitem>
-      </varlistentry>
       <varlistentry>
 	<term><option>--randomize</option></term>
 	<listitem>

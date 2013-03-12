@@ -592,14 +592,14 @@ database::add_elf_error(file_id file, const char *message)
 }
 
 database::package_set_id
-database::create_package_set(const char *name, const char *arch)
+database::create_package_set(const char *name)
 {
-  const char *params[] = {name, arch};
+  const char *params[] = {name};
   pgresult_handle res;
   res.execParams
     (impl_->conn,
      "INSERT INTO " PACKAGE_SET_TABLE
-     " (name, arch) VALUES ($1, $2) RETURNING id", params);
+     " (name) VALUES ($1) RETURNING id", params);
   return package_set_id(get_id_force(res));
 }
 

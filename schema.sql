@@ -85,10 +85,8 @@ COMMENT ON table symboldb.package_digest IS
 
 CREATE TABLE symboldb.package_set (
   id SERIAL NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE COLLATE "C",
-  arch TEXT NOT NULL CHECK (LENGTH(arch) > 0) COLLATE "C"
+  name TEXT NOT NULL UNIQUE COLLATE "C"
 );
-COMMENT ON COLUMN symboldb.package_set.arch IS 'main architecture';
 
 CREATE TABLE symboldb.package_set_member (
   set INTEGER NOT NULL

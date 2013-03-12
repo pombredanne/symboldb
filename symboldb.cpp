@@ -98,7 +98,7 @@ do_create_set(const symboldb_options &opt, database &db, char **argv)
 
   db.txn_begin();
   database::package_set_id set =
-    db.create_package_set(opt.set_name.c_str(), opt.arch.c_str());
+    db.create_package_set(opt.set_name.c_str());
   if (db.update_package_set(set, ids)) {
     finalize_package_set(opt, db, set);
   }
@@ -221,7 +221,7 @@ usage(const char *progname, const char *error = NULL)
   fprintf(stderr, "Usage:\n\n"
 "  %1$s --create-schema\n"
 "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
-"  %1$s --create-set=NAME --arch=ARCH [OPTIONS] RPM-FILE...\n"
+"  %1$s --create-set=NAME [OPTIONS] RPM-FILE...\n"
 "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
 "  %1$s --update-set-from-repo=NAME [OPTIONS] URL...\n"
 "  %1$s --download [OPTIONS] URL\n"
@@ -233,7 +233,6 @@ usage(const char *progname, const char *error = NULL)
 "  %1$s --show-stale-cached-rpms [OPTIONS]\n"
 "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 "\nOptions:\n"
-"  --arch=ARCH, -a        base architecture\n"
 "  --randomize            perform downloads in random order\n"
 "  --exclude-name=REGEXP  exclude packages whose name matches REGEXP\n"
 "  --quiet, -q            less output\n"
@@ -296,7 +295,6 @@ main(int argc, char **argv)
        command::show_stale_cached_rpms},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
-      {"arch", required_argument, 0, 'a'},
       {"exclude-name", required_argument, 0, options::exclude_name},
       {"randomize", no_argument, 0, options::randomize},
       {"cache", required_argument, 0, 'C'},
@@ -309,14 +307,9 @@ main(int argc, char **argv)
     };
     int ch;
     int index;
-    while ((ch = getopt_long(argc, argv, "a:NC:qv", long_options, &index)) != -1) {
+    while ((ch = getopt_long(argc, argv, "NC:qv",
+			     long_options, &index)) != -1) {
       switch (ch) {
-      case 'a':
-	if (optarg[0] == '\0') {
-	  usage(argv[0], "invalid architecture name");
-	}
-	opt.arch = optarg;
-	break;
       case 'N':
 	opt.no_net = true;
 	break;
@@ -375,11 +368,6 @@ main(int argc, char **argv)
 	usage(argv[0]);
       }
       break;
-    case command::create_set:
-      if (opt.arch.empty()) {
-	usage(argv[0]);
-      }
-      break;
     case command::create_schema:
     case command::show_soname_conflicts:
       if (argc != optind) {
@@ -387,6 +375,7 @@ main(int argc, char **argv)
       }
       break;
     case command::undefined:
+    case command::create_set:
     case command::update_set:
     case command::update_set_from_repo:
     case command::show_stale_cached_rpms:

@@ -128,7 +128,7 @@ public:
   // Package sets.
   struct package_set_tag {};
   typedef tagged<int, package_set_tag> package_set_id;
-  package_set_id create_package_set(const char *name, const char *arch);
+  package_set_id create_package_set(const char *name);
   package_set_id lookup_package_set(const char *name);
 
   // Adds a single package to the package set.

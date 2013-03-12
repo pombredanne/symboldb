@@ -84,11 +84,11 @@ RPM file is loaded concurrently.
 RPMs can be assigned to a package set (roughly equivalent to a
 compose) using:
 
-    symboldb --create-set=Fedora/18/x86_64 --arch=x86_64 *.rpm
+    symboldb --create-set=Fedora/18/x86_64 *.rpm
 
 To load RPMs from a combination of composes, use this command
 
-    symboldb --create-set=Fedora/18/x86_64 --arch=x86_64
+    symboldb --create-set=Fedora/18/x86_64
     symboldb --update-set-from-repo=Fedora/18/x86_64 \
       http://download.fedoraproject.org/pub/fedora/linux/updates/18/x86_64/ \
       http://download.fedoraproject.org/pub/fedora/linux/releases/18/Everything/x86_64/os/
