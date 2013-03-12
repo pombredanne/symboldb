@@ -146,6 +146,16 @@ target_link_libraries (symboldb
 
 install (TARGETS symboldb DESTINATION bin)
 
+add_executable (pgtestshell
+  pgtestshell.cpp
+)
+
+target_link_libraries (pgtestshell
+  SymbolDB
+)
+
+install (TARGETS pgtestshell DESTINATION bin)
+
 add_executable (runtests
   runtests.cpp
   test-base16.cpp
