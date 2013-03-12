@@ -205,47 +205,28 @@ database::intern_package(const rpm_package_info &pkg,
   // FIXME: This needs a transaction and locking.
 
   // Try to locate existing row.
-  {
-    pgresult_handle res;
-    const char *params[] = {
-      pkg.hash.c_str(),
-    };
-    res.execParams
-      (impl_->conn,
-       "SELECT id FROM " PACKAGE_TABLE " WHERE hash = decode($1, 'hex')",
-       params);
-    int id = get_id(res);
-    if (id > 0) {
-      pkg_id = package_id(id);
-      return false;
-    }
+  pgresult_handle res;
+  pg_query_binary
+    (impl_->conn, res,
+     "SELECT id FROM " PACKAGE_TABLE " WHERE hash = decode($1, 'hex')",
+     pkg.hash);
+  int id = get_id(res);
+  if (id > 0) {
+    pkg_id = package_id(id);
+    return false;
   }
 
   // Insert new row.
-  {
-    char epochstr[32];
-    if (pkg.epoch >= 0) {
-      snprintf(epochstr, sizeof(epochstr), "%d", pkg.epoch);
-    }
-    const char *params[] = {
-      pkg.name.c_str(),
-      pkg.epoch >= 0 ? epochstr : NULL,
-      pkg.version.c_str(),
-      pkg.release.c_str(),
-      pkg.arch.c_str(),
-      pkg.hash.c_str(),
-      pkg.source_rpm.c_str(),
-    };
-    pgresult_handle res;
-    res.execParams
-      (impl_->conn,
-       "INSERT INTO " PACKAGE_TABLE
-       " (name, epoch, version, release, arch, hash, source)"
-       " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex'), $7) RETURNING id",
-       params);
-    pkg_id = package_id(get_id_force(res));
-    return true;
-  }
+  pg_query_binary
+    (impl_->conn, res,
+     "INSERT INTO " PACKAGE_TABLE
+     " (name, epoch, version, release, arch, hash, source)"
+     " VALUES ($1, $2, $3, $4, $5::symboldb.arch, decode($6, 'hex'), $7)"
+     " RETURNING id",
+     pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
+     pkg.arch, pkg.hash, pkg.source_rpm);
+  pkg_id = package_id(get_id_force(res));
+  return true;
 }
 
 void
