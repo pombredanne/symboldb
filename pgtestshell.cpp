@@ -21,8 +21,10 @@
 
 #include "pg_testdb.hpp"
 #include "subprocess.hpp"
+#include "string_support.hpp"
 
 #include <stdlib.h>
+#include <unistd.h>
 
 int
 main(int argc, char **argv)
@@ -43,7 +45,19 @@ main(int argc, char **argv)
       ++p;
     }
   }
-  proc.inherit_environ();
+
+  // Do not inherit PG* environment variables because they could lead
+  // astray PostgreSQL operations in the subprocess.
+  for (char **p = environ; *p; ++p) {
+    std::string key_val(*p);
+    size_t sep = key_val.find('=');
+    if (!starts_with(key_val, "PG") && sep != std::string::npos) {
+      std::string key(key_val.begin(), key_val.begin() + sep);
+      std::string val(key_val.begin() + sep + 1, key_val.end());
+      proc.env(key.c_str(), val.c_str());
+    }
+  }
+
   proc.env("PGHOST", db.directory().c_str());
   proc.start();
   int ret = proc.wait();
