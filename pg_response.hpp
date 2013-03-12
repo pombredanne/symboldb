@@ -33,7 +33,7 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2)
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
 }
 
 template <class T1, class T2, class T3> inline void
@@ -41,8 +41,8 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3)
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
 }
 
 template <class T1, class T2, class T3, class T4> inline void
@@ -50,9 +50,9 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4)
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
-  pg_private::dispatch<T1>::load(r, row, 3, t4);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
+  pg_private::dispatch<T4>::load(r, row, 3, t4);
 }
 
 template <class T1, class T2, class T3, class T4, class T5> inline void
@@ -61,10 +61,10 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
-  pg_private::dispatch<T1>::load(r, row, 3, t4);
-  pg_private::dispatch<T1>::load(r, row, 4, t5);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
+  pg_private::dispatch<T4>::load(r, row, 3, t4);
+  pg_private::dispatch<T5>::load(r, row, 4, t5);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6>
@@ -74,11 +74,11 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
-  pg_private::dispatch<T1>::load(r, row, 3, t4);
-  pg_private::dispatch<T1>::load(r, row, 4, t5);
-  pg_private::dispatch<T1>::load(r, row, 5, t6);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
+  pg_private::dispatch<T4>::load(r, row, 3, t4);
+  pg_private::dispatch<T5>::load(r, row, 4, t5);
+  pg_private::dispatch<T6>::load(r, row, 5, t6);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6, class T7>
@@ -88,12 +88,12 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
-  pg_private::dispatch<T1>::load(r, row, 3, t4);
-  pg_private::dispatch<T1>::load(r, row, 4, t5);
-  pg_private::dispatch<T1>::load(r, row, 5, t6);
-  pg_private::dispatch<T1>::load(r, row, 6, t7);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
+  pg_private::dispatch<T4>::load(r, row, 3, t4);
+  pg_private::dispatch<T5>::load(r, row, 4, t5);
+  pg_private::dispatch<T6>::load(r, row, 5, t6);
+  pg_private::dispatch<T7>::load(r, row, 6, t7);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6, class T7,
@@ -103,13 +103,13 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
-  pg_private::dispatch<T1>::load(r, row, 3, t4);
-  pg_private::dispatch<T1>::load(r, row, 4, t5);
-  pg_private::dispatch<T1>::load(r, row, 5, t6);
-  pg_private::dispatch<T1>::load(r, row, 6, t7);
-  pg_private::dispatch<T1>::load(r, row, 7, t8);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
+  pg_private::dispatch<T4>::load(r, row, 3, t4);
+  pg_private::dispatch<T5>::load(r, row, 4, t5);
+  pg_private::dispatch<T6>::load(r, row, 5, t6);
+  pg_private::dispatch<T7>::load(r, row, 6, t7);
+  pg_private::dispatch<T8>::load(r, row, 7, t8);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6, class T7,
@@ -119,12 +119,12 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
 {
   PGresult *r = res.get();
   pg_private::dispatch<T1>::load(r, row, 0, t1);
-  pg_private::dispatch<T1>::load(r, row, 1, t2);
-  pg_private::dispatch<T1>::load(r, row, 2, t3);
-  pg_private::dispatch<T1>::load(r, row, 3, t4);
-  pg_private::dispatch<T1>::load(r, row, 4, t5);
-  pg_private::dispatch<T1>::load(r, row, 5, t6);
-  pg_private::dispatch<T1>::load(r, row, 6, t7);
-  pg_private::dispatch<T1>::load(r, row, 7, t8);
-  pg_private::dispatch<T1>::load(r, row, 8, t9);
+  pg_private::dispatch<T2>::load(r, row, 1, t2);
+  pg_private::dispatch<T3>::load(r, row, 2, t3);
+  pg_private::dispatch<T4>::load(r, row, 3, t4);
+  pg_private::dispatch<T5>::load(r, row, 4, t5);
+  pg_private::dispatch<T6>::load(r, row, 5, t6);
+  pg_private::dispatch<T7>::load(r, row, 6, t7);
+  pg_private::dispatch<T8>::load(r, row, 7, t8);
+  pg_private::dispatch<T9>::load(r, row, 8, t9);
 }
