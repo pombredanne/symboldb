@@ -154,6 +154,44 @@ test()
     CHECK(r.ntuples() == 1);
     COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9}");
 
+    pg_query_binary(h, r, "SELECT ARRAY[$1]::text", 1);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2]::text", 1, 2);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3]::text", 1, 2, 3);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3, $4]::text", 1, 2, 3, 4);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5]::text",
+		    1, 2, 3, 4, 5);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5]::text",
+		    1, 2, 3, 4, 5);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6]::text",
+		    1, 2, 3, 4, 5, 6);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7]::text",
+	     1, 2, 3, 4, 5, 6, 7);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7}");
+    pg_query_binary(h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7, $8]::text",
+		    1, 2, 3, 4, 5, 6, 7, 8);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8}");
+    pg_query_binary(h, r,
+		    "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7, $8, $9]::text",
+		    1, 2, 3, 4, 5, 6, 7, 8, 9);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9}");
+
     ////////////////////////////////////////////////////////////////////
     // Response decoding
 
