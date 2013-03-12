@@ -779,14 +779,10 @@ database::referenced_package_digests
      "SELECT digest FROM " PACKAGE_SET_MEMBER_TABLE " psm"
      " JOIN " PACKAGE_DIGEST_TABLE " d ON psm.package = d.package"
      " ORDER BY digest");
+  std::vector<unsigned char> digest;
   for (int i = 0, end = res.ntuples(); i < end; ++i) {
-    int len = res.getlength(i, 0);
-    if (len != 20 && len != 32) {
-      throw pg_exception("invalid package digest received from database");
-    }
-    const char *first = res.getvalue(i, 0);
-    const char *last = first + len;
-    digests.push_back(std::vector<unsigned char>(first, last));
+    pg_response(res, i, digest);
+    digests.push_back(digest);
   }
 }
 
@@ -794,23 +790,20 @@ void
 database::print_elf_soname_conflicts(package_set_id set,
 				     bool include_unreferenced)
 {
-  char setstr[32];
-  snprintf(setstr, sizeof(setstr), "%d", set.value());
-  const char *params[] = {setstr};
   pgresult_handle res;
   if (include_unreferenced) {
-    res.execParams
-      (impl_->conn,
+    pg_query
+      (impl_->conn, res,
        "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
        " FROM (SELECT arch, soname, UNNEST(files) AS file"
        "  FROM symboldb.elf_soname_provider"
        "  WHERE package_set = $1 AND array_length(files, 1) > 1) c"
        " JOIN symboldb.file f ON c.file = f.id"
        " JOIN symboldb.package p ON f.package = p.id"
-       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", params);
+       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", set.value());
   } else {
-    res.execParams
-      (impl_->conn,
+    pg_query
+      (impl_->conn, res,
        "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
        " FROM (SELECT arch, soname, UNNEST(files) AS file"
        "  FROM symboldb.elf_soname_provider"
@@ -823,7 +816,7 @@ database::print_elf_soname_conflicts(package_set_id set,
        "    WHERE psm.set = $1)) c"
        " JOIN symboldb.file f ON c.file = f.id"
        " JOIN symboldb.package p ON f.package = p.id"
-       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", params);
+       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", set.value());
   }
 
   std::string arch;
@@ -835,10 +828,11 @@ database::print_elf_soname_conflicts(package_set_id set,
   }
   bool first = true;
   for (int row = 0; row < rows; ++row) {
-    const char *current_arch = res.getvalue(row, 0);
-    const char *current_soname = res.getvalue(row, 1);
-    const char *file = res.getvalue(row, 2);
-    const char *pkg = res.getvalue(row, 3);
+    std::string current_arch;
+    std::string current_soname;
+    std::string file;
+    std::string pkg;
+    pg_response(res, row, current_arch, current_soname, file, pkg);
     bool primary = false;
     if (current_arch != arch) {
       if (first) {
@@ -846,7 +840,7 @@ database::print_elf_soname_conflicts(package_set_id set,
       } else {
 	printf("\n\n");
       }
-      printf("* Architecture: %s\n", current_arch);
+      printf("* Architecture: %s\n", current_arch.c_str());
       arch = current_arch;
       primary = true;
     } else if (current_soname != soname) {
@@ -854,10 +848,10 @@ database::print_elf_soname_conflicts(package_set_id set,
       soname = current_soname;
     }
     if (primary) {
-      printf("\nsoname: %s\n", current_soname);
+      printf("\nsoname: %s\n", current_soname.c_str());
     }
     printf("    %c %s (from %s)\n",
-	   primary ? '*' : ' ', file, pkg);
+	   primary ? '*' : ' ', file.c_str(), pkg.c_str());
   }
   printf("\nThe chosen DSO for each soname is marked with \"*\".\n");
   if (!include_unreferenced) {
