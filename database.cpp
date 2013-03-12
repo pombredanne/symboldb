@@ -239,41 +239,27 @@ database::add_package_digest(package_id pkg,
   if (digest.size() < 16) {
     throw std::logic_error("invalid digest length");
   }
-
-  char pkgstr[32];
-  snprintf(pkgstr, sizeof(pkgstr), "%d", pkg.value());
-  char lenstr[32];
-  snprintf(lenstr, sizeof(lenstr), "%llu", length);
-
-  static const Oid paramTypes[] = {23 /* INT4 */, 17 /* BYTEA */, 20 /* INT */};
-  const int paramLengths[] = {0, static_cast<int>(digest.size()), 0};
-  const char *params[] = {
-    pkgstr,
-    reinterpret_cast<const char *>(digest.data()),
-    lenstr,
-  };
-  static const int paramFormats[] = {0, 1, 0};
+  if (length > (1ULL << 60)) {
+    throw std::logic_error("invalid length");
+  }
 
   // Try to locate existing row.
-  {
-    pgresult_handle res;
-    res.execTypedParams
-      (impl_->conn,
-       "SELECT 1 FROM " PACKAGE_DIGEST_TABLE
-       " WHERE package = $1 AND digest = $2 AND length = $3",
-       paramTypes, params, paramLengths, paramFormats);
-    if (res.ntuples() > 0) {
-      return;
-    }
+  pgresult_handle res;
+  pg_query
+    (impl_->conn, res,
+     "SELECT 1 FROM " PACKAGE_DIGEST_TABLE
+     " WHERE package = $1 AND digest = $2 AND length = $3",
+     pkg.value(), digest, static_cast<long long>(length));
+  if (res.ntuples() > 0) {
+    return;
   }
 
   // Insert new row.
-  pgresult_handle res;
-  res.execTypedParams
-    (impl_->conn,
+  pg_query
+    (impl_->conn, res,
      "INSERT INTO " PACKAGE_DIGEST_TABLE " (package, digest, length)"
      " VALUES ($1, $2, $3)",
-     paramTypes, params, paramLengths, paramFormats);
+     pkg.value(), digest, static_cast<long long>(length));
 }
 
 database::package_id
@@ -282,17 +268,11 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
   if (digest.size() < 16) {
     throw std::logic_error("invalid digest length");
   }
-  static const Oid paramTypes[] = {17 /* BYTEA */};
-  const int paramLengths[] = {static_cast<int>(digest.size())};
-  const char *params[] = {
-    reinterpret_cast<const char *>(digest.data()),
-  };
-  static const int paramFormats[] = {1};
   pgresult_handle res;
-  res.execTypedParams
-    (impl_->conn,
+  pg_query_binary
+    (impl_->conn, res,
      "SELECT package FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
-     paramTypes, params, paramLengths, paramFormats);
+     digest);
   return package_id(get_id(res));
 }
 
