@@ -36,6 +36,7 @@
 #include "os.hpp"
 #include "base16.hpp"
 #include "curl_exception.hpp"
+#include "curl_exception_dump.hpp"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -427,22 +428,7 @@ main(int argc, char **argv)
       abort();
     }
   } catch(curl_exception &e) {
-    fprintf(stderr, "error: download");
-    if (!e.remote_ip().empty()) {
-      fprintf(stderr, " from [%s]:%u",
-	      e.remote_ip().c_str(), e.remote_port());
-    }
-    if (e.status() != 0) {
-      fprintf(stderr, " failed with status code %d\n", e.status());
-    } else {
-      fprintf(stderr, " failed\n");
-    }
-    if (!e.url().empty()) {
-      fprintf(stderr, "error:  URL: %s\n", e.url().c_str());
-    }
-    if (!e.original_url().empty()) {
-      fprintf(stderr, "error:  starting at: %s\n", e.original_url().c_str());
-    }
+    dump("error: ", e, stderr);
   } catch (symboldb_options::usage_error e) {
     fprintf(stderr, "error: %s\n", e.what());
   } catch (pg_exception &e) {
