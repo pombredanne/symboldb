@@ -58,6 +58,7 @@ add_library (SymbolDB
   base16.cpp
   cpio_reader.cpp
   curl_exception.cpp
+  curl_exception_dump.cpp
   curl_fetch_result.cpp
   curl_handle.cpp
   database.cpp
