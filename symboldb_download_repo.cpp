@@ -24,6 +24,7 @@
 #include "file_cache.hpp"
 #include "rpm_load.hpp"
 #include "curl_exception.hpp"
+#include "curl_exception_dump.hpp"
 #include "regex_handle.hpp"
 
 #include <algorithm>
@@ -161,22 +162,7 @@ namespace {
       }
       return true;
     } catch (curl_exception &e) {
-      fprintf(stderr, "error: %s", rurl.href.c_str());
-      if (!e.remote_ip().empty()) {
-	fprintf(stderr, " [%s]:%u", e.remote_ip().c_str(), e.remote_port());
-      }
-      if (e.status() != 0) {
-	fprintf(stderr, " status %d\n", e.status());
-      } else {
-	fprintf(stderr, "\n");
-      }
-      if (!e.url().empty() && e.url() != rurl.href) {
-	fprintf(stderr, "error:   URL: %s\n", e.url().c_str());
-      }
-      if (!e.original_url().empty()
-	  && e.original_url() != rurl.href && e.original_url() != e.url()) {
-	fprintf(stderr, "error:   starting at: %s\n", e.original_url().c_str());
-      }
+      dump("error: ", e, stderr);
       return false;
     } catch (file_cache::unsupported_hash &e) {
       fprintf(stderr, "error: unsupported hash for %s: %s\n",
