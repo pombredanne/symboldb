@@ -82,7 +82,19 @@ curl_fetch_result::init(curl_handle &h, const char *url)
   if (ret != CURLE_OK) {
     throw curl_exception(curl_easy_strerror(ret)).url(url);
   }
+
+  // The following settings should detect connectivity issues.  The
+  // throughput limit is fairly low, but it should allow us to detect
+  // dead connections.
   ret = curl_easy_setopt(h.raw, CURLOPT_CONNECTTIMEOUT, 30L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(h.raw, CURLOPT_LOW_SPEED_LIMIT, 500L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(h.raw, CURLOPT_LOW_SPEED_TIME, 60L);
   if (ret != CURLE_OK) {
     throw curl_exception(curl_easy_strerror(ret)).url(url);
   }
