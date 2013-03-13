@@ -58,7 +58,13 @@ main(int argc, char **argv)
     }
   }
 
+  // Connect to the temporary database.
   proc.env("PGHOST", db.directory().c_str());
+
+  // Do not use the original files in the home directory.
+  proc.env("PGPASSFILE", (db.directory() + "/pgpass").c_str());
+  proc.env("PGSERVICEFILE", (db.directory() + "/pgservice").c_str());
+
   proc.start();
   int ret = proc.wait();
   if (ret < 0) {
