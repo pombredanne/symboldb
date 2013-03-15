@@ -37,6 +37,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<bool> {
+    typedef bool arg;
     static const Oid oid = 16;
     static const int storage = 1;
     static const char *store(char *, bool);
@@ -46,6 +47,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<short> {
+    typedef short arg;
     static const Oid oid = 21;
     static const int storage = 2;
     static const char *store(char *, short);
@@ -59,6 +61,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<int> {
+    typedef int arg;
     static const Oid oid = 23;
     static const int storage = 4;
     static const char *store(char *, int);
@@ -73,6 +76,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<long long> {
+    typedef long long arg;
     static const Oid oid = 20;
     static const int storage = 8;
     static const char *store(char *, long long);
@@ -86,6 +90,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<const char *> {
+    typedef const char *arg;
     static const Oid oid = 25;
     static const int storage = 0;
     static const char *store(char *, const char *);
@@ -94,6 +99,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<std::string> {
+    typedef const std::string &arg;
     static const Oid oid = 25;
     static const int storage = 0;
     static const char *store(char *, const std::string &);
@@ -103,6 +109,7 @@ namespace pg_private {
 
   template <>
   struct dispatch<std::vector<unsigned char> > {
+    typedef const std::vector<unsigned char> &arg;
     static const Oid oid = 17; // BYTEA
     static const int storage = 0;
     static const char *store(char *, const std::vector<unsigned char> &);
@@ -118,6 +125,7 @@ namespace pg_private {
 
   template <class T>
   struct dispatch<T *> {
+    typedef const T *arg;
     static const Oid oid = dispatch<T>::oid;
     static const int storage = dispatch<T>::storage;
     static const char *store(char *, const T *);

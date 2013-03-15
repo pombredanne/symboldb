@@ -24,9 +24,9 @@
 // Not for direct use.
 namespace pg_private {
 
-  template <class T1> inline void
+  template <class T1> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1)
+	   typename dispatch<T1>::arg t1)
   {
     char s1[pg_private::dispatch<T1>::storage];
     const Oid paramTypes[] = {
@@ -45,9 +45,9 @@ namespace pg_private {
       (conn, sql, 1, paramTypes, paramValues, paramLengths, paramFormats, fmt);
   }
 
-  template <class T1, class T2> inline void
+  template <class T1, class T2> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -71,9 +71,10 @@ namespace pg_private {
       (conn, sql, 2, paramTypes, paramValues, paramLengths, paramFormats, fmt);
   }
 
-  template <class T1, class T2, class T3> inline void
+  template <class T1, class T2, class T3> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -102,9 +103,10 @@ namespace pg_private {
       (conn, sql, 3, paramTypes, paramValues, paramLengths, paramFormats, fmt);
   }
 
-  template <class T1, class T2, class T3, class T4> inline void
+  template <class T1, class T2, class T3, class T4> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -138,9 +140,11 @@ namespace pg_private {
       (conn, sql, 4, paramTypes, paramValues, paramLengths, paramFormats, fmt);
   }
 
-  template <class T1, class T2, class T3, class T4, class T5> inline void
+  template <class T1, class T2, class T3, class T4, class T5> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -180,10 +184,11 @@ namespace pg_private {
   }
 
   template <class T1, class T2, class T3, class T4, class T5, class T6>
-  inline void
+  void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5,
-	   const T6 &t6)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5, typename dispatch<T6>::arg t6)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -228,10 +233,12 @@ namespace pg_private {
   }
 
   template <class T1, class T2, class T3, class T4, class T5, class T6,
-	    class T7> inline void
+	    class T7> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5,
-	   const T6 &t6, const T7 &t7)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5, typename dispatch<T6>::arg t6,
+	   typename dispatch<T7>::arg t7)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -281,10 +288,12 @@ namespace pg_private {
   }
 
   template <class T1, class T2, class T3, class T4, class T5, class T6,
-	    class T7, class T8> inline void
+	    class T7, class T8> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5,
-	   const T6 &t6, const T7 &t7, const T8 &t8)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5, typename dispatch<T6>::arg t6,
+	   typename dispatch<T7>::arg t7, typename dispatch<T8>::arg t8)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -339,10 +348,13 @@ namespace pg_private {
   }
 
   template <class T1, class T2, class T3, class T4, class T5, class T6,
-	    class T7, class T8, class T9> inline void
+	    class T7, class T8, class T9> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5,
-	   const T6 &t6, const T7 &t7, const T8 &t8, const T9 &t9)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5, typename dispatch<T6>::arg t6,
+	   typename dispatch<T7>::arg t7, typename dispatch<T8>::arg t8,
+	   typename dispatch<T9>::arg t9)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -402,11 +414,13 @@ namespace pg_private {
   }
 
   template <class T1, class T2, class T3, class T4, class T5, class T6,
-	    class T7, class T8, class T9, class T10> inline void
+	    class T7, class T8, class T9, class T10> void
   pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
-	   const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4, const T5 &t5,
-	   const T6 &t6, const T7 &t7, const T8 &t8, const T9 &t9,
-	   const T10 &t10)
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5, typename dispatch<T6>::arg t6,
+	   typename dispatch<T7>::arg t7, typename dispatch<T8>::arg t8,
+	   typename dispatch<T9>::arg t9, typename dispatch<T10>::arg t10)
   {
     char s1[pg_private::dispatch<T1>::storage];
     char s2[pg_private::dispatch<T2>::storage];
@@ -476,7 +490,7 @@ template <class T1> inline void
 pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1);
+  return pg_private::pg_query<T1>(0, conn, res, sql, t1);
 }
 
 template <class T1>
@@ -484,14 +498,14 @@ inline void
 pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1);
+  return pg_private::pg_query<T1>(1, conn, res, sql, t1);
 }
 
 template <class T1, class T2> inline void
 pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1, t2);
+  return pg_private::pg_query<T1, T2>(0, conn, res, sql, t1, t2);
 }
 
 template <class T1, class T2>
@@ -499,14 +513,14 @@ inline void
 pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1, t2);
+  return pg_private::pg_query<T1, T2>(1, conn, res, sql, t1, t2);
 }
 
 template <class T1, class T2, class T3> inline void
 pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2, const T3 &t3)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1, t2, t3);
+  return pg_private::pg_query<T1, T2, T3>(0, conn, res, sql, t1, t2, t3);
 }
 
 template <class T1, class T2, class T3>
@@ -514,14 +528,15 @@ inline void
 pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2, const T3 &t3)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1, t2, t3);
+  return pg_private::pg_query<T1, T2, T3>(1, conn, res, sql, t1, t2, t3);
 }
 
 template <class T1, class T2, class T3, class T4> inline void
 pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1, t2, t3, t4);
+  return pg_private::pg_query<T1, T2, T3, T4>
+    (0, conn, res, sql, t1, t2, t3, t4);
 }
 
 template <class T1, class T2, class T3, class T4>
@@ -529,7 +544,8 @@ inline void
 pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1, t2, t3, t4);
+  return pg_private::pg_query<T1, T2, T3, T4>
+    (1, conn, res, sql, t1, t2, t3, t4);
 }
 
 template <class T1, class T2, class T3, class T4, class T5> inline void
@@ -537,7 +553,8 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 	 const T5 &t5)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1, t2, t3, t4, t5);
+  return pg_private::pg_query<T1, T2, T3, T4, T5>
+    (0, conn, res, sql, t1, t2, t3, t4, t5);
 }
 
 template <class T1, class T2, class T3, class T4, class T5>
@@ -546,7 +563,8 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 		const T5 &t5)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1, t2, t3, t4, t5);
+  return pg_private::pg_query<T1, T2, T3, T4, T5>
+    (1, conn, res, sql, t1, t2, t3, t4, t5);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6>
@@ -555,7 +573,8 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 	 const T5 &t5, const T6 &t6)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1, t2, t3, t4, t5, t6);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6>
+    (0, conn, res, sql, t1, t2, t3, t4, t5, t6);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6>
@@ -564,7 +583,8 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 		const T5 &t5, const T6 &t6)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1, t2, t3, t4, t5, t6);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6>
+    (1, conn, res, sql, t1, t2, t3, t4, t5, t6);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -573,7 +593,8 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 	 const T5 &t5, const T6 &t6, const T7 &t7)
 {
-  return pg_private::pg_query(0, conn, res, sql, t1, t2, t3, t4, t5, t6, t7);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7>
+    (0, conn, res, sql, t1, t2, t3, t4, t5, t6, t7);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -582,7 +603,8 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 		const T5 &t5, const T6 &t6, const T7 &t7)
 {
-  return pg_private::pg_query(1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7>
+    (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -591,8 +613,8 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 	 const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8)
 {
-  return pg_private::pg_query(0, conn, res, sql,
-			      t1, t2, t3, t4, t5, t6, t7, t8);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8>
+    (0, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -601,8 +623,8 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
 		const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8)
 {
-  return pg_private::pg_query(1, conn, res, sql,
-			      t1, t2, t3, t4, t5, t6, t7, t8);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8>
+    (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -612,8 +634,8 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8,
 	 const T9 &t9)
 {
-  return pg_private::pg_query(0, conn, res, sql,
-			      t1, t2, t3, t4, t5, t6, t7, t8, t9);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+    (0, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -623,8 +645,8 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8,
 		const T9 &t9)
 {
-  return pg_private::pg_query(1, conn, res, sql,
-			      t1, t2, t3, t4, t5, t6, t7, t8, t9);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9>
+    (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -634,8 +656,8 @@ pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 	 const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8,
 	 const T9 &t9, const T10 &t10)
 {
-  return pg_private::pg_query(0, conn, res, sql,
-			      t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+    (0, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
 }
 
 template <class T1, class T2, class T3, class T4, class T5, class T6,
@@ -645,6 +667,6 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
 		const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8,
 		const T9 &t9, const T10 &t10)
 {
-  return pg_private::pg_query(1, conn, res, sql,
-			      t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
+    (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
 }
