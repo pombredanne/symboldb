@@ -54,8 +54,9 @@ add_custom_command (
 )
 
 add_library (SymbolDB
-  checksum.cpp
+  backtrace.cpp
   base16.cpp
+  checksum.cpp
   cpio_reader.cpp
   curl_exception.cpp
   curl_exception_dump.cpp

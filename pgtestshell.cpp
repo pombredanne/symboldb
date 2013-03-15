@@ -19,6 +19,7 @@
 // pgtestshell creates a temporary database and opens a shell with a
 // PGHOST environment variable pointing to it.
 
+#include "backtrace.hpp"
 #include "pg_testdb.hpp"
 #include "subprocess.hpp"
 #include "string_support.hpp"
@@ -29,6 +30,8 @@
 int
 main(int argc, char **argv)
 {
+  backtrace_init();
+
   pg_testdb db;
   subprocess proc;
   if (argc <= 1) {

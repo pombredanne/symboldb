@@ -28,6 +28,8 @@
 static void
 test()
 {
+  throw "foo";
+
   {
     int fd;
     {

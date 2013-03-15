@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "backtrace.hpp"
 #include "elf_image.hpp"
 #include "rpm_parser.hpp"
 #include "rpm_package_info.hpp"
@@ -277,6 +278,8 @@ namespace {
 int
 main(int argc, char **argv)
 {
+  backtrace_init();
+
   symboldb_options opt;
   command::type cmd = command::undefined;
   {

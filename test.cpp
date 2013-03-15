@@ -17,6 +17,7 @@
  */
 
 #include "test.hpp"
+#include "backtrace.hpp"
 #include "dir_handle.hpp"
 #include "os.hpp"
 #include "os_exception.hpp"
@@ -234,6 +235,8 @@ report_descriptors(const char *prefix, const std::vector<int> &fds, bool all)
 int
 run_tests()
 {
+  backtrace_init();
+
   std::vector<int> start_fds(file_descriptors());
   if (!file_descriptors_valid(start_fds)) {
     fprintf(stderr, "warning: invalid set of file descriptors:\n");
@@ -263,15 +266,18 @@ run_tests()
       ++exception_count;
       fprintf(stderr, "error: from PostgreSQL:\n");
       dump("error: ", e, stderr);
+      throw;
     } catch (std::exception &e) {
       ++exception_count;
       test_header();
       fprintf(stderr, "error: %s: exception %s: %s\n",
 	      p->name, typeid(e).name(), e.what());
+      throw;
     } catch (...) {
       ++exception_count;
       test_header();
       fprintf(stderr, "error: %s: unknown exception\n", p->name);
+      throw;
     }
   }
   if (exception_count > 0 || failure_count > 0) {
