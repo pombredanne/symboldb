@@ -111,6 +111,11 @@ namespace pg_private {
 		     std::vector<unsigned char> &);
   };
 
+  template <>
+  struct dispatch<const std::vector<unsigned char> >
+    : dispatch<std::vector<unsigned char> > {
+  };
+
   template <class T>
   struct dispatch<T *> {
     static const Oid oid = dispatch<T>::oid;
