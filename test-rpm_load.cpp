@@ -176,7 +176,7 @@ test()
 	    "SELECT DISTINCT"
 	    " length, user_name, group_name, mtime, mode,"
 	    " encode(digest, 'hex'), encode(contents, 'hex'),"
-	    " e_type, soname"
+	    " e_type, soname, encode(build_id, 'hex')"
 	    " FROM symboldb.file f"
 	    " JOIN symboldb.package p ON f.package = p.id"
 	    " JOIN symboldb.elf_file ef ON f.id = ef.file"
@@ -197,6 +197,10 @@ test()
 		   "03003e00010000009c1e000000000000"
 		   "40000000000000008855000000000000"
 		   "0000000040003800090040001d001c00");
+    COMPARE_STRING(r1.getvalue(0, 7), "3"); // ET_DYN (sic)
+    COMPARE_STRING(r1.getvalue(0, 8), "killall5");
+    COMPARE_STRING(r1.getvalue(0, 9),
+		   "876e6e5ec70f451531bd4ec82a60a1c7f206462a");
 
     COMPARE_STRING(r1.getvalue(0, 7), "3"); // ET_DYN (sic)
     COMPARE_STRING(r1.getvalue(0, 8), "killall5");
@@ -205,7 +209,7 @@ test()
 	    "SELECT DISTINCT"
 	    " length, user_name, group_name, mtime, mode,"
 	    " encode(digest, 'hex'), encode(contents, 'hex'),"
-	    " e_type, soname"
+	    " e_type, soname, encode(build_id, 'hex')"
 	    " FROM symboldb.file f"
 	    " JOIN symboldb.package p ON f.package = p.id"
 	    " JOIN symboldb.elf_file ef ON f.id = ef.file"
@@ -228,6 +232,8 @@ test()
 		   "0000000040003800090040001d001c00");
     COMPARE_STRING(r1.getvalue(0, 7), "3"); // ET_DYN (sic)
     COMPARE_STRING(r1.getvalue(0, 8), "wall");
+    COMPARE_STRING(r1.getvalue(0, 9),
+		   "36d9f2992247e4afaf292e939c4a3cb25204c142");
     r1.close();
 
     CHECK(!pids.empty());

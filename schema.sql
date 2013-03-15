@@ -157,7 +157,8 @@ CREATE TABLE symboldb.elf_file (
   e_type symboldb.elf_short NOT NULL,
   e_machine symboldb.elf_short NOT NULL,
   arch symboldb.arch NOT NULL,
-  soname TEXT NOT NULL COLLATE "C"
+  soname TEXT NOT NULL COLLATE "C",
+  build_id BYTEA CHECK (LENGTH(build_id) > 0)
 );
 CREATE INDEX ON symboldb.elf_file (soname);
 

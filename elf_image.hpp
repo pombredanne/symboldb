@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <tr1/memory>
+#include <vector>
 
 class elf_symbol_definition;
 class elf_symbol_reference;
@@ -37,6 +38,8 @@ public:
   unsigned char ei_data() const;
   unsigned short e_type() const;
   unsigned short e_machine() const;
+
+  const std::vector<unsigned char> &build_id() const;
 
   // Architecture from the e_machine field, in RPM-compatible format.
   // Can be NULL if the architecture cannot be determined.

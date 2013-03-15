@@ -44,6 +44,7 @@
 
 #include <libelf.h>
 #include <gelf.h>
+#include <string.h>
 
 struct elf_image::impl {
   Elf *elf;
@@ -54,6 +55,7 @@ struct elf_image::impl {
   unsigned short e_type;
   unsigned short e_machine;
   const char *arch;
+  std::vector<unsigned char> build_id;
 
   impl(const void *start, size_t size)
     : elf(NULL)
@@ -100,14 +102,84 @@ struct elf_image::impl {
     if (elf_getphdrnum (elf, &phnum) < 0) {
       throw elf_exception();
     }
+
+    set_build_id();
   }
 
   ~impl()
   {
     elf_end(elf);
   }
+
+  void set_build_id();
+  void set_build_id_from_section(Elf_Data *data);
 };
 
+void
+elf_image::impl::set_build_id()
+{
+  // See handle_notes() in readelf.c (from elfutils).
+  if (shnum == 0) {
+    Elf_Scn *scn = NULL;
+    while (true) {
+      scn = elf_nextscn(elf, scn);
+      if (scn == NULL) {
+	break;
+      }
+      GElf_Shdr shdr_mem;
+      GElf_Shdr *shdr = gelf_getshdr(scn, &shdr_mem);
+      if (shdr == NULL || shdr->sh_type != SHT_NOTE
+	  || (shdr->sh_flags & SHF_ALLOC) == 0) {
+	continue;
+      }
+
+      Elf_Data *data = elf_getdata (scn, NULL);
+      if (data != NULL) {
+	set_build_id_from_section(data);
+	return;
+      }
+    }
+    return;
+  }
+
+  // Look at the program header if no section headers are present.
+  for (size_t i = 0; i < phnum; ++i) {
+    GElf_Phdr mem;
+    GElf_Phdr *phdr = gelf_getphdr (elf, i, &mem);
+    if (phdr == NULL || phdr->p_type != PT_NOTE) {
+      continue;
+    }
+    Elf_Data *data =
+      elf_getdata_rawchunk (elf, phdr->p_offset, phdr->p_filesz, ELF_T_NHDR);
+    if (data != NULL) {
+      set_build_id_from_section(data);
+      return;
+    }
+  }
+}
+
+void
+elf_image::impl::set_build_id_from_section(Elf_Data *data)
+{
+  // See handle_notes_data() in readelf.c (from elfutils).
+  size_t offset = 0;
+  GElf_Nhdr nhdr;
+  size_t name_offset;
+  size_t desc_offset;
+  while (offset < data->d_size) {
+    offset = gelf_getnote(data, offset, &nhdr, &name_offset, &desc_offset);
+    if (offset == 0) {
+      break;
+    }
+    const char *name = static_cast<const char *>(data->d_buf) + name_offset;
+    if (strcmp(name, "GNU") == 0 && nhdr.n_type == 3) {
+      const unsigned char *desc =
+	static_cast<unsigned char *>(data->d_buf) + desc_offset;
+      build_id.assign(desc, desc + nhdr.n_descsz);
+      return;
+    }
+  }
+}
 
 void
 elf_image_init()
@@ -152,6 +224,12 @@ const char *
 elf_image::arch() const
 {
   return impl_->arch;
+}
+
+const std::vector<unsigned char> &
+elf_image::build_id() const
+{
+  return impl_->build_id;
 }
 
 struct elf_image::symbol_range::state {

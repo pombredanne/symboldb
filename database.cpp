@@ -355,15 +355,16 @@ database::add_elf_image(file_id file, const elf_image &image,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_FILE_TABLE
-     " (file, ei_class, ei_data, e_type, e_machine, arch, soname)"
-     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.arch, $7)",
+     " (file, ei_class, ei_data, e_type, e_machine, arch, soname, build_id)"
+     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.arch, $7, $8)",
      file.value(),
      static_cast<int>(image.ei_class()),
      static_cast<int>(image.ei_data()),
      static_cast<int>(image.e_type()),
      static_cast<int>(image.e_machine()),
      arch,
-     soname);
+     soname,
+     image.build_id().empty() ? NULL : &image.build_id());
 }
 
 void
