@@ -115,8 +115,7 @@ public:
   // Populates the elf_file table.  Uses fallback_arch (from the RPM
   // header) in case we cannot determine the architecture from the ELF
   // header.
-  void add_elf_image(file_id, const elf_image &, const char *fallback_arch,
-		     const char *soname);
+  void add_elf_image(file_id, const elf_image &, const char *soname);
 
   void add_elf_symbol_definition(file_id, const elf_symbol_definition &);
   void add_elf_symbol_reference(file_id, const elf_symbol_reference &);

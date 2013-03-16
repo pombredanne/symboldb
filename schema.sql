@@ -18,8 +18,16 @@ BEGIN;
 
 CREATE SCHEMA symboldb;
 
-CREATE TYPE symboldb.arch AS ENUM
-  ('noarch', 'i686', 'x86_64', 'ppc', 'ppc64', 'ppc64p7', 's390', 's390x');
+CREATE TYPE symboldb.rpm_arch AS ENUM (
+  'noarch',
+  'i386', 'i686', 'x86_64',
+  'ppc', 'ppc64', 'ppc64p7',
+  's390', 's390x');
+CREATE TYPE symboldb.elf_arch AS ENUM (
+  'i386', 'x86_64',
+  'ppc', 'ppc64',
+  's390', 's390x'
+);
 
 CREATE TYPE symboldb.elf_visibility AS ENUM
   ('default', 'internal', 'hidden', 'protected');
@@ -43,7 +51,7 @@ CREATE TABLE symboldb.package (
   epoch INTEGER CHECK (epoch >= 0),
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
-  arch symboldb.arch NOT NULL,
+  arch symboldb.rpm_arch NOT NULL,
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
   source TEXT NOT NULL CHECK (LENGTH(source) > 0)
 );
@@ -156,7 +164,7 @@ CREATE TABLE symboldb.elf_file (
   ei_data symboldb.elf_byte NOT NULL,
   e_type symboldb.elf_short NOT NULL,
   e_machine symboldb.elf_short NOT NULL,
-  arch symboldb.arch NOT NULL,
+  arch symboldb.elf_arch,
   soname TEXT NOT NULL COLLATE "C",
   build_id BYTEA CHECK (LENGTH(build_id) > 0)
 );

@@ -96,7 +96,7 @@ is_elf(const std::vector<unsigned char> data)
 
 // Loads an ELF image.
 static void
-load_elf(const symboldb_options &opt, database &db, rpm_package_info &info,
+load_elf(const symboldb_options &opt, database &db,
 	 database::file_id fid, rpm_file_entry &file)
 {
   try {
@@ -157,7 +157,7 @@ load_elf(const symboldb_options &opt, database &db, rpm_package_info &info,
 	}
       }
     }
-    db.add_elf_image(fid, image, info.arch.c_str(), soname.c_str());
+    db.add_elf_image(fid, image, soname.c_str());
   } catch (elf_exception e) {
     db.add_elf_error(fid, e.what());
   }
@@ -211,7 +211,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 					  file.contents.size()));
       database::file_id fid = db.add_file(pkg, *file.info, digest, preview);
       if (is_elf(file.contents)) {
-	load_elf(opt, db, info, fid, file);
+	load_elf(opt, db, fid, file);
       }
     }
   }

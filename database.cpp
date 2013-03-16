@@ -207,7 +207,7 @@ database::intern_package(const rpm_package_info &pkg,
     (impl_->conn, res,
      "INSERT INTO " PACKAGE_TABLE
      " (name, epoch, version, release, arch, hash, source)"
-     " VALUES ($1, $2, $3, $4, $5::symboldb.arch, decode($6, 'hex'), $7)"
+     " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7)"
      " RETURNING id",
      pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
      pkg.arch, pkg.hash, pkg.source_rpm);
@@ -327,28 +327,21 @@ database::add_symlink(package_id pkg, const rpm_file_info &info,
 
 void
 database::add_elf_image(file_id file, const elf_image &image,
-			const char *fallback_arch, const char *soname)
+			const char *soname)
 {
-  if (fallback_arch == NULL) {
-    throw std::logic_error("fallback_arch");
-  }
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  const char *arch = image.arch();
-  if (arch == NULL) {
-    arch = fallback_arch;
-  }
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_FILE_TABLE
      " (file, ei_class, ei_data, e_type, e_machine, arch, soname, build_id)"
-     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.arch, $7, $8)",
+     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_arch, $7, $8)",
      file.value(),
      static_cast<int>(image.ei_class()),
      static_cast<int>(image.ei_data()),
      static_cast<int>(image.e_type()),
      static_cast<int>(image.e_machine()),
-     arch,
+     image.arch(),
      soname,
      image.build_id().empty() ? NULL : &image.build_id());
 }

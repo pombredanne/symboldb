@@ -110,17 +110,6 @@ get_string(Header header, const char *name, rpmTagVal tag)
 			     + name + " header");
 }
 
-static std::string
-normalize_arch(const std::string &arch)
-{
-  // Some really old packages use the old architecture designators.
-  if (arch.size() == 4 && arch.at(0) == 'i'
-      && arch.at(2) == '8' && arch.at(3) == '6') {
-    return "i686";
-  }
-  return arch;
-}
-
 void
 rpm_parser_state::impl::get_header()
 {
@@ -131,7 +120,7 @@ rpm_parser_state::impl::get_header()
   pkg.name = get_string(header, "NAME", RPMTAG_NAME);
   pkg.version = get_string(header, "VERSION", RPMTAG_VERSION);
   pkg.release = get_string(header, "RELEASE", RPMTAG_RELEASE);
-  pkg.arch = normalize_arch(get_string(header, "ARCH", RPMTAG_ARCH));
+  pkg.arch = get_string(header, "ARCH", RPMTAG_ARCH);
   pkg.source_rpm = get_string(header, "SOURCERPM", RPMTAG_SOURCERPM);
   pkg.hash = get_string(header, "SHA1HEADER", RPMTAG_SHA1HEADER);
   rpmtd_wrapper td;

@@ -41,8 +41,10 @@ public:
 
   const std::vector<unsigned char> &build_id() const;
 
-  // Architecture from the e_machine field, in RPM-compatible format.
-  // Can be NULL if the architecture cannot be determined.
+  // Architecture from the e_machine field.  The possible values
+  // differ slightly from those used by RPM.  This can be NULL if the
+  // value cannot be determined (look at ei_class() and e_machine()
+  // instead).
   const char *arch() const;
 
   class symbol_range {

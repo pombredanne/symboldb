@@ -236,6 +236,16 @@ test()
 		   "36d9f2992247e4afaf292e939c4a3cb25204c142");
     r1.close();
 
+    r1.exec(dbh, "SELECT COUNT(*) FROM symboldb.elf_file WHERE arch IS NULL");
+    COMPARE_STRING(r1.getvalue(0, 0), "0");
+    r1.exec(dbh, "SELECT DISTINCT p.arch, ef.arch FROM symboldb.package p"
+	    " JOIN symboldb.file f ON p.id = f.package "
+	    " JOIN symboldb.elf_file ef ON f.id = ef.file"
+	    " WHERE p.arch::text <> ef.arch::text");
+    CHECK(r1.ntuples() == 1);
+    COMPARE_STRING(r1.getvalue(0, 0), "i686");
+    COMPARE_STRING(r1.getvalue(0, 1), "i386");
+
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set"));

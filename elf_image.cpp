@@ -45,6 +45,38 @@
 #include <libelf.h>
 #include <gelf.h>
 #include <string.h>
+#include <stdio.h>
+
+
+static const char *
+get_arch(unsigned char ei_class, unsigned short e_machine)
+{
+  static const struct {
+    unsigned short machine;
+    const char *name_32;
+    const char *name_64;
+  } archlist[] = {
+    {EM_386, "i386", NULL},
+    {EM_SPARC, "sparc", NULL},
+    {EM_PPC, "ppc", NULL},
+    {EM_PPC64, NULL, "ppc64"},
+    {EM_S390, "s390", "s390x"},
+    {EM_X86_64, NULL, "x86_64"},
+    {0, 0, 0}
+  };
+  for (unsigned i = 0; archlist[i].machine; ++i) {
+    if (e_machine == archlist[i].machine) {
+      if (ei_class == ELFCLASS32) {
+	return archlist[i].name_32;
+      } else if (ei_class == ELFCLASS64) {
+	return archlist[i].name_64;
+      } else {
+	return NULL;
+      }
+    }
+  }
+  return NULL;
+}
 
 struct elf_image::impl {
   Elf *elf;
@@ -75,26 +107,7 @@ struct elf_image::impl {
     ei_data = ehdr->e_ident[EI_DATA];
     e_type = ehdr->e_type;
     e_machine = ehdr->e_machine;
-    arch = NULL;
-    switch (e_machine) {
-    case EM_386:
-      // Use the current RPM architecture name to avoid confusion.
-      arch = "i686";
-      break;
-    case EM_PPC:
-      arch = "ppc";
-      break;
-    case EM_PPC64:
-      arch = "ppc64";
-      break;
-    case EM_S390:
-      if (ei_class == ELFCLASS32) {
-	arch = "s390";
-      } else if (ei_class == ELFCLASS64) {
-	arch = "s390x";
-      }
-      break;
-    }
+    arch = get_arch(ei_class, e_machine);
 
     if (elf_getshdrnum (elf, &shnum) < 0) {
       throw elf_exception();
