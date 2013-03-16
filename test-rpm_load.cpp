@@ -172,6 +172,13 @@ test()
       COMPARE_STRING(r2.getvalue(1, 1), "last");
     }
 
+    r1.exec(dbh, "SELECT build_host, build_time FROM symboldb.package"
+	    " WHERE symboldb.nevra(package)"
+	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
+    CHECK(r1.ntuples() == 1);
+    COMPARE_STRING(r1.getvalue(0, 0), "x86-05.phx2.fedoraproject.org");
+    COMPARE_STRING(r1.getvalue(0, 1), "2012-09-13 15:46:22");
+
     r1.exec(dbh,
 	    "SELECT DISTINCT"
 	    " length, user_name, group_name, mtime, mode,"

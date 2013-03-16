@@ -28,6 +28,8 @@ struct rpm_package_info {
   std::string arch;
   std::string source_rpm;
   std::string hash;		// 40 hexadecimal characters
+  std::string build_host;
+  long long build_time;
   int epoch;			// -1 if no epoch
 
   rpm_package_info();

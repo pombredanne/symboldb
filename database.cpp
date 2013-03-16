@@ -206,11 +206,13 @@ database::intern_package(const rpm_package_info &pkg,
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " PACKAGE_TABLE
-     " (name, epoch, version, release, arch, hash, source)"
-     " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7)"
+     " (name, epoch, version, release, arch, hash, source,"
+     " build_host, build_time)"
+     " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7,"
+     " $8, 'epoch'::TIMESTAMP WITHOUT TIME ZONE + '1 second'::interval * $9)"
      " RETURNING id",
      pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
-     pkg.arch, pkg.hash, pkg.source_rpm);
+     pkg.arch, pkg.hash, pkg.source_rpm, pkg.build_host, pkg.build_time);
   pkg_id = package_id(get_id_force(res));
   return true;
 }

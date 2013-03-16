@@ -53,7 +53,9 @@ CREATE TABLE symboldb.package (
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
   arch symboldb.rpm_arch NOT NULL,
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
-  source TEXT NOT NULL CHECK (LENGTH(source) > 0)
+  source TEXT NOT NULL CHECK (LENGTH(source) > 0),
+  build_host TEXT NOT NULL CHECK (LENGTH(build_host) > 0),
+  build_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 COMMENT ON COLUMN symboldb.package.source IS
   'file name of the source RPM package';

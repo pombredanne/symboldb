@@ -123,11 +123,14 @@ rpm_parser_state::impl::get_header()
   pkg.arch = get_string(header, "ARCH", RPMTAG_ARCH);
   pkg.source_rpm = get_string(header, "SOURCERPM", RPMTAG_SOURCERPM);
   pkg.hash = get_string(header, "SHA1HEADER", RPMTAG_SHA1HEADER);
+  pkg.build_host = get_string(header, "BUILDHOST", RPMTAG_BUILDHOST);
+
   rpmtd_wrapper td;
+  unsigned *p;
   if (!headerGet(header, RPMTAG_EPOCH, td.raw, 0)) {
     pkg.epoch = -1;
   } else {
-    unsigned *p = rpmtdGetUint32(td.raw);
+    p = rpmtdGetUint32(td.raw);
     if (p == NULL) {
       throw rpm_parser_exception("could not get EPOCH header");
     }
@@ -136,6 +139,11 @@ rpm_parser_state::impl::get_header()
     }
     pkg.epoch = *p;
   }
+  if (!headerGet(header, RPMTAG_BUILDTIME, td.raw, 0)
+      || (p = rpmtdGetUint32(td.raw)) == NULL) {
+    throw rpm_parser_exception("could not get BUILDTIME header");
+  }
+  pkg.build_time = *p;
 }
 
 void
