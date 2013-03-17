@@ -17,7 +17,7 @@
  */
 
 #include "database.hpp"
-#include "database_elf_closure.hpp"
+#include "update_elf_closure.hpp"
 #include "rpm_file_info.hpp"
 #include "rpm_package_info.hpp"
 #include "elf_image.hpp"

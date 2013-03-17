@@ -20,7 +20,7 @@
 #include "rpm_package_info.hpp"
 
 #include "database.hpp"
-#include "database_elf_closure.hpp"
+#include "update_elf_closure.hpp"
 #include "dir_handle.hpp"
 #include "pg_testdb.hpp"
 #include "pgconn_handle.hpp"

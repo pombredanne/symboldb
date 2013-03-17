@@ -62,7 +62,6 @@ add_library (SymbolDB
   curl_fetch_result.cpp
   curl_handle.cpp
   database.cpp
-  database_elf_closure.cpp
   dir_handle.cpp
   download.cpp
   elf_exception.cpp
@@ -117,6 +116,7 @@ add_library (SymbolDB
   symboldb_show_source_packages.cpp
   task.cpp
   tee_sink.cpp
+  update_elf_closure.cpp
   url.cpp
   utf8.cpp
   vector_sink.cpp

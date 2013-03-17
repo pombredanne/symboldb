@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "database_elf_closure.hpp"
+#include "update_elf_closure.hpp"
 #include "pgresult_handle.hpp"
 #include "pgconn_handle.hpp"
 #include "pg_exception.hpp"
