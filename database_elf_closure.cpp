@@ -336,49 +336,59 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
   }
 
   // Load the closure into the database.
-  char idstr[32];
-  snprintf(idstr, sizeof(idstr), "%d", id.value());
-  char *idstrend = idstr + strlen(idstr);
-  std::vector<char> upload;
-  pgresult_handle copy;
-  pg_query
-    (conn, copy, "DELETE FROM symboldb.elf_closure WHERE package_set = $1",
-     id.value());
-  copy.exec(conn, "COPY symboldb.elf_closure FROM STDIN");
-  assert(copy.resultStatus() == PGRES_COPY_IN);
-  for (dependency_map::iterator
-	 needing = closure.begin(), needing_end = closure.end();
-       needing != needing_end; ++needing) {
-    char filebuf[32];
-    snprintf(filebuf, sizeof(filebuf), "%d", needing->first.value());
-    char *fileend = filebuf + strlen(filebuf);
-    std::set<database::file_id> &needing_deps(needing->second);
-    for (std::set<database::file_id>::const_iterator
-	   needing_dep = needing_deps.begin(),
-	   needing_dep_end = needing_deps.end();
-	 needing_dep != needing_dep_end; ++needing_dep) {
-      database::file_id needed(needing_dep->value());
-      char neededbuf[32];
-      snprintf(neededbuf, sizeof(neededbuf), "%d", needed.value());
-      char *neededend = neededbuf + strlen(neededbuf);
-
-      upload.insert(upload.end(), idstr, idstrend);
-      upload.push_back('\t');
-      upload.insert(upload.end(), filebuf, fileend);
-      upload.push_back('\t');
-      upload.insert(upload.end(), neededbuf, neededend);
-      upload.push_back('\n');
-      if (upload.size() > 128 * 1024) {
-	conn.putCopyData(upload.data(), upload.size());
-	upload.clear();
+  res.exec(conn, "CREATE TEMPORARY TABLE update_elf_closure ("
+	   " file INTEGER NOT NULL,"
+	   " needed INTEGER NOT NULL) ON COMMIT DROP");
+  {
+    std::vector<char> upload;
+    pgresult_handle copy;
+    copy.exec(conn, "COPY update_elf_closure FROM STDIN");
+    assert(copy.resultStatus() == PGRES_COPY_IN);
+    for (dependency_map::iterator
+	   needing = closure.begin(), needing_end = closure.end();
+	 needing != needing_end; ++needing) {
+      char filebuf[32];
+      snprintf(filebuf, sizeof(filebuf), "%d", needing->first.value());
+      char *fileend = filebuf + strlen(filebuf);
+      std::set<database::file_id> &needing_deps(needing->second);
+      for (std::set<database::file_id>::const_iterator
+	     needing_dep = needing_deps.begin(),
+	     needing_dep_end = needing_deps.end();
+	   needing_dep != needing_dep_end; ++needing_dep) {
+	database::file_id needed(needing_dep->value());
+	char neededbuf[32];
+	snprintf(neededbuf, sizeof(neededbuf), "%d", needed.value());
+	char *neededend = neededbuf + strlen(neededbuf);
+	upload.insert(upload.end(), filebuf, fileend);
+	upload.push_back('\t');
+	upload.insert(upload.end(), neededbuf, neededend);
+	upload.push_back('\n');
+	if (upload.size() > 128 * 1024) {
+	  conn.putCopyData(upload.data(), upload.size());
+	  upload.clear();
+	}
       }
     }
+    if (!upload.empty()) {
+      conn.putCopyData(upload.data(), upload.size());
+    }
+    conn.putCopyEnd();
+    copy.getresult(conn);
   }
-  if (!upload.empty()) {
-    conn.putCopyData(upload.data(), upload.size());
-  }
-  conn.putCopyEnd();
-  copy.getresult(conn);
+  res.exec(conn, "CREATE INDEX ON update_elf_closure (file, needed)");
+  res.exec(conn, "ANALYZE update_elf_closure");
+  pg_query(conn, res,
+	   "DELETE FROM symboldb.elf_closure ec"
+	   " WHERE package_set = $1"
+	   " AND NOT EXISTS (SELECT 1 FROM update_elf_closure u"
+	   "  WHERE ec.file = u.file AND ec.needed = u.needed)",
+	   id.value());
+  pg_query(conn, res,
+	   "INSERT INTO symboldb.elf_closure (package_set, file, needed)"
+	   " SELECT $1, * FROM (SELECT * FROM update_elf_closure"
+	   " EXCEPT SELECT file, needed FROM symboldb.elf_closure"
+	   " WHERE package_set = $1) x", id.value());
+  res.exec(conn, "DROP TABLE update_elf_closure");
 }
 
 //////////////////////////////////////////////////////////////////////
