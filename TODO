@@ -38,10 +38,6 @@
 * Accelerate downloads of re-signed RPMs by combining the new header
   with the existing compressed cpio data.
 
-* The ELF closure update is non-deterministic under file conflicts (as
-  seen with MariaDB vs MySQL).  We need to add another tie-braker,
-  potentially based on the package name.
-
 * Use the libpq binary interface for bulk data transfers.  This should
   lead to a measurable speedup when transferring mostly integer
   columns (e.g., when computing the ELF closure).

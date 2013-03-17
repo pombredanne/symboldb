@@ -33,8 +33,9 @@ namespace {
   struct file_ref {
     database::file_id id;
     std::string name;
-    file_ref(int fid, const std::string &file_name)
-      : id(fid), name(file_name)
+    std::string package;
+    file_ref(int fid, const std::string &file_name, const std::string &pkg)
+      : id(fid), name(file_name), package(pkg)
     {
     }
 
@@ -134,7 +135,11 @@ namespace {
 	fprintf(stderr, "info: closure:     %s %d\n",
 		p->second.name.c_str(), prio);
       }
-      if (prio > best_priority) {
+      // On a file name conflict, pick the package with the
+      // lexicographically smaller name.
+      if (prio > best_priority
+	  || (p->second.name == best->name
+	      && p->second.package < best->package)) {
 	best = &p->second;
 	best_priority = prio;
       }
@@ -171,8 +176,9 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
   // different files at the same path.
   pgresult_handle res;
   pg_query_binary(conn, res,
-		  "SELECT ef.arch::text, ef.soname, f.id, f.name"
+		  "SELECT ef.arch::text, ef.soname, f.id, f.name, p.name"
 		  " FROM symboldb.package_set_member psm"
+		  " JOIN symboldb.package p ON psm.package = p.id"
 		  " JOIN symboldb.file f ON psm.package = f.package"
 		  " JOIN symboldb.elf_file ef ON f.id = ef.file"
 		  " WHERE psm.set = $1 AND ef.e_type = 3", id.value());
@@ -184,10 +190,11 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
     std::string soname;
     int fid;
     std::string file_name;
+    std::string pkg;
     for (int row = 0, end = res.ntuples(); row < end; ++row) {
-      pg_response(res, row, arch, soname, fid, file_name);
+      pg_response(res, row, arch, soname, fid, file_name, pkg);
       arch_soname[arch].insert(std::make_pair(soname,
-					      file_ref(fid, file_name)));
+					      file_ref(fid, file_name, pkg)));
     }
   }
 
