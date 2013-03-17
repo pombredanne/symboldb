@@ -34,6 +34,7 @@
 
 #include <libpq-fe.h>
 
+#include <map>
 #include <set>
 
 // FIXME: We need to add a transaction runner, so that we can retry
@@ -613,6 +614,13 @@ database::referenced_package_digests
   }
 }
 
+namespace {
+  struct fc_entry {
+    std::string file;
+    std::string nevra;
+  };
+}
+
 void
 database::print_elf_soname_conflicts(package_set_id set)
 {
@@ -625,26 +633,25 @@ database::print_elf_soname_conflicts(package_set_id set)
 
     void missing(file_id fid, const std::string &soname)
     {
-      std::string file;
-      std::string nevra;
-      get_name(fid, file, nevra);
+      const fc_entry &entry(get_name(fid));
       printf("missing: %s (%s) %s\n",
-	     file.c_str(), nevra.c_str(), soname.c_str());
+	     entry.file.c_str(), entry.nevra.c_str(), soname.c_str());
     }
 
     void conflict(file_id fid, const std::string &soname,
 		  const std::vector<file_id> &choices)
     {
-      std::string file;
-      std::string nevra;
-      get_name(fid, file, nevra);
-      printf("conflicts: %s (%s) %s\n",
-	     file.c_str(), nevra.c_str(), soname.c_str());
+      {
+	const fc_entry &entry(get_name(fid));
+	printf("conflicts: %s (%s) %s\n",
+	       entry.file.c_str(), entry.nevra.c_str(), soname.c_str());
+      }
       const char *first = "*";
       for (std::vector<file_id>::const_iterator
 	     p = choices.begin(), end = choices.end(); p != end; ++p) {
-	get_name(*p, file, nevra);
-	printf("  %s %s (%s)\n", first, file.c_str(), nevra.c_str());
+	const fc_entry &entry(get_name(*p));
+	printf("  %s %s (%s)\n",
+	       first, entry.file.c_str(), entry.nevra.c_str());
 	first = " ";
       }
     }
@@ -654,8 +661,17 @@ database::print_elf_soname_conflicts(package_set_id set)
       return true;
     }
 
-    void get_name(file_id fid, std::string &file, std::string &nevra)
+    typedef std::map<file_id, fc_entry> file_cache;
+    file_cache file_cache_;
+
+    const fc_entry &get_name(file_id fid)
     {
+      file_cache::iterator p = file_cache_.find(fid);
+      if (p != file_cache_.end()) {
+	return p->second;
+      }
+
+      fc_entry &entry(file_cache_[fid]);
       pgresult_handle res;
       pg_query_binary
 	(db->impl_->conn, res,
@@ -665,7 +681,8 @@ database::print_elf_soname_conflicts(package_set_id set)
       if (res.ntuples() != 1) {
 	throw std::runtime_error("could not locate symboldb.file row");
       }
-      pg_response(res, 0, file, nevra);
+      pg_response(res, 0, entry.file, entry.nevra);
+      return entry;
     }
   } dumper(this);
 
