@@ -169,14 +169,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
   // Obtain the list of SONAME providers.  There can be multiple DSOs
   // which have the same SONAME, and packages can conflict and install
   // different files at the same path.
-  // FIXME: Providers should be restricted to DYN ELF images.
   pgresult_handle res;
   pg_query_binary(conn, res,
 		  "SELECT ef.arch::text, ef.soname, f.id, f.name"
 		  " FROM symboldb.package_set_member psm"
 		  " JOIN symboldb.file f ON psm.package = f.package"
 		  " JOIN symboldb.elf_file ef ON f.id = ef.file"
-		  " WHERE psm.set = $1", id.value());
+		  " WHERE psm.set = $1 AND ef.e_type = 3", id.value());
+  // ef.e_type == ET_DYN is a restriction to DSOs.
 
   arch_soname_map arch_soname;
   {
