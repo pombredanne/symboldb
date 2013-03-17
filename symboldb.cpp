@@ -204,7 +204,7 @@ do_show_soname_conflicts(const symboldb_options &opt, database &db)
 {
   database::package_set_id pset = db.lookup_package_set(opt.set_name.c_str());
   if (pset > database::package_set_id()) {
-    db.print_elf_soname_conflicts(pset, opt.output == opt.verbose);
+    db.print_elf_soname_conflicts(pset);
     return 0;
   } else {
     fprintf(stderr, "error: invalid package set: %s\n", opt.set_name.c_str());

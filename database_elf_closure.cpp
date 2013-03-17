@@ -93,19 +93,24 @@ namespace {
   database::file_id
   lookup(const arch_soname_map &arch_soname,
 	 const std::string &arch, const std::string &needed_name,
-	 const char *needing_path, bool debug = false)
+	 database::file_id needing_file, const char *needing_path,
+	 update_elf_closure_conflicts *conflicts, bool debug = false)
   {
     arch_soname_map::const_iterator soname(arch_soname.find(arch));
     if (soname == arch_soname.end()) {
       return database::file_id();
     }
-    std::pair<soname_map::const_iterator, soname_map::const_iterator> providers
+    const std::pair<soname_map::const_iterator,
+		    soname_map::const_iterator> providers
       (soname->second.equal_range(needed_name));
     if (providers.first == providers.second) {
+      if (conflicts) {
+	conflicts->missing(needing_file, needed_name);
+      }
       return database::file_id();
     }
 
-    soname_map::const_iterator &p(providers.first);
+    soname_map::const_iterator p(providers.first);
     const file_ref *best = &p->second;
     ++p;
 
@@ -139,18 +144,31 @@ namespace {
       fprintf(stderr, "info: closure:   winner: %s %d\n",
 	      best->name.c_str(), best_priority);
     }
+    if (conflicts) {
+      std::vector<database::file_id> choices;
+      choices.push_back(best->id);
+      for (p = providers.first;  p != providers.second; ++p) {
+	database::file_id fid = p->second.id;
+	if (fid != best->id) {
+	  choices.push_back(fid);
+	}
+      }
+      conflicts->conflict(needing_file, needed_name, choices);
+    }
     return best->id;
   }
  }
 
 void
-update_elf_closure(pgconn_handle &conn, database::package_set_id id)
+update_elf_closure(pgconn_handle &conn, database::package_set_id id,
+		   update_elf_closure_conflicts *conflicts)
 {
   assert(conn.transactionStatus() == PQTRANS_INTRANS);
   bool debug = false;
 
   // Obtain the list of SONAME providers.  There can be multiple DSOs
-  // which have the sane SONAME.
+  // which have the same SONAME, and packages can conflict and install
+  // different files at the same path.
   // FIXME: Providers should be restricted to DYN ELF images.
   pgresult_handle res;
   pg_query_binary(conn, res,
@@ -193,7 +211,9 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
 		  arch, needed_name, fid, needing_path);
       database::file_id needing_file(fid);
       database::file_id library =
-	lookup(arch_soname, arch, needed_name, needing_path.c_str());
+	lookup(arch_soname, arch, needed_name,
+	       needing_file, needing_path.c_str(),
+	       conflicts);
       if (library != database::file_id()) {
 	elements += closure[needing_file].insert(library).second;
       }
@@ -239,6 +259,9 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   arch_soname.clear();
   res.close();
 
+  if (conflicts && conflicts->skip_update()) {
+    return;
+  }
 
   // Load the closure into the database.
   char idstr[32];
@@ -284,4 +307,13 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id)
   }
   conn.putCopyEnd();
   copy.getresult(conn);
+}
+
+//////////////////////////////////////////////////////////////////////
+// update_elf_closure_conflicts
+
+bool
+update_elf_closure_conflicts::skip_update()
+{
+  return false;
 }

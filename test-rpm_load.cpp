@@ -303,7 +303,7 @@ test()
 		    " WHERE arch IN ('x86_64', 'i686')", params);
     }
     r1.exec(dbh, "BEGIN");
-    update_elf_closure(dbh, pset);
+    update_elf_closure(dbh, pset, NULL);
     r1.exec(dbh, "COMMIT");
 
     std::vector<std::vector<unsigned char> > digests;

@@ -534,7 +534,7 @@ database::update_package_set(package_set_id set,
 void
 database::update_package_set_caches(package_set_id set)
 {
-  update_elf_closure(impl_->conn, set);
+  update_elf_closure(impl_->conn, set, NULL);
 }
 
 bool
@@ -614,77 +614,66 @@ database::referenced_package_digests
 }
 
 void
-database::print_elf_soname_conflicts(package_set_id set,
-				     bool include_unreferenced)
+database::print_elf_soname_conflicts(package_set_id set)
 {
-  pgresult_handle res;
-  if (include_unreferenced) {
-    pg_query
-      (impl_->conn, res,
-       "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
-       " FROM (SELECT arch, soname, UNNEST(files) AS file"
-       "  FROM symboldb.elf_soname_provider"
-       "  WHERE package_set = $1 AND array_length(files, 1) > 1) c"
-       " JOIN symboldb.file f ON c.file = f.id"
-       " JOIN symboldb.package p ON f.package = p.id"
-       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", set.value());
-  } else {
-    pg_query
-      (impl_->conn, res,
-       "SELECT c.arch, c.soname, f.name, symboldb.nevra(p)"
-       " FROM (SELECT arch, soname, UNNEST(files) AS file"
-       "  FROM symboldb.elf_soname_provider"
-       "  WHERE package_set = $1 AND array_length(files, 1) > 1"
-       "  AND soname IN (SELECT en.name"
-       "    FROM symboldb.package_set_member psm"
-       "    JOIN symboldb.file f ON psm.package = f.package"
-       "    JOIN symboldb.elf_file ef ON f.id = ef.file"
-       "    JOIN symboldb.elf_needed en ON en.file = f.id"
-       "    WHERE psm.set = $1)) c"
-       " JOIN symboldb.file f ON c.file = f.id"
-       " JOIN symboldb.package p ON f.package = p.id"
-       " ORDER BY c.arch::text, soname, LENGTH(f.name), f.name", set.value());
-  }
+  struct dumper : update_elf_closure_conflicts {
+    database *db;
+    dumper(database *dbase)
+      : db(dbase)
+    {
+    }
 
-  std::string arch;
-  std::string soname;
-  int rows = res.ntuples();
-  if (rows == 0) {
-    printf("No soname conflicts detected.");
-    return;
-  }
-  bool first = true;
-  for (int row = 0; row < rows; ++row) {
-    std::string current_arch;
-    std::string current_soname;
-    std::string file;
-    std::string pkg;
-    pg_response(res, row, current_arch, current_soname, file, pkg);
-    bool primary = false;
-    if (current_arch != arch) {
-      if (first) {
-	first = false;
-      } else {
-	printf("\n\n");
+    void missing(file_id fid, const std::string &soname)
+    {
+      std::string file;
+      std::string nevra;
+      get_name(fid, file, nevra);
+      printf("missing: %s (%s) %s\n",
+	     file.c_str(), nevra.c_str(), soname.c_str());
+    }
+
+    void conflict(file_id fid, const std::string &soname,
+		  const std::vector<file_id> &choices)
+    {
+      std::string file;
+      std::string nevra;
+      get_name(fid, file, nevra);
+      printf("conflicts: %s (%s) %s\n",
+	     file.c_str(), nevra.c_str(), soname.c_str());
+      const char *first = "*";
+      for (std::vector<file_id>::const_iterator
+	     p = choices.begin(), end = choices.end(); p != end; ++p) {
+	get_name(*p, file, nevra);
+	printf("  %s %s (%s)\n", first, file.c_str(), nevra.c_str());
+	first = " ";
       }
-      printf("* Architecture: %s\n", current_arch.c_str());
-      arch = current_arch;
-      primary = true;
-    } else if (current_soname != soname) {
-      primary = true;
-      soname = current_soname;
     }
-    if (primary) {
-      printf("\nsoname: %s\n", current_soname.c_str());
+
+    void get_name(file_id fid, std::string &file, std::string &nevra)
+    {
+      pgresult_handle res;
+      pg_query_binary
+	(db->impl_->conn, res,
+	 "SELECT f.name, symboldb.nevra(p)"
+	 " FROM symboldb.file f JOIN symboldb.package p ON f.package = p.id"
+	 " WHERE f.id = $1", fid.value());
+      if (res.ntuples() != 1) {
+	throw std::runtime_error("could not locate symboldb.file row");
+      }
+      pg_response(res, 0, file, nevra);
     }
-    printf("    %c %s (from %s)\n",
-	   primary ? '*' : ' ', file.c_str(), pkg.c_str());
-  }
-  printf("\nThe chosen DSO for each soname is marked with \"*\".\n");
-  if (!include_unreferenced) {
-    printf("Re-run with --verbose to see conflicts "
-	   "involving unreferenced sonames.\n");
-  }
+
+    bool skip_update()
+    {
+      return true;
+    }
+  } dumper(this);
+
+  pgresult_handle res;
+  res.exec(impl_->conn,
+	   "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY");
+  update_elf_closure(impl_->conn, set, &dumper);
+  res.exec(impl_->conn, "ROLLBACK");
 }
 
 void

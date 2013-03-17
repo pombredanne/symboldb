@@ -20,6 +20,29 @@
 
 #include "database.hpp"
 
+#include <string>
+#include <vector>
+
 class pgconn_handle;
 
-void update_elf_closure(pgconn_handle &, database::package_set_id);
+struct update_elf_closure_conflicts {
+  // Called to indicate that the soname NEEDED_NAME could not be
+  // satisfied for NEEDING_FILE.
+  virtual void missing(database::file_id needing_file,
+		       const std::string &needed_name) = 0;
+
+  // Called to indicate a conflicting for NEEDING_FILE when looking up
+  // NEEDED_NAME.  The first element of CHOICES is the chosen
+  // resolution.
+  virtual void conflict(database::file_id needing_file,
+			const std::string &needed_name,
+			const std::vector<database::file_id> &choices) = 0;
+
+  // If true, the database is not actually written to.  The default
+  // implementation returns false.
+  virtual bool skip_update();
+};
+
+// If CONFLICTS is not NULL, conflicts encountered are recorded there.
+void update_elf_closure(pgconn_handle &, database::package_set_id,
+			update_elf_closure_conflicts *conflicts);

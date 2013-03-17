@@ -276,7 +276,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    This command prints sonames which are provided by multiple
 	    shared libraries.  Due to such conflicts, the ELF closure
 	    computed by <command>symboldb</command> may not accurately
-	    reflect reality.
+	    reflect reality.  References to sonames which cannot be
+	    resolved are also printed.
 	  </para>
 	</listitem>
       </varlistentry>

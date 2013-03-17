@@ -230,40 +230,6 @@ CREATE TABLE symboldb.elf_error (
   message TEXT
 );
 
-CREATE VIEW symboldb.elf_soname_provider AS
-  SELECT set AS package_set, arch, soname,
-    (SELECT array_agg(id ORDER BY LENGTH(name), name)
-     FROM symboldb.file WHERE id = ANY(files)) AS files
-    -- heuristic: prefer files with sorter paths
-   FROM (SELECT psm.set, ef.arch, ef.soname, array_agg(DISTINCT f.id) AS files
-    FROM symboldb.package_set_member psm
-    JOIN symboldb.file f ON psm.package = f.package
-    JOIN symboldb.elf_file ef ON f.id = ef.file
-    WHERE EXISTS(SELECT 1
-      FROM symboldb.package_set_member psm2
-      JOIN symboldb.file f2 ON psm2.package = f2.package
-      JOIN symboldb.elf_file ef2 ON f2.id = ef2.file
-      JOIN symboldb.elf_needed en2 ON f2.id = en2.file
-      WHERE psm.set = psm2.set
-      AND ef.arch = ef2.arch AND ef.soname = en2.name)
-    GROUP BY psm.set, ef.arch, ef.soname
-  ) x;
-COMMENT ON VIEW symboldb.elf_soname_provider IS
-  'files which provide a ELF soname for a specific architecture within a package set';
-
-CREATE VIEW symboldb.elf_soname_needed_missing AS
-  SELECT psm.set AS package_set, ef.arch, en.file, en.name AS soname
-      FROM symboldb.package_set_member psm
-      JOIN symboldb.file f ON psm.package = f.package
-      JOIN symboldb.elf_file ef ON f.id = ef.file
-      JOIN symboldb.elf_needed en ON f.id = en.file
-    WHERE NOT EXISTS (SELECT 1
-      FROM symboldb.elf_soname_provider esp
-      WHERE esp.package_set = psm.set
-      AND esp.arch = ef.arch AND esp.soname = en.name);
-COMMENT ON VIEW symboldb.elf_soname_provider IS
-  'files which need a soname which cannot be resolved within the same package set';
-
 CREATE TABLE symboldb.elf_closure (
   package_set INTEGER NOT NULL REFERENCES symboldb.package_set
     ON DELETE CASCADE,
