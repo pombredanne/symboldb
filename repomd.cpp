@@ -114,19 +114,13 @@ repomd::parse(const unsigned char *buffer, size_t length,
 	return false;
       }
       en.compressed = open_csum != 0;
-      if (!en.checksum.set_hexadecimal
+      en.checksum.set_hexadecimal
 	  (csum->attributes["type"].c_str(), nsize,
-	   strip(csum->text()).c_str())) {
-	error = "malformed checksum";
-	return false;
-      }
+	   strip(csum->text()).c_str());
       if (en.compressed) {
-	if (!en.open_checksum.set_hexadecimal
-	    (open_csum->attributes["type"].c_str(), nopen_size,
-	     strip(open_csum->text()).c_str())) {
-	  error = "malformed checksum";
-	  return false;
-	}
+	en.open_checksum.set_hexadecimal
+	  (open_csum->attributes["type"].c_str(), nopen_size,
+	   strip(open_csum->text()).c_str());
       } else {
 	en.open_checksum = en.checksum;
       }

@@ -17,6 +17,7 @@
  */
 
 #include "checksum.hpp"
+#include "base16.hpp"
 
 #include <cstring>
 
@@ -45,26 +46,15 @@ namespace {
   }
 }
 
-bool
+void
 checksum::set_hexadecimal(const char *typ, unsigned long long len,
 			  const char *checksum)
 {
   size_t cslen = std::strlen(checksum);
-  if ((cslen % 2) != 0) {
-    return false;
-  }
-  cslen /= 2;
-  std::vector<unsigned char> v(cslen);
-  for (unsigned i = 0; i < cslen; ++i) {
-    int a = hexdigit(checksum[2 * i]);
-    int b = hexdigit(checksum[2 * i + 1]);
-    if (a < 0 || b < 0) {
-      return false;
-    }
-    v.at(i) = a * 16 + b;
-  }
+  std::vector<unsigned char> v;
+  v.reserve(cslen / 2);
+  base16_decode(checksum, checksum + cslen, std::back_inserter(v));
   type = hash_sink::from_string(typ);
   length = len;
   value.swap(v);
-  return true;
 }

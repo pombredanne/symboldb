@@ -36,6 +36,6 @@ struct checksum {
 
   // Sets the type, performs base16 decoding, and sets value.  Returns
   // false if the checksum is malformed.
-  bool set_hexadecimal(const char *type, unsigned long long length,
+  void set_hexadecimal(const char *type, unsigned long long length,
 		       const char *checksum);
 };
