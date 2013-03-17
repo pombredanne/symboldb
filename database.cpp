@@ -649,6 +649,11 @@ database::print_elf_soname_conflicts(package_set_id set)
       }
     }
 
+    bool skip_update()
+    {
+      return true;
+    }
+
     void get_name(file_id fid, std::string &file, std::string &nevra)
     {
       pgresult_handle res;
@@ -661,11 +666,6 @@ database::print_elf_soname_conflicts(package_set_id set)
 	throw std::runtime_error("could not locate symboldb.file row");
       }
       pg_response(res, 0, file, nevra);
-    }
-
-    bool skip_update()
-    {
-      return true;
     }
   } dumper(this);
 
