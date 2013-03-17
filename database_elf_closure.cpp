@@ -22,6 +22,7 @@
 #include "pg_exception.hpp"
 #include "pg_query.hpp"
 #include "pg_response.hpp"
+#include "string_support.hpp"
 
 #include <map>
 #include <set>
@@ -162,7 +163,69 @@ namespace {
     }
     return best->id;
   }
-}
+
+  // Special case for files which should not contribute to conflicts.
+  bool
+  ignored_file_name(const std::string &path)
+  {
+    return (starts_with(path, "/lib/")
+	    && (starts_with(path, "/lib/i686/nosegneg/")
+		|| (starts_with(path, "/lib/rtkaio/")
+		    && (starts_with(path, "/lib/rtkaio/librtkaio-")
+			|| starts_with(path, "/lib/rtkaio/i686/nosegneg/")))))
+      || starts_with(path, "/lib64/rtkaio/librtkaio-");
+  }
+
+  // Special case for packages which should not contribute to
+  // conflicts.
+  bool
+  ignored_package_name(const std::string &pkg)
+  {
+    return pkg == "compat-gcc-34-c++"
+      || pkg == "compat-glibc";
+  }
+
+  // Suppress some common conflicts, caused by compatibility packages
+  // and sub-architecture DSOs.
+  void
+  ignore_some_conflicts(arch_soname_map &arch)
+  {
+    std::vector<soname_map::iterator> ignore_queue;
+
+    for (arch_soname_map::iterator parch = arch.begin(), archend = arch.end();
+	 parch != archend; ++parch) {
+      soname_map &soname(parch->second);
+      for (soname_map::iterator p = soname.begin(), pend = soname.end();
+	   p != pend; ) {
+	soname_map::iterator q = p;
+	size_t count = 0;
+	ignore_queue.clear();
+	while (q != pend && q->first == p->first) {
+	  ++count;
+	  if (ignored_file_name(q->second.name)
+	      || ignored_package_name(q->second.package)) {
+	    ignore_queue.push_back(q);
+	  }
+	  ++q;
+	}
+	// We must make sure that at least one non-ignored file is
+	// left.  In addition, it does not make much sense to remove
+	// the spurious conflicts if there are still remaining
+	// conflicts, so we only proceed if there is just one
+	// remaining resolution.
+	if (ignore_queue.size() + 1 == count) {
+	  for (std::vector<soname_map::iterator>::iterator
+		 v = ignore_queue.begin(), vend = ignore_queue.end();
+	       v != vend; ++v) {
+	    soname.erase(*v);
+	  }
+	}
+	p = q;
+      }
+    }
+  }
+
+} // namespace
 
 void
 update_elf_closure(pgconn_handle &conn, database::package_set_id id,
@@ -197,6 +260,8 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
 					      file_ref(fid, file_name, pkg)));
     }
   }
+
+  ignore_some_conflicts(arch_soname);
 
   dependency_map closure;
   pg_query_binary
