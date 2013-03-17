@@ -162,7 +162,7 @@ namespace {
     }
     return best->id;
   }
- }
+}
 
 void
 update_elf_closure(pgconn_handle &conn, database::package_set_id id,
