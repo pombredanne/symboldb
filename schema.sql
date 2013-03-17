@@ -106,27 +106,38 @@ CREATE TABLE symboldb.package_set_member (
 CREATE INDEX ON symboldb.package_set_member (set);
 CREATE INDEX ON symboldb.package_set_member (package);
 
-CREATE TABLE symboldb.file (
+CREATE TABLE symboldb.file_contents (
   id SERIAL NOT NULL PRIMARY KEY,
-  package INTEGER NOT NULL
-    REFERENCES symboldb.package (id) ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   length BIGINT NOT NULL CHECK(length >= 0),
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
-  normalized BOOLEAN NOT NULL,
   digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
   contents BYTEA NOT NULL
 );
+COMMENT ON COLUMN symboldb.file_contents.digest IS
+  'SHA-256 digest of the entire file contents';
+COMMENT ON COLUMN symboldb.file_contents.contents IS
+  'preview of the file contents';
+CREATE INDEX ON symboldb.file_contents (digest, mtime);
+  -- mtime is used to discriminate otherwise identical empty files.
+
+CREATE TABLE symboldb.file (
+  package INTEGER NOT NULL
+    REFERENCES symboldb.package (id) ON DELETE CASCADE,
+  contents INTEGER NOT NULL REFERENCES symboldb.file_inode (id),
+  inode INTEGER NOT NULL,
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
+  normalized BOOLEAN NOT NULL,
+  PRIMARY KEY (package, name)
+);
+CREATE INDEX ON symboldb.file (name);
+CREATE INDEX ON symboldb.file (contents);
 COMMENT ON COLUMN symboldb.file.normalized IS
   'indicates that the file name has been forced to UTF-8 encoding';
-COMMENT ON COLUMN symboldb.file.digest IS
-  'SHA-256 digest of the file contents';
-COMMENT ON COLUMN symboldb.file.contents IS 'preview of the file contents';
-CREATE INDEX ON symboldb.file (package);
-CREATE INDEX ON symboldb.file (name);
+COMMENT ON COLUMN symboldb.file.inode IS
+  'intra-package inode number (used to indicate hardlinks)';
 
 CREATE TABLE symboldb.symlink (
   package INTEGER NOT NULL
@@ -161,7 +172,7 @@ CREATE INDEX ON symboldb.directory (name);
 
 CREATE TABLE symboldb.elf_file (
   file INTEGER NOT NULL PRIMARY KEY
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
   ei_class symboldb.elf_byte NOT NULL,
   ei_data symboldb.elf_byte NOT NULL,
   e_type symboldb.elf_short NOT NULL,
@@ -174,7 +185,7 @@ CREATE INDEX ON symboldb.elf_file (soname);
 
 CREATE TABLE symboldb.elf_definition (
   file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(length(name) > 0) COLLATE "C",
   version TEXT CHECK (LENGTH(version) > 0) COLLATE "C",
   primary_version BOOLEAN NOT NULL,
@@ -192,7 +203,7 @@ CREATE INDEX ON symboldb.elf_definition (name, version);
 
 CREATE TABLE symboldb.elf_reference (
   file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(length(name) > 0) COLLATE "C",
   version TEXT CHECK (LENGTH(version) > 0) COLLATE "C",
   symbol_type symboldb.elf_symbol_type NOT NULL,
@@ -204,7 +215,7 @@ CREATE INDEX ON symboldb.elf_reference (name, version);
 
 CREATE TABLE symboldb.elf_needed (
   file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
   name TEXT NOT NULL COLLATE "C",
   PRIMARY KEY (file, name)
 );
@@ -219,14 +230,14 @@ CREATE TABLE symboldb.elf_rpath (
 
 CREATE TABLE symboldb.elf_runpath (
   file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
   path TEXT NOT NULL COLLATE "C",
   PRIMARY KEY (file, path)
 );
 
 CREATE TABLE symboldb.elf_error (
   file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
   message TEXT
 );
 
