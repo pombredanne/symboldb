@@ -69,6 +69,7 @@ struct rpm_parser_state::impl {
 
   rpmtd_wrapper nevra;
   rpm_package_info pkg;
+  std::string digest_algo;
 
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
@@ -110,6 +111,19 @@ get_string(Header header, const char *name, rpmTagVal tag)
 			     + name + " header");
 }
 
+static unsigned
+get_unsigned(Header header, const char *name, rpmTagVal tag)
+{
+  rpmtd_wrapper td;
+  unsigned *p;
+  if (!headerGet(header, tag, td.raw, 0)
+      || (p = rpmtdGetUint32(td.raw)) == NULL) {
+    throw rpm_parser_exception
+      ("could not get " + std::string(name) + " header");
+  }
+  return *p;
+}
+
 void
 rpm_parser_state::impl::get_header()
 {
@@ -125,25 +139,48 @@ rpm_parser_state::impl::get_header()
   pkg.hash = get_string(header, "SHA1HEADER", RPMTAG_SHA1HEADER);
   pkg.build_host = get_string(header, "BUILDHOST", RPMTAG_BUILDHOST);
 
-  rpmtd_wrapper td;
-  unsigned *p;
-  if (!headerGet(header, RPMTAG_EPOCH, td.raw, 0)) {
-    pkg.epoch = -1;
-  } else {
-    p = rpmtdGetUint32(td.raw);
-    if (p == NULL) {
-      throw rpm_parser_exception("could not get EPOCH header");
+  {
+    rpmtd_wrapper td;
+    if (!headerGet(header, RPMTAG_EPOCH, td.raw, 0)) {
+      pkg.epoch = -1;
+    } else {
+      unsigned *p = rpmtdGetUint32(td.raw);
+      if (p == NULL) {
+	throw rpm_parser_exception("could not get EPOCH header");
+      }
+      if (*p > INT_MAX) {
+	throw rpm_parser_exception("RPM epoch out of range");
+      }
+      pkg.epoch = *p;
     }
-    if (*p > INT_MAX) {
-      throw rpm_parser_exception("RPM epoch out of range");
+  }
+
+  pkg.build_time = get_unsigned(header, "BUILDTIME", RPMTAG_BUILDTIME);
+  {
+    unsigned digalg;
+    try {
+      digalg = get_unsigned(header, "FILEDIGESTALGO", RPMTAG_FILEDIGESTALGO);
+    } catch (rpm_parser_exception &) {
+      digalg = PGPHASHALGO_MD5;
     }
-    pkg.epoch = *p;
+    switch (digalg) {
+    case PGPHASHALGO_MD5:
+      digest_algo = "md5";
+      break;
+    case PGPHASHALGO_SHA1:
+      digest_algo = "sha1";
+      break;
+    case PGPHASHALGO_SHA256:
+      digest_algo = "sha256";
+      break;
+    default:
+      {
+	char buf[128];
+	snprintf(buf, sizeof(buf), "unknown file digest algorithm %u", digalg);
+	throw rpm_parser_exception(buf);
+      }
+    }
   }
-  if (!headerGet(header, RPMTAG_BUILDTIME, td.raw, 0)
-      || (p = rpmtdGetUint32(td.raw)) == NULL) {
-    throw rpm_parser_exception("could not get BUILDTIME header");
-  }
-  pkg.build_time = *p;
 }
 
 void
@@ -183,6 +220,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (!headerGet(header, RPMTAG_FILEMODES, modes.raw, hflags)) {
     throw rpm_parser_exception("could not get FILEMODES header");
   }
+  rpmtd_wrapper digests;
+  if (!headerGet(header, RPMTAG_FILEDIGESTS, digests.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEDIGESTS header");
+  }
 
   while (true) {
     const char *name = rpmtdNextString(names.raw);
@@ -209,14 +250,18 @@ rpm_parser_state::impl::get_files_from_header()
     if (mode == NULL) {
       throw rpm_parser_exception("missing entries in FILEMODES header");
     }
+    const char *digest = rpmtdNextString(digests.raw);
+    if (digest == NULL) {
+      throw rpm_parser_exception("missing entries in FILEDIGESTS header");
+    }
 
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
     p->name = name;
-    p->length = *size;
     p->user = user;
     p->group = group;
     p->mtime = *mtime;
     p->mode = *mode;
+    p->digest.set_hexadecimal(digest_algo.c_str(), *size, digest);
     files[p->name] = p;
   }
 

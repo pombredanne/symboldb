@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "checksum.hpp"
+
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -27,11 +29,11 @@
 // This data comes from the RPM header, not the cpio section.
 struct rpm_file_info {
   std::string name;
-  unsigned long long length;
   std::string user;
   std::string group;
   uint32_t mode;
   uint32_t mtime;
+  checksum digest;
   bool normalized; // See normalize_name() below.
 
   rpm_file_info();

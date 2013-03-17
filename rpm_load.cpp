@@ -34,6 +34,7 @@
 #include "source_sink.hpp"
 #include "symboldb_options.hpp"
 #include "tee_sink.hpp"
+#include "base16.hpp"
 
 #include <sstream>
 
@@ -163,6 +164,23 @@ load_elf(const symboldb_options &opt, database &db,
   }
 }
 
+static void
+check_digest(const char *rpm_path, const std::string &file,
+	     const checksum &actual, const checksum &expected)
+{
+  if (actual.value != expected.value) {
+    throw std::runtime_error(std::string(rpm_path)
+			     + ": digest mismatch for "
+			     + file + " (actual "
+			     + base16_encode(actual.value.begin(),
+					     actual.value.end())
+			     + ", expected "
+			     + base16_encode(expected.value.begin(),
+					     expected.value.end())
+			     + ")");
+  }
+}
+
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &info)
@@ -204,12 +222,23 @@ load_rpm_internal(const symboldb_options &opt, database &db,
       db.add_symlink(pkg, *file.info, file.contents);
     } else {
       // FIXME: deal with special files, hard links.
-      std::vector<unsigned char> digest(hash(hash_sink::sha256, file.contents));
+      checksum digest;
+      digest.type = hash_sink::sha256;
+      digest.value = hash(hash_sink::sha256, file.contents);
+      if (file.info->digest.type == hash_sink::sha256) {
+	check_digest(rpm_path, file.info->name, digest, file.info->digest);
+      } else {
+	checksum chk_digest;
+	chk_digest.type = file.info->digest.type;
+	chk_digest.value = hash(chk_digest.type, file.contents);
+	check_digest(rpm_path, file.info->name, chk_digest, file.info->digest);
+      }
       std::vector<unsigned char> preview
 	(file.contents.begin(),
 	 file.contents.begin() + std::min(static_cast<size_t>(64),
 					  file.contents.size()));
-      database::file_id fid = db.add_file(pkg, *file.info, digest, preview);
+      database::file_id fid = db.add_file(pkg, *file.info,
+					  digest.value, preview);
       if (is_elf(file.contents)) {
 	load_elf(opt, db, fid, file);
       }
