@@ -59,9 +59,6 @@ file_cache::~file_cache()
 bool
 file_cache::lookup_path(const checksum &csum, std::string &path)
 {
-  if (csum.type != "sha" && csum.type != "sha256") {
-    return false;
-  }
   struct stat64 st;
   std::string hex(base16_encode(csum.value.begin(), csum.value.end()));
   if( fstatat64(impl_->dirfd.get(), hex.c_str(), &st, AT_SYMLINK_NOFOLLOW) == 0
@@ -128,16 +125,7 @@ struct file_cache::add_sink::add_impl {
 
 file_cache::add_sink::add_sink(file_cache &c, const checksum &csum)
 {
-  hash_sink::type hash_type = hash_sink::sha256;
-  if (csum.type == "sha256") {
-    // already set
-  } else if (csum.type == "sha") {
-    hash_type = hash_sink::sha1;
-  } else {
-    throw unsupported_hash(csum.type);
-  }
-
-  impl_.reset(new add_impl(c.impl_, hash_type));
+  impl_.reset(new add_impl(c.impl_, csum.type));
   impl_->csum = csum;
   impl_->hex = base16_encode(csum.value.begin(), csum.value.end());
   impl_->temp_file = impl_->hex;

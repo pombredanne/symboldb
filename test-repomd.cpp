@@ -37,7 +37,7 @@ test_primary()
   CHECK(primary.info().epoch == 0);
   COMPARE_STRING(primary.info().version, "3.3.15");
   COMPARE_STRING(primary.info().release, "3.fc18");
-  COMPARE_STRING(primary.checksum().type, "sha256");
+  COMPARE_STRING(hash_sink::to_string(primary.checksum().type), "sha256");
   COMPARE_STRING(base16_encode(primary.checksum().value.begin(),
 			       primary.checksum().value.end()),
 		 "c2c85a567d1b92dd6131bd326611b162ed485f6f97583e46459b430006908d66");
@@ -52,7 +52,7 @@ test_primary()
   CHECK(primary.info().epoch == 32);
   COMPARE_STRING(primary.info().version, "9.9.2");
   COMPARE_STRING(primary.info().release, "5.P1.fc18");
-  COMPARE_STRING(primary.checksum().type, "sha256");
+  COMPARE_STRING(hash_sink::to_string(primary.checksum().type), "sha256");
   COMPARE_STRING(base16_encode(primary.checksum().value.begin(),
 			       primary.checksum().value.end()),
 		 "e8914e18e2264100d40a422ba91be6f19a803a96c5a1e464a3fef2248ad1063b");
@@ -67,7 +67,7 @@ test_primary()
   CHECK(primary.info().epoch == 0);
   COMPARE_STRING(primary.info().version, "5.9.2");
   COMPARE_STRING(primary.info().release, "4.fc18");
-  COMPARE_STRING(primary.checksum().type, "sha256");
+  COMPARE_STRING(hash_sink::to_string(primary.checksum().type), "sha256");
   COMPARE_STRING(base16_encode(primary.checksum().value.begin(),
 			       primary.checksum().value.end()),
 		 "4e03d256c6aacc905efdb83c7bd16bd452771758d1a0a80cea647cfe0f2c6314");

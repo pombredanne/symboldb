@@ -21,6 +21,7 @@
 #include <cstring>
 
 checksum::checksum()
+  : type(hash_sink::sha256)
 {
 }
 
@@ -62,7 +63,7 @@ checksum::set_hexadecimal(const char *typ, unsigned long long len,
     }
     v.at(i) = a * 16 + b;
   }
-  type = typ;
+  type = hash_sink::from_string(typ);
   length = len;
   value.swap(v);
   return true;

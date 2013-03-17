@@ -18,13 +18,15 @@
 
 #pragma once
 
+#include "hash.hpp"
+
 #include <string>
 #include <vector>
 
 struct checksum {
-  std::string type;		// "sha256"
-  unsigned long long length;	// length of data being checksummed
   std::vector<unsigned char> value; // as raw bytes (not hexadecimal)
+  unsigned long long length;	// length of data being checksummed
+  hash_sink::type type;		// defaults to sha256
 
   // dummy length value if the length is not available.
   static const unsigned long long no_length = -1;

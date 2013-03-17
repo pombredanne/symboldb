@@ -51,7 +51,7 @@ struct repomd::primary::impl {
     info_.hash.clear();
     info_.epoch = -1;
     href_.clear();
-    checksum_.type.clear();
+    checksum_.type = hash_sink::sha256;
     checksum_.value.clear();
     checksum_.length = ::checksum::no_length;
   }
@@ -66,7 +66,9 @@ struct repomd::primary::impl {
     check_attr("<arch>", info_.arch);
     check_attr("<format>/<rpm:sourcerpm>", info_.source_rpm);
     check_attr("<location>/href", href_);
-    check_attr("<checksum>", checksum_.type);
+    if (checksum_.value.empty()) {
+      throw std::runtime_error("missing <checksum> element");
+    }
     if (checksum_.length == ::checksum::no_length) {
       throw std::runtime_error("missing <size> element");
     }
