@@ -130,6 +130,10 @@ test()
 	CHECK(pkg > 0);
 	pids.push_back(database::package_id(pkg));
       }
+      if (r1.getvalue(i, 1) == std::string("unzip")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "6.0");
+	continue;
+      }
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
       COMPARE_STRING(r1.getvalue(i, 2), "2.88");
       std::string release(r1.getvalue(i, 3));
@@ -304,7 +308,7 @@ test()
 
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
-    CHECK(digests.size() == 8); // 4 packages with 2 digests each
+    CHECK(digests.size() == 10); // 5 packages with 2 digests each
   }
 
   // FIXME: Add more sanity check on database contents.
