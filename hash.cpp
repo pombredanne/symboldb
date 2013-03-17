@@ -40,6 +40,10 @@ struct hash_sink::impl {
   {
     SECOidTag oid;
     switch (t) {
+    case md5:
+      oid = SEC_OID_MD5;
+      digest_length = 16;
+      break;
     case sha1:
       oid = SEC_OID_SHA1;
       digest_length = 20;
@@ -104,6 +108,36 @@ unsigned long long
 hash_sink::octets() const
 {
   return impl_->octets;
+}
+
+hash_sink::type
+hash_sink::from_string(const char *str)
+{
+  if (strcmp(str, "md5") == 0) {
+    return md5;
+  } else if (strcmp(str, "sha1") == 0
+	     || strcmp(str, "sha") == 0) {
+    return sha1;
+  } else if (strcmp(str, "sha256") == 0) {
+    return sha256;
+  } else {
+    throw std::runtime_error("unknown hash type: " + std::string(str));
+  }
+}
+
+const char *
+hash_sink::to_string(type hash)
+{
+  switch (hash) {
+  case md5:
+    return "md5";
+  case sha1:
+    return "sha1";
+  case sha256:
+    return "sha256";
+  default:
+    throw std::runtime_error("unknown numeric hash type");
+  }
 }
 
 //////////////////////////////////////////////////////////////////////

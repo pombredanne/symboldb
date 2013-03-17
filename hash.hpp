@@ -34,9 +34,12 @@ class hash_sink : public sink {
   void operator=(const hash_sink &); // not implemented
 public:
   typedef enum {
-    sha1, sha256
+    md5 = 1,
+    sha1,
+    sha256
   } type;
-  hash_sink(type);
+  explicit hash_sink(type);
+  explicit hash_sink(const char *type);
   ~hash_sink();
 
   // Hashes the specified byte array.
@@ -48,6 +51,11 @@ public:
 
   // Returns the number of octets written so far.
   unsigned long long octets() const;
+
+  // Convert between hash types and their string representation.
+  // Throws runtime_error if the conversion fails.
+  static type from_string(const char *);
+  static const char *to_string(type);
 };
 
 // Computes the 32-byte SHA-256 hash of the argument.
