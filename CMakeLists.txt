@@ -158,7 +158,7 @@ target_link_libraries (SymbolDB
 )
 
 add_executable (symboldb
-  symboldb.cpp
+  src/symboldb.cpp
 )
 
 target_link_libraries (symboldb
@@ -168,7 +168,7 @@ target_link_libraries (symboldb
 install (TARGETS symboldb DESTINATION bin)
 
 add_executable (pgtestshell
-  pgtestshell.cpp
+  src/pgtestshell.cpp
 )
 
 target_link_libraries (pgtestshell
