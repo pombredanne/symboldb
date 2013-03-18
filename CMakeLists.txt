@@ -54,7 +54,7 @@ add_custom_command (
   DEPENDS schema.sql
 )
 
-add_library (SymbolDB
+add_library (CXXLL
   checksum.cpp
   base16.cpp
   cpio_reader.cpp
@@ -62,7 +62,6 @@ add_library (SymbolDB
   curl_exception_dump.cpp
   curl_fetch_result.cpp
   curl_handle.cpp
-  database.cpp
   dir_handle.cpp
   download.cpp
   elf_exception.cpp
@@ -113,19 +112,38 @@ add_library (SymbolDB
   string_source.cpp
   string_support.cpp
   subprocess.cpp
-  symboldb_download_repo.cpp
-  symboldb_options.cpp
-  symboldb_show_source_packages.cpp
   task.cpp
   tee_sink.cpp
-  update_elf_closure.cpp
   url.cpp
   utf8.cpp
   vector_sink.cpp
   zlib.cpp
   zlib_inflate_exception.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
+)
+
+add_library (SymbolDB
+  database.cpp
+  symboldb_download_repo.cpp
+  symboldb_options.cpp
+  symboldb_show_source_packages.cpp
+  update_elf_closure.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
+)
+
+target_link_libraries (CXXLL
+  -lcurl
+  -ldl
+  -lelf
+  -lexpat
+  -lnss3
+  -lpq
+  -lrpm -lrpmio
+  -lz
+)
+
+target_link_libraries (SymbolDB
+  CXXLL
 )
 
 target_link_libraries (SymbolDB
@@ -154,7 +172,7 @@ add_executable (pgtestshell
 )
 
 target_link_libraries (pgtestshell
-  SymbolDB
+  CXXLL
 )
 
 install (TARGETS pgtestshell DESTINATION bin)
