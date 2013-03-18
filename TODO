@@ -11,9 +11,6 @@
 
 * Parallelize downloading.
 
-* Store sizes of files inside RPMs.  Handle symbolic links and
-  possibly hard links.
-
 * Support extracting Java symbols (class, method, field definitions
   and references).
 
