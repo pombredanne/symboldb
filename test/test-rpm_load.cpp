@@ -136,7 +136,11 @@ test()
       if (r1.getvalue(i, 1) == std::string("unzip")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "6.0");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("openbios")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "1.0.svn1063");
+	continue;
       }
+
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
       COMPARE_STRING(r1.getvalue(i, 2), "2.88");
       std::string release(r1.getvalue(i, 3));
@@ -257,7 +261,7 @@ test()
     r1.exec(dbh, "SELECT DISTINCT p.arch, ef.arch FROM symboldb.package p"
 	    " JOIN symboldb.file f USING (package_id)"
 	    " JOIN symboldb.elf_file ef USING (contents_id)"
-	    " WHERE p.arch::text <> ef.arch::text");
+	    " WHERE p.arch::text <> ef.arch::text AND p.name <> 'openbios'");
     CHECK(r1.ntuples() == 1);
     COMPARE_STRING(r1.getvalue(0, 0), "i686");
     COMPARE_STRING(r1.getvalue(0, 1), "i386");
@@ -287,6 +291,16 @@ test()
 	    " AND inode = 2"
 	    " AND f.name NOT IN ('/usr/bin/unzip', '/usr/bin/zipinfo')");
     COMPARE_STRING(r1.getvalue(0, 0), "0");
+
+    r1.exec(dbh,
+	    "SELECT name || ':' || arch FROM symboldb.file"
+	    " JOIN symboldb.elf_file USING (contents_id)"
+	    " WHERE name LIKE '/usr/share/qemu/openbios-%' ORDER BY name");
+    CHECK(r1.ntuples() == 3);
+    COMPARE_STRING(r1.getvalue(0, 0), "/usr/share/qemu/openbios-ppc:ppc");
+    COMPARE_STRING(r1.getvalue(1, 0), "/usr/share/qemu/openbios-sparc32:sparc");
+    COMPARE_STRING(r1.getvalue(2, 0),
+		   "/usr/share/qemu/openbios-sparc64:sparc64");
 
     CHECK(!pids.empty());
     db.txn_begin();

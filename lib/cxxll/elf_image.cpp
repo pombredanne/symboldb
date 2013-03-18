@@ -59,6 +59,7 @@ get_arch(unsigned char ei_class, unsigned short e_machine)
   } archlist[] = {
     {EM_386, "i386", NULL},
     {EM_SPARC, "sparc", NULL},
+    {EM_SPARCV9, NULL, "sparc64"},
     {EM_PPC, "ppc", NULL},
     {EM_PPC64, NULL, "ppc64"},
     {EM_S390, "s390", "s390x"},

@@ -26,7 +26,8 @@ CREATE TYPE symboldb.rpm_arch AS ENUM (
 CREATE TYPE symboldb.elf_arch AS ENUM (
   'i386', 'x86_64',
   'ppc', 'ppc64',
-  's390', 's390x'
+  's390', 's390x',
+  'sparc', 'sparc64'
 );
 
 CREATE TYPE symboldb.elf_visibility AS ENUM
