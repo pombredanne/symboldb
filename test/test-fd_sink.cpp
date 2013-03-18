@@ -24,6 +24,8 @@
 
 #include <fcntl.h>
 
+using namespace cxxll;
+
 static void
 test(void)
 {

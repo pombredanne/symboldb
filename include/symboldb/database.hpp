@@ -25,11 +25,13 @@
 #include <tr1/memory>
 #include <vector>
 
-class rpm_file_info;
-class rpm_package_info;
-class elf_image;
-class elf_symbol_definition;
-class elf_symbol_reference;
+namespace cxxll {
+  class rpm_file_info;
+  class rpm_package_info;
+  class elf_image;
+  class elf_symbol_definition;
+  class elf_symbol_reference;
+}
 
 // Database wrapper.
 // Members of this class throw pg_exception on error.
@@ -77,16 +79,16 @@ public:
   enum { PACKAGE_SET_LOCK_TAG = 1667369644 };
 
   struct package_id_tag {};
-  typedef tagged<int, package_id_tag> package_id;
+  typedef cxxll::tagged<int, package_id_tag> package_id;
   struct file_id_tag {};
-  typedef tagged<int, file_id_tag> file_id;
+  typedef cxxll::tagged<int, file_id_tag> file_id;
 
   // Creates the "symboldb" database schema.
   void create_schema();
 
   // Returns true if the package_id was freshly added to the database.
   // FIXME: add source URI
-  bool intern_package(const rpm_package_info &, package_id &);
+  bool intern_package(const cxxll::rpm_package_info &, package_id &);
 
   // Adds a digest of the file representation.  A single RPM with
   // identical contents can have multiple representations due to
@@ -99,15 +101,15 @@ public:
   // Returns 0 if the package ID was not found.
   package_id package_by_digest(const std::vector<unsigned char> &digest);
 
-  file_id add_file(package_id, const rpm_file_info &,
+  file_id add_file(package_id, const cxxll::rpm_file_info &,
 		   std::vector<unsigned char> &digest,
 		   std::vector<unsigned char> &contents);
 
   // Adds the directory to the database.
-  void add_directory(package_id, const rpm_file_info &);
+  void add_directory(package_id, const cxxll::rpm_file_info &);
 
   // Adds the symlink to the database.
-  void add_symlink(package_id, const rpm_file_info &,
+  void add_symlink(package_id, const cxxll::rpm_file_info &,
 		   const std::vector<unsigned char> &contents);
 
   // Loading ELF-related tables.
@@ -115,10 +117,10 @@ public:
   // Populates the elf_file table.  Uses fallback_arch (from the RPM
   // header) in case we cannot determine the architecture from the ELF
   // header.
-  void add_elf_image(file_id, const elf_image &, const char *soname);
+  void add_elf_image(file_id, const cxxll::elf_image &, const char *soname);
 
-  void add_elf_symbol_definition(file_id, const elf_symbol_definition &);
-  void add_elf_symbol_reference(file_id, const elf_symbol_reference &);
+  void add_elf_symbol_definition(file_id, const cxxll::elf_symbol_definition &);
+  void add_elf_symbol_reference(file_id, const cxxll::elf_symbol_reference &);
   void add_elf_needed(file_id, const char *);
   void add_elf_rpath(file_id, const char *);
   void add_elf_runpath(file_id, const char *);
@@ -126,7 +128,7 @@ public:
 
   // Package sets.
   struct package_set_tag {};
-  typedef tagged<int, package_set_tag> package_set_id;
+  typedef cxxll::tagged<int, package_set_tag> package_set_id;
   package_set_id create_package_set(const char *name);
   package_set_id lookup_package_set(const char *name);
 

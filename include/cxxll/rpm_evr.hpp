@@ -20,6 +20,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Epoch, version and release (but not name nor architecture).
 struct rpm_evr {
   std::string epoch;
@@ -31,3 +33,5 @@ struct rpm_evr {
 
   bool operator<(const rpm_evr &other) const;
 };
+
+} // namespace cxxll

@@ -20,6 +20,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Replaces non-printable characters (less than ASCII 32, greater than
 // ASCII 126) with hexadecimal escape seqences or special escape
 // sequences.  Does not include the surrounding quote characters.
@@ -61,3 +63,5 @@ ends_with(const std::string &s, const char (&pattern)[N])
 unsigned fnv(const std::string &);
 unsigned fnv(const char *);
 unsigned fnv(const unsigned char *, size_t);
+
+} // namespace cxxll

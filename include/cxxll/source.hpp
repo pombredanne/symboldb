@@ -20,6 +20,8 @@
 
 #include <cstddef>
 
+namespace cxxll {
+
 // Source of a sequence of bytes.
 struct source {
   virtual ~source();
@@ -27,3 +29,5 @@ struct source {
   // Returns 0 on end-of-stream.  Must throw an exception on error.
   virtual size_t read(unsigned char *, size_t) = 0;
 };
+
+} // namespace cxxll

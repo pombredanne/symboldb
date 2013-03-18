@@ -44,6 +44,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 static void
 dump_def(const symboldb_options &opt, database &db,
 	 database::file_id fid, const char *elf_path,

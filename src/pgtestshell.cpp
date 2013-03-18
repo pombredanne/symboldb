@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 int
 main(int argc, char **argv)
 {

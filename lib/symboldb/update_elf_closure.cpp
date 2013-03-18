@@ -30,6 +30,8 @@
 #include <cassert>
 #include <cstring>
 
+using namespace cxxll;
+
 namespace {
   struct file_ref {
     database::file_id id;

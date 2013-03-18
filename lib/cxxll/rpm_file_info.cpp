@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+using namespace cxxll;
+
 rpm_file_info::rpm_file_info()
   : length(0), mode(0), mtime(0), normalized(false)
 {

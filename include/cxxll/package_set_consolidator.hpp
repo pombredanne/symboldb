@@ -25,6 +25,8 @@
 #include <cxxll/rpm_evr.hpp>
 #include <cxxll/rpm_package_info.hpp>
 
+namespace cxxll {
+
 // Picks the largest version number for each package name/architecture
 // combinations.
 template <class T>
@@ -105,3 +107,5 @@ package_set_consolidator<T>::values() const
   }
   return result;
 }
+
+} // namespace cxxll

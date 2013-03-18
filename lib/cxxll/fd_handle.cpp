@@ -29,6 +29,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 fd_handle::~fd_handle()
 {
   close_nothrow();
@@ -221,13 +223,11 @@ fd_handle::unlinkat(const char *pathname, int flags)
 }
 
 void
-renameat(fd_handle &from, const char *from_name,
-	 fd_handle &to, const char *to_name)
+cxxll::renameat(fd_handle &from, const char *from_name,
+		fd_handle &to, const char *to_name)
 {
-  if (renameat(from.get(), from_name, to.get(), to_name) < 0) {
-    throw os_exception()
-      .function(static_cast<int(*)(int, const char *,
-				   int, const char *)>(::renameat))
+  if (::renameat(from.get(), from_name, to.get(), to_name) < 0) {
+    throw os_exception().function(::renameat)
       .fd(from.get()).path2(from_name).message(to_name).defaults();
   }
 }

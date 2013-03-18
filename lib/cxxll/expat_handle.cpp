@@ -20,6 +20,8 @@
 
 #include <stdexcept>
 
+using namespace cxxll;
+
 expat_handle::expat_handle()
 {
   raw = XML_ParserCreate(NULL);

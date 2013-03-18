@@ -23,6 +23,8 @@
 
 #include <pthread.h>
 
+using namespace cxxll;
+
 static void
 callback(int *i) throw()
 {

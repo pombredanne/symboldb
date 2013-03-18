@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 dir_handle::dir_handle(int fd)
 {
   try {

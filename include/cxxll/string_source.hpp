@@ -22,6 +22,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Source which reads data from a string.
 struct string_source : source {
   std::string source;
@@ -32,3 +34,5 @@ struct string_source : source {
 
   virtual size_t read(unsigned char *, size_t);
 };
+
+} // namespace cxxll

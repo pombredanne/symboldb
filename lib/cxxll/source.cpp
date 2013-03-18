@@ -18,6 +18,8 @@
 
 #include <cxxll/source.hpp>
 
+using namespace cxxll;
+
 source::~source()
 {
 }

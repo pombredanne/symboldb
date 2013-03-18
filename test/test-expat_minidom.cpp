@@ -22,6 +22,7 @@
 
 #include "test.hpp"
 
+using namespace cxxll;
 using namespace expat_minidom;
 
 static void

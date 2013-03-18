@@ -21,6 +21,8 @@
 #include <tr1/functional>
 #include <tr1/memory>
 
+namespace cxxll {
+
 // Wrapper around a pthread.
 class task {
   struct impl;
@@ -37,3 +39,5 @@ public:
   //  Wait for termination.  Can throw os_exception.
   void wait();
 };
+
+} // namespace cxxll

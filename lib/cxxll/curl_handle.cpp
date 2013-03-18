@@ -20,6 +20,8 @@
 
 #include <stdexcept>
 
+using namespace cxxll;
+
 curl_handle::curl_handle()
 {
   raw = curl_easy_init();

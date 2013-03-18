@@ -20,6 +20,8 @@
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/fd_source.hpp>
 
+using namespace cxxll;
+
 static void
 test(void)
 {

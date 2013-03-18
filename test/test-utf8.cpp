@@ -19,6 +19,8 @@
 #include <cxxll/utf8.hpp>
 #include "test.hpp"
 
+using namespace cxxll;
+
 static void
 test()
 {

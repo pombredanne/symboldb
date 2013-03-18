@@ -24,6 +24,8 @@
 #include <tr1/memory>
 #include <vector>
 
+namespace cxxll {
+
 // A wrapper for a PostgreSQL server running as a subprocess, against
 // a temporary database directory (which is removed when the object is
 // destroyed).
@@ -56,3 +58,5 @@ public:
   // errors.
   void dump_logs();
 };
+
+} // namespace cxxll

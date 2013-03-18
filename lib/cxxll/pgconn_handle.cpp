@@ -22,6 +22,8 @@
 #include <algorithm>
 #include <climits>
 
+using namespace cxxll;
+
 static void
 do_check(PGconn *raw)
 {

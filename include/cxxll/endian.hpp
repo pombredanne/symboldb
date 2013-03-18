@@ -22,6 +22,8 @@
 #error unknown endianess
 #endif
 
+namespace cxxll {
+
 inline bool
 is_little_endian()
 {
@@ -97,3 +99,5 @@ be_to_cpu_64(unsigned long long val)
 {
   return cpu_to_be_64(val);
 }
+
+} // namespace cxxll

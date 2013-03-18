@@ -21,8 +21,9 @@
 #include <string>
 #include <vector>
 
+#include <cxxll/sink.hpp>
+
 class database;
-class sink;
 
 struct download_options {
   enum {
@@ -38,7 +39,7 @@ struct download_options {
 // Tries to download URL and sends its contents to SINK.  Throws
 // pg_exception or curl_exception on errors, or whatever SINK throws.
 void download(const download_options &, database &,
-	      const char *url, sink *);
+	      const char *url, cxxll::sink *);
 
 // Tries to download URL and stores its contents in RESULT.  Throws
 // pg_exception or curl_exception on errors.

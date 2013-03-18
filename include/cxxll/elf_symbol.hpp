@@ -20,6 +20,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 struct elf_symbol {
   std::string symbol_name;
   unsigned char type;		// between 0 and 15
@@ -31,3 +33,5 @@ struct elf_symbol {
   // Returns the string describing the attribute (in lower case).
   const char *visibility() const;
 };
+
+} // namespace cxxll

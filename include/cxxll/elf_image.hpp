@@ -21,6 +21,8 @@
 #include <tr1/memory>
 #include <vector>
 
+namespace cxxll {
+
 class elf_symbol_definition;
 class elf_symbol_reference;
 
@@ -86,3 +88,5 @@ public:
 
 // Call this to initialize the subsystem.
 void elf_image_init();
+
+} // namespace cxxll

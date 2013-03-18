@@ -18,6 +18,8 @@
 
 #include <cxxll/string_sink.hpp>
 
+using namespace cxxll;
+
 string_sink::string_sink()
 {
 }

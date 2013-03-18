@@ -34,6 +34,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 struct file_cache::impl {
   std::string root;
   fd_handle dirfd;

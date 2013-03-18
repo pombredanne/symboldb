@@ -22,9 +22,13 @@
 
 #include <string>
 
+namespace cxxll {
+
 struct string_sink : sink {
   std::string data;
   string_sink();
   ~string_sink();
   void write(const unsigned char *, size_t);
 };
+
+} // namespace cxxll

@@ -22,6 +22,8 @@
 
 #include <cstdio>
 
+namespace cxxll {
+
 // Wrapper for a C FILE * handle.
 class file_handle {
   FILE *raw;
@@ -71,3 +73,5 @@ file_handle::release()
   raw = NULL;
   return p;
 }
+
+} // namespace cxxll

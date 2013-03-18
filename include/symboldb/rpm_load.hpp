@@ -27,4 +27,4 @@ class symboldb_options;
 // not have an open transaction.  The return value is the package ID,
 // or 0 on error.
 database::package_id rpm_load(const symboldb_options &opt, database &db,
-			      const char *path, rpm_package_info &info);
+			      const char *path, cxxll::rpm_package_info &info);

@@ -23,6 +23,8 @@
 #include <string>
 #include <tr1/memory>
 
+namespace cxxll {
+
 class source;
 
 // Pull-based XML parser.
@@ -105,3 +107,5 @@ public:
     const char *what() const throw ();
   };
 };
+
+} // namespace cxxll

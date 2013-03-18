@@ -20,7 +20,11 @@
 
 #include <cstddef>
 
+namespace cxxll {
+
 struct sink {
   virtual ~sink();
   virtual void write(const unsigned char *, size_t) = 0;
 };
+
+} // namespace cxxll

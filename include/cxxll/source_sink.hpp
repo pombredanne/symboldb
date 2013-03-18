@@ -20,9 +20,13 @@
 
 #pragma once
 
+namespace cxxll {
+
 class source;
 class sink;
 
 // Copies bytes from SOURCE to SINK.  Returns the total number of
 // bytes copied.
 unsigned long long copy_source_to_sink(source &, sink &);
+
+} // namespace cxxll

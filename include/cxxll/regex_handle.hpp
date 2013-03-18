@@ -22,6 +22,8 @@
 #include <string>
 #include <tr1/memory>
 
+namespace cxxll {
+
 // POSIX extended regular expression.
 class regex_handle {
   struct impl;
@@ -49,3 +51,5 @@ regex_handle::error::code() const
 {
   return code_;
 }
+
+} // namespace cxxll

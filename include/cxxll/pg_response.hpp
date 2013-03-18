@@ -21,6 +21,8 @@
 #include "pg_private.hpp"
 #include "pgresult_handle.hpp"
 
+namespace cxxll {
+
 template <class T1> inline void
 pg_response(pgresult_handle &res, int row, T1 &t1)
 {
@@ -128,3 +130,5 @@ pg_response(pgresult_handle &res, int row, T1 &t1, T2 &t2, T3 &t3, T4 &t4,
   pg_private::dispatch<T8>::load(r, row, 7, t8);
   pg_private::dispatch<T9>::load(r, row, 8, t9);
 }
+
+} // namespace cxxll

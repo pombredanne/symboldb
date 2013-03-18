@@ -24,23 +24,21 @@
 #include <assert.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 std::string
-readlink(const char *path)
+cxxll::readlink(const char *path)
 {
   char buf[4096];
-  ssize_t ret = readlink(path, buf, sizeof(buf));
+  ssize_t ret = ::readlink(path, buf, sizeof(buf));
   if (ret < 0) {
-    throw os_exception()
-      .function<ssize_t(const char *, char *, size_t)>(readlink)
-      .path(path);
+    throw os_exception().function(::readlink).path(path);
   } if (ret == sizeof(buf)) {
     std::vector<char> vec(2 * sizeof(buf));
     while (true) {
-      ret = readlink(path, vec.data(), vec.size());
+      ret = ::readlink(path, vec.data(), vec.size());
       if (ret < 0) {
-	throw os_exception()
-	  .function<ssize_t(const char *, char *, size_t)>(readlink)
-	  .path(path);
+	throw os_exception().function(readlink).path(path);
       } else if (static_cast<size_t>(ret) != vec.size()) {
 	break;
       }

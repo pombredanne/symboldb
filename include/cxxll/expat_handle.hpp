@@ -20,6 +20,8 @@
 
 #include <expat.h>
 
+namespace cxxll {
+
 struct expat_handle {
   XML_Parser raw;
 
@@ -35,3 +37,5 @@ private:
   expat_handle(const expat_handle &); // not implemented
   expat_handle &operator=(const expat_handle &); // not implemented
 };
+
+} // namespace cxxll

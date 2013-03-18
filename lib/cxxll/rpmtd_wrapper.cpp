@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,8 @@
  */
 
 #include <cxxll/rpmtd_wrapper.hpp>
+
+using namespace cxxll;
 
 rpmtd_wrapper::~rpmtd_wrapper()
 {

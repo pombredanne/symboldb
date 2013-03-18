@@ -20,6 +20,8 @@
 
 #include <libpq-fe.h>
 
+namespace cxxll {
+
 class pgconn_handle;
 
 // Wrapper around a PostgreSQL result object (PGresult).
@@ -219,3 +221,5 @@ pgresult_handle::execParamsBinary(pgconn_handle &conn,
 {
   execParamsCustom(conn, command, N, NULL, paramValues, NULL, NULL, 1);
 }
+
+} // namespace cxxll

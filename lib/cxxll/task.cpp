@@ -21,6 +21,8 @@
 
 #include <pthread.h>
 
+using namespace cxxll;
+
 struct task::impl {
   std::tr1::function<void () throw()> runner;
   pthread_t thread;

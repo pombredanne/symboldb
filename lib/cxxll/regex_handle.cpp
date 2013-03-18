@@ -20,6 +20,8 @@
 
 #include <regex.h>
 
+using namespace cxxll;
+
 struct regex_handle::impl {
   regex_t rx;
 

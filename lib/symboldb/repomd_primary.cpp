@@ -18,17 +18,18 @@
 
 #include <symboldb/repomd.hpp>
 #include <cxxll/expat_source.hpp>
-#include <cxxll/rpm_package_info.hpp>
 #include <cxxll/string_support.hpp>
 #include <cxxll/checksum.hpp>
 #include <cxxll/url.hpp>
+
+using namespace cxxll;
 
 struct repomd::primary::impl {
   expat_source source_;
   std::string base_url_;
   rpm_package_info info_;
   std::string href_;
-  ::checksum checksum_;
+  cxxll::checksum checksum_;
 
   impl(source *src, const char *base_url)
     : source_(src), base_url_(base_url)
@@ -53,7 +54,7 @@ struct repomd::primary::impl {
     href_.clear();
     checksum_.type = hash_sink::sha256;
     checksum_.value.clear();
-    checksum_.length = ::checksum::no_length;
+    checksum_.length = checksum::no_length;
   }
 
   void validate()

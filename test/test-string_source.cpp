@@ -19,6 +19,8 @@
 #include <cxxll/string_source.hpp>
 #include "test.hpp"
 
+using namespace cxxll;
+
 static void
 test()
 {

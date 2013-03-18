@@ -19,8 +19,10 @@
 #include <cxxll/curl_exception_dump.hpp>
 #include <cxxll/curl_exception.hpp>
 
+using namespace cxxll;
+
 void
-dump(const char *prefix, const curl_exception &e, FILE *out)
+cxxll::dump(const char *prefix, const curl_exception &e, FILE *out)
 {
   fprintf(out, "%sdownload", prefix);
   if (!e.remote_ip().empty()) {

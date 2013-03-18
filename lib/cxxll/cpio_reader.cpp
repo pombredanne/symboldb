@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +21,8 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+
+using namespace cxxll;
 
 static int
 octal_digit(char ch)
@@ -84,7 +86,7 @@ read_hex(const char *where, const char *p, uint32_t &result, const char *&error)
 }
 
 size_t
-cpio_header_length(const char magic[6])
+cxxll::cpio_header_length(const char magic[6])
 {
   if (memcmp(magic, "070707", 6) == 0) {
     return 70;
@@ -97,7 +99,7 @@ cpio_header_length(const char magic[6])
 
 
 bool
-parse(const char *buf, size_t len, cpio_entry &e, const char *&error)
+cxxll::parse(const char *buf, size_t len, cpio_entry &e, const char *&error)
 {
   const char *p = buf;
   switch (len) {

@@ -22,8 +22,10 @@
 
 #include <cassert>
 
+using namespace cxxll;
+
 unsigned long long
-copy_source_to_sink(source &src, sink &dst)
+cxxll::copy_source_to_sink(source &src, sink &dst)
 {
   unsigned long long count = 0;
   unsigned char buf[8192];

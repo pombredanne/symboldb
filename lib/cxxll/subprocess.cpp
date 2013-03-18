@@ -35,6 +35,8 @@
 #include <vector>
 #include <stdexcept>
 
+using namespace cxxll;
+
 namespace {
   void
   free_vector(std::vector<char *> &v)

@@ -23,6 +23,8 @@
 #include <sstream>
 #include <unistd.h>
 
+using namespace cxxll;
+
 static void
 test(void)
 {

@@ -20,6 +20,8 @@
 
 #include "sink.hpp"
 
+namespace cxxll {
+
 // Sink which writes to a POSIX file descriptor.  Does not take
 // ownership of the descriptor.  Writing throws os_exception on error.
 struct fd_sink : sink {
@@ -35,3 +37,5 @@ struct fd_sink : sink {
 
   void write(const unsigned char *, size_t);
 };
+
+} // namespace cxxll

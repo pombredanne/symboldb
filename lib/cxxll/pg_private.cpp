@@ -24,6 +24,8 @@
 #include <climits>
 #include <cstdlib>
 
+using namespace cxxll;
+
 const Oid pg_private::dispatch<short>::oid;
 const int pg_private::dispatch<short>::storage;
 

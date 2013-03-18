@@ -20,6 +20,8 @@
 
 #include <string.h>
 
+using namespace cxxll;
+
 namespace {
   void
   set_field_string(PGresult *res, std::string &field, int code)
@@ -100,8 +102,8 @@ pg_exception::what() const throw()
 
 namespace {
   void
-  dump(const char *prefix, const char *infix1, const char *infix2,
-       const char *message, FILE *out)
+  dump1(const char *prefix, const char *infix1, const char *infix2,
+	const char *message, FILE *out)
   {
     bool first = true;
     while (true) {
@@ -124,19 +126,19 @@ namespace {
   }
 
   void
-  dump(const char *prefix, const char *infix1, const char *infix2,
-       const std::string &message, FILE *out)
+  dump1(const char *prefix, const char *infix1, const char *infix2,
+	const std::string &message, FILE *out)
   {
     if (!message.empty()) {
-      dump(prefix, infix1, infix2, message.c_str(), out);
+      dump1(prefix, infix1, infix2, message.c_str(), out);
     }
   }
 }
 
 void
-dump(const char *prefix, const pg_exception &e, FILE *out)
+cxxll::dump(const char *prefix, const pg_exception &e, FILE *out)
 {
-  dump(prefix, "", "  ", e.message_, out);
+  dump1(prefix, "", "  ", e.message_, out);
   fprintf(out, "%s  status=%s severity=%s sqlstate=%s", prefix,
 	  PQresStatus(e.status_), e.severity_.c_str(), e.sqlstate_.c_str());
   if (e.statement_position_ >= 0) {
@@ -144,15 +146,15 @@ dump(const char *prefix, const pg_exception &e, FILE *out)
   } else {
     putc('\n', out);
   }
-  dump(prefix, "  message: ", "message2: ", e.primary_, out);
-  dump(prefix, "  detail: ", "detail: ", e.detail_, out);
-  dump(prefix, "  hint: ", "hint: ", e.detail_, out);
-  dump(prefix, "  internal: ", "internal: ", e.internal_query_, out);
+  dump1(prefix, "  message: ", "message2: ", e.primary_, out);
+  dump1(prefix, "  detail: ", "detail: ", e.detail_, out);
+  dump1(prefix, "  hint: ", "hint: ", e.detail_, out);
+  dump1(prefix, "  internal: ", "internal: ", e.internal_query_, out);
   if (e.internal_position_ >= 0) {
     fprintf(out, "%s  internal position: %d\n", prefix, e.internal_position_);
   }
   if (e.context_ != e.source_file_) {
-    dump(prefix, "  context: ", "context: ", e.context_, out);
+    dump1(prefix, "  context: ", "context: ", e.context_, out);
   }
   if (!e.source_file_.empty() && e.source_line_ >= 0) {
     fprintf(out, "%s  location: %s:%d%s%s\n", prefix,

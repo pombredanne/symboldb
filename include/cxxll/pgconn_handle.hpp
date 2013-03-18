@@ -20,6 +20,8 @@
 
 #include <libpq-fe.h>
 
+namespace cxxll {
+
 // Wrapper around a PostgreSQL connection object (PGconn).
 class pgconn_handle {
   pgconn_handle(const pgconn_handle &); // not implemented
@@ -109,3 +111,5 @@ pgconn_handle::transactionStatus() const
 {
   return PQtransactionStatus(raw);
 }
+
+} // namespace cxxll

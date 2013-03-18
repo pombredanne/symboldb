@@ -20,6 +20,8 @@
 
 #include <cstring>
 
+using namespace cxxll;
+
 string_source::string_source(const std::string &src)
   : source(src), position(0)
 {

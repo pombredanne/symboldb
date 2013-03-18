@@ -23,8 +23,10 @@
 #include <cstring>
 #include <sstream>
 
+using namespace cxxll;
+
 std::string
-quote(const std::string &str)
+cxxll::quote(const std::string &str)
 {
   for (const char *p = str.data(), *end = p + str.size(); p != end; ++p) {
     unsigned char ch = *p;
@@ -104,7 +106,8 @@ namespace {
 
 // Parses an unsigned long long while skipping white space.
 bool
-parse_unsigned_long_long(const std::string &text, unsigned long long &value)
+cxxll::parse_unsigned_long_long(const std::string &text,
+				unsigned long long &value)
 {
   const char *first = text.c_str();
   const char *last = first + text.size();
@@ -124,7 +127,7 @@ parse_unsigned_long_long(const std::string &text, unsigned long long &value)
 }
 
 std::string
-strip(const std::string &s)
+cxxll::strip(const std::string &s)
 {
   std::string r(s);
   strip_inplace(r);
@@ -132,7 +135,7 @@ strip(const std::string &s)
 }
 
 unsigned
-fnv(const unsigned char *p, size_t len)
+cxxll::fnv(const unsigned char *p, size_t len)
 {
   unsigned hash = 0x243f6a88;
   while (len) {
@@ -145,13 +148,13 @@ fnv(const unsigned char *p, size_t len)
 }
 
 unsigned
-fnv(const std::string &str)
+cxxll::fnv(const std::string &str)
 {
   return fnv(reinterpret_cast<const unsigned char *>(str.data()), str.size());
 }
 
 unsigned
-fnv(const char *str)
+cxxll::fnv(const char *str)
 {
   return fnv(reinterpret_cast<const unsigned char *>(str), strlen(str));
 }

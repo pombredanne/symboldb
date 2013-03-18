@@ -47,6 +47,8 @@
 #include <algorithm>
 #include <vector>
 
+using namespace cxxll;
+
 static bool
 load_rpms(const symboldb_options &opt, database &db, char **argv,
 	  package_set_consolidator<database::package_id> &ids)

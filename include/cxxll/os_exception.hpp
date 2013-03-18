@@ -19,6 +19,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace cxxll {
+
 // Exception class mostly intended for POSIX-related errors.
 class os_exception : public std::exception {
   std::string message_;
@@ -203,3 +205,5 @@ os_exception::function_name() const
 {
   return function_name_;
 }
+
+} // namespace cxxll

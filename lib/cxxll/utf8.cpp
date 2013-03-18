@@ -21,7 +21,7 @@
 static int pg_utf8_verifier(const unsigned char *s, int len);
 
 bool
-is_valid_utf8(const std::string &str)
+cxxll::is_valid_utf8(const std::string &str)
 {
   const unsigned char *p =
     reinterpret_cast<const unsigned char *>(str.data());
@@ -42,7 +42,7 @@ is_valid_utf8(const std::string &str)
 }
 
 std::string
-latin1_to_utf8(const std::string &str)
+cxxll::latin1_to_utf8(const std::string &str)
 {
   const unsigned char *p =
     reinterpret_cast<const unsigned char *>(str.data());

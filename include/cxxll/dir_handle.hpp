@@ -20,6 +20,8 @@
 
 #include <dirent.h>
 
+namespace cxxll {
+
 // Wrapper around DIR pointers.
 class dir_handle {
   DIR *raw;
@@ -74,3 +76,5 @@ dir_handle::dirfd() const
 {
   return ::dirfd(raw);
 }
+
+} // namespace cxxll

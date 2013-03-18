@@ -20,6 +20,8 @@
 
 #include <elf.h>
 
+using namespace cxxll;
+
 elf_symbol_definition::elf_symbol_definition()
   : value(0ULL), section(0), xsection(0), default_version(false)
 {

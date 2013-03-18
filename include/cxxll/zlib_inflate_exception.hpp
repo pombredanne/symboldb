@@ -20,6 +20,8 @@
 
 #include <stdexcept>
 
+namespace cxxll {
+
 class zlib_inflate_exception : public std::exception {
   std::string what_;
 public:
@@ -27,3 +29,5 @@ public:
   ~zlib_inflate_exception() throw();
   const char *what() const throw();
 };
+
+} // namespace cxxll

@@ -24,6 +24,7 @@
 #include <string>
 #include <tr1/memory>
 
+namespace cxxll {
 
 // Hashing sink implementation.
 // On NSS errors, an exception is thrown.
@@ -68,3 +69,5 @@ std::vector<unsigned char> hash(hash_sink::type,
 // result in os_exception.
 void hash_file(hash_sink::type, const char *path,
 	       std::vector<unsigned char> &digest);
+
+} // namespace cxxll

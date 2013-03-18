@@ -29,6 +29,8 @@
 
 #include <libpq-fe.h>
 
+namespace cxxll {
+
 // Not for direct use.
 namespace pg_private {
   template <class T>
@@ -213,4 +215,5 @@ namespace pg_private {
     }
     return 0;
   }
-} // pg_private
+} // namespace pg_private
+} // namespace cxxll

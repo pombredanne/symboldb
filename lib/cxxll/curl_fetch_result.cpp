@@ -23,6 +23,8 @@
 
 #include <cstring>
 
+using namespace cxxll;
+
 size_t
 curl_fetch_result::write_function(char *ptr, size_t size, size_t nmemb,
 				  void *userdata)

@@ -18,6 +18,8 @@
 
 #include <cxxll/zlib_inflate_exception.hpp>
 
+using namespace cxxll;
+
 zlib_inflate_exception::zlib_inflate_exception(const char *msg)
   : what_(msg ? msg : "inflate error")
 {

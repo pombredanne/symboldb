@@ -21,6 +21,8 @@
 
 #include <cstdio>
 
+using namespace cxxll;
+
 static const char oom_message[] = "out of memory";
 
 curl_exception::curl_exception(const char *message) throw()

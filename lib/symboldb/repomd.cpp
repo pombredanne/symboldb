@@ -27,6 +27,8 @@
 #include <cerrno>
 #include <cstdlib>
 
+using namespace cxxll;
+
 repomd::entry::entry()
   : compressed(false)
 {

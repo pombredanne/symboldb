@@ -37,6 +37,8 @@
 #include <map>
 #include <set>
 
+using namespace cxxll;
+
 // FIXME: We need to add a transaction runner, so that we can retry
 // transactions on deadlock or update conflict.
 

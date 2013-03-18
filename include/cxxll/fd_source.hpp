@@ -20,6 +20,8 @@
 
 #include "source.hpp"
 
+namespace cxxll {
+
 // Source which reads from a POSIX file descriptor.  Does not take
 // ownership of the descriptor.  Reading throws os_exception on error.
 struct fd_source : source {
@@ -35,3 +37,5 @@ struct fd_source : source {
 
   size_t read(unsigned char *, size_t);
 };
+
+} // namespace cxxll

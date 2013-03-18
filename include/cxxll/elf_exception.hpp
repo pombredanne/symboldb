@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,13 @@
 
 #include <stdexcept>
 
+namespace cxxll {
+
 struct elf_exception : std::runtime_error {
   elf_exception();		// uses elf_errmsg
   elf_exception(const char *);
   static void raise(const char *msg, ...)
     __attribute__((format(printf, 1, 2), noreturn));
 };
+
+} // namespace cxxll

@@ -20,8 +20,12 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Returns true if the string is proper UTF-8.
 bool is_valid_utf8(const std::string &);
 
 // Converts from ISO-8859-1 to UTF-8.
 std::string latin1_to_utf8(const std::string &);
+
+} // namespace cxxll

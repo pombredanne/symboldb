@@ -19,6 +19,7 @@
 #pragma once
 
 #include <cxxll/checksum.hpp>
+#include <cxxll/rpm_package_info.hpp>
 #include <cxxll/source.hpp>
 
 #include <string>
@@ -26,15 +27,13 @@
 
 class database;
 class download_options;
-class rpm_package_info;
-class checksum;
 
 struct repomd {
   struct entry {
     std::string type;		// "primary", "primary_db", etc.
     bool compressed;
-    ::checksum checksum;
-    ::checksum open_checksum;
+    cxxll::checksum checksum;
+    cxxll::checksum open_checksum;
     std::string href;		// location of the file
 
     entry();
@@ -61,7 +60,7 @@ struct repomd {
 
   // Source which provides access to the primary.XML file for the
   // repository.
-  class primary_xml : public source {
+  class primary_xml : public cxxll::source {
     struct impl;
     std::tr1::shared_ptr<impl> impl_;
     primary_xml(const primary_xml &); // not implemented
@@ -89,15 +88,15 @@ struct repomd {
     // SOURCE is the byte stream with the (uncompressed) XML.
     // BASE_URL is the URL relative to which non-absolute URLs are
     // interpreted.
-    primary(source *, const char *base_url);
+    primary(cxxll::source *, const char *base_url);
     ~primary();
 
     // Advances the iterator to the next element.
     bool next();
 
     // Accessors for package attributes.
-    const rpm_package_info &info() const; // without hash
-    const ::checksum &checksum() const;
+    const cxxll::rpm_package_info &info() const; // without hash
+    const cxxll::checksum &checksum() const;
 
     // From <location>, Already combined with the base URL or the
     // xml:base algorithm, accordingq to the yum algorithm.

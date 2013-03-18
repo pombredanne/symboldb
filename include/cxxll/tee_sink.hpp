@@ -20,6 +20,8 @@
 
 #include "sink.hpp"
 
+namespace cxxll {
+
 // Sink which sends data to two sinks.  Does not take ownership of the
 // pointers.
 struct tee_sink : sink {
@@ -29,3 +31,5 @@ struct tee_sink : sink {
   ~tee_sink();
   void write(const unsigned char *, size_t);
 };
+
+} // namespace cxxll

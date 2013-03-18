@@ -32,8 +32,10 @@
 #include <stdexcept>
 #include <vector>
 
+using namespace cxxll;
+
 bool
-is_directory(const char *path)
+cxxll::is_directory(const char *path)
 {
   struct stat64 st;
   if (stat64(path, &st) != 0) {
@@ -43,18 +45,19 @@ is_directory(const char *path)
 }
 
 bool
-is_executable(const char *path)
+cxxll::is_executable(const char *path)
 {
   return access(path, X_OK) == 0;
 }
 
 bool
-path_exists(const char *path)
+cxxll::path_exists(const char *path)
 {
   return access(path, F_OK) == 0;
 }
 
-std::string home_directory()
+std::string
+cxxll::home_directory()
 {
   const char *home = getenv("HOME");
   if (home && is_directory(home)) {
@@ -66,7 +69,7 @@ std::string home_directory()
 }
 
 bool
-make_directory_hierarchy(const char *path, unsigned mode)
+cxxll::make_directory_hierarchy(const char *path, unsigned mode)
 {
   int ret = mkdir(path, mode);
   if (ret == 0) {
@@ -104,7 +107,7 @@ make_directory_hierarchy(const char *path, unsigned mode)
 }
 
 std::string
-make_temporary_directory(const char *prefix)
+cxxll::make_temporary_directory(const char *prefix)
 {
   std::vector<char> templ(prefix, prefix + strlen(prefix));
   static const char placeholder[7] = "XXXXXX";
@@ -117,12 +120,11 @@ make_temporary_directory(const char *prefix)
 }
 
 std::string
-realpath(const char *path)
+cxxll::realpath(const char *path)
 {
-  malloc_handle<char> handle(realpath(path, NULL));
+  malloc_handle<char> handle(::realpath(path, NULL));
   if (handle.get() == NULL) {
-    throw os_exception().function<char *(const char *, char *)>(realpath)
-      .path(path);
+    throw os_exception().function(::realpath).path(path);
   }
   return std::string(handle.get());
 }

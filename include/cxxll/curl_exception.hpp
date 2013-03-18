@@ -21,6 +21,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace cxxll {
+
 // Reports a libcurl error.
 class curl_exception : public std::exception {
   mutable std::string what_;
@@ -101,3 +103,5 @@ curl_exception::remote_port() const throw()
 {
   return remote_port_;
 }
+
+} // namespace cxxll

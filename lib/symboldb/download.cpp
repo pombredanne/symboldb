@@ -22,6 +22,8 @@
 #include <cxxll/curl_fetch_result.hpp>
 #include <cxxll/vector_sink.hpp>
 
+using namespace cxxll;
+
 download_options::download_options()
   : cache_mode(check_cache)
 {

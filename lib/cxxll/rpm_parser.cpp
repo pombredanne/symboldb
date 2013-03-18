@@ -34,14 +34,16 @@
 #include <map>
 #include <tr1/memory>
 
+using namespace cxxll;
+
 void
-rpm_parser_init()
+cxxll::rpm_parser_init()
 {
   rpmReadConfigFiles("", "noarch");
 }
 
 void
-rpm_parser_deinit()
+cxxll::rpm_parser_deinit()
 {
   rpmInitCrypto();
   rpmFreeCrypto();

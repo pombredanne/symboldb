@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 fd_source::fd_source()
   : raw(-1)
 {

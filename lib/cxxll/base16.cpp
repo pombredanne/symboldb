@@ -18,6 +18,8 @@
 
 #include <cxxll/base16.hpp>
 
+using namespace cxxll;
+
 base16_decode_exception::base16_decode_exception(const char *msg, size_t offset)
   : what_(msg), offset_(offset)
 {

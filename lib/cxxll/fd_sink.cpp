@@ -22,6 +22,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 fd_sink::fd_sink()
   : raw(-1)
 {

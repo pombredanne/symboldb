@@ -20,6 +20,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 template <class InputIterator> std::string
 base16_encode(InputIterator first, InputIterator last)
 {
@@ -90,3 +92,5 @@ base16_decode(InputIterator first, InputIterator last,
     ++out;
   }
 }
+
+} // namespace cxxll

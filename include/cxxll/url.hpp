@@ -20,6 +20,10 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Combine RELATIVE with BASE according to the yum algorithm (which is
 // broken and does not follow Section 5.2 of RFC 3986).
 std::string url_combine_yum(const char *base, const char *relative);
+
+} // namespace cxxll

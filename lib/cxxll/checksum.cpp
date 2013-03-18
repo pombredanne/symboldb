@@ -21,6 +21,8 @@
 
 #include <cstring>
 
+using namespace cxxll;
+
 checksum::checksum()
   : type(hash_sink::sha256)
 {

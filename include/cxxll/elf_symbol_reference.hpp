@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,13 @@
 
 #include "elf_symbol.hpp"
 
+namespace cxxll {
+
 struct elf_symbol_reference : elf_symbol {
   std::string vna_name;
   unsigned vna_other;
   elf_symbol_reference();
   ~elf_symbol_reference();
 };
+
+} // namespace cxxll

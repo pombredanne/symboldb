@@ -22,6 +22,8 @@
 
 #include <tr1/memory>
 
+namespace cxxll {
+
 // Decompresses the source using the gzip algorithm.  Does not take
 // ownership of the pointer.
 class gunzip_source : public source {
@@ -33,3 +35,5 @@ public:
 
   size_t read(unsigned char *, size_t);
 };
+
+} // namespace cxxll

@@ -18,6 +18,8 @@
 
 #include <cxxll/sink.hpp>
 
+using namespace cxxll;
+
 sink::~sink()
 {
 }

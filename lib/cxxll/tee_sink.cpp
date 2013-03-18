@@ -18,6 +18,8 @@
 
 #include <cxxll/tee_sink.hpp>
 
+using namespace cxxll;
+
 tee_sink::tee_sink(sink *l, sink *r)
   : left(l), right(r)
 {

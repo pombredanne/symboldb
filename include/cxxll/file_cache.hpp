@@ -24,6 +24,8 @@
 #include <tr1/memory>
 #include <vector>
 
+namespace cxxll {
+
 class checksum;
 
 // A cache for content-addressed files on the disk.
@@ -88,3 +90,5 @@ public:
     const char *what() const throw();
   };
 };
+
+} // namespace cxxll

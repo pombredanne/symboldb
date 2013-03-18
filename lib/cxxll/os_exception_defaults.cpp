@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 namespace {
   std::string
   path_from_fd(int fd)

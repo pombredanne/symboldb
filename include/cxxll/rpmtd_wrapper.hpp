@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,8 @@
 #pragma once
 
 #include <rpm/rpmtd.h>
+
+namespace cxxll {
 
 // Simple wrapper around an rpmtd value.
 struct rpmtd_wrapper {
@@ -40,3 +42,5 @@ private:
   rpmtd_wrapper(const rpmtd_wrapper &); // not implemented
   rpmtd_wrapper &operator=(const rpmtd_wrapper &); // not implemented
 };
+
+} // namespace cxxll

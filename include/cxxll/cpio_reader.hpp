@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,8 @@
 #include <stdint.h>
 
 #include <cpio.h>
+
+namespace cxxll {
 
 struct cpio_entry {
   static const size_t magic_size = 6;
@@ -50,3 +52,4 @@ size_t cpio_header_length(const char magic[cpio_entry::magic_size]);
 bool parse(const char *buf, size_t len, cpio_entry &e,
 	   const char *&error);
 
+} // namespace cxxll

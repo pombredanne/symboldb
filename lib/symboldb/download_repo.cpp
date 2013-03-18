@@ -32,6 +32,8 @@
 #include <set>
 #include <vector>
 
+using namespace cxxll;
+
 namespace {
   struct rpm_url {
     std::string name;

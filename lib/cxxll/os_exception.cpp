@@ -24,6 +24,8 @@
 
 #include <errno.h>
 
+using namespace cxxll;
+
 os_exception::os_exception()
 {
   init();

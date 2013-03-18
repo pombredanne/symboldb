@@ -27,6 +27,8 @@
 #include <cstring>
 #include <vector>
 
+using namespace cxxll;
+
 // We translate the callback-based Expat API into an event-based API.
 // We buffer callback events in a vector, using the following
 // encoding.  The first byte of every element encodes the type.  We

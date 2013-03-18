@@ -20,8 +20,12 @@
 
 #include <cstdio>
 
+namespace cxxll {
+
 class curl_exception;
 
 // Writes a description of the exception to FILE, using PREFIX on each
 // line of the output.
 void dump(const char *prefix, const curl_exception &, FILE *);
+
+} // namespace cxxll

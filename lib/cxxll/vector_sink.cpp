@@ -18,6 +18,8 @@
 
 #include <cxxll/vector_sink.hpp>
 
+using namespace cxxll;
+
 vector_sink::vector_sink()
 {
 }

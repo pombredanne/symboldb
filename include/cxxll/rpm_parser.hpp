@@ -24,6 +24,8 @@
 #include <tr1/memory>
 #include <vector>
 
+namespace cxxll {
+
 class rpm_package_info;
 
 // This needs to be called once before creating any rpm_parser_state
@@ -56,3 +58,5 @@ public:
   // read, false on EOF.  Throws rpm_parser_exception on read errors.
   bool read_file(rpm_file_entry &);
 };
+
+} // namespace cxxll

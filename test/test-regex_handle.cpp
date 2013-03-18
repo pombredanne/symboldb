@@ -21,6 +21,8 @@
 
 #include <regex.h>
 
+using namespace cxxll;
+
 static void
 test()
 {

@@ -18,12 +18,13 @@
 
 #pragma once
 
-class sink;
-
 #include <string>
 #include <vector>
 
+namespace cxxll {
+
 class curl_handle;
+class sink;
 
 struct curl_fetch_result {
   std::string effective_url;
@@ -54,3 +55,5 @@ private:
   void init(curl_handle &, const char *url);
   void perform(curl_handle &, const char *url);
 };
+
+} // namespace cxxll

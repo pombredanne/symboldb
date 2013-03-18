@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,6 +20,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Information about an entire RPM package.
 struct rpm_package_info {
   std::string name;
@@ -35,3 +37,5 @@ struct rpm_package_info {
   rpm_package_info();
   ~rpm_package_info();
 };
+
+} // namespace cxxll

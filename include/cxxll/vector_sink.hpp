@@ -22,9 +22,13 @@
 
 #include <vector>
 
+namespace cxxll {
+
 struct vector_sink : sink {
   std::vector<unsigned char> data;
   vector_sink();
   ~vector_sink();
   void write(const unsigned char *, size_t);
 };
+
+} // namespace cxxll

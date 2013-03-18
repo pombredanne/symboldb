@@ -30,6 +30,8 @@
 
 #include <pk11pub.h>
 
+using namespace cxxll;
+
 struct hash_sink::impl {
   PK11Context *raw;
   size_t digest_length;
@@ -143,7 +145,7 @@ hash_sink::to_string(type hash)
 //////////////////////////////////////////////////////////////////////
 
 std::vector<unsigned char>
-hash(hash_sink::type t, const std::vector<unsigned char> &data)
+cxxll::hash(hash_sink::type t, const std::vector<unsigned char> &data)
 {
   hash_sink sink(t);
   sink.write(data.data(), data.size());
@@ -154,8 +156,8 @@ hash(hash_sink::type t, const std::vector<unsigned char> &data)
 
 
 void
-hash_file(hash_sink::type t,
-	       const char *path, std::vector<unsigned char> &digest)
+cxxll::hash_file(hash_sink::type t,
+		 const char *path, std::vector<unsigned char> &digest)
 {
   hash_sink sink(t);
   fd_handle fd;

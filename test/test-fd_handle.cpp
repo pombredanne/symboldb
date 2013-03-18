@@ -25,6 +25,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+using namespace cxxll;
+
 static void
 test(void)
 {

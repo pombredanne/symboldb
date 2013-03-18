@@ -22,6 +22,8 @@
 
 #include "symboldb_config.h"
 
+using namespace cxxll;
+
 static void
 do_check(PGresult *raw)
 {

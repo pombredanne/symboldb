@@ -19,6 +19,8 @@
 #include <cxxll/base16.hpp>
 #include "test.hpp"
 
+using namespace cxxll;
+
 static void
 test()
 {

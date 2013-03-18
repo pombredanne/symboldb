@@ -23,6 +23,8 @@
 #include <string>
 #include <tr1/memory>
 
+namespace cxxll {
+
 class expat_source;
 
 namespace expat_minidom {
@@ -55,4 +57,6 @@ namespace expat_minidom {
   // Loads the element at the current position of EXPAT_SOURCE.
   // EXPAT_SOURCE must be in state INIT or START.
   std::tr1::shared_ptr<element> parse(expat_source &);
-};
+
+} // namespace cxxll::expat_minidom
+} // namespace cxxll

@@ -23,6 +23,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Information about a file in an RPM.
 // This data comes from the RPM header, not the cpio section.
 struct rpm_file_info {
@@ -49,3 +51,5 @@ struct rpm_file_info {
   // true.
   void normalize_name();
 };
+
+} // namespace cxxll

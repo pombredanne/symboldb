@@ -20,6 +20,8 @@
 
 #include <tr1/memory>
 
+namespace cxxll {
+
 class subprocess {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
@@ -87,3 +89,5 @@ public:
   // Terminates the process if it runs.
   void destroy_nothrow() throw();
 };
+
+} // namespace cxxll

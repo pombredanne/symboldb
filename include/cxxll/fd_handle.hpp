@@ -21,6 +21,8 @@
 #include <cstddef>
 #include <string>
 
+namespace cxxll {
+
 // POSIX file descriptor which is closed on scope exit.
 class fd_handle {
   int raw;
@@ -140,3 +142,5 @@ fd_handle::release() throw()
 // Throws os_exception on error.
 void renameat(fd_handle &from, const char *from_name,
 	      fd_handle &to, const char *to_name);
+
+} // namespace cxxll

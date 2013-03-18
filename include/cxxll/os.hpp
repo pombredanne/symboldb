@@ -22,6 +22,8 @@
 
 #include <string>
 
+namespace cxxll {
+
 // Returns true if PATH is a directory.
 bool is_directory(const char *path);
 
@@ -72,3 +74,5 @@ const char *error_string_or_null(int code) throw();
 // Turns the current errno value into a string.  Can throw
 // std::bad_alloc.
 std::string error_string();
+
+} // namespace cxxll

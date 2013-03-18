@@ -25,8 +25,10 @@
 #include <errno.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 std::string
-current_directory()
+cxxll::current_directory()
 {
   char buf[4096];
   char *ret = getcwd(buf, sizeof(buf));

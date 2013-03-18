@@ -20,6 +20,8 @@
 
 #include <cstdlib>
 
+namespace cxxll {
+
 // Helper class to ensure that free() is called on a malloc()ed
 // pointer on scope exit.
 template <class T>
@@ -82,3 +84,5 @@ malloc_handle<T>::reset(T *p)
   free(raw);
   raw = p;
 }
+
+} // namespace cxxll

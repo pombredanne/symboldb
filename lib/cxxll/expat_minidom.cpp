@@ -19,6 +19,8 @@
 #include <cxxll/expat_minidom.hpp>
 #include <cxxll/expat_source.hpp>
 
+using namespace cxxll;
+
 expat_minidom::node::~node()
 {
 }

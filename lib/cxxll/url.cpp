@@ -21,7 +21,7 @@
 #include <cstring>
 
 std::string
-url_combine_yum(const char *base, const char *relative)
+cxxll::url_combine_yum(const char *base, const char *relative)
 {
   std::string result(base);
   if (result.empty()) {

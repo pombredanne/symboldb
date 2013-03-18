@@ -29,6 +29,8 @@
 #include <string>
 #include <vector>
 
+using namespace cxxll;
+
 namespace {
   class DIR_stack {
   public:
@@ -86,7 +88,7 @@ namespace {
 }
 
 void
-remove_directory_tree(const char *root)
+cxxll::remove_directory_tree(const char *root)
 {
   fd_handle fd;
   fd.open(root, O_RDONLY | O_DIRECTORY | O_CLOEXEC);

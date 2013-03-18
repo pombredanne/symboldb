@@ -26,6 +26,8 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
+using namespace cxxll;
+
 namespace {
   void
   relative_address(std::ostream &s, void *base, void *p)

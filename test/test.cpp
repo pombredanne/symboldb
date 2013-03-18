@@ -34,6 +34,8 @@
 #include <typeinfo>
 #include <vector>
 
+using namespace cxxll;
+
 namespace {
   struct test_case {
     const char *name;

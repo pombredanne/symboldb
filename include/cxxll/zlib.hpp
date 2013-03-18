@@ -20,9 +20,12 @@
 
 #include <vector>
 
+namespace cxxll {
+
 // Decompresses IN using the gzip algorithm, and assigns the data to
 // OUT.  Returns true on success, false on failure.  Memory allocation
 // errors result in the std::bad_alloc exception.
 bool gzip_uncompress(const std::vector<unsigned char> &in,
 		     std::vector<unsigned char> &out);
 
+} // namespace cxxll

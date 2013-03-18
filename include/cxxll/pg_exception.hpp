@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <string>
 
+namespace cxxll {
 
 // Captures information related to a PostgreSQL error.
 class pg_exception : public std::exception {
@@ -63,3 +64,5 @@ public:
 
 // Writes a description of the exception to the stream.
 void dump(const char *prefix, const pg_exception &, FILE *);
+
+} // namespace cxxll

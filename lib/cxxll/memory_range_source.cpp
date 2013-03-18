@@ -21,6 +21,8 @@
 #include <algorithm>
 #include <cstring>
 
+using namespace cxxll;
+
 memory_range_source::memory_range_source(const unsigned char *start,
 					   size_t length)
   : p(start), end(start + length)

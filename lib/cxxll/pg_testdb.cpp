@@ -37,6 +37,8 @@
 #include <string.h>
 #include <unistd.h>
 
+using namespace cxxll;
+
 namespace {
   static const char INITDB[] = "initdb";
   static const char POSTMASTER[] = "postgres";

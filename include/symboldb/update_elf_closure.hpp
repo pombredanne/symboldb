@@ -19,11 +19,10 @@
 #pragma once
 
 #include "database.hpp"
+#include <cxxll/pgconn_handle.hpp>
 
 #include <string>
 #include <vector>
-
-class pgconn_handle;
 
 struct update_elf_closure_conflicts {
   // Called to indicate that the soname NEEDED_NAME could not be
@@ -44,5 +43,5 @@ struct update_elf_closure_conflicts {
 };
 
 // If CONFLICTS is not NULL, conflicts encountered are recorded there.
-void update_elf_closure(pgconn_handle &, database::package_set_id,
+void update_elf_closure(cxxll::pgconn_handle &, database::package_set_id,
 			update_elf_closure_conflicts *conflicts);

@@ -21,6 +21,8 @@
 #include "pg_private.hpp"
 #include "pgresult_handle.hpp"
 
+namespace cxxll {
+
 // Not for direct use.
 namespace pg_private {
 
@@ -670,3 +672,5 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
   return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>
     (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
 }
+
+} // namespace cxxll

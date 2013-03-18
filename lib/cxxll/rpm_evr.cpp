@@ -20,6 +20,8 @@
 
 #include <rpm/rpmlib.h>
 
+using namespace cxxll;
+
 rpm_evr::rpm_evr()
 {
 }

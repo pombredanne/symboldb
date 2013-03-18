@@ -16,6 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
+namespace cxxll {
+
 // Wrapper class to create distinct types from a single type, T.
 template <class T, class Tag>
 class tagged {
@@ -50,3 +54,5 @@ public:
 
   typedef Tag tag;
 };
+
+} // namespace cxxll

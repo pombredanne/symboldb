@@ -19,14 +19,13 @@
 #pragma once
 
 #include "download.hpp"
+#include <cxxll/file_cache.hpp>
 #include <cxxll/regex_handle.hpp>
 
 #include <stdexcept>
 #include <string>
 #include <tr1/memory>
 #include <vector>
-
-class file_cache;
 
 class symboldb_options {
   std::vector<std::string> exclude_names_;
@@ -54,7 +53,7 @@ public:
   void add_exclude_name(const char *);
 
   // Returns a regular expression combining all excluded names.
-  regex_handle exclude_name() const;
+  cxxll::regex_handle exclude_name() const;
 
   // Returns true if add_exclude_name has been called.
   bool exclude_name_present() const;
@@ -64,7 +63,7 @@ public:
   // cache_only or always_cache, depending on no_net.
   download_options download_always_cache() const;
 
-  std::tr1::shared_ptr<file_cache> rpm_cache() const;
+  std::tr1::shared_ptr<cxxll::file_cache> rpm_cache() const;
 
   std::string rpm_cache_path() const;
 

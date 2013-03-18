@@ -20,6 +20,8 @@
 
 #include "source.hpp"
 
+namespace cxxll {
+
 class memory_range_source : public source {
   const unsigned char *p;
   const unsigned char *const end;
@@ -30,3 +32,4 @@ public:
   size_t read(unsigned char *, size_t);
 };
 
+} // namespace cxxll

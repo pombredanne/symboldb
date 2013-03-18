@@ -47,6 +47,7 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace cxxll;
 
 static const char *
 get_arch(unsigned char ei_class, unsigned short e_machine)
@@ -195,7 +196,7 @@ elf_image::impl::set_build_id_from_section(Elf_Data *data)
 }
 
 void
-elf_image_init()
+cxxll::elf_image_init()
 {
   elf_version(EV_CURRENT);
 }

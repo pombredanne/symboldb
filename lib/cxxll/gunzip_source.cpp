@@ -25,6 +25,8 @@
 
 #include <zlib.h>
 
+using namespace cxxll;
+
 enum {
   BUFFER_SIZE = 4096
 };

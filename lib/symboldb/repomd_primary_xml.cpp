@@ -26,6 +26,8 @@
 #include <stdexcept>
 #include <vector>
 
+using namespace cxxll;
+
 struct repomd::primary_xml::impl {
   std::string url_;
   std::tr1::shared_ptr<const std::vector<unsigned char> > compressed_;

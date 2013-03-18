@@ -20,6 +20,8 @@
 
 #include "elf_symbol.hpp"
 
+namespace cxxll {
+
 struct elf_symbol_definition : elf_symbol {
   std::string vda_name;
   unsigned long long value;
@@ -33,3 +35,5 @@ struct elf_symbol_definition : elf_symbol {
   elf_symbol_definition();
   ~elf_symbol_definition();
 };
+
+} // namespace cxxll

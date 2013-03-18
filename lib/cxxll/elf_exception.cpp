@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012, 2013 Red Hat, Inc.
  * Written by Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+using namespace cxxll;
 
 elf_exception::elf_exception()
   : std::runtime_error(elf_errmsg(-1))

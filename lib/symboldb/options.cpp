@@ -17,10 +17,11 @@
  */
 
 #include <symboldb/options.hpp>
-#include <cxxll/file_cache.hpp>
 #include <cxxll/os.hpp>
 #include <cxxll/regex_handle.hpp>
 #include <cxxll/string_support.hpp>
+
+using namespace cxxll;
 
 symboldb_options::symboldb_options()
   : output(standard), no_net(false), ignore_download_errors(false),

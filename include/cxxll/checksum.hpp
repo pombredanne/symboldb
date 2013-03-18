@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+namespace cxxll {
+
 struct checksum {
   std::vector<unsigned char> value; // as raw bytes (not hexadecimal)
   unsigned long long length;	// length of data being checksummed
@@ -39,3 +41,5 @@ struct checksum {
   void set_hexadecimal(const char *type, unsigned long long length,
 		       const char *checksum);
 };
+
+} // namespace cxxll

@@ -21,6 +21,8 @@
 
 #include <errno.h>
 
+using namespace cxxll;
+
 file_handle::file_handle(FILE *newptr)
   : raw(newptr)
 {

@@ -20,6 +20,8 @@
 
 #include <curl/curl.h>
 
+namespace cxxll {
+
 struct curl_handle {
   CURL *raw;
 
@@ -35,3 +37,5 @@ private:
   curl_handle(const curl_handle&); // not implemented
   curl_handle &operator=(const curl_handle&); // not implemented
 };
+
+} // namespace cxxll
