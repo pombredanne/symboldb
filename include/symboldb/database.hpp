@@ -113,7 +113,7 @@ public:
   package_id package_by_digest(const std::vector<unsigned char> &digest);
 
   file_id add_file(package_id, const std::string &name, bool normalized,
-		   contents_id);
+		   int inode, contents_id);
 
   // Adds the directory to the database.
   void add_directory(package_id, const cxxll::rpm_file_info &);
