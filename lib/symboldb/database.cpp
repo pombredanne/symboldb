@@ -338,10 +338,6 @@ database::add_file(package_id pkg, const rpm_file_info &info, contents_id cid)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
-  long long length = info.length;
-  if (length < 0) {
-    std::runtime_error("file length out of range");
-  }
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
