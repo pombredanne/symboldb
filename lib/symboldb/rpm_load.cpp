@@ -217,7 +217,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	  load_elf(opt, db, cid, file);
 	}
       }
-      db.add_file(pkg, *file.info, cid);
+      db.add_file(pkg, file.info->name, file.info->normalized, cid);
     }
   }
   return pkg;
