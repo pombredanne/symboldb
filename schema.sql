@@ -114,14 +114,15 @@ CREATE TABLE symboldb.file_contents (
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
   digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
-  contents BYTEA NOT NULL
+  contents BYTEA NOT NULL,
+  row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
 );
 COMMENT ON COLUMN symboldb.file_contents.digest IS
   'SHA-256 digest of the entire file contents';
 COMMENT ON COLUMN symboldb.file_contents.contents IS
   'preview of the file contents';
-CREATE INDEX ON symboldb.file_contents (digest, mtime);
-  -- mtime is used to discriminate otherwise identical empty files.
+COMMENT ON COLUMN symboldb.file_contents.row_hash IS
+  'internal hash used for deduplication';
 
 CREATE TABLE symboldb.file (
   file_id SERIAL NOT NULL PRIMARY KEY,

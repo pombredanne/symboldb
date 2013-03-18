@@ -28,6 +28,7 @@
 #include <cxxll/pg_exception.hpp>
 #include <cxxll/pg_query.hpp>
 #include <cxxll/pg_response.hpp>
+#include <cxxll/hash.hpp>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -221,6 +222,31 @@ database::intern_package(const rpm_package_info &pkg,
   return true;
 }
 
+static void
+intern_hash(const rpm_file_info &info,
+	    const std::vector<unsigned char> &digest,
+	    std::vector<unsigned char> &result)
+{
+  std::vector<unsigned char> to_hash(digest);
+  union {
+    struct {
+      unsigned mtime;
+      unsigned mode;
+    } data;
+    char data_bytes[sizeof(data)];
+  } u;
+  u.data.mtime = cpu_to_le_32(info.mtime);
+  u.data.mode = cpu_to_le_32(info.mode);
+  to_hash.insert(to_hash.end(),
+		 u.data_bytes + 0, u.data_bytes + sizeof(u.data_bytes));
+  to_hash.insert(to_hash.end(),
+		 info.user.begin(), info.user.end());
+  to_hash.push_back('\0');
+  to_hash.insert(to_hash.end(),
+		 info.group.begin(), info.group.end());
+  result = hash(hash_sink::md5, to_hash);
+}
+
 bool
 database::intern_file_contents(const rpm_file_info &info,
 			       const std::vector<unsigned char> &digest,
@@ -234,28 +260,28 @@ database::intern_file_contents(const rpm_file_info &info,
     std::runtime_error("file length out of range");
   }
 
+  std::vector<unsigned char> row_hash;
+  intern_hash(info, digest, row_hash);
+
   // Ideally, we would like to obtain a lock here, but for large RPM
   // packages, the required number of locks would be huge.
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "SELECT contents_id FROM " FILE_CONTENTS_TABLE
-     " WHERE digest = $1 AND mtime = $2"
-     " AND user_name = $3 AND group_name = $4 AND mode = $5",
-     digest, static_cast<long long>(info.mtime),
-     info.user, info.group, static_cast<long long>(info.mode));
-  if (res.ntuples() == 0) {
+     "SELECT contents_id FROM " FILE_CONTENTS_TABLE " WHERE row_hash = $1",
+     row_hash);
+  if (res.ntuples() == 1) {
     cid = contents_id(get_id_force(res));
     return false;
   }
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " FILE_CONTENTS_TABLE
-     " (digest, mtime, user_name, group_name, mode, length, contents)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id",
+     " (digest, mtime, user_name, group_name, mode, length, contents, row_hash)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING contents_id",
 	 digest, static_cast<long long>(info.mtime),
      info.user, info.group, static_cast<long long>(info.mode),
-     length, contents);
+     length, contents, row_hash);
   cid = contents_id(get_id_force(res));
   return true;
 }
