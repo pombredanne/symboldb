@@ -111,7 +111,6 @@ CREATE TABLE symboldb.file_contents (
   length BIGINT NOT NULL CHECK(length >= 0),
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
-  mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
   digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
   contents BYTEA NOT NULL,
@@ -130,6 +129,7 @@ CREATE TABLE symboldb.file (
     REFERENCES symboldb.package ON DELETE CASCADE,
   contents_id INTEGER NOT NULL REFERENCES symboldb.file_contents,
   inode INTEGER NOT NULL,
+  mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   normalized BOOLEAN NOT NULL,
   UNIQUE (package_id, name)

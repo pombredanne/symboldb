@@ -94,8 +94,8 @@ public:
 
   // Returns true if the contents_id was freshly added to the
   // database.  contents_id are specific to the file digest and inode
-  // metadata (mtime, user name, group name, mode etc.), but not the
-  // file name.
+  // metadata (user name, group name, mode etc.), but not the
+  // file name and the mtime.
   bool intern_file_contents(const cxxll::rpm_file_info &,
 			    const std::vector<unsigned char> &digest,
 			    const std::vector<unsigned char> &contents,
@@ -113,7 +113,7 @@ public:
   package_id package_by_digest(const std::vector<unsigned char> &digest);
 
   file_id add_file(package_id, const std::string &name, bool normalized,
-		   int inode, contents_id);
+		   long long mtime, int inode, contents_id);
 
   // Adds the directory to the database.
   void add_directory(package_id, const cxxll::rpm_file_info &);

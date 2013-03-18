@@ -229,14 +229,10 @@ intern_hash(const rpm_file_info &info,
 {
   std::vector<unsigned char> to_hash(digest);
   union {
-    struct {
-      unsigned mtime;
-      unsigned mode;
-    } data;
-    char data_bytes[sizeof(data)];
+    unsigned mtime;
+    char data_bytes[sizeof(mtime)];
   } u;
-  u.data.mtime = cpu_to_le_32(info.mtime);
-  u.data.mode = cpu_to_le_32(info.mode);
+  u.mtime = cpu_to_le_32(info.mtime);
   to_hash.insert(to_hash.end(),
 		 u.data_bytes + 0, u.data_bytes + sizeof(u.data_bytes));
   to_hash.insert(to_hash.end(),
@@ -277,10 +273,9 @@ database::intern_file_contents(const rpm_file_info &info,
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " FILE_CONTENTS_TABLE
-     " (digest, mtime, user_name, group_name, mode, length, contents, row_hash)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING contents_id",
-	 digest, static_cast<long long>(info.mtime),
-     info.user, info.group, static_cast<long long>(info.mode),
+     " (digest, user_name, group_name, mode, length, contents, row_hash)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id",
+     digest, info.user, info.group, static_cast<long long>(info.mode),
      length, contents, row_hash);
   cid = contents_id(get_id_force(res));
   return true;
@@ -335,18 +330,18 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
 
 database::file_id
 database::add_file(package_id pkg, const std::string &name, bool normalized,
-		   int inode, contents_id cid)
+		   long long mtime, int inode, contents_id cid)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "INSERT INTO " FILE_TABLE " (package_id, name, inode,"
+     "INSERT INTO " FILE_TABLE " (package_id, name, mtime, inode,"
      " contents_id, normalized)"
-     " VALUES ($1, $2, $3, $4, $5) RETURNING file_id",
+     " VALUES ($1, $2, $3, $4, $5, $6) RETURNING file_id",
      // FIXME: Add RPM inode.
-     pkg.value(), name, inode, cid.value(), normalized);
+     pkg.value(), name, mtime, inode, cid.value(), normalized);
   return file_id(get_id_force(res));
 }
 

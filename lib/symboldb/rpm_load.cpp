@@ -169,17 +169,23 @@ load_elf(const symboldb_options &opt, database &db,
 }
 
 namespace {
+  // Directory entries referring to inodes.  We put the mtime here to
+  // increase the deduplication potential.
   struct dentry {
     std::string name;
+    unsigned mtime;
     bool normalized;
     explicit dentry(const rpm_file_info &info);
   };
 
   dentry::dentry(const rpm_file_info &info)
-    : name(info.name), normalized(info.normalized)
+    : name(info.name), mtime(info.mtime), normalized(info.normalized)
   {
   }
 
+  // Inode with the directory entries which point to it.  We use the
+  // entries vector to insert all entries when we encounter the file
+  // entry with the actual file contents.
   struct inode {
     rpm_file_info info;
     std::vector<dentry> entries;
@@ -349,14 +355,15 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	    for (std::vector<dentry>::const_iterator
 		   q = p->second.entries.begin(), end = p->second.entries.end();
 		 q != end; ++q) {
-	      db.add_file(pkg, q->name, q->normalized, ino, cid);
+	      db.add_file(pkg, q->name, q->normalized, q->mtime, ino, cid);
 	    }
 	  }
 	}
       } else {
 	// No hardlinks.
 	database::contents_id cid = load_contents(opt, db, rpm_path, file);
-	db.add_file(pkg, file.info->name, file.info->normalized, ino, cid);
+	db.add_file(pkg, file.info->name, file.info->normalized,
+		    file.info->mtime, ino, cid);
       }
     }
   }
