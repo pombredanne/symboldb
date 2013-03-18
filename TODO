@@ -17,8 +17,8 @@
 * Support extracting Java symbols (class, method, field definitions
   and references).
 
-* Support for extracting Python symbols.  This probably needs a some
-  flow analysis to give good results.
+* Support for extracting Python symbols.  This probably needs flow
+  analysis to give good results.
 
 * Parallelize RPM parsing and database loading.  It is not entirely
   clear if this is beneficial on small systems, but it will probably
