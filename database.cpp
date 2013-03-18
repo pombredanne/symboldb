@@ -694,8 +694,14 @@ database::print_elf_soname_conflicts(package_set_id set)
 }
 
 void
-database::create_schema()
+database::exec_sql(const char *command)
 {
   pgresult_handle res;
-  res.exec(impl_->conn, SCHEMA);
+  res.exec(impl_->conn, command);
+}
+
+void
+database::create_schema()
+{
+  exec_sql(SCHEMA);
 }

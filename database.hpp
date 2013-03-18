@@ -167,6 +167,9 @@ public:
 
   // Debugging functions.
   void print_elf_soname_conflicts(package_set_id);
+
+  // Trap door into the database.
+  void exec_sql(const char *command);
 };
 
 template <class RandomAccessIterator> database::advisory_lock
