@@ -239,12 +239,12 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
   // different files at the same path.
   pgresult_handle res;
   pg_query_binary(conn, res,
-		  "SELECT ef.arch::text, ef.soname, f.id, f.name, p.name"
+		  "SELECT ef.arch::text, ef.soname, file_id, f.name, p.name"
 		  " FROM symboldb.package_set_member psm"
-		  " JOIN symboldb.package p ON psm.package = p.id"
-		  " JOIN symboldb.file f ON psm.package = f.package"
-		  " JOIN symboldb.elf_file ef ON f.id = ef.file"
-		  " WHERE psm.set = $1 AND ef.e_type = 3", id.value());
+		  " JOIN symboldb.package p USING (package_id)"
+		  " JOIN symboldb.file f USING (package_id)"
+		  " JOIN symboldb.elf_file ef USING (file_id)"
+		  " WHERE psm.set_id = $1 AND ef.e_type = 3", id.value());
   // ef.e_type == ET_DYN is a restriction to DSOs.
 
   arch_soname_map arch_soname;
@@ -266,12 +266,12 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
   dependency_map closure;
   pg_query_binary
     (conn, res,
-     "SELECT ef.arch::text, en.name, f.id, f.name"
+     "SELECT ef.arch::text, en.name, file_id, f.name"
      " FROM symboldb.package_set_member psm"
-     " JOIN symboldb.file f ON psm.package = f.package"
-     " JOIN symboldb.elf_file ef ON f.id = ef.file"
-     " JOIN symboldb.elf_needed en ON f.id = en.file"
-     " WHERE psm.set = $1", id.value());
+     " JOIN symboldb.file f USING (package_id)"
+     " JOIN symboldb.elf_file ef USING (file_id)"
+     " JOIN symboldb.elf_needed en USING (file_id)"
+     " WHERE psm.set_id = $1", id.value());
   size_t elements = 0;
   {
     std::string arch;
@@ -337,7 +337,7 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
 
   // Load the closure into the database.
   res.exec(conn, "CREATE TEMPORARY TABLE update_elf_closure ("
-	   " file INTEGER NOT NULL,"
+	   " file_id INTEGER NOT NULL,"
 	   " needed INTEGER NOT NULL) ON COMMIT DROP");
   {
     std::vector<char> upload;
@@ -375,19 +375,19 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
     conn.putCopyEnd();
     copy.getresult(conn);
   }
-  res.exec(conn, "CREATE INDEX ON update_elf_closure (file, needed)");
+  res.exec(conn, "CREATE INDEX ON update_elf_closure (file_id, needed)");
   res.exec(conn, "ANALYZE update_elf_closure");
   pg_query(conn, res,
 	   "DELETE FROM symboldb.elf_closure ec"
-	   " WHERE package_set = $1"
+	   " WHERE set_id = $1"
 	   " AND NOT EXISTS (SELECT 1 FROM update_elf_closure u"
-	   "  WHERE ec.file = u.file AND ec.needed = u.needed)",
+	   "  WHERE ec.file_id = u.file_id AND ec.needed = u.needed)",
 	   id.value());
   pg_query(conn, res,
-	   "INSERT INTO symboldb.elf_closure (package_set, file, needed)"
+	   "INSERT INTO symboldb.elf_closure (set_id, file_id, needed)"
 	   " SELECT $1, * FROM (SELECT * FROM update_elf_closure"
-	   " EXCEPT SELECT file, needed FROM symboldb.elf_closure"
-	   " WHERE package_set = $1) x", id.value());
+	   " EXCEPT SELECT file_id, needed FROM symboldb.elf_closure"
+	   " WHERE set_id = $1) x", id.value());
   res.exec(conn, "DROP TABLE update_elf_closure");
 }
 

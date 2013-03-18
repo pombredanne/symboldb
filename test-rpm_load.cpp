@@ -106,7 +106,7 @@ test()
     {
       pgresult_handle res;
       res.exec(dbh, "SELECT digest, length FROM symboldb.package_digest"
-	       " JOIN symboldb.package p ON package = id"
+	       " JOIN symboldb.package p USING (package_id)"
 	       " WHERE symboldb.nevra(p)"
 	       " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'"
 	       " ORDER BY length(digest)");
@@ -122,7 +122,8 @@ test()
 
     std::vector<database::package_id> pids;
     pgresult_handle r1;
-    r1.exec(dbh, "SELECT id, name, version, release FROM symboldb.package");
+    r1.exec(dbh, "SELECT package_id, name, version, release"
+	    " FROM symboldb.package");
     for (int i = 0, endi = r1.ntuples(); i < endi; ++i) {
       {
 	int pkg = 0;
@@ -150,7 +151,7 @@ test()
       pgresult_handle r2;
       r2.execParams(dbh,
 		    "SELECT name FROM symboldb.file"
-		    " WHERE package = $1 ORDER BY 1", params);
+		    " WHERE package_id = $1 ORDER BY 1", params);
       int endj = r2.ntuples();
       CHECK(endj > 0);
       for (int j = 0; j < endj; ++j) {
@@ -163,12 +164,12 @@ test()
       CHECK(files[endj] == NULL);
 
       r2.execParams(dbh, "SELECT name FROM symboldb.directory"
-		    " WHERE package = $1 ORDER BY name", params);
+		    " WHERE package_id = $1 ORDER BY name", params);
       CHECK(r2.ntuples() == 1);
       COMPARE_STRING(r2.getvalue(0, 0), "/usr/share/doc/sysvinit-tools-2.88");
 
       r2.execParams(dbh, "SELECT name, target FROM symboldb.symlink"
-		    " WHERE package = $1 ORDER BY name", params);
+		    " WHERE package_id = $1 ORDER BY name", params);
       CHECK(r2.ntuples() == 2);
       COMPARE_STRING(r2.getvalue(0, 0), "/sbin/pidof");
       COMPARE_STRING(r2.getvalue(0, 1), "killall5");
@@ -189,8 +190,8 @@ test()
 	    " encode(digest, 'hex'), encode(contents, 'hex'),"
 	    " e_type, soname, encode(build_id, 'hex')"
 	    " FROM symboldb.file f"
-	    " JOIN symboldb.package p ON f.package = p.id"
-	    " JOIN symboldb.elf_file ef ON f.id = ef.file"
+	    " JOIN symboldb.package p USING (package_id)"
+	    " JOIN symboldb.elf_file ef USING (file_id)"
 	    " WHERE f.name = '/sbin/killall5'"
 	    " AND symboldb.nevra(p)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
@@ -222,8 +223,8 @@ test()
 	    " encode(digest, 'hex'), encode(contents, 'hex'),"
 	    " e_type, soname, encode(build_id, 'hex')"
 	    " FROM symboldb.file f"
-	    " JOIN symboldb.package p ON f.package = p.id"
-	    " JOIN symboldb.elf_file ef ON f.id = ef.file"
+	    " JOIN symboldb.package p USING (package_id)"
+	    " JOIN symboldb.elf_file ef USING (file_id)"
 	    " WHERE f.name = '/usr/bin/wall'"
 	    " AND symboldb.nevra(p)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
@@ -250,8 +251,8 @@ test()
     r1.exec(dbh, "SELECT COUNT(*) FROM symboldb.elf_file WHERE arch IS NULL");
     COMPARE_STRING(r1.getvalue(0, 0), "0");
     r1.exec(dbh, "SELECT DISTINCT p.arch, ef.arch FROM symboldb.package p"
-	    " JOIN symboldb.file f ON p.id = f.package "
-	    " JOIN symboldb.elf_file ef ON f.id = ef.file"
+	    " JOIN symboldb.file f USING (package_id)"
+	    " JOIN symboldb.elf_file ef USING (file_id)"
 	    " WHERE p.arch::text <> ef.arch::text");
     CHECK(r1.ntuples() == 1);
     COMPARE_STRING(r1.getvalue(0, 0), "i686");
@@ -281,14 +282,14 @@ test()
       const char *params[] = {pkgstr};
       r1.execParams(dbh,
 		    "SELECT * FROM symboldb.package_set_member"
-		    " WHERE package = $1", params);
+		    " WHERE package_id = $1", params);
       CHECK(r1.ntuples() == 0);
     }
     db.txn_begin();
     CHECK(db.update_package_set(pset, pids.begin(), pids.begin() + 1));
     CHECK(!db.update_package_set(pset, pids.begin(), pids.begin() + 1));
     db.txn_commit();
-    r1.exec(dbh, "SELECT package FROM symboldb.package_set_member");
+    r1.exec(dbh, "SELECT package_id FROM symboldb.package_set_member");
     CHECK(r1.ntuples() == 1);
     COMPARE_STRING(r1.getvalue(0, 0), pkgstr);
 
@@ -299,7 +300,7 @@ test()
       const char *params[] = {psetstr};
       r1.execParams(dbh,
 		    "INSERT INTO symboldb.package_set_member"
-		    " SELECT $1, id FROM symboldb.package"
+		    " SELECT $1, package_id FROM symboldb.package"
 		    " WHERE arch IN ('x86_64', 'i686')", params);
     }
     r1.exec(dbh, "BEGIN");

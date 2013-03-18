@@ -195,7 +195,7 @@ database::intern_package(const rpm_package_info &pkg,
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "SELECT id FROM " PACKAGE_TABLE " WHERE hash = decode($1, 'hex')",
+     "SELECT package_id FROM " PACKAGE_TABLE " WHERE hash = decode($1, 'hex')",
      pkg.hash);
   int id = get_id(res);
   if (id > 0) {
@@ -211,7 +211,7 @@ database::intern_package(const rpm_package_info &pkg,
      " build_host, build_time)"
      " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7,"
      " $8, 'epoch'::TIMESTAMP WITHOUT TIME ZONE + '1 second'::interval * $9)"
-     " RETURNING id",
+     " RETURNING package_id",
      pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
      pkg.arch, pkg.hash, pkg.source_rpm, pkg.build_host, pkg.build_time);
   pkg_id = package_id(get_id_force(res));
@@ -237,7 +237,7 @@ database::add_package_digest(package_id pkg,
   pg_query
     (impl_->conn, res,
      "SELECT 1 FROM " PACKAGE_DIGEST_TABLE
-     " WHERE package = $1 AND digest = $2 AND length = $3",
+     " WHERE package_id = $1 AND digest = $2 AND length = $3",
      pkg.value(), digest, static_cast<long long>(length));
   if (res.ntuples() > 0) {
     return;
@@ -246,7 +246,7 @@ database::add_package_digest(package_id pkg,
   // Insert new row.
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " PACKAGE_DIGEST_TABLE " (package, digest, length)"
+     "INSERT INTO " PACKAGE_DIGEST_TABLE " (package_id, digest, length)"
      " VALUES ($1, $2, $3)",
      pkg.value(), digest, static_cast<long long>(length));
 }
@@ -280,9 +280,9 @@ database::add_file(package_id pkg, const rpm_file_info &info,
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " FILE_TABLE
-     " (package, name, length, user_name, group_name, mtime, mode, normalized,"
-     " digest, contents)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
+     " (package_id, name, length, user_name, group_name, mtime, mode,"
+     " normalized, digest, contents)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING file_id",
      pkg.value(), info.name, length,  info.user, info.group,
      static_cast<long long>(info.mtime), static_cast<long long>(info.mode),
      info.normalized, digest, contents);
@@ -298,7 +298,7 @@ database::add_directory(package_id pkg, const rpm_file_info &info)
   pg_query
     (impl_->conn, res,
      "INSERT INTO " DIRECTORY_TABLE
-     " (package, name, user_name, group_name, mtime, mode, normalized)"
+     " (package_id, name, user_name, group_name, mtime, mode, normalized)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7)",
      pkg.value(), info.name, info.user, info.group,
      static_cast<long long>(info.mtime),
@@ -321,7 +321,7 @@ database::add_symlink(package_id pkg, const rpm_file_info &info,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " SYMLINK_TABLE
-     " (package, name, target, user_name, group_name, mtime, normalized)"
+     " (package_id, name, target, user_name, group_name, mtime, normalized)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7)",
      pkg.value(), info.name, target, info.user, info.group,
      static_cast<long long>(info.mtime),
@@ -337,7 +337,7 @@ database::add_elf_image(file_id file, const elf_image &image,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_FILE_TABLE
-     " (file, ei_class, ei_data, e_type, e_machine, arch, soname, build_id)"
+     " (file_id, ei_class, ei_data, e_type, e_machine, arch, soname, build_id)"
      " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_arch, $7, $8)",
      file.value(),
      static_cast<int>(image.ei_class()),
@@ -359,7 +359,7 @@ database::add_elf_symbol_definition(file_id file,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_DEFINITION_TABLE
-     " (file, name, version, primary_version, symbol_type, binding,"
+     " (file_id, name, version, primary_version, symbol_type, binding,"
      " section, xsection, visibility)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::symboldb.elf_visibility)",
      file.value(),
@@ -382,7 +382,7 @@ database::add_elf_symbol_reference(file_id file,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_REFERENCE_TABLE
-     " (file, name, version, symbol_type, binding, visibility)"
+     " (file_id, name, version, symbol_type, binding, visibility)"
      " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_visibility)",
      file.value(),
      ref.symbol_name,
@@ -400,7 +400,7 @@ database::add_elf_needed(file_id file, const char *name)
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_NEEDED_TABLE " (file, name) VALUES ($1, $2)",
+     "INSERT INTO " ELF_NEEDED_TABLE " (file_id, name) VALUES ($1, $2)",
      file.value(), name);
 }
 
@@ -412,7 +412,7 @@ database::add_elf_rpath(file_id file, const char *name)
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_RPATH_TABLE " (file, path) VALUES ($1, $2)",
+     "INSERT INTO " ELF_RPATH_TABLE " (file_id, path) VALUES ($1, $2)",
      file.value(), name);
 }
 
@@ -424,7 +424,7 @@ database::add_elf_runpath(file_id file, const char *name)
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_RUNPATH_TABLE " (file, path) VALUES ($1, $2)",
+     "INSERT INTO " ELF_RUNPATH_TABLE " (file_id, path) VALUES ($1, $2)",
      file.value(), name);
 }
 
@@ -436,7 +436,7 @@ database::add_elf_error(file_id file, const char *message)
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_ERROR_TABLE " (file, message) VALUES ($1, $2)",
+     "INSERT INTO " ELF_ERROR_TABLE " (file_id, message) VALUES ($1, $2)",
      file.value(), message);
 }
 
@@ -447,7 +447,7 @@ database::create_package_set(const char *name)
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " PACKAGE_SET_TABLE
-     " (name) VALUES ($1) RETURNING id", name);
+     " (name) VALUES ($1) RETURNING set_id", name);
   return package_set_id(get_id_force(res));
 }
 
@@ -457,7 +457,7 @@ database::lookup_package_set(const char *name)
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "SELECT id FROM " PACKAGE_SET_TABLE " WHERE name = $1", name);
+     "SELECT set_id FROM " PACKAGE_SET_TABLE " WHERE name = $1", name);
   return package_set_id(get_id(res));
 }
 
@@ -468,7 +468,7 @@ database::add_package_set(package_set_id set, package_id pkg)
   pg_query
     (impl_->conn, res,
      "INSERT INTO " PACKAGE_SET_MEMBER_TABLE
-     " (set, package) VALUES ($1, $2)", set.value(), pkg.value());
+     " (set_id, package_id) VALUES ($1, $2)", set.value(), pkg.value());
 }
 
 void
@@ -477,7 +477,8 @@ database::delete_from_package_set(package_set_id set, package_id pkg)
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1 AND package = $2",
+     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE
+     " WHERE set_id = $1 AND package_id = $2",
      set.value(), pkg.value());
 }
 
@@ -487,7 +488,7 @@ database::empty_package_set(package_set_id set)
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set = $1", set.value());
+     "DELETE FROM " PACKAGE_SET_MEMBER_TABLE " WHERE set_id = $1", set.value());
 }
 
 bool
@@ -501,8 +502,8 @@ database::update_package_set(package_set_id set,
   {
     pgresult_handle res;
     pg_query_binary
-      (impl_->conn, res, "SELECT package FROM " PACKAGE_SET_MEMBER_TABLE
-       " WHERE set = $1", set.value());
+      (impl_->conn, res, "SELECT package_id FROM " PACKAGE_SET_MEMBER_TABLE
+       " WHERE set_id = $1", set.value());
 
     for (int row = 0, end = res.ntuples(); row < end; ++row) {
       int pkg;
@@ -604,8 +605,8 @@ database::referenced_package_digests
   pgresult_handle res;
   res.execBinary
     (impl_->conn,
-     "SELECT digest FROM " PACKAGE_SET_MEMBER_TABLE " psm"
-     " JOIN " PACKAGE_DIGEST_TABLE " d ON psm.package = d.package"
+     "SELECT digest FROM " PACKAGE_SET_MEMBER_TABLE
+     " JOIN " PACKAGE_DIGEST_TABLE " USING (package_id)"
      " ORDER BY digest");
   std::vector<unsigned char> digest;
   for (int i = 0, end = res.ntuples(); i < end; ++i) {
@@ -676,8 +677,8 @@ database::print_elf_soname_conflicts(package_set_id set)
       pg_query_binary
 	(db->impl_->conn, res,
 	 "SELECT f.name, symboldb.nevra(p)"
-	 " FROM symboldb.file f JOIN symboldb.package p ON f.package = p.id"
-	 " WHERE f.id = $1", fid.value());
+	 " FROM symboldb.file f JOIN symboldb.package p USING (package_id)"
+	 " WHERE f.file_id = $1", fid.value());
       if (res.ntuples() != 1) {
 	throw std::runtime_error("could not locate symboldb.file row");
       }
