@@ -46,7 +46,7 @@ CREATE DOMAIN symboldb.elf_binding_type AS SMALLINT
 CREATE DOMAIN symboldb.elf_section_type AS SMALLINT;
 
 CREATE TABLE symboldb.package (
-  id SERIAL NOT NULL PRIMARY KEY,
+  package_id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   epoch INTEGER CHECK (epoch >= 0),
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
@@ -86,28 +86,28 @@ CREATE TABLE symboldb.package_digest (
   digest BYTEA NOT NULL PRIMARY KEY
     CHECK (LENGTH(digest) IN (20, 32)),
   length BIGINT NOT NULL CHECK (length > 0),
-  package INTEGER NOT NULL
+  package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE
 );
-CREATE INDEX ON symboldb.package_digest (package);
+CREATE INDEX ON symboldb.package_digest (package_id);
 COMMENT ON table symboldb.package_digest IS
   'SHA-1 and SHA-256 hashes of multiple representations of the same RPM package';
 
 CREATE TABLE symboldb.package_set (
-  id SERIAL NOT NULL PRIMARY KEY,
+  set_id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE COLLATE "C"
 );
 
 CREATE TABLE symboldb.package_set_member (
-  set INTEGER NOT NULL
+  set_id INTEGER NOT NULL
     REFERENCES symboldb.package_set ON DELETE CASCADE,
-  package INTEGER NOT NULL REFERENCES symboldb.package
+  package_id INTEGER NOT NULL REFERENCES symboldb.package
 );
-CREATE INDEX ON symboldb.package_set_member (set);
-CREATE INDEX ON symboldb.package_set_member (package);
+CREATE INDEX ON symboldb.package_set_member (set_id);
+CREATE INDEX ON symboldb.package_set_member (package_id);
 
 CREATE TABLE symboldb.file_contents (
-  id SERIAL NOT NULL PRIMARY KEY,
+  contents_id SERIAL NOT NULL PRIMARY KEY,
   length BIGINT NOT NULL CHECK(length >= 0),
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
@@ -124,31 +124,32 @@ CREATE INDEX ON symboldb.file_contents (digest, mtime);
   -- mtime is used to discriminate otherwise identical empty files.
 
 CREATE TABLE symboldb.file (
-  package INTEGER NOT NULL
-    REFERENCES symboldb.package (id) ON DELETE CASCADE,
-  contents INTEGER NOT NULL REFERENCES symboldb.file_inode (id),
+  file_id SERIAL NOT NULL PRIMARY KEY,
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL REFERENCES symboldb.file_contents,
   inode INTEGER NOT NULL,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   normalized BOOLEAN NOT NULL,
-  PRIMARY KEY (package, name)
+  UNIQUE (package_id, name)
 );
 CREATE INDEX ON symboldb.file (name);
-CREATE INDEX ON symboldb.file (contents);
+CREATE INDEX ON symboldb.file (contents_id);
 COMMENT ON COLUMN symboldb.file.normalized IS
   'indicates that the file name has been forced to UTF-8 encoding';
 COMMENT ON COLUMN symboldb.file.inode IS
   'intra-package inode number (used to indicate hardlinks)';
 
 CREATE TABLE symboldb.symlink (
-  package INTEGER NOT NULL
-    REFERENCES symboldb.package (id) ON DELETE CASCADE,
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   target TEXT NOT NULL CHECK (LENGTH(target) > 0) COLLATE "C",
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   normalized BOOLEAN NOT NULL,
-  PRIMARY KEY(package, name)
+  PRIMARY KEY(package_id, name)
 );
 COMMENT ON COLUMN symboldb.symlink.normalized IS
   'indicates that the symlink name has been forced to UTF-8 encoding';
@@ -156,23 +157,23 @@ CREATE INDEX ON symboldb.symlink (name);
 CREATE INDEX ON symboldb.symlink (target);
 
 CREATE TABLE symboldb.directory (
-  package INTEGER NOT NULL
-    REFERENCES symboldb.package (id) ON DELETE CASCADE,
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   mode INTEGER NOT NULL CHECK (mode >= 0),
   normalized BOOLEAN NOT NULL,
-  PRIMARY KEY(package, name)
+  PRIMARY KEY(package_id, name)
 );
 COMMENT ON COLUMN symboldb.directory.normalized IS
   'indicates that the directory name has been forced to UTF-8 encoding';
 CREATE INDEX ON symboldb.directory (name);
 
 CREATE TABLE symboldb.elf_file (
-  file INTEGER NOT NULL PRIMARY KEY
-    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL PRIMARY KEY
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   ei_class symboldb.elf_byte NOT NULL,
   ei_data symboldb.elf_byte NOT NULL,
   e_type symboldb.elf_short NOT NULL,
@@ -184,8 +185,8 @@ CREATE TABLE symboldb.elf_file (
 CREATE INDEX ON symboldb.elf_file (soname);
 
 CREATE TABLE symboldb.elf_definition (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(length(name) > 0) COLLATE "C",
   version TEXT CHECK (LENGTH(version) > 0) COLLATE "C",
   primary_version BOOLEAN NOT NULL,
@@ -198,56 +199,56 @@ CREATE TABLE symboldb.elf_definition (
   -- xsection is only present when section is SHN_XINDEX.
   CHECK ((xsection IS NOT NULL) = (section = -1))
 );
-CREATE INDEX ON symboldb.elf_definition (file);
+CREATE INDEX ON symboldb.elf_definition (contents_id);
 CREATE INDEX ON symboldb.elf_definition (name, version);
 
 CREATE TABLE symboldb.elf_reference (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(length(name) > 0) COLLATE "C",
   version TEXT CHECK (LENGTH(version) > 0) COLLATE "C",
   symbol_type symboldb.elf_symbol_type NOT NULL,
   binding symboldb.elf_binding_type NOT NULL,
   visibility symboldb.elf_visibility NOT NULL
 );
-CREATE INDEX ON symboldb.elf_reference (file);
+CREATE INDEX ON symboldb.elf_reference (contents_id);
 CREATE INDEX ON symboldb.elf_reference (name, version);
 
 CREATE TABLE symboldb.elf_needed (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   name TEXT NOT NULL COLLATE "C",
-  PRIMARY KEY (file, name)
+  PRIMARY KEY (contents_id, name)
 );
 CREATE INDEX ON symboldb.elf_needed (name);
 
 CREATE TABLE symboldb.elf_rpath (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   path TEXT NOT NULL COLLATE "C",
-  PRIMARY KEY (file, path)
+  PRIMARY KEY (contents_id, path)
 );
 
 CREATE TABLE symboldb.elf_runpath (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   path TEXT NOT NULL COLLATE "C",
-  PRIMARY KEY (file, path)
+  PRIMARY KEY (contents_id, path)
 );
 
 CREATE TABLE symboldb.elf_error (
-  file INTEGER NOT NULL
-    REFERENCES symboldb.file_contents (id) ON DELETE CASCADE,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
   message TEXT
 );
 
 CREATE TABLE symboldb.elf_closure (
-  package_set INTEGER NOT NULL REFERENCES symboldb.package_set
+  set_id INTEGER NOT NULL REFERENCES symboldb.package_set
     ON DELETE CASCADE,
-  file INTEGER NOT NULL REFERENCES symboldb.file,
+  file_id INTEGER NOT NULL REFERENCES symboldb.file,
   needed INTEGER NOT NULL REFERENCES symboldb.file
 );
-CREATE INDEX ON symboldb.elf_closure (file);
+CREATE INDEX ON symboldb.elf_closure (file_id);
 CREATE INDEX ON symboldb.elf_closure (needed);
 
 -- URL cache (mainly for raw repository metadata).
@@ -300,7 +301,7 @@ COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
 -- Convenience functions.
 
 CREATE FUNCTION symboldb.package_set (TEXT) RETURNS INTEGER AS $$
-  SELECT id FROM symboldb.package_set WHERE name = $1
+  SELECT set_id FROM symboldb.package_set WHERE name = $1
 $$ STABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
   'return the ID of the named package set';
