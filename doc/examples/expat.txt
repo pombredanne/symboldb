@@ -7,15 +7,16 @@ attack" via attributes).
 
     SELECT DISTINCT p.name AS package, f.name AS file
       FROM symboldb.package_set_member psm
-      JOIN symboldb.package p ON p.id = psm.package
-      JOIN symboldb.file f ON f.package = psm.package
-      JOIN symboldb.elf_reference er1 ON er1.file = f.id
-      WHERE psm.set = symboldb.package_set('Fedora/18/x86_64')
+      JOIN symboldb.package p USING (package_id)
+      JOIN symboldb.file f USING (package_id)
+      JOIN symboldb.elf_reference er1 USING (contents_id)
+      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
       AND er1.name IN ('XML_ParserCreate',
                        'XML_ParserCreateNS',
                        'XML_ParserCreate_MM')
       AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
-                      WHERE er2.file = f.id
+                      JOIN symboldb.file f2 USING (contents_id)
+                      WHERE f2.file_id = f.file_id
                       AND er2.name IN ('XML_SetEntityDeclHandler'))
       ORDER BY 1, 2;
 
