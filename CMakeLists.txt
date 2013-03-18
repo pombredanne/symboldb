@@ -76,6 +76,7 @@ add_library (SymbolDB
   fd_sink.cpp
   fd_source.cpp
   file_cache.cpp
+  file_handle.cpp
   gunzip_source.cpp
   hash.cpp
   memory_range_source.cpp
