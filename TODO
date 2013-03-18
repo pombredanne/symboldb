@@ -38,3 +38,8 @@
 * Use the libpq binary interface for bulk data transfers.  This should
   lead to a measurable speedup when transferring mostly integer
   columns (e.g., when computing the ELF closure).
+
+* Retry database transactions on unique constraint failures.  This
+  means re-opening the RPM file and re-start processing, expecting
+  that the race condition will not reappear (because the row is now
+  present).
