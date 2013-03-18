@@ -80,6 +80,8 @@ public:
 
   struct package_id_tag {};
   typedef cxxll::tagged<int, package_id_tag> package_id;
+  struct contents_id_tag {};
+  typedef cxxll::tagged<int, contents_id_tag> contents_id;
   struct file_id_tag {};
   typedef cxxll::tagged<int, file_id_tag> file_id;
 
@@ -89,6 +91,15 @@ public:
   // Returns true if the package_id was freshly added to the database.
   // FIXME: add source URI
   bool intern_package(const cxxll::rpm_package_info &, package_id &);
+
+  // Returns true if the contents_id was freshly added to the
+  // database.  contents_id are specific to the file digest and inode
+  // metadata (mtime, user name, group name, mode etc.), but not the
+  // file name.
+  bool intern_file_contents(const cxxll::rpm_file_info &,
+			    std::vector<unsigned char> &digest,
+			    std::vector<unsigned char> &contents,
+			    contents_id &);
 
   // Adds a digest of the file representation.  A single RPM with
   // identical contents can have multiple representations due to
@@ -101,9 +112,7 @@ public:
   // Returns 0 if the package ID was not found.
   package_id package_by_digest(const std::vector<unsigned char> &digest);
 
-  file_id add_file(package_id, const cxxll::rpm_file_info &,
-		   std::vector<unsigned char> &digest,
-		   std::vector<unsigned char> &contents);
+  file_id add_file(package_id, const cxxll::rpm_file_info &, contents_id);
 
   // Adds the directory to the database.
   void add_directory(package_id, const cxxll::rpm_file_info &);
@@ -117,14 +126,16 @@ public:
   // Populates the elf_file table.  Uses fallback_arch (from the RPM
   // header) in case we cannot determine the architecture from the ELF
   // header.
-  void add_elf_image(file_id, const cxxll::elf_image &, const char *soname);
+  void add_elf_image(contents_id, const cxxll::elf_image &, const char *soname);
 
-  void add_elf_symbol_definition(file_id, const cxxll::elf_symbol_definition &);
-  void add_elf_symbol_reference(file_id, const cxxll::elf_symbol_reference &);
-  void add_elf_needed(file_id, const char *);
-  void add_elf_rpath(file_id, const char *);
-  void add_elf_runpath(file_id, const char *);
-  void add_elf_error(file_id, const char *);
+  void add_elf_symbol_definition(contents_id,
+				 const cxxll::elf_symbol_definition &);
+  void add_elf_symbol_reference(contents_id,
+				const cxxll::elf_symbol_reference &);
+  void add_elf_needed(contents_id, const char *);
+  void add_elf_rpath(contents_id, const char *);
+  void add_elf_runpath(contents_id, const char *);
+  void add_elf_error(contents_id, const char *);
 
   // Package sets.
   struct package_set_tag {};

@@ -245,7 +245,7 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
 		  " FROM symboldb.package_set_member psm"
 		  " JOIN symboldb.package p USING (package_id)"
 		  " JOIN symboldb.file f USING (package_id)"
-		  " JOIN symboldb.elf_file ef USING (file_id)"
+		  " JOIN symboldb.elf_file ef USING (contents_id)"
 		  " WHERE psm.set_id = $1 AND ef.e_type = 3", id.value());
   // ef.e_type == ET_DYN is a restriction to DSOs.
 
@@ -271,8 +271,8 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
      "SELECT ef.arch::text, en.name, file_id, f.name"
      " FROM symboldb.package_set_member psm"
      " JOIN symboldb.file f USING (package_id)"
-     " JOIN symboldb.elf_file ef USING (file_id)"
-     " JOIN symboldb.elf_needed en USING (file_id)"
+     " JOIN symboldb.elf_file ef USING (contents_id)"
+     " JOIN symboldb.elf_needed en USING (contents_id)"
      " WHERE psm.set_id = $1", id.value());
   size_t elements = 0;
   {

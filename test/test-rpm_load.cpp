@@ -193,7 +193,8 @@ test()
 	    " e_type, soname, encode(build_id, 'hex')"
 	    " FROM symboldb.file f"
 	    " JOIN symboldb.package p USING (package_id)"
-	    " JOIN symboldb.elf_file ef USING (file_id)"
+	    " JOIN symboldb.elf_file ef USING (contents_id)"
+	    " JOIN symboldb.file_contents fc USING (contents_id)"
 	    " WHERE f.name = '/sbin/killall5'"
 	    " AND symboldb.nevra(p)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
@@ -226,7 +227,8 @@ test()
 	    " e_type, soname, encode(build_id, 'hex')"
 	    " FROM symboldb.file f"
 	    " JOIN symboldb.package p USING (package_id)"
-	    " JOIN symboldb.elf_file ef USING (file_id)"
+	    " JOIN symboldb.elf_file ef USING (contents_id)"
+	    " JOIN symboldb.file_contents fc USING (contents_id)"
 	    " WHERE f.name = '/usr/bin/wall'"
 	    " AND symboldb.nevra(p)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
@@ -254,7 +256,7 @@ test()
     COMPARE_STRING(r1.getvalue(0, 0), "0");
     r1.exec(dbh, "SELECT DISTINCT p.arch, ef.arch FROM symboldb.package p"
 	    " JOIN symboldb.file f USING (package_id)"
-	    " JOIN symboldb.elf_file ef USING (file_id)"
+	    " JOIN symboldb.elf_file ef USING (contents_id)"
 	    " WHERE p.arch::text <> ef.arch::text");
     CHECK(r1.ntuples() == 1);
     COMPARE_STRING(r1.getvalue(0, 0), "i686");

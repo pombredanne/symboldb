@@ -47,6 +47,7 @@ using namespace cxxll;
 #define PACKAGE_TABLE "symboldb.package"
 #define PACKAGE_DIGEST_TABLE "symboldb.package_digest"
 #define FILE_TABLE "symboldb.file"
+#define FILE_CONTENTS_TABLE "symboldb.file_contents"
 #define DIRECTORY_TABLE "symboldb.directory"
 #define SYMLINK_TABLE "symboldb.symlink"
 #define ELF_FILE_TABLE "symboldb.elf_file"
@@ -220,6 +221,55 @@ database::intern_package(const rpm_package_info &pkg,
   return true;
 }
 
+bool
+database::intern_file_contents(const rpm_file_info &info,
+			       std::vector<unsigned char> &digest,
+			       std::vector<unsigned char> &contents,
+			       contents_id &cid)
+{
+  // FIXME: This needs a transaction.
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  long long length = info.length;
+  if (length < 0) {
+    std::runtime_error("file length out of range");
+  }
+
+  // Loop for double-checked locking idiom.
+  bool first = true;
+  pgresult_handle res;
+  while (true) {
+    pg_query_binary
+      (impl_->conn, res,
+       "SELECT contents_id FROM " FILE_CONTENTS_TABLE
+       " WHERE digest = $1 AND mtime = $2"
+       " AND user_name = $3 AND group_name = $4 AND mode = $5",
+       digest, static_cast<long long>(info.mtime),
+       info.user, info.group, static_cast<long long>(info.mode));
+    if (res.ntuples() == 1) {
+      cid = contents_id(get_id_force(res));
+      return false;
+    }
+    if (first) {
+      first = false;
+      // In-transaction lock, so we do not have to keep the reference
+      // live.  Retry under the lock.
+      lock_digest(digest.begin(), digest.end());
+    } else {
+      // SELECT did not return any data, and we got the lock.
+      pg_query_binary
+	(impl_->conn, res,
+	 "INSERT INTO " FILE_CONTENTS_TABLE
+	 " (digest, mtime, user_name, group_name, mode, length, contents)"
+	 " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id",
+	 digest, static_cast<long long>(info.mtime),
+	 info.user, info.group, static_cast<long long>(info.mode),
+	 length, contents);
+      cid = contents_id(get_id_force(res));
+      return true;
+    }
+  }
+}
+
 void
 database::add_package_digest(package_id pkg,
 			     const std::vector<unsigned char> &digest,
@@ -268,9 +318,7 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
 }
 
 database::file_id
-database::add_file(package_id pkg, const rpm_file_info &info,
-		   std::vector<unsigned char> &digest,
-		   std::vector<unsigned char> &contents)
+database::add_file(package_id pkg, const rpm_file_info &info, contents_id cid)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -281,13 +329,11 @@ database::add_file(package_id pkg, const rpm_file_info &info,
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "INSERT INTO " FILE_TABLE
-     " (package_id, name, length, user_name, group_name, mtime, mode,"
-     " normalized, digest, contents)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING file_id",
-     pkg.value(), info.name, length,  info.user, info.group,
-     static_cast<long long>(info.mtime), static_cast<long long>(info.mode),
-     info.normalized, digest, contents);
+     "INSERT INTO " FILE_TABLE " (package_id, name, inode,"
+     " contents_id, normalized)"
+     " VALUES ($1, $2, 0, $3, $4) RETURNING file_id",
+     // FIXME: Add RPM inode.
+     pkg.value(), info.name, cid.value(), info.normalized);
   return file_id(get_id_force(res));
 }
 
@@ -331,7 +377,7 @@ database::add_symlink(package_id pkg, const rpm_file_info &info,
 }
 
 void
-database::add_elf_image(file_id file, const elf_image &image,
+database::add_elf_image(contents_id cid, const elf_image &image,
 			const char *soname)
 {
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -339,9 +385,10 @@ database::add_elf_image(file_id file, const elf_image &image,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_FILE_TABLE
-     " (file_id, ei_class, ei_data, e_type, e_machine, arch, soname, build_id)"
+     " (contents_id, ei_class, ei_data, e_type, e_machine, arch, soname,"
+     " build_id)"
      " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_arch, $7, $8)",
-     file.value(),
+     cid.value(),
      static_cast<int>(image.ei_class()),
      static_cast<int>(image.ei_data()),
      static_cast<int>(image.e_type()),
@@ -352,7 +399,7 @@ database::add_elf_image(file_id file, const elf_image &image,
 }
 
 void
-database::add_elf_symbol_definition(file_id file,
+database::add_elf_symbol_definition(contents_id cid,
 				    const elf_symbol_definition &def)
 {
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -361,10 +408,10 @@ database::add_elf_symbol_definition(file_id file,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_DEFINITION_TABLE
-     " (file_id, name, version, primary_version, symbol_type, binding,"
+     " (contents_id, name, version, primary_version, symbol_type, binding,"
      " section, xsection, visibility)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::symboldb.elf_visibility)",
-     file.value(),
+     cid.value(),
      def.symbol_name.c_str(),
      def.vda_name.empty() ? NULL : def.vda_name.c_str(),
      def.default_version,
@@ -376,7 +423,7 @@ database::add_elf_symbol_definition(file_id file,
 }
 
 void
-database::add_elf_symbol_reference(file_id file,
+database::add_elf_symbol_reference(contents_id cid,
 				   const elf_symbol_reference &ref)
 {
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -384,9 +431,9 @@ database::add_elf_symbol_reference(file_id file,
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_REFERENCE_TABLE
-     " (file_id, name, version, symbol_type, binding, visibility)"
+     " (contents_id, name, version, symbol_type, binding, visibility)"
      " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_visibility)",
-     file.value(),
+     cid.value(),
      ref.symbol_name,
      ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
      static_cast<int>(ref.type),
@@ -395,51 +442,51 @@ database::add_elf_symbol_reference(file_id file,
 }
 
 void
-database::add_elf_needed(file_id file, const char *name)
+database::add_elf_needed(contents_id cid, const char *name)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_NEEDED_TABLE " (file_id, name) VALUES ($1, $2)",
-     file.value(), name);
+     "INSERT INTO " ELF_NEEDED_TABLE " (contents_id, name) VALUES ($1, $2)",
+     cid.value(), name);
 }
 
 void
-database::add_elf_rpath(file_id file, const char *name)
+database::add_elf_rpath(contents_id cid, const char *name)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_RPATH_TABLE " (file_id, path) VALUES ($1, $2)",
-     file.value(), name);
+     "INSERT INTO " ELF_RPATH_TABLE " (contents_id, path) VALUES ($1, $2)",
+     cid.value(), name);
 }
 
 void
-database::add_elf_runpath(file_id file, const char *name)
+database::add_elf_runpath(contents_id cid, const char *name)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_RUNPATH_TABLE " (file_id, path) VALUES ($1, $2)",
-     file.value(), name);
+     "INSERT INTO " ELF_RUNPATH_TABLE " (contents_id, path) VALUES ($1, $2)",
+     cid.value(), name);
 }
 
 void
-database::add_elf_error(file_id file, const char *message)
+database::add_elf_error(contents_id cid, const char *message)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
-     "INSERT INTO " ELF_ERROR_TABLE " (file_id, message) VALUES ($1, $2)",
-     file.value(), message);
+     "INSERT INTO " ELF_ERROR_TABLE " (contents_id, message) VALUES ($1, $2)",
+     cid.value(), message);
 }
 
 database::package_set_id

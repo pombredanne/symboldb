@@ -48,7 +48,7 @@ using namespace cxxll;
 
 static void
 dump_def(const symboldb_options &opt, database &db,
-	 database::file_id fid, const char *elf_path,
+	 database::contents_id cid, const char *elf_path,
 	 const elf_symbol_definition &def)
 {
   if (def.symbol_name.empty()) {
@@ -59,12 +59,12 @@ dump_def(const symboldb_options &opt, database &db,
 	    elf_path, def.symbol_name.c_str(), def.vda_name.c_str(),
 	    def.value, def.default_version ? " [default]" : "");
   }
-  db.add_elf_symbol_definition(fid, def);
+  db.add_elf_symbol_definition(cid, def);
 }
 
 static void
 dump_ref(const symboldb_options &opt, database &db,
-	 database::file_id fid, const char *elf_path,
+	 database::contents_id cid, const char *elf_path,
 	 const elf_symbol_reference &ref)
 {
   if (ref.symbol_name.empty()) {
@@ -74,7 +74,7 @@ dump_ref(const symboldb_options &opt, database &db,
     fprintf(stderr, "%s REF %s %s\n",
 	    elf_path, ref.symbol_name.c_str(), ref.vna_name.c_str());
   }
-  db.add_elf_symbol_reference(fid, ref);
+  db.add_elf_symbol_reference(cid, ref);
 }
 
 // Locks the package digest in the database.  Used to prevent
@@ -99,7 +99,7 @@ is_elf(const std::vector<unsigned char> data)
 // Loads an ELF image.
 static void
 load_elf(const symboldb_options &opt, database &db,
-	 database::file_id fid, rpm_file_entry &file)
+	 database::contents_id cid, rpm_file_entry &file)
 {
   try {
     const char *elf_path = file.info->name.c_str();
@@ -108,9 +108,9 @@ load_elf(const symboldb_options &opt, database &db,
       elf_image::symbol_range symbols(image);
       while (symbols.next()) {
 	if (symbols.definition()) {
-	  dump_def(opt, db, fid, elf_path, *symbols.definition());
+	  dump_def(opt, db, cid, elf_path, *symbols.definition());
 	} else if (symbols.reference()) {
-	  dump_ref(opt, db, fid, elf_path, *symbols.reference());
+	  dump_ref(opt, db, cid, elf_path, *symbols.reference());
 	} else {
 	  throw std::logic_error("unknown elf_symbol type");
 	}
@@ -123,7 +123,7 @@ load_elf(const symboldb_options &opt, database &db,
       while (dyn.next()) {
 	switch (dyn.type()) {
 	case elf_image::dynamic_section_range::needed:
-	  db.add_elf_needed(fid, dyn.value().c_str());
+	  db.add_elf_needed(cid, dyn.value().c_str());
 	  break;
 	case elf_image::dynamic_section_range::soname:
 	  if (soname_seen) {
@@ -133,7 +133,7 @@ load_elf(const symboldb_options &opt, database &db,
 	      std::ostringstream out;
 	      out << "duplicate soname ignored: " << dyn.value()
 		  << ", previous soname: " << soname;
-	      db.add_elf_error(fid, out.str().c_str());
+	      db.add_elf_error(cid, out.str().c_str());
 	    }
 	  } else {
 	    soname = dyn.value();
@@ -141,10 +141,10 @@ load_elf(const symboldb_options &opt, database &db,
 	  }
 	  break;
 	case elf_image::dynamic_section_range::rpath:
-	  db.add_elf_rpath(fid, dyn.value().c_str());
+	  db.add_elf_rpath(cid, dyn.value().c_str());
 	  break;
 	case elf_image::dynamic_section_range::runpath:
-	  db.add_elf_runpath(fid, dyn.value().c_str());
+	  db.add_elf_runpath(cid, dyn.value().c_str());
 	  break;
 	}
       }
@@ -159,9 +159,9 @@ load_elf(const symboldb_options &opt, database &db,
 	}
       }
     }
-    db.add_elf_image(fid, image, soname.c_str());
+    db.add_elf_image(cid, image, soname.c_str());
   } catch (elf_exception e) {
-    db.add_elf_error(fid, e.what());
+    db.add_elf_error(cid, e.what());
   }
 }
 
@@ -211,10 +211,13 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	(file.contents.begin(),
 	 file.contents.begin() + std::min(static_cast<size_t>(64),
 					  file.contents.size()));
-      database::file_id fid = db.add_file(pkg, *file.info, digest, preview);
-      if (is_elf(file.contents)) {
-	load_elf(opt, db, fid, file);
+      database::contents_id cid;
+      if (db.intern_file_contents(*file.info, digest, preview, cid)) {
+	if (is_elf(file.contents)) {
+	  load_elf(opt, db, cid, file);
+	}
       }
+      db.add_file(pkg, *file.info, cid);
     }
   }
   return pkg;
