@@ -234,40 +234,30 @@ database::intern_file_contents(const rpm_file_info &info,
     std::runtime_error("file length out of range");
   }
 
-  // Loop for double-checked locking idiom.
-  bool first = true;
+  // Ideally, we would like to obtain a lock here, but for large RPM
+  // packages, the required number of locks would be huge.
   pgresult_handle res;
-  while (true) {
-    pg_query_binary
-      (impl_->conn, res,
-       "SELECT contents_id FROM " FILE_CONTENTS_TABLE
-       " WHERE digest = $1 AND mtime = $2"
-       " AND user_name = $3 AND group_name = $4 AND mode = $5",
-       digest, static_cast<long long>(info.mtime),
-       info.user, info.group, static_cast<long long>(info.mode));
-    if (res.ntuples() == 1) {
-      cid = contents_id(get_id_force(res));
-      return false;
-    }
-    if (first) {
-      first = false;
-      // In-transaction lock, so we do not have to keep the reference
-      // live.  Retry under the lock.
-      lock_digest(digest.begin(), digest.end());
-    } else {
-      // SELECT did not return any data, and we got the lock.
-      pg_query_binary
-	(impl_->conn, res,
-	 "INSERT INTO " FILE_CONTENTS_TABLE
-	 " (digest, mtime, user_name, group_name, mode, length, contents)"
-	 " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id",
-	 digest, static_cast<long long>(info.mtime),
-	 info.user, info.group, static_cast<long long>(info.mode),
-	 length, contents);
-      cid = contents_id(get_id_force(res));
-      return true;
-    }
+  pg_query_binary
+    (impl_->conn, res,
+     "SELECT contents_id FROM " FILE_CONTENTS_TABLE
+     " WHERE digest = $1 AND mtime = $2"
+     " AND user_name = $3 AND group_name = $4 AND mode = $5",
+     digest, static_cast<long long>(info.mtime),
+     info.user, info.group, static_cast<long long>(info.mode));
+  if (res.ntuples() == 0) {
+    cid = contents_id(get_id_force(res));
+    return false;
   }
+  pg_query_binary
+    (impl_->conn, res,
+     "INSERT INTO " FILE_CONTENTS_TABLE
+     " (digest, mtime, user_name, group_name, mode, length, contents)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id",
+	 digest, static_cast<long long>(info.mtime),
+     info.user, info.group, static_cast<long long>(info.mode),
+     length, contents);
+  cid = contents_id(get_id_force(res));
+  return true;
 }
 
 void
