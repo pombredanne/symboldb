@@ -97,8 +97,8 @@ public:
   // metadata (mtime, user name, group name, mode etc.), but not the
   // file name.
   bool intern_file_contents(const cxxll::rpm_file_info &,
-			    std::vector<unsigned char> &digest,
-			    std::vector<unsigned char> &contents,
+			    const std::vector<unsigned char> &digest,
+			    const std::vector<unsigned char> &contents,
 			    contents_id &);
 
   // Adds a digest of the file representation.  A single RPM with

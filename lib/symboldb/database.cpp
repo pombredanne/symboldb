@@ -223,8 +223,8 @@ database::intern_package(const rpm_package_info &pkg,
 
 bool
 database::intern_file_contents(const rpm_file_info &info,
-			       std::vector<unsigned char> &digest,
-			       std::vector<unsigned char> &contents,
+			       const std::vector<unsigned char> &digest,
+			       const std::vector<unsigned char> &contents,
 			       contents_id &cid)
 {
   // FIXME: This needs a transaction.
