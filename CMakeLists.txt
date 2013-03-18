@@ -24,6 +24,7 @@ find_path (
 )
 
 include_directories (
+  ${PROJECT_SOURCE_DIR}
   ${NSS_INCLUDE_DIR}
   ${NSPR_INCLUDE_DIR}
   ${PQ_INCLUDE_DIR}
@@ -159,30 +160,30 @@ target_link_libraries (pgtestshell
 install (TARGETS pgtestshell DESTINATION bin)
 
 add_executable (runtests
-  runtests.cpp
-  test-base16.cpp
-  test-dir_handle.cpp
-  test-download.cpp
-  test-fd_handle.cpp
-  test-fd_sink.cpp
-  test-fd_source.cpp
-  test-file_cache.cpp
-  test-endian.cpp
-  test-expat_minidom.cpp
-  test-expat_source.cpp
-  test-gunzip_source.cpp
-  test-os.cpp
-  test-os_exception.cpp
-  test-pg_testdb.cpp
-  test-regex_handle.cpp
-  test-repomd.cpp
-  test-rpm_load.cpp
-  test-string_source.cpp
-  test-string_support.cpp
-  test-subprocess.cpp
-  test-task.cpp
-  test-utf8.cpp
-  test.cpp
+  test/runtests.cpp
+  test/test-base16.cpp
+  test/test-dir_handle.cpp
+  test/test-download.cpp
+  test/test-fd_handle.cpp
+  test/test-fd_sink.cpp
+  test/test-fd_source.cpp
+  test/test-file_cache.cpp
+  test/test-endian.cpp
+  test/test-expat_minidom.cpp
+  test/test-expat_source.cpp
+  test/test-gunzip_source.cpp
+  test/test-os.cpp
+  test/test-os_exception.cpp
+  test/test-pg_testdb.cpp
+  test/test-regex_handle.cpp
+  test/test-repomd.cpp
+  test/test-rpm_load.cpp
+  test/test-string_source.cpp
+  test/test-string_support.cpp
+  test/test-subprocess.cpp
+  test/test-task.cpp
+  test/test-utf8.cpp
+  test/test.cpp
 )
 
 target_link_libraries (runtests
