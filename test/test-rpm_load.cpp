@@ -314,6 +314,12 @@ test()
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
     CHECK(digests.size() == 10); // 5 packages with 2 digests each
+
+    {
+      std::vector<unsigned char> digest;
+      digest.resize(32);
+      CHECK(db.package_by_digest(digest).value() == 0);
+    }
   }
 
   // FIXME: Add more sanity check on database contents.

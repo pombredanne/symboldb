@@ -312,7 +312,7 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "SELECT package FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
+     "SELECT package_id FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
      digest);
   return package_id(get_id(res));
 }
