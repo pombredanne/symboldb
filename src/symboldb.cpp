@@ -257,7 +257,6 @@ do_run_example(const symboldb_options &opt, database &db, char **argv)
 	db.exec_sql(current.c_str());
       }
     } catch (pg_exception &e) {
-      fprintf(stderr, "error: While executing example code from %s:\n", *argv);
       dump("error: ", e, stderr);
       ++errors;
     }
