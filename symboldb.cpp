@@ -37,6 +37,7 @@
 #include "base16.hpp"
 #include "curl_exception.hpp"
 #include "curl_exception_dump.hpp"
+#include "file_handle.hpp"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -212,6 +213,60 @@ do_show_soname_conflicts(const symboldb_options &opt, database &db)
   }
 }
 
+static int
+do_run_example(const symboldb_options &opt, database &db, char **argv)
+{
+  int errors = 0;
+  while (*argv) {
+    file_handle file(*argv, "r");
+    malloc_handle<char> lineptr;
+    size_t line_length = 0;
+    std::string current;
+    unsigned lineno = 0;
+    unsigned start_lineno;
+    try {
+      while (file.getline(lineptr, line_length)) {
+	++lineno;
+	std::string line(lineptr.get());
+	bool start = current.empty();
+	if (starts_with(line, "    ")) {
+	  current += "      ";
+	  current.append(line.begin() + 4, line.end());
+	} else if (starts_with(line, "\t")) {
+	  current.append(line.begin() + 1, line.end());
+	} else if (!current.empty()) {
+	  if (opt.output != symboldb_options::quiet) {
+	    fprintf(stderr, "info: executing %s:%u\n", *argv, start_lineno);
+	  }
+	  db.exec_sql(current.c_str());
+	  current.clear();
+	  start = false;
+	} else {
+	  start = false;
+	}
+	if (start && !current.empty()) {
+	  start_lineno = lineno;
+	}
+      }
+      if (!current.empty()) {
+	if (opt.output != symboldb_options::quiet) {
+	  fprintf(stderr, "info: executing %s:%u\n", *argv, start_lineno);
+	}
+	db.exec_sql(current.c_str());
+      }
+    } catch (pg_exception &e) {
+      fprintf(stderr, "error: While executing example code from %s:\n", *argv);
+      dump("error: ", e, stderr);
+      ++errors;
+    }
+    ++argv;
+  }
+  if (errors > 0) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
 
 static void
 usage(const char *progname, const char *error = NULL)
@@ -262,6 +317,7 @@ namespace {
       show_source_packages,
       show_stale_cached_rpms,
       show_soname_conflicts,
+      run_example,
     } type;
   };
   namespace options {
@@ -296,6 +352,7 @@ main(int argc, char **argv)
        command::show_stale_cached_rpms},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
+      {"run-example", no_argument, 0, command::run_example},
       {"exclude-name", required_argument, 0, options::exclude_name},
       {"randomize", no_argument, 0, options::randomize},
       {"cache", required_argument, 0, 'C'},
@@ -342,6 +399,7 @@ main(int argc, char **argv)
       case command::show_primary:
       case command::show_source_packages:
       case command::show_stale_cached_rpms:
+      case command::run_example:
 	cmd = static_cast<command::type>(ch);
 	break;
       case options::exclude_name:
@@ -365,6 +423,7 @@ main(int argc, char **argv)
     case command::show_source_packages:
     case command::download_repo:
     case command::load_repo:
+    case command::run_example:
       if (argc == optind) {
 	usage(argv[0]);
       }
@@ -423,6 +482,8 @@ main(int argc, char **argv)
       return do_show_stale_cached_rpms(opt, db);
     case command::show_soname_conflicts:
       return do_show_soname_conflicts(opt, db);
+    case command::run_example:
+      return do_run_example(opt, db, argv + optind);
     case command::undefined:
     default:
       abort();
