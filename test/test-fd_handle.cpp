@@ -17,10 +17,10 @@
  */
 
 #include "test.hpp"
-#include "fd_handle.hpp"
-#include "os_exception.hpp"
-#include "string_support.hpp"
-#include "os.hpp"
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/os_exception.hpp>
+#include <cxxll/string_support.hpp>
+#include <cxxll/os.hpp>
 
 #include <errno.h>
 #include <fcntl.h>

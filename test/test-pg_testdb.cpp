@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "pg_testdb.hpp"
-#include "pgconn_handle.hpp"
-#include "pgresult_handle.hpp"
-#include "pg_exception.hpp"
-#include "pg_query.hpp"
-#include "pg_response.hpp"
+#include <cxxll/pg_testdb.hpp>
+#include <cxxll/pgconn_handle.hpp>
+#include <cxxll/pgresult_handle.hpp>
+#include <cxxll/pg_exception.hpp>
+#include <cxxll/pg_query.hpp>
+#include <cxxll/pg_response.hpp>
 
 #include "test.hpp"
 

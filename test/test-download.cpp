@@ -16,18 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "database.hpp"
-#include "download.hpp"
+#include "../database.hpp"
+#include "../download.hpp"
 
-#include "fd_handle.hpp"
-#include "fd_source.hpp"
-#include "os.hpp"
-#include "pg_testdb.hpp"
-#include "pgconn_handle.hpp"
-#include "pgresult_handle.hpp"
-#include "source_sink.hpp"
-#include "vector_sink.hpp"
-#include "curl_exception.hpp"
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/fd_source.hpp>
+#include <cxxll/os.hpp>
+#include <cxxll/pg_testdb.hpp>
+#include <cxxll/pgconn_handle.hpp>
+#include <cxxll/pgresult_handle.hpp>
+#include <cxxll/source_sink.hpp>
+#include <cxxll/vector_sink.hpp>
+#include <cxxll/curl_exception.hpp>
 
 #include "test.hpp"
 

@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "string_source.hpp"
-#include "expat_source.hpp"
-#include "expat_minidom.hpp"
+#include <cxxll/string_source.hpp>
+#include <cxxll/expat_source.hpp>
+#include <cxxll/expat_minidom.hpp>
 
 #include "test.hpp"
 

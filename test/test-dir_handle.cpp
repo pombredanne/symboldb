@@ -16,9 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dir_handle.hpp"
-#include "fd_handle.hpp"
-#include "os.hpp"
+#include <cxxll/dir_handle.hpp>
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/os.hpp>
 
 #include <set>
 #include <string>

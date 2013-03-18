@@ -17,10 +17,10 @@
  */
 
 #include "test.hpp"
-#include "fd_handle.hpp"
-#include "fd_sink.hpp"
-#include "os_exception.hpp"
-#include "string_support.hpp"
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/fd_sink.hpp>
+#include <cxxll/os_exception.hpp>
+#include <cxxll/string_support.hpp>
 
 #include <fcntl.h>
 

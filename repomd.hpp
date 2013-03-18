@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include "checksum.hpp"
-#include "source.hpp"
+#include <cxxll/checksum.hpp>
+#include <cxxll/source.hpp>
 
 #include <string>
 #include <tr1/memory>

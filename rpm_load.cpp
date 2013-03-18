@@ -21,19 +21,19 @@
 
 #include "rpm_load.hpp"
 #include "database.hpp"
-#include "elf_exception.hpp"
-#include "elf_image.hpp"
-#include "elf_symbol_definition.hpp"
-#include "elf_symbol_reference.hpp"
-#include "fd_handle.hpp"
-#include "fd_source.hpp"
-#include "hash.hpp"
-#include "os.hpp"
-#include "rpm_package_info.hpp"
-#include "rpm_parser.hpp"
-#include "source_sink.hpp"
 #include "symboldb_options.hpp"
-#include "tee_sink.hpp"
+#include <cxxll/elf_exception.hpp>
+#include <cxxll/elf_image.hpp>
+#include <cxxll/elf_symbol_definition.hpp>
+#include <cxxll/elf_symbol_reference.hpp>
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/fd_source.hpp>
+#include <cxxll/hash.hpp>
+#include <cxxll/os.hpp>
+#include <cxxll/rpm_package_info.hpp>
+#include <cxxll/rpm_parser.hpp>
+#include <cxxll/source_sink.hpp>
+#include <cxxll/tee_sink.hpp>
 
 #include <sstream>
 

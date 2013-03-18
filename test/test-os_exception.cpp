@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "fd_handle.hpp"
-#include "os_exception.hpp"
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/os_exception.hpp>
 #include "test.hpp"
 
 #include <sstream>

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "base16.hpp"
+#include <cxxll/base16.hpp>
 #include "test.hpp"
 
 static void

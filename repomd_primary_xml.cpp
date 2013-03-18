@@ -17,11 +17,11 @@
  */
 
 #include "repomd.hpp"
-#include "memory_range_source.hpp"
-#include "gunzip_source.hpp"
 #include "download.hpp"
-#include "string_support.hpp"
-#include "url.hpp"
+#include <cxxll/memory_range_source.hpp>
+#include <cxxll/gunzip_source.hpp>
+#include <cxxll/string_support.hpp>
+#include <cxxll/url.hpp>
 
 #include <stdexcept>
 #include <vector>

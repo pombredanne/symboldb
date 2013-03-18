@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gunzip_source.hpp"
-#include "memory_range_source.hpp"
-#include "source_sink.hpp"
-#include "vector_sink.hpp"
-#include "string_source.hpp"
+#include <cxxll/gunzip_source.hpp>
+#include <cxxll/memory_range_source.hpp>
+#include <cxxll/source_sink.hpp>
+#include <cxxll/vector_sink.hpp>
+#include <cxxll/string_source.hpp>
 
 #include "test.hpp"
 

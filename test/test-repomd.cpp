@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "repomd.hpp"
-#include "fd_handle.hpp"
-#include "fd_source.hpp"
-#include "rpm_package_info.hpp"
-#include "base16.hpp"
+#include "../repomd.hpp"
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/fd_source.hpp>
+#include <cxxll/rpm_package_info.hpp>
+#include <cxxll/base16.hpp>
 
 #include "test.hpp"
 

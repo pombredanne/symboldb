@@ -20,8 +20,8 @@
 #include "symboldb_options.hpp"
 #include "database.hpp"
 #include "repomd.hpp"
-#include "rpm_package_info.hpp"
-#include "task.hpp"
+#include <cxxll/rpm_package_info.hpp>
+#include <cxxll/task.hpp>
 
 #include <algorithm>
 #include <cstdio>

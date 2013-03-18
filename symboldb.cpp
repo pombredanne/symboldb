@@ -16,28 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "elf_image.hpp"
-#include "rpm_parser.hpp"
-#include "rpm_package_info.hpp"
+#include <cxxll/elf_image.hpp>
+#include <cxxll/rpm_parser.hpp>
+#include <cxxll/rpm_package_info.hpp>
 #include "rpm_load.hpp"
 #include "database.hpp"
-#include "package_set_consolidator.hpp"
+#include <cxxll/package_set_consolidator.hpp>
 #include "repomd.hpp"
 #include "download.hpp"
-#include "url.hpp"
-#include "string_support.hpp"
-#include "file_cache.hpp"
-#include "fd_sink.hpp"
-#include "source_sink.hpp"
-#include "pg_exception.hpp"
+#include <cxxll/url.hpp>
+#include <cxxll/string_support.hpp>
+#include <cxxll/file_cache.hpp>
+#include <cxxll/fd_sink.hpp>
+#include <cxxll/source_sink.hpp>
+#include <cxxll/pg_exception.hpp>
 #include "symboldb_options.hpp"
 #include "symboldb_download_repo.hpp"
 #include "symboldb_show_source_packages.hpp"
-#include "os.hpp"
-#include "base16.hpp"
-#include "curl_exception.hpp"
-#include "curl_exception_dump.hpp"
-#include "file_handle.hpp"
+#include <cxxll/os.hpp>
+#include <cxxll/base16.hpp>
+#include <cxxll/curl_exception.hpp>
+#include <cxxll/curl_exception_dump.hpp>
+#include <cxxll/file_handle.hpp>
 
 #include <getopt.h>
 #include <stdio.h>

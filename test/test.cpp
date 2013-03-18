@@ -17,15 +17,15 @@
  */
 
 #include "test.hpp"
-#include "dir_handle.hpp"
-#include "os.hpp"
-#include "os_exception.hpp"
-#include "string_support.hpp"
-#include "pg_exception.hpp"
-#include "fd_handle.hpp"
-#include "elf_image.hpp"
-#include "rpm_parser.hpp"
-#include "curl_fetch_result.hpp"
+#include <cxxll/dir_handle.hpp>
+#include <cxxll/os.hpp>
+#include <cxxll/os_exception.hpp>
+#include <cxxll/string_support.hpp>
+#include <cxxll/pg_exception.hpp>
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/elf_image.hpp>
+#include <cxxll/rpm_parser.hpp>
+#include <cxxll/curl_fetch_result.hpp>
 
 #include <algorithm>
 #include <cstdio>

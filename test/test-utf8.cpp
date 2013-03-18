@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "utf8.hpp"
+#include <cxxll/utf8.hpp>
 #include "test.hpp"
 
 static void

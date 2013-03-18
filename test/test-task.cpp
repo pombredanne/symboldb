@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "task.hpp"
+#include <cxxll/task.hpp>
 #include "test.hpp"
 
 #include <vector>

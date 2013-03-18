@@ -18,9 +18,9 @@
 
 #include "download.hpp"
 #include "database.hpp"
-#include "curl_exception.hpp"
-#include "curl_fetch_result.hpp"
-#include "vector_sink.hpp"
+#include <cxxll/curl_exception.hpp>
+#include <cxxll/curl_fetch_result.hpp>
+#include <cxxll/vector_sink.hpp>
 
 download_options::download_options()
   : cache_mode(check_cache)

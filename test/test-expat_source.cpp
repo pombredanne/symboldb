@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "expat_source.hpp"
-#include "string_source.hpp"
+#include <cxxll/expat_source.hpp>
+#include <cxxll/string_source.hpp>
 
 #include "test.hpp"
 

@@ -19,9 +19,9 @@
 // pgtestshell creates a temporary database and opens a shell with a
 // PGHOST environment variable pointing to it.
 
-#include "pg_testdb.hpp"
-#include "subprocess.hpp"
-#include "string_support.hpp"
+#include <cxxll/pg_testdb.hpp>
+#include <cxxll/subprocess.hpp>
+#include <cxxll/string_support.hpp>
 
 #include <stdlib.h>
 #include <unistd.h>

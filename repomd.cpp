@@ -17,12 +17,12 @@
  */
 
 #include "repomd.hpp"
-#include "memory_range_source.hpp"
-#include "expat_source.hpp"
-#include "expat_minidom.hpp"
-#include "string_support.hpp"
+#include <cxxll/memory_range_source.hpp>
+#include <cxxll/expat_source.hpp>
+#include <cxxll/expat_minidom.hpp>
+#include <cxxll/string_support.hpp>
 #include "download.hpp"
-#include "curl_exception.hpp"
+#include <cxxll/curl_exception.hpp>
 
 #include <cerrno>
 #include <cstdlib>

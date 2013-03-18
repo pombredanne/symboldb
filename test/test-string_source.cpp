@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "string_source.hpp"
+#include <cxxll/string_source.hpp>
 #include "test.hpp"
 
 static void

@@ -24,7 +24,7 @@ find_path (
 )
 
 include_directories (
-  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include
   ${NSS_INCLUDE_DIR}
   ${NSPR_INCLUDE_DIR}
   ${PQ_INCLUDE_DIR}
@@ -55,75 +55,75 @@ add_custom_command (
 )
 
 add_library (CXXLL
-  checksum.cpp
-  base16.cpp
-  cpio_reader.cpp
-  curl_exception.cpp
-  curl_exception_dump.cpp
-  curl_fetch_result.cpp
-  curl_handle.cpp
-  dir_handle.cpp
-  download.cpp
-  elf_exception.cpp
-  elf_image.cpp
-  elf_symbol.cpp
-  elf_symbol_definition.cpp
-  elf_symbol_reference.cpp
-  expat_handle.cpp
-  expat_minidom.cpp
-  expat_source.cpp
-  fd_handle.cpp
-  fd_sink.cpp
-  fd_source.cpp
-  file_cache.cpp
-  file_handle.cpp
-  gunzip_source.cpp
-  hash.cpp
-  memory_range_source.cpp
-  os.cpp
-  os_error_string.cpp
-  os_exception.cpp
-  os_exception_function.cpp
-  os_exception_defaults.cpp
-  os_current_directory.cpp
-  os_readlink.cpp
-  os_remove_directory_tree.cpp
-  pg_exception.cpp
-  pg_private.cpp
-  pg_testdb.cpp
-  pgconn_handle.cpp
-  pgresult_handle.cpp
-  regex_handle.cpp
-  repomd.cpp
-  repomd_primary.cpp
-  repomd_primary_xml.cpp
-  rpm_evr.cpp
-  rpm_file_entry.cpp
-  rpm_file_info.cpp
-  rpm_load.cpp
-  rpm_package_info.cpp
-  rpm_parser.cpp
-  rpm_parser_exception.cpp
-  rpmtd_wrapper.cpp
-  sink.cpp
-  source.cpp
-  source_sink.cpp
-  string_sink.cpp
-  string_source.cpp
-  string_support.cpp
-  subprocess.cpp
-  task.cpp
-  tee_sink.cpp
-  url.cpp
-  utf8.cpp
-  vector_sink.cpp
-  zlib.cpp
-  zlib_inflate_exception.cpp
+  lib/cxxll/checksum.cpp
+  lib/cxxll/base16.cpp
+  lib/cxxll/cpio_reader.cpp
+  lib/cxxll/curl_exception.cpp
+  lib/cxxll/curl_exception_dump.cpp
+  lib/cxxll/curl_fetch_result.cpp
+  lib/cxxll/curl_handle.cpp
+  lib/cxxll/dir_handle.cpp
+  lib/cxxll/elf_exception.cpp
+  lib/cxxll/elf_image.cpp
+  lib/cxxll/elf_symbol.cpp
+  lib/cxxll/elf_symbol_definition.cpp
+  lib/cxxll/elf_symbol_reference.cpp
+  lib/cxxll/expat_handle.cpp
+  lib/cxxll/expat_minidom.cpp
+  lib/cxxll/expat_source.cpp
+  lib/cxxll/fd_handle.cpp
+  lib/cxxll/fd_sink.cpp
+  lib/cxxll/fd_source.cpp
+  lib/cxxll/file_cache.cpp
+  lib/cxxll/file_handle.cpp
+  lib/cxxll/gunzip_source.cpp
+  lib/cxxll/hash.cpp
+  lib/cxxll/memory_range_source.cpp
+  lib/cxxll/os.cpp
+  lib/cxxll/os_error_string.cpp
+  lib/cxxll/os_exception.cpp
+  lib/cxxll/os_exception_function.cpp
+  lib/cxxll/os_exception_defaults.cpp
+  lib/cxxll/os_current_directory.cpp
+  lib/cxxll/os_readlink.cpp
+  lib/cxxll/os_remove_directory_tree.cpp
+  lib/cxxll/pg_exception.cpp
+  lib/cxxll/pg_private.cpp
+  lib/cxxll/pg_testdb.cpp
+  lib/cxxll/pgconn_handle.cpp
+  lib/cxxll/pgresult_handle.cpp
+  lib/cxxll/regex_handle.cpp
+  lib/cxxll/rpm_evr.cpp
+  lib/cxxll/rpm_file_entry.cpp
+  lib/cxxll/rpm_file_info.cpp
+  lib/cxxll/rpm_package_info.cpp
+  lib/cxxll/rpm_parser.cpp
+  lib/cxxll/rpm_parser_exception.cpp
+  lib/cxxll/rpmtd_wrapper.cpp
+  lib/cxxll/sink.cpp
+  lib/cxxll/source.cpp
+  lib/cxxll/source_sink.cpp
+  lib/cxxll/string_sink.cpp
+  lib/cxxll/string_source.cpp
+  lib/cxxll/string_support.cpp
+  lib/cxxll/subprocess.cpp
+  lib/cxxll/task.cpp
+  lib/cxxll/tee_sink.cpp
+  lib/cxxll/url.cpp
+  lib/cxxll/utf8.cpp
+  lib/cxxll/vector_sink.cpp
+  lib/cxxll/zlib.cpp
+  lib/cxxll/zlib_inflate_exception.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
 )
 
 add_library (SymbolDB
   database.cpp
+  download.cpp
+  repomd.cpp
+  repomd_primary.cpp
+  repomd_primary_xml.cpp
+  rpm_load.cpp
   symboldb_download_repo.cpp
   symboldb_options.cpp
   symboldb_show_source_packages.cpp

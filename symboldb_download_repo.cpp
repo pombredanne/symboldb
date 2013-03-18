@@ -19,13 +19,13 @@
 #include "symboldb_download_repo.hpp"
 #include "symboldb_options.hpp"
 #include "database.hpp"
-#include "package_set_consolidator.hpp"
+#include <cxxll/package_set_consolidator.hpp>
 #include "repomd.hpp"
-#include "file_cache.hpp"
+#include <cxxll/file_cache.hpp>
 #include "rpm_load.hpp"
-#include "curl_exception.hpp"
-#include "curl_exception_dump.hpp"
-#include "regex_handle.hpp"
+#include <cxxll/curl_exception.hpp>
+#include <cxxll/curl_exception_dump.hpp>
+#include <cxxll/regex_handle.hpp>
 
 #include <algorithm>
 #include <cstdio>

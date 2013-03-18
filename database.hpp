@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "tagged.hpp"
+#include <cxxll/tagged.hpp>
 
 #include <stdexcept>
 #include <string>

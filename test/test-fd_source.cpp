@@ -17,8 +17,8 @@
  */
 
 #include "test.hpp"
-#include "fd_handle.hpp"
-#include "fd_source.hpp"
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/fd_source.hpp>
 
 static void
 test(void)

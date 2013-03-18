@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "subprocess.hpp"
-#include "fd_source.hpp"
-#include "fd_sink.hpp"
-#include "string_sink.hpp"
-#include "source_sink.hpp"
-#include "fd_handle.hpp"
+#include <cxxll/subprocess.hpp>
+#include <cxxll/fd_source.hpp>
+#include <cxxll/fd_sink.hpp>
+#include <cxxll/string_sink.hpp>
+#include <cxxll/source_sink.hpp>
+#include <cxxll/fd_handle.hpp>
 
 #include <signal.h>
 #include <stdlib.h>

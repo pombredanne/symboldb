@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "regex_handle.hpp"
+#include <cxxll/regex_handle.hpp>
 #include "test.hpp"
 
 #include <regex.h>

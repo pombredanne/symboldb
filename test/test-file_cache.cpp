@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "file_cache.hpp"
-#include "checksum.hpp"
-#include "base16.hpp"
+#include <cxxll/file_cache.hpp>
+#include <cxxll/checksum.hpp>
+#include <cxxll/base16.hpp>
 
-#include "os.hpp"
+#include <cxxll/os.hpp>
 #include "test.hpp"
 
 #include <errno.h>

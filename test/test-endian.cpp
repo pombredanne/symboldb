@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "endian.hpp"
+#include <cxxll/endian.hpp>
 #include "test.hpp"
 
 static void

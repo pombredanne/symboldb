@@ -17,11 +17,11 @@
  */
 
 #include "repomd.hpp"
-#include "expat_source.hpp"
-#include "rpm_package_info.hpp"
-#include "string_support.hpp"
-#include "checksum.hpp"
-#include "url.hpp"
+#include <cxxll/expat_source.hpp>
+#include <cxxll/rpm_package_info.hpp>
+#include <cxxll/string_support.hpp>
+#include <cxxll/checksum.hpp>
+#include <cxxll/url.hpp>
 
 struct repomd::primary::impl {
   expat_source source_;

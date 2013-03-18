@@ -17,12 +17,12 @@
  */
 
 #include "update_elf_closure.hpp"
-#include "pgresult_handle.hpp"
-#include "pgconn_handle.hpp"
-#include "pg_exception.hpp"
-#include "pg_query.hpp"
-#include "pg_response.hpp"
-#include "string_support.hpp"
+#include <cxxll/pgresult_handle.hpp>
+#include <cxxll/pgconn_handle.hpp>
+#include <cxxll/pg_exception.hpp>
+#include <cxxll/pg_query.hpp>
+#include <cxxll/pg_response.hpp>
+#include <cxxll/string_support.hpp>
 
 #include <map>
 #include <set>

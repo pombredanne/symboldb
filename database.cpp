@@ -18,16 +18,16 @@
 
 #include "database.hpp"
 #include "update_elf_closure.hpp"
-#include "rpm_file_info.hpp"
-#include "rpm_package_info.hpp"
-#include "elf_image.hpp"
-#include "elf_symbol_definition.hpp"
-#include "elf_symbol_reference.hpp"
-#include "pgconn_handle.hpp"
-#include "pgresult_handle.hpp"
-#include "pg_exception.hpp"
-#include "pg_query.hpp"
-#include "pg_response.hpp"
+#include <cxxll/rpm_file_info.hpp>
+#include <cxxll/rpm_package_info.hpp>
+#include <cxxll/elf_image.hpp>
+#include <cxxll/elf_symbol_definition.hpp>
+#include <cxxll/elf_symbol_reference.hpp>
+#include <cxxll/pgconn_handle.hpp>
+#include <cxxll/pgresult_handle.hpp>
+#include <cxxll/pg_exception.hpp>
+#include <cxxll/pg_query.hpp>
+#include <cxxll/pg_response.hpp>
 
 #include <assert.h>
 #include <stdlib.h>
