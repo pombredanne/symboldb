@@ -9,12 +9,13 @@ using:
       FROM (SELECT file_id, f.name, package_id
         FROM symboldb.package_set_member psm
         JOIN symboldb.file f USING (package_id)
-        JOIN symboldb.elf_file ef USING (file_id)
+        JOIN symboldb.elf_file ef USING (contents_id)
+	JOIN symboldb.file_contents fc USING (contents_id)
         WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
-	AND (f.mode & 3072) <> 0) base
+	AND (fc.mode & 3072) <> 0) base
       JOIN symboldb.elf_closure ec USING (file_id)
-      JOIN symboldb.elf_reference er ON ec.needed = er.file_id
-      JOIN symboldb.file f ON f.file_id = er.file_id
+      JOIN symboldb.file f ON ec.needed = f.file_id
+      JOIN symboldb.elf_reference er USING (contents_id)
       JOIN symboldb.package p ON base.package_id = p.package_id
       WHERE ec.set_id = symboldb.package_set('Fedora/18/x86_64')
       AND er.name = 'getenv'
@@ -29,7 +30,7 @@ Indirect references to getenv from PAM modules can be found using:
       FROM (SELECT file_id, f.name, package_id
         FROM symboldb.package_set_member psm
         JOIN symboldb.file f USING (package_id)
-        JOIN symboldb.elf_definition ed USING (file_id)
+        JOIN symboldb.elf_definition ed USING (contents_id)
         WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
         AND ed.name IN (
           'pam_sm_acct_mgmt',
@@ -39,8 +40,8 @@ Indirect references to getenv from PAM modules can be found using:
           'pam_sm_open_ssession',
           'pam_sm_setcred')) base
       JOIN symboldb.elf_closure ec USING (file_id)
-      JOIN symboldb.elf_reference er ON ec.needed = er.file_id
-      JOIN symboldb.file f ON f.file_id = er.file_id
+      JOIN symboldb.file f ON ec.needed = f.file_id
+      JOIN symboldb.elf_reference er USING (contents_id)
       JOIN symboldb.package p ON base.package_id = p.package_id
       WHERE ec.set_id = symboldb.package_set('Fedora/18/x86_64')
       AND er.name = 'getenv'
@@ -53,13 +54,13 @@ Indirect references to getenv from NSS modules can be found using:
       FROM (SELECT file_id, f.name, package_id
         FROM symboldb.package_set_member psm
         JOIN symboldb.file f USING (package_id)
-        JOIN symboldb.elf_definition ed USING (file_id)
+        JOIN symboldb.elf_definition ed USING (contents_id)
         WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
         AND ed.name ~ '^_nss_(.*)_((set|end)(gr|host|proto|pw|serv)ent|get(grgid|grnam|protobyname|protobynumber|pwnam|pwuid|servybname|servbyport)(_r)?)$'
         ) base
       JOIN symboldb.elf_closure ec USING (file_id)
-      JOIN symboldb.elf_reference er ON ec.needed = er.file_id
-      JOIN symboldb.file f ON f.file_id = er.file_id
+      JOIN symboldb.file f ON ec.needed = f.file_id
+      JOIN symboldb.elf_reference er USING (contents_id)
       JOIN symboldb.package p ON base.package_id = p.package_id
       WHERE ec.set_id = symboldb.package_set('Fedora/18/x86_64')
       AND er.name = 'getenv'
