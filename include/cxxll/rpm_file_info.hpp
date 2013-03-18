@@ -34,6 +34,8 @@ struct rpm_file_info {
   std::string group;
   uint32_t mode;
   uint32_t mtime;
+  uint32_t ino;
+  uint32_t nlinks;
   bool normalized; // See normalize_name() below.
 
   rpm_file_info();
