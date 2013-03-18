@@ -185,6 +185,14 @@ rpm_parser_state::impl::get_files_from_header()
   if (!headerGet(header, RPMTAG_FILEMODES, modes.raw, hflags)) {
     throw rpm_parser_exception("could not get FILEMODES header");
   }
+  rpmtd_wrapper inodes;
+  if (!headerGet(header, RPMTAG_FILEINODES, inodes.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEINODES header");
+  }
+  rpmtd_wrapper nlinks_array;
+  if (!headerGet(header, RPMTAG_FILENLINKS, nlinks_array.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILENLINKS header");
+  }
 
   while (true) {
     const char *name = rpmtdNextString(names.raw);
@@ -211,6 +219,14 @@ rpm_parser_state::impl::get_files_from_header()
     if (mode == NULL) {
       throw rpm_parser_exception("missing entries in FILEMODES header");
     }
+    const uint32_t *inode = rpmtdNextUint32(inodes.raw);
+    if (inode == NULL) {
+      throw rpm_parser_exception("missing entries in FILEINODES header");
+    }
+    const uint32_t *nlinks = rpmtdNextUint32(nlinks_array.raw);
+    if (nlinks == NULL) {
+      throw rpm_parser_exception("missing entries in FILENLINKS header");
+    }
 
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
     p->name = name;
@@ -219,6 +235,8 @@ rpm_parser_state::impl::get_files_from_header()
     p->group = group;
     p->mtime = *mtime;
     p->mode = *mode;
+    p->ino = *inode;
+    p->nlinks = *nlinks;
     files[p->name] = p;
   }
 
