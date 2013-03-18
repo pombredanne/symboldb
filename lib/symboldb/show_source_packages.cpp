@@ -16,10 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "symboldb_show_source_packages.hpp"
-#include "symboldb_options.hpp"
-#include "database.hpp"
-#include "repomd.hpp"
+#include <symboldb/show_source_packages.hpp>
+#include <symboldb/options.hpp>
+#include <symboldb/database.hpp>
+#include <symboldb/repomd.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/task.hpp>
 

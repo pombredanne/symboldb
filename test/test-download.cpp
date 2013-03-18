@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../database.hpp"
-#include "../download.hpp"
+#include <symboldb/database.hpp>
+#include <symboldb/download.hpp>
 
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/fd_source.hpp>

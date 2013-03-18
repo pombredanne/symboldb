@@ -16,17 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../rpm_load.hpp"
+#include <symboldb/rpm_load.hpp>
 #include <cxxll/rpm_package_info.hpp>
 
-#include "../database.hpp"
-#include "../update_elf_closure.hpp"
+#include <symboldb/database.hpp>
+#include <symboldb/update_elf_closure.hpp>
 #include <cxxll/dir_handle.hpp>
 #include <cxxll/pg_testdb.hpp>
 #include <cxxll/pgconn_handle.hpp>
 #include <cxxll/pgresult_handle.hpp>
 #include <cxxll/string_support.hpp>
-#include "../symboldb_options.hpp"
+#include <symboldb/options.hpp>
 
 #include "test.hpp"
 

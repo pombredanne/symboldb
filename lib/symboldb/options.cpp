@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "symboldb_options.hpp"
+#include <symboldb/options.hpp>
 #include <cxxll/file_cache.hpp>
 #include <cxxll/os.hpp>
 #include <cxxll/regex_handle.hpp>

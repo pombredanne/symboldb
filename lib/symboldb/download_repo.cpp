@@ -16,13 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "symboldb_download_repo.hpp"
-#include "symboldb_options.hpp"
-#include "database.hpp"
+#include <symboldb/download_repo.hpp>
+#include <symboldb/options.hpp>
+#include <symboldb/database.hpp>
 #include <cxxll/package_set_consolidator.hpp>
-#include "repomd.hpp"
+#include <symboldb/repomd.hpp>
 #include <cxxll/file_cache.hpp>
-#include "rpm_load.hpp"
+#include <symboldb/rpm_load.hpp>
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/curl_exception_dump.hpp>
 #include <cxxll/regex_handle.hpp>

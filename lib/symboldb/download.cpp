@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "download.hpp"
-#include "database.hpp"
+#include <symboldb/download.hpp>
+#include <symboldb/database.hpp>
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/curl_fetch_result.hpp>
 #include <cxxll/vector_sink.hpp>

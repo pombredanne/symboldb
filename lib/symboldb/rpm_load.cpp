@@ -19,9 +19,9 @@
 // For <inttypes.h>
 #define __STDC_FORMAT_MACROS
 
-#include "rpm_load.hpp"
-#include "database.hpp"
-#include "symboldb_options.hpp"
+#include <symboldb/rpm_load.hpp>
+#include <symboldb/database.hpp>
+#include <symboldb/options.hpp>
 #include <cxxll/elf_exception.hpp>
 #include <cxxll/elf_image.hpp>
 #include <cxxll/elf_symbol_definition.hpp>

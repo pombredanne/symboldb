@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "repomd.hpp"
+#include <symboldb/repomd.hpp>
 #include <cxxll/expat_source.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/string_support.hpp>

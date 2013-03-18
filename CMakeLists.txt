@@ -118,16 +118,16 @@ add_library (CXXLL
 )
 
 add_library (SymbolDB
-  database.cpp
-  download.cpp
-  repomd.cpp
-  repomd_primary.cpp
-  repomd_primary_xml.cpp
-  rpm_load.cpp
-  symboldb_download_repo.cpp
-  symboldb_options.cpp
-  symboldb_show_source_packages.cpp
-  update_elf_closure.cpp
+  lib/symboldb/database.cpp
+  lib/symboldb/download.cpp
+  lib/symboldb/download_repo.cpp
+  lib/symboldb/options.cpp
+  lib/symboldb/repomd.cpp
+  lib/symboldb/repomd_primary.cpp
+  lib/symboldb/repomd_primary_xml.cpp
+  lib/symboldb/rpm_load.cpp
+  lib/symboldb/show_source_packages.cpp
+  lib/symboldb/update_elf_closure.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
 )
 

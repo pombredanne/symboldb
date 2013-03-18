@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "update_elf_closure.hpp"
+#include <symboldb/update_elf_closure.hpp>
 #include <cxxll/pgresult_handle.hpp>
 #include <cxxll/pgconn_handle.hpp>
 #include <cxxll/pg_exception.hpp>

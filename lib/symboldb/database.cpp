@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "database.hpp"
-#include "update_elf_closure.hpp"
+#include <symboldb/database.hpp>
+#include <symboldb/update_elf_closure.hpp>
 #include <cxxll/rpm_file_info.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/elf_image.hpp>

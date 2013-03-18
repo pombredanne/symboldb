@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "repomd.hpp"
-#include "download.hpp"
+#include <symboldb/repomd.hpp>
+#include <symboldb/download.hpp>
 #include <cxxll/memory_range_source.hpp>
 #include <cxxll/gunzip_source.hpp>
 #include <cxxll/string_support.hpp>

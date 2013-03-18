@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "repomd.hpp"
+#include <symboldb/repomd.hpp>
+#include <symboldb/download.hpp>
 #include <cxxll/memory_range_source.hpp>
 #include <cxxll/expat_source.hpp>
 #include <cxxll/expat_minidom.hpp>
 #include <cxxll/string_support.hpp>
-#include "download.hpp"
 #include <cxxll/curl_exception.hpp>
 
 #include <cerrno>
