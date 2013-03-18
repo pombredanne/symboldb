@@ -33,9 +33,11 @@ struct rpm_file_info {
   std::string name;
   std::string user;
   std::string group;
+  checksum digest;
   uint32_t mode;
   uint32_t mtime;
-  checksum digest;
+  uint32_t ino;
+  uint32_t nlinks;
   bool normalized; // See normalize_name() below.
 
   rpm_file_info();

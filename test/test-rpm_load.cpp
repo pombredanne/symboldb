@@ -262,6 +262,31 @@ test()
     COMPARE_STRING(r1.getvalue(0, 0), "i686");
     COMPARE_STRING(r1.getvalue(0, 1), "i386");
 
+    r1.exec(dbh, "SELECT f.name, f.inode, encode(fc.digest, 'hex')"
+	    " FROM symboldb.file f JOIN symboldb.package p USING (package_id)"
+	    " JOIN symboldb.file_contents fc USING (contents_id)"
+	    " WHERE symboldb.nevra(p) = 'unzip-6.0-7.fc18.x86_64'"
+	    " AND f.name IN ('/usr/bin/unzip', '/usr/bin/zipinfo')"
+	    " ORDER BY f.name");
+    CHECK(r1.ntuples() == 2);
+    COMPARE_STRING(r1.getvalue(0, 0), "/usr/bin/unzip");
+    COMPARE_STRING(r1.getvalue(0, 1), "2");
+    COMPARE_STRING(r1.getvalue(0, 2),
+		   "8fd9d1fdf0bcee5715e347313f5e43a9"
+		   "207f3404c03f4e0fe5c1108e0d0f6c4d");
+    COMPARE_STRING(r1.getvalue(1, 0), "/usr/bin/zipinfo");
+    COMPARE_STRING(r1.getvalue(1, 1), "2");
+    COMPARE_STRING(r1.getvalue(0, 2),
+		   "8fd9d1fdf0bcee5715e347313f5e43a9"
+		   "207f3404c03f4e0fe5c1108e0d0f6c4d");
+    r1.exec(dbh, "SELECT COUNT(*) FROM symboldb.file f"
+	    " JOIN symboldb.package p USING (package_id)"
+	    " JOIN symboldb.file_contents fc USING (contents_id)"
+	    " WHERE symboldb.nevra(p) = 'unzip-6.0-7.fc18.x86_64'"
+	    " AND inode = 2"
+	    " AND f.name NOT IN ('/usr/bin/unzip', '/usr/bin/zipinfo')");
+    COMPARE_STRING(r1.getvalue(0, 0), "0");
+
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set"));

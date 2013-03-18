@@ -32,10 +32,12 @@
 #include <cxxll/os.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpm_parser.hpp>
+#include <cxxll/rpm_parser_exception.hpp>
 #include <cxxll/source_sink.hpp>
 #include <cxxll/tee_sink.hpp>
 #include <cxxll/base16.hpp>
 
+#include <map>
 #include <sstream>
 
 #include <cassert>
@@ -100,7 +102,7 @@ is_elf(const std::vector<unsigned char> data)
 // Loads an ELF image.
 static void
 load_elf(const symboldb_options &opt, database &db,
-	 database::contents_id cid, rpm_file_entry &file)
+	 database::contents_id cid, const rpm_file_entry &file)
 {
   try {
     const char *elf_path = file.info->name.c_str();
@@ -166,6 +168,84 @@ load_elf(const symboldb_options &opt, database &db,
   }
 }
 
+namespace {
+  struct dentry {
+    std::string name;
+    bool normalized;
+    explicit dentry(const rpm_file_info &info);
+  };
+
+  dentry::dentry(const rpm_file_info &info)
+    : name(info.name), normalized(info.normalized)
+  {
+  }
+
+  struct inode {
+    rpm_file_info info;
+    std::vector<dentry> entries;
+
+    explicit inode(const rpm_file_info &i);
+
+    void check_consistency(const rpm_file_info &new_info) const;
+    void add(const rpm_file_info &new_info);
+  };
+
+  inode::inode(const rpm_file_info &i)
+    : info(i)
+  {
+    if (info.nlinks < 2) {
+      throw rpm_parser_exception("invalid link count for " + i.name);
+    }
+    entries.push_back(dentry(i));
+  }
+
+  void
+  inode::check_consistency(const rpm_file_info &new_info) const
+  {
+    if (info.nlinks == entries.size()) {
+      throw rpm_parser_exception
+	("all inode references already seen at " + new_info.name);
+    }
+    if (info.digest.length != new_info.digest.length) {
+      throw rpm_parser_exception
+	("intra-inode length mismatch for " + new_info.name);
+    }
+    if (info.digest.value != new_info.digest.value) {
+      throw rpm_parser_exception
+	("intra-inode checksum mismatch for " + new_info.name);
+    }
+    if (info.nlinks != new_info.nlinks) {
+      throw rpm_parser_exception
+	("intra-inode link count mismatch for " + new_info.name);
+    }
+    if (info.user != new_info.user) {
+      throw rpm_parser_exception
+	("intra-inode user mismatch for " + new_info.name);
+    }
+    if (info.group != new_info.group) {
+      throw rpm_parser_exception
+	("intra-inode user mismatch for " + new_info.name);
+    }
+    if (info.mtime != new_info.mtime) {
+      throw rpm_parser_exception
+	("intra-inode mtime mismatch for " + new_info.name);
+    }
+    if (info.mode != new_info.mode) {
+      throw rpm_parser_exception
+	("intra-inode mode mismatch for " + new_info.name);
+    }
+  }
+
+  void
+  inode::add(const rpm_file_info &new_info)
+  {
+    check_consistency(new_info);
+    entries.push_back(dentry(new_info));
+  }
+
+  typedef std::map<unsigned, inode> inode_map;
+}
+
 static void
 check_digest(const char *rpm_path, const std::string &file,
 	     const checksum &actual, const checksum &expected)
@@ -181,6 +261,34 @@ check_digest(const char *rpm_path, const std::string &file,
 					     expected.value.end())
 			     + ")");
   }
+}
+
+static database::contents_id
+load_contents(const symboldb_options &opt, database &db,
+	      const char *rpm_path, const rpm_file_entry &file)
+{
+  checksum digest;
+  digest.type = hash_sink::sha256;
+  digest.value = hash(hash_sink::sha256, file.contents);
+  if (file.info->digest.type == hash_sink::sha256) {
+    check_digest(rpm_path, file.info->name, digest, file.info->digest);
+  } else {
+    checksum chk_digest;
+    chk_digest.type = file.info->digest.type;
+    chk_digest.value = hash(chk_digest.type, file.contents);
+    check_digest(rpm_path, file.info->name, chk_digest, file.info->digest);
+  }
+  std::vector<unsigned char> preview
+    (file.contents.begin(),
+     file.contents.begin() + std::min(static_cast<size_t>(64),
+				      file.contents.size()));
+  database::contents_id cid;
+  if (db.intern_file_contents(*file.info, digest.value, preview, cid)) {
+    if (is_elf(file.contents)) {
+      load_elf(opt, db, cid, file);
+    }
+  }
+  return cid;
 }
 
 static database::package_id
@@ -207,6 +315,8 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
   }
 
+  inode_map inodes;
+
   // FIXME: We should not read arbitrary files into memory, only ELF
   // files.
   while (rpmst.read_file(file)) {
@@ -223,29 +333,31 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     } else if (file.info->is_symlink()) {
       db.add_symlink(pkg, *file.info, file.contents);
     } else {
-      // FIXME: deal with special files, hard links.
-      checksum digest;
-      digest.type = hash_sink::sha256;
-      digest.value = hash(hash_sink::sha256, file.contents);
-      if (file.info->digest.type == hash_sink::sha256) {
-	check_digest(rpm_path, file.info->name, digest, file.info->digest);
-      } else {
-	checksum chk_digest;
-	chk_digest.type = file.info->digest.type;
-	chk_digest.value = hash(chk_digest.type, file.contents);
-	check_digest(rpm_path, file.info->name, chk_digest, file.info->digest);
-      }
-      std::vector<unsigned char> preview
-	(file.contents.begin(),
-	 file.contents.begin() + std::min(static_cast<size_t>(64),
-					  file.contents.size()));
-      database::contents_id cid;
-      if (db.intern_file_contents(*file.info, digest.value, preview, cid)) {
-	if (is_elf(file.contents)) {
-	  load_elf(opt, db, cid, file);
+      // FIXME: deal with special files.
+      unsigned ino = file.info->ino;
+      if (file.info->nlinks > 1) {
+	inode_map::iterator p(inodes.find(ino));
+	if (p == inodes.end()) {
+	  inodes.insert(std::make_pair(ino, inode(*file.info)));
+	} else {
+	  p->second.add(*file.info);
+	  if (p->second.entries.size() == p->second.info.nlinks) {
+	    // This is the last entry for this inode, and it comes
+	    // with the contents.  Load it and patch in the previous
+	    // references.
+	    database::contents_id cid = load_contents(opt, db, rpm_path, file);
+	    for (std::vector<dentry>::const_iterator
+		   q = p->second.entries.begin(), end = p->second.entries.end();
+		 q != end; ++q) {
+	      db.add_file(pkg, q->name, q->normalized, ino, cid);
+	    }
+	  }
 	}
+      } else {
+	// No hardlinks.
+	database::contents_id cid = load_contents(opt, db, rpm_path, file);
+	db.add_file(pkg, file.info->name, file.info->normalized, ino, cid);
       }
-      db.add_file(pkg, file.info->name, file.info->normalized, cid);
     }
   }
   return pkg;

@@ -335,7 +335,7 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
 
 database::file_id
 database::add_file(package_id pkg, const std::string &name, bool normalized,
-		   contents_id cid)
+		   int inode, contents_id cid)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -344,9 +344,9 @@ database::add_file(package_id pkg, const std::string &name, bool normalized,
     (impl_->conn, res,
      "INSERT INTO " FILE_TABLE " (package_id, name, inode,"
      " contents_id, normalized)"
-     " VALUES ($1, $2, 0, $3, $4) RETURNING file_id",
+     " VALUES ($1, $2, $3, $4, $5) RETURNING file_id",
      // FIXME: Add RPM inode.
-     pkg.value(), name, cid.value(), normalized);
+     pkg.value(), name, inode, cid.value(), normalized);
   return file_id(get_id_force(res));
 }
 
