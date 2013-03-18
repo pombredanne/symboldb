@@ -30,6 +30,7 @@
 #include <cxxll/subprocess.hpp>
 #include <cxxll/dir_handle.hpp>
 #include <cxxll/fd_handle.hpp>
+#include <cxxll/file_handle.hpp>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -92,35 +93,16 @@ namespace {
   bool
   uses_unix_socket_directories(const char *confpath)
   {
-    char *line = NULL;
-    FILE *conf = fopen(confpath, "r");
-    if (conf == NULL) {
-      throw os_exception().function(fopen).path(confpath);
-    }
+    cxxll::file_handle conf(confpath, "r");
     bool found = false;
-    try {
-      size_t linesize = 0;
-      while (true) {
-	errno = 0;
-	if (getline(&line, &linesize, conf) < 0) {
-	  if (errno == 0) {
-	    break;
-	  } else {
-	    throw os_exception().function(getline).fd(fileno(conf)).defaults();
-	  }
-	}
-	found = strstr(line, "unix_socket_directories") != NULL;
-	if (found) {
-	  break;
-	}
+    malloc_handle<char> line;
+    size_t linesize = 0;
+    while (conf.getline(line, linesize)) {
+      found = strstr(line.get(), "unix_socket_directories") != NULL;
+      if (found) {
+	break;
       }
-    } catch(...) {
-      fclose(conf);
-      free(line);
-      throw;
     }
-    fclose(conf);
-    free(line);
     return found;
   }
 }
@@ -207,24 +189,15 @@ pg_testdb::impl::configure()
   // variant).
   bool sockdir_plural = uses_unix_socket_directories(confpath.c_str());
 
-  FILE *conf = fopen(confpath.c_str(), "a");
-  if (conf == NULL) {
-    throw os_exception().function(fopen).path(confpath.c_str());
+  file_handle conf(confpath.c_str(), "a");
+  fprintf(conf.get(), "unix_socket_director%s = '%s'\n",
+	  sockdir_plural ? "ies" : "y", directory.c_str());
+  fprintf(conf.get(), "unix_socket_permissions = 0700\n");
+  fprintf(conf.get(), "log_directory = '.'\n");
+  fprintf(conf.get(), "log_filename = 'server.log'\n");
+  if (ferror(conf.get())) {
+    throw os_exception().function(fprintf).fd(fileno(conf.get())).defaults();
   }
-  try {
-    fprintf(conf, "unix_socket_director%s = '%s'\n",
-	    sockdir_plural ? "ies" : "y", directory.c_str());
-    fprintf(conf, "unix_socket_permissions = 0700\n");
-    fprintf(conf, "log_directory = '.'\n");
-    fprintf(conf, "log_filename = 'server.log'\n");
-    if (ferror(conf)) {
-      throw os_exception().function(fprintf).fd(fileno(conf)).defaults();
-    }
-  } catch (...) {
-    fclose(conf);
-    throw;
-  }
-  fclose(conf);
 }
 
 void
