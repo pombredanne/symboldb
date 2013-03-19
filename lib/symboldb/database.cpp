@@ -255,6 +255,10 @@ database::intern_file_contents(const rpm_file_info &info,
   if (length < 0) {
     std::runtime_error("file length out of range");
   }
+  int mode = info.mode;
+  if (mode < 0) {
+    std::runtime_error("file mode out of range");
+  }
 
   std::vector<unsigned char> row_hash;
   intern_hash(info, digest, row_hash);
@@ -264,21 +268,13 @@ database::intern_file_contents(const rpm_file_info &info,
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "SELECT contents_id FROM " FILE_CONTENTS_TABLE " WHERE row_hash = $1",
-     row_hash);
-  if (res.ntuples() == 1) {
-    cid = contents_id(get_id_force(res));
-    return false;
-  }
-  pg_query_binary
-    (impl_->conn, res,
-     "INSERT INTO " FILE_CONTENTS_TABLE
-     " (digest, user_name, group_name, mode, length, contents, row_hash)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id",
-     digest, info.user, info.group, static_cast<long long>(info.mode),
-     length, contents, row_hash);
-  cid = contents_id(get_id_force(res));
-  return true;
+     "SELECT * FROM symboldb.intern_file_contents($1, $2, $3, $4, $5, $6, $7)",
+     row_hash, length, mode, info.user, info.group, digest, contents);
+  int id;
+  bool added;
+  pg_response(res, 0, id, added);
+  cid = contents_id(id);
+  return added;
 }
 
 void

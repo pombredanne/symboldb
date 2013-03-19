@@ -109,10 +109,10 @@ CREATE INDEX ON symboldb.package_set_member (package_id);
 
 CREATE TABLE symboldb.file_contents (
   contents_id SERIAL NOT NULL PRIMARY KEY,
+  mode INTEGER NOT NULL CHECK (mode >= 0),
   length BIGINT NOT NULL CHECK(length >= 0),
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
-  mode INTEGER NOT NULL CHECK (mode >= 0),
   digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
   contents BYTEA NOT NULL,
   row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
@@ -123,6 +123,26 @@ COMMENT ON COLUMN symboldb.file_contents.contents IS
   'preview of the file contents';
 COMMENT ON COLUMN symboldb.file_contents.row_hash IS
   'internal hash used for deduplication';
+
+CREATE FUNCTION symboldb.intern_file_contents (
+  row_hash BYTEA, length BIGINT, mode INTEGER, 
+  user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
+  OUT cid INTEGER, OUT added BOOLEAN
+) LANGUAGE 'plpgsql' AS $$
+BEGIN
+  SELECT contents_id INTO cid
+    FROM symboldb.file_contents fc WHERE fc.row_hash = $1;
+  IF FOUND THEN
+    added := FALSE;
+    RETURN;
+  END IF;
+  INSERT INTO symboldb.file_contents
+     (row_hash, length, mode, user_name, group_name, digest, contents)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id INTO cid;
+  added := TRUE;
+  RETURN;
+END;
+$$;
 
 CREATE TABLE symboldb.file (
   file_id SERIAL NOT NULL PRIMARY KEY,
