@@ -46,6 +46,10 @@ test()
     COMPARE_STRING(db.notices().at(0),
 		   "NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit"
 		   " index \"test_table_pkey\" for table \"test_table\"\n");
+    r.exec(h, "SELECT NULL, '', 'NULL'");
+    CHECK(r.getisnull(0, 0));
+    CHECK(!r.getisnull(0, 1));
+    CHECK(!r.getisnull(0, 2));
   }
   {
     pgresult_handle r;

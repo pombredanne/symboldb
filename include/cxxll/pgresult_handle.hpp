@@ -73,6 +73,9 @@ public:
    // Calls PQgetlength().  Counting of rows and columns starts at 0.
   int getlength(int row, int column) const throw();
 
+  // Calls PQgetisnull().  Counting of rows and columns starts at 0.
+  bool getisnull(int row, int column) const throw();
+
   // Calls PQresultStatus().
   ExecStatusType resultStatus() const throw();
 
@@ -176,6 +179,12 @@ inline int
 pgresult_handle::getlength(int row, int column) const throw ()
 {
   return PQgetlength(raw, row, column);
+}
+
+inline bool
+pgresult_handle::getisnull(int row, int column) const throw ()
+{
+  return PQgetisnull(raw, row, column);
 }
 
 inline ExecStatusType
