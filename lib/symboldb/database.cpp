@@ -341,6 +341,48 @@ database::add_file(package_id pkg, const std::string &name, bool normalized,
 }
 
 void
+database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
+		   const std::vector<unsigned char> &digest,
+		   const std::vector<unsigned char> &contents,
+		   file_id &fid, contents_id &cid, bool &added)
+{
+  // FIXME: This needs a transaction.
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  long long length = info.digest.length;
+  if (length < 0) {
+    std::runtime_error("file length out of range");
+  }
+  int mode = info.mode;
+  if (mode < 0) {
+    std::runtime_error("file mode out of range");
+  }
+  int ino = info.ino;
+  if (ino < 0) {
+    std::runtime_error("file inode out of range");
+  }
+  int mtime = info.mtime;
+  if (mtime < 0) {
+    std::runtime_error("file mtime out of range");
+  }
+
+  std::vector<unsigned char> row_hash;
+  intern_hash(info, digest, row_hash);
+
+  pgresult_handle res;
+  pg_query_binary
+    (impl_->conn, res,
+     "SELECT * FROM symboldb.add_file"
+     "($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+     row_hash, length, mode, info.user, info.group, digest, contents,
+     pkg.value(), ino, mtime, info.name, info.normalized);
+  int fidint;
+  int cidint;
+  pg_response(res, 0, fidint, cidint, added);
+  fid = file_id(fidint);
+  cid = contents_id(cidint);
+}
+
+void
 database::add_directory(package_id pkg, const rpm_file_info &info)
 {
   // FIXME: This needs a transaction.

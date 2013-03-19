@@ -114,6 +114,10 @@ public:
 
   file_id add_file(package_id, const std::string &name, bool normalized,
 		   long long mtime, int inode, contents_id);
+  void add_file(package_id, const cxxll::rpm_file_info &,
+		const std::vector<unsigned char> &digest,
+		const std::vector<unsigned char> &contents,
+		file_id &, contents_id &, bool &added);
 
   // Adds the directory to the database.
   void add_directory(package_id, const cxxll::rpm_file_info &);

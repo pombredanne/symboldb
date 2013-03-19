@@ -162,6 +162,21 @@ COMMENT ON COLUMN symboldb.file.normalized IS
 COMMENT ON COLUMN symboldb.file.inode IS
   'intra-package inode number (used to indicate hardlinks)';
 
+CREATE FUNCTION symboldb.add_file (
+  row_hash BYTEA, length BIGINT, mode INTEGER,
+  user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
+  package_id INTEGER, inode INTEGER, mtime INTEGER,
+  name TEXT, normalized BOOLEAN,
+  OUT fid INTEGER, OUT cid INTEGER, OUT added BOOLEAN
+) LANGUAGE 'plpgsql' AS $$
+BEGIN
+  SELECT ifc.cid, ifc.added INTO cid, added FROM symboldb.intern_file_contents
+    ($1, $2, $3, $4, $5, $6, $7) ifc;
+  INSERT INTO symboldb.file VALUES
+    (DEFAULT, $8, cid, $9, $10, $11, $12) RETURNING file_id INTO fid;
+END;
+$$;
+
 CREATE TABLE symboldb.symlink (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
