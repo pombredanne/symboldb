@@ -301,6 +301,24 @@ load_contents(const symboldb_options &opt, database &db,
   return cid;
 }
 
+static void
+add_file(const symboldb_options &opt, database &db,
+	 database::package_id pkg,
+	 const char *rpm_path, const rpm_file_entry &file)
+{
+  std::vector<unsigned char> digest;
+  std::vector<unsigned char> preview;
+  prepare_load(rpm_path, file, digest, preview);
+  database::file_id fid;
+  database::contents_id cid;
+  bool added;
+  db.add_file(pkg, *file.info, digest, preview, fid, cid, added);
+  if (added && is_elf(file.contents)) {
+    load_elf(opt, db, cid, file);
+  }
+}
+
+
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &info)
@@ -365,9 +383,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	}
       } else {
 	// No hardlinks.
-	database::contents_id cid = load_contents(opt, db, rpm_path, file);
-	db.add_file(pkg, file.info->name, file.info->normalized,
-		    file.info->mtime, ino, cid);
+	add_file(opt, db, pkg, rpm_path, file);
       }
     }
   }
