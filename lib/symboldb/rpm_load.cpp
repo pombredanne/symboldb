@@ -262,27 +262,38 @@ check_digest(const char *rpm_path, const std::string &file,
   }
 }
 
+static void
+prepare_load(const char *rpm_path, const rpm_file_entry &file,
+	     std::vector<unsigned char> &digest,
+	     std::vector<unsigned char> &preview)
+{
+  checksum csum;
+  csum.type = hash_sink::sha256;
+  csum.value = hash(hash_sink::sha256, file.contents);
+  if (file.info->digest.type == hash_sink::sha256) {
+    check_digest(rpm_path, file.info->name, csum, file.info->digest);
+  } else {
+    checksum chk_csum;
+    chk_csum.type = file.info->digest.type;
+    chk_csum.value = hash(chk_csum.type, file.contents);
+    check_digest(rpm_path, file.info->name, chk_csum, file.info->digest);
+  }
+  std::swap(digest, csum.value);
+  preview.assign
+    (file.contents.begin(),
+     file.contents.begin() + std::min(static_cast<size_t>(64),
+				      file.contents.size()));
+}
+
 static database::contents_id
 load_contents(const symboldb_options &opt, database &db,
 	      const char *rpm_path, const rpm_file_entry &file)
 {
-  checksum digest;
-  digest.type = hash_sink::sha256;
-  digest.value = hash(hash_sink::sha256, file.contents);
-  if (file.info->digest.type == hash_sink::sha256) {
-    check_digest(rpm_path, file.info->name, digest, file.info->digest);
-  } else {
-    checksum chk_digest;
-    chk_digest.type = file.info->digest.type;
-    chk_digest.value = hash(chk_digest.type, file.contents);
-    check_digest(rpm_path, file.info->name, chk_digest, file.info->digest);
-  }
-  std::vector<unsigned char> preview
-    (file.contents.begin(),
-     file.contents.begin() + std::min(static_cast<size_t>(64),
-				      file.contents.size()));
+  std::vector<unsigned char> digest;
+  std::vector<unsigned char> preview;
+  prepare_load(rpm_path, file, digest, preview);
   database::contents_id cid;
-  if (db.intern_file_contents(*file.info, digest.value, preview, cid)) {
+  if (db.intern_file_contents(*file.info, digest, preview, cid)) {
     if (is_elf(file.contents)) {
       load_elf(opt, db, cid, file);
     }
