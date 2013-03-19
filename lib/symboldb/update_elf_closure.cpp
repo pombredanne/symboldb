@@ -227,6 +227,15 @@ namespace {
     }
   }
 
+  std::string synthesize_soname(const std::string &path)
+  {
+    size_t slash = path.rfind('/');
+    if (slash == std::string::npos) {
+      return path;
+    } else {
+      return std::string(path.begin() + slash + 1, path.end());
+    }
+  }
 } // namespace
 
 void
@@ -240,13 +249,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
   // which have the same SONAME, and packages can conflict and install
   // different files at the same path.
   pgresult_handle res;
-  pg_query_binary(conn, res,
-		  "SELECT ef.arch::text, ef.soname, file_id, f.name, p.name"
-		  " FROM symboldb.package_set_member psm"
-		  " JOIN symboldb.package p USING (package_id)"
-		  " JOIN symboldb.file f USING (package_id)"
-		  " JOIN symboldb.elf_file ef USING (contents_id)"
-		  " WHERE psm.set_id = $1 AND ef.e_type = 3", id.value());
+  pg_query_binary
+    (conn, res,
+     "SELECT ef.arch::text, COALESCE(ef.soname, ''), file_id, f.name, p.name"
+     " FROM symboldb.package_set_member psm"
+     " JOIN symboldb.package p USING (package_id)"
+     " JOIN symboldb.file f USING (package_id)"
+     " JOIN symboldb.elf_file ef USING (contents_id)"
+     " WHERE psm.set_id = $1 AND ef.e_type = 3", id.value());
   // ef.e_type == ET_DYN is a restriction to DSOs.
 
   arch_soname_map arch_soname;
@@ -258,6 +268,9 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
     std::string pkg;
     for (int row = 0, end = res.ntuples(); row < end; ++row) {
       pg_response(res, row, arch, soname, fid, file_name, pkg);
+      if (soname.empty()) {
+	soname = synthesize_soname(file_name);
+      }
       arch_soname[arch].insert(std::make_pair(soname,
 					      file_ref(fid, file_name, pkg)));
     }

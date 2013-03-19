@@ -181,10 +181,9 @@ CREATE TABLE symboldb.elf_file (
   e_type symboldb.elf_short NOT NULL,
   e_machine symboldb.elf_short NOT NULL,
   arch symboldb.elf_arch,
-  soname TEXT NOT NULL COLLATE "C",
+  soname TEXT COLLATE "C",
   build_id BYTEA CHECK (LENGTH(build_id) > 0)
 );
-CREATE INDEX ON symboldb.elf_file (soname);
 
 CREATE TABLE symboldb.elf_definition (
   contents_id INTEGER NOT NULL

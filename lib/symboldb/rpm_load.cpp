@@ -120,9 +120,9 @@ load_elf(const symboldb_options &opt, database &db,
       }
     }
     std::string soname;
+    bool soname_seen = false;
     {
       elf_image::dynamic_section_range dyn(image);
-      bool soname_seen = false;
       while (dyn.next()) {
 	switch (dyn.type()) {
 	case elf_image::dynamic_section_range::needed:
@@ -151,18 +151,11 @@ load_elf(const symboldb_options &opt, database &db,
 	  break;
 	}
       }
-      if (!soname_seen) {
-	// The implicit soname is derived from the name of the
-	// binary.
-	size_t slashpos = file.info->name.rfind('/');
-	if (slashpos == std::string::npos) {
-	  soname = file.info->name;
-	} else {
-	  soname = file.info->name.substr(slashpos + 1);
-	}
-      }
     }
-    db.add_elf_image(cid, image, soname.c_str());
+    // We used to derive the soname from the file name, but because of
+    // hardlinks (and deduplication), we no longer can do this here.
+    const char *sonameptr = soname_seen ? soname.c_str() : NULL;
+    db.add_elf_image(cid, image, sonameptr);
   } catch (elf_exception e) {
     db.add_elf_error(cid, e.what());
   }

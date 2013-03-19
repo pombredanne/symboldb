@@ -217,12 +217,9 @@ test()
 		   "40000000000000008855000000000000"
 		   "0000000040003800090040001d001c00");
     COMPARE_STRING(r1.getvalue(0, 7), "3"); // ET_DYN (sic)
-    COMPARE_STRING(r1.getvalue(0, 8), "killall5");
+    CHECK(r1.getisnull(0, 8));
     COMPARE_STRING(r1.getvalue(0, 9),
 		   "876e6e5ec70f451531bd4ec82a60a1c7f206462a");
-
-    COMPARE_STRING(r1.getvalue(0, 7), "3"); // ET_DYN (sic)
-    COMPARE_STRING(r1.getvalue(0, 8), "killall5");
 
     r1.exec(dbh,
 	    "SELECT DISTINCT"
@@ -251,7 +248,7 @@ test()
 		   "4000000000000000b834000000000000"
 		   "0000000040003800090040001d001c00");
     COMPARE_STRING(r1.getvalue(0, 7), "3"); // ET_DYN (sic)
-    COMPARE_STRING(r1.getvalue(0, 8), "wall");
+    CHECK(r1.getisnull(0, 8));
     COMPARE_STRING(r1.getvalue(0, 9),
 		   "36d9f2992247e4afaf292e939c4a3cb25204c142");
     r1.close();
