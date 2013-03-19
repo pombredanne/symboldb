@@ -340,7 +340,6 @@ database::add_file(package_id pkg, const std::string &name, bool normalized,
      "INSERT INTO " FILE_TABLE " (package_id, name, mtime, inode,"
      " contents_id, normalized)"
      " VALUES ($1, $2, $3, $4, $5, $6) RETURNING file_id",
-     // FIXME: Add RPM inode.
      pkg.value(), name, mtime, inode, cid.value(), normalized);
   return file_id(get_id_force(res));
 }
