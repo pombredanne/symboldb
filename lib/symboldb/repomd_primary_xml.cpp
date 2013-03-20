@@ -22,6 +22,8 @@
 #include <cxxll/gunzip_source.hpp>
 #include <cxxll/string_support.hpp>
 #include <cxxll/url.hpp>
+#include <cxxll/curl_exception.hpp>
+#include <cxxll/base16.hpp>
 
 #include <stdexcept>
 #include <vector>
@@ -53,6 +55,19 @@ repomd::primary_xml::primary_xml(const repomd &rp,
       std::tr1::shared_ptr<std::vector<unsigned char> > compressed
 	(new std::vector<unsigned char>());
       download(opt, db, entry_url.c_str(), *compressed);
+      std::vector<unsigned char> digest
+	(hash(p->checksum.type, *compressed));
+      if (digest != p->checksum.value) {
+	std::string msg("compressed data does not match ");
+	msg += hash_sink::to_string(p->checksum.type);
+	msg += " checksum (actual ";
+	msg += base16_encode(digest.begin(), digest.end());
+	msg += ", expected ";
+	msg += base16_encode(p->checksum.value.begin(),
+			     p->checksum.value.end());
+	msg += ')';
+	throw curl_exception(msg.c_str());
+      }
       impl_.reset(new impl(entry_url, compressed));
       return;
     }
