@@ -59,10 +59,11 @@ test()
 	  && !ends_with(std::string(e->d_name), ".src.rpm")) {
 	rpm_package_info info;
 	database::package_id pkg
-	  (rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info));
+	  (rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info, NULL));
 	CHECK(pkg > last_pkg_id);
 	last_pkg_id = pkg;
-	pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info);
+	pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info,
+		       NULL);
 	CHECK(pkg == last_pkg_id);
       }
     }

@@ -156,7 +156,8 @@ namespace {
 
       if (load_) {
 	rpm_package_info info;
-	database::package_id pid = rpm_load(opt_, db_, rpm_path.c_str(), info);
+	database::package_id pid = rpm_load(opt_, db_, rpm_path.c_str(), info,
+					    &rurl.csum);
 	if (pid == database::package_id()) {
 	  return false;
 	}

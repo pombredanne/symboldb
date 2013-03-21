@@ -20,6 +20,10 @@
 
 #include "database.hpp"
 
+namespace cxxll {
+  class checksum;
+}
+
 class symboldb_options;
 
 // Loads the RPM file PATH into the database and returns metadata in
@@ -27,4 +31,5 @@ class symboldb_options;
 // not have an open transaction.  The return value is the package ID,
 // or 0 on error.
 database::package_id rpm_load(const symboldb_options &opt, database &db,
-			      const char *path, cxxll::rpm_package_info &info);
+			      const char *path, cxxll::rpm_package_info &info,
+			      const cxxll::checksum *expected);

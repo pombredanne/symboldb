@@ -55,7 +55,7 @@ load_rpms(const symboldb_options &opt, database &db, char **argv,
 {
   rpm_package_info info;
   for (; *argv; ++argv) {
-    database::package_id pkg = rpm_load(opt, db, *argv, info);
+    database::package_id pkg = rpm_load(opt, db, *argv, info, NULL);
     if (pkg == database::package_id()) {
       return false;
     }

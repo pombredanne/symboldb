@@ -392,8 +392,14 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 
 database::package_id
 rpm_load(const symboldb_options &opt, database &db,
-	 const char *path, rpm_package_info &info)
+	 const char *path, rpm_package_info &info,
+	 const checksum *expected)
 {
+  if (expected && (expected->type != hash_sink::sha256
+		   && expected->type != hash_sink::sha1)) {
+    throw std::runtime_error("unsupported hash type");
+  }
+
   // Unreferenced RPMs should not be visible to analyzers, so we can
   // load each RPM in a separate transaction.  We make a synchronous
   // commit when referencing the RPM data, so a non-synchronous commit
@@ -415,8 +421,16 @@ rpm_load(const symboldb_options &opt, database &db,
   std::vector<unsigned char> digest;
   sha256.digest(digest);
   db.add_package_digest(pkg, digest, sha256.octets());
+  if (expected && expected->type == hash_sink::sha256
+      && expected->value != digest) {
+    throw std::runtime_error("checksum mismatch");
+  }
   sha1.digest(digest);
   db.add_package_digest(pkg, digest, sha1.octets());
+  if (expected && expected->type == hash_sink::sha1
+      && expected->value != digest) {
+    throw std::runtime_error("checksum mismatch");
+  }
 
   db.txn_commit();
   return pkg;

@@ -29,9 +29,6 @@
 
 * More test cases, including loading of sample RPMs.
 
-* Follow the cryptographic chain starting with the repomd.xml file and
-  verify all hashes up to the RPM files along the way.
-
 * Accelerate downloads of re-signed RPMs by combining the new header
   with the existing compressed cpio data.
 
