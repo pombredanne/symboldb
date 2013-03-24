@@ -36,6 +36,7 @@
 
 #include <libpq-fe.h>
 
+#include <algorithm>
 #include <map>
 #include <set>
 
@@ -558,6 +559,19 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
 	(impl_->conn, res,
 	 "INSERT INTO symboldb.java_interface (class_id, name) VALUES ($1, $2)",
 	 classid, jc.interface(i));
+    }
+    std::vector<std::string> classes(jc.class_references());
+    std::sort(classes.begin(), classes.end());
+    std::vector<std::string>::iterator end =
+      std::unique(classes.begin(), classes.end());
+    for (std::vector<std::string>::iterator p = classes.begin();
+	 p != end; ++p) {
+      const std::string &name(*p);
+      if (name != "java/lang/Object" && name != "java/lang/String") {
+	pg_query(impl_->conn, res,
+		 "INSERT INTO symboldb.java_class_reference (class_id, name)"
+		 " VALUES ($1, $2)", classid, name);
+      }
     }
   }
   pg_query

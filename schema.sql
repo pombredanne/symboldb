@@ -324,6 +324,13 @@ CREATE TABLE symboldb.java_interface (
 );
 CREATE INDEX ON symboldb.java_interface (name);
 
+CREATE TABLE symboldb.java_class_reference (
+  class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  PRIMARY KEY (name, class_id)
+);
+CREATE INDEX ON symboldb.java_class_reference (class_id);
+
 CREATE TABLE symboldb.java_class_contents (
   contents_id INTEGER NOT NULL REFERENCES symboldb.file_contents,
   class_id INTEGER NOT NULL REFERENCES symboldb.java_class,

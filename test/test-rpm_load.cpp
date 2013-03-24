@@ -64,6 +64,38 @@ test_java_class(database &db, pgconn_handle &conn)
   CHECK(res.ntuples() == 2);
   COMPARE_STRING(res.getvalue(0, 0), "java/lang/AutoCloseable");
   COMPARE_STRING(res.getvalue(1, 0), "java/lang/Runnable");
+  pg_query
+    (conn, res, "SELECT name FROM symboldb.java_class_reference"
+     " WHERE class_id = $1 ORDER BY name", classid);
+  {
+    const char *expected[] = {
+      "com/redhat/symboldb/test/JavaClass",
+      "java/lang/AutoCloseable",
+      "java/lang/Byte",
+      "java/lang/Double",
+      "java/lang/Exception",
+      "java/lang/Float",
+      "java/lang/Integer",
+      "java/lang/Long",
+      "java/lang/Runnable",
+      "java/lang/Short",
+      "java/lang/StackOverflowError",
+      "java/lang/StringBuilder",
+      "java/lang/Thread",
+      NULL
+    };
+    unsigned end = res.ntuples();
+    for (unsigned i = 0; i <= end; ++i) {
+      if (i == end) {
+	CHECK(expected[i] == NULL);
+      } else if (expected[i] == NULL) {
+	CHECK(false);
+	break;
+      } else {
+	COMPARE_STRING(res.getvalue(i, 0), expected[i]);
+      }
+    }
+  }
 }
 
 static void
