@@ -546,10 +546,11 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   pgresult_handle res;
   std::vector<unsigned char> digest(hash(hash_sink::sha256, jc.buffer()));
+  std::string this_class(jc.this_class());
   pg_query_binary
     (impl_->conn, res, "SELECT * FROM symboldb.intern_java_class"
      " ($1, $2, $3, $4)", digest,
-     jc.this_class(), jc.super_class(), static_cast<int>(jc.access_flags()));
+     this_class, jc.super_class(), static_cast<int>(jc.access_flags()));
   int classid;
   bool added;
   pg_response(res, 0, classid, added);
@@ -567,7 +568,8 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
     for (std::vector<std::string>::iterator p = classes.begin();
 	 p != end; ++p) {
       const std::string &name(*p);
-      if (name != "java/lang/Object" && name != "java/lang/String") {
+      if (name != "java/lang/Object" && name != "java/lang/String"
+	  && name != this_class) {
 	pg_query(impl_->conn, res,
 		 "INSERT INTO symboldb.java_class_reference (class_id, name)"
 		 " VALUES ($1, $2)", classid, name);

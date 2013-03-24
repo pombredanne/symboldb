@@ -69,7 +69,6 @@ test_java_class(database &db, pgconn_handle &conn)
      " WHERE class_id = $1 ORDER BY name", classid);
   {
     const char *expected[] = {
-      "com/redhat/symboldb/test/JavaClass",
       "java/lang/AutoCloseable",
       "java/lang/Byte",
       "java/lang/Double",
