@@ -92,6 +92,7 @@ add_library (CXXLL
   lib/cxxll/pg_testdb.cpp
   lib/cxxll/pgconn_handle.cpp
   lib/cxxll/pgresult_handle.cpp
+  lib/cxxll/read_file.cpp
   lib/cxxll/regex_handle.cpp
   lib/cxxll/rpm_evr.cpp
   lib/cxxll/rpm_file_entry.cpp
@@ -193,6 +194,7 @@ add_executable (runtests
   test/test-os.cpp
   test/test-os_exception.cpp
   test/test-pg_testdb.cpp
+  test/test-read_file.cpp
   test/test-regex_handle.cpp
   test/test-repomd.cpp
   test/test-rpm_load.cpp
