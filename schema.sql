@@ -54,8 +54,8 @@ CREATE TABLE symboldb.package (
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
   arch symboldb.rpm_arch NOT NULL,
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
-  source TEXT NOT NULL CHECK (LENGTH(source) > 0),
-  build_host TEXT NOT NULL CHECK (LENGTH(build_host) > 0),
+  source TEXT NOT NULL CHECK (LENGTH(source) > 0) COLLATE "C",
+  build_host TEXT NOT NULL CHECK (LENGTH(build_host) > 0) COLLATE "C",
   build_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
 );
 COMMENT ON COLUMN symboldb.package.source IS
@@ -292,9 +292,9 @@ CREATE INDEX ON symboldb.elf_closure (needed);
 CREATE TABLE symboldb.java_class (
   class_id SERIAL NOT NULL PRIMARY KEY,
   access_flags INTEGER NOT NULL CHECK (access_flags BETWEEN 0 AND 65536),
-  name TEXT NOT NULL CHECK(LENGTH(name) > 0),
+  name TEXT NOT NULL CHECK(LENGTH(name) > 0) COLLATE "C",
   digest BYTEA NOT NULL CHECK(LENGTH(digest) = 32),
-  super_class TEXT NOT NULL
+  super_class TEXT NOT NULL COLLATE "C"
 );
 CREATE INDEX ON symboldb.java_class (name);
 CREATE INDEX ON symboldb.java_class (super_class);
@@ -319,14 +319,14 @@ $$;
 
 CREATE TABLE symboldb.java_interface (
   class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
-  name TEXT NOT NULL CHECK(LENGTH(name) > 0),
+  name TEXT NOT NULL CHECK(LENGTH(name) > 0) COLLATE "C",
   PRIMARY KEY (class_id, name)
 );
 CREATE INDEX ON symboldb.java_interface (name);
 
 CREATE TABLE symboldb.java_class_reference (
   class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   PRIMARY KEY (name, class_id)
 );
 CREATE INDEX ON symboldb.java_class_reference (class_id);
