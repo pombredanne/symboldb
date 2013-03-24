@@ -78,6 +78,7 @@ add_library (CXXLL
   lib/cxxll/file_handle.cpp
   lib/cxxll/gunzip_source.cpp
   lib/cxxll/hash.cpp
+  lib/cxxll/java_class.cpp
   lib/cxxll/memory_range_source.cpp
   lib/cxxll/os.cpp
   lib/cxxll/os_error_string.cpp
@@ -192,6 +193,7 @@ add_executable (runtests
   test/test-expat_minidom.cpp
   test/test-expat_source.cpp
   test/test-gunzip_source.cpp
+  test/test-java_class.cpp
   test/test-os.cpp
   test/test-os_exception.cpp
   test/test-pg_testdb.cpp
