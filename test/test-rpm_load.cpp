@@ -25,12 +25,44 @@
 #include <cxxll/pg_testdb.hpp>
 #include <cxxll/pgconn_handle.hpp>
 #include <cxxll/pgresult_handle.hpp>
+#include <cxxll/pg_query.hpp>
+#include <cxxll/pg_response.hpp>
 #include <cxxll/string_support.hpp>
+#include <cxxll/read_file.hpp>
+#include <cxxll/java_class.hpp>
 #include <symboldb/options.hpp>
 
 #include "test.hpp"
 
 using namespace cxxll;
+
+static void
+test_java_class(database &db, pgconn_handle &conn)
+{
+  std::vector<unsigned char> buffer;
+  read_file("test/data/JavaClass.class", buffer);
+  java_class jc(&buffer);
+  db.txn_begin_no_sync();
+  db.add_java_class(/* fake */ database::contents_id(1), jc);
+  db.txn_commit();
+  pgresult_handle res;
+  res.execBinary
+    (conn, "SELECT class_id, name, super_class FROM symboldb.java_class"
+     " JOIN symboldb.java_class_contents USING (class_id)"
+     " WHERE contents_id = 1");
+  CHECK(res.ntuples() == 1);
+  int classid;
+  std::string name, super_class;
+  pg_response(res, 0, classid, name, super_class);
+  COMPARE_STRING(name, "com/redhat/symboldb/test/JavaClass");
+  COMPARE_STRING(super_class, "java/lang/Thread");
+  pg_query_binary
+    (conn, res, "SELECT name FROM symboldb.java_interface"
+     " WHERE class_id = $1 ORDER BY name", classid);
+  CHECK(res.ntuples() == 2);
+  COMPARE_STRING(res.getvalue(0, 0), "java/lang/AutoCloseable");
+  COMPARE_STRING(res.getvalue(1, 0), "java/lang/Runnable");
+}
 
 static void
 test()
@@ -358,6 +390,8 @@ test()
       digest.resize(32);
       CHECK(db.package_by_digest(digest).value() == 0);
     }
+
+    test_java_class(db, dbh);
   }
 
   // FIXME: Add more sanity check on database contents.

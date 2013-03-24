@@ -29,6 +29,7 @@
 #include <cxxll/pg_query.hpp>
 #include <cxxll/pg_response.hpp>
 #include <cxxll/hash.hpp>
+#include <cxxll/java_class.hpp>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -533,6 +534,39 @@ database::add_elf_error(contents_id cid, const char *message)
      "INSERT INTO " ELF_ERROR_TABLE " (contents_id, message) VALUES ($1, $2)",
      cid.value(), message);
 }
+
+//////////////////////////////////////////////////////////////////////
+// Java classes.
+
+void
+database::add_java_class(contents_id cid, const cxxll::java_class &jc)
+{
+  // FIXME: This needs a transaction.
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  pgresult_handle res;
+  std::vector<unsigned char> digest(hash(hash_sink::sha256, jc.buffer()));
+  pg_query_binary
+    (impl_->conn, res, "SELECT * FROM symboldb.intern_java_class($1, $2, $3)",
+     digest, jc.this_class(), jc.super_class());
+  int classid;
+  bool added;
+  pg_response(res, 0, classid, added);
+  if (added) {
+    for (unsigned i= 0, end = jc.interface_count(); i < end; ++i) {
+      pg_query
+	(impl_->conn, res,
+	 "INSERT INTO symboldb.java_interface (class_id, name) VALUES ($1, $2)",
+	 classid, jc.interface(i));
+    }
+  }
+  pg_query
+    (impl_->conn, res,
+     "INSERT INTO symboldb.java_class_contents"
+     " (class_id, contents_id) VALUES ($1, $2)", classid, cid.value());
+}
+
+//////////////////////////////////////////////////////////////////////
+// Package sets.
 
 database::package_set_id
 database::create_package_set(const char *name)

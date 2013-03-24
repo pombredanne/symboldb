@@ -287,6 +287,49 @@ CREATE TABLE symboldb.elf_closure (
 CREATE INDEX ON symboldb.elf_closure (file_id);
 CREATE INDEX ON symboldb.elf_closure (needed);
 
+-- Java classes.
+
+CREATE TABLE symboldb.java_class (
+  class_id SERIAL NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL CHECK(LENGTH(name) > 0),
+  digest BYTEA NOT NULL CHECK(LENGTH(digest) = 32),
+  super_class TEXT NOT NULL
+);
+CREATE INDEX ON symboldb.java_class (name);
+CREATE INDEX ON symboldb.java_class (super_class);
+
+CREATE FUNCTION symboldb.intern_java_class (
+  digest BYTEA, name TEXT, super_class TEXT,
+  OUT cid INTEGER, OUT added BOOLEAN
+) LANGUAGE plpgsql AS $$
+BEGIN
+  SELECT class_id INTO cid
+    FROM symboldb.java_class jc WHERE jc.digest = $1;
+  IF FOUND THEN
+    added := FALSE;
+    RETURN;
+  END IF;
+  INSERT INTO symboldb.java_class (digest, name, super_class)
+     VALUES ($1, $2, $3) RETURNING class_id INTO cid;
+  added := TRUE;
+  RETURN;
+END;
+$$;
+
+CREATE TABLE symboldb.java_interface (
+  class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
+  name TEXT NOT NULL CHECK(LENGTH(name) > 0),
+  PRIMARY KEY (class_id, name)
+);
+CREATE INDEX ON symboldb.java_interface (name);
+
+CREATE TABLE symboldb.java_class_contents (
+  contents_id INTEGER NOT NULL REFERENCES symboldb.file_contents,
+  class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
+  PRIMARY KEY (contents_id, class_id)
+);
+CREATE INDEX ON symboldb.java_class_contents (class_id);
+
 -- URL cache (mainly for raw repository metadata).
 
 CREATE TABLE symboldb.url_cache (

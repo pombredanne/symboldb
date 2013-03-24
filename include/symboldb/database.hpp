@@ -31,6 +31,7 @@ namespace cxxll {
   class elf_image;
   class elf_symbol_definition;
   class elf_symbol_reference;
+  class java_class;
 }
 
 // Database wrapper.
@@ -141,6 +142,9 @@ public:
   void add_elf_rpath(contents_id, const char *);
   void add_elf_runpath(contents_id, const char *);
   void add_elf_error(contents_id, const char *);
+
+  // Java support.
+  void add_java_class(contents_id, const cxxll::java_class &);
 
   // Package sets.
   struct package_set_tag {};
