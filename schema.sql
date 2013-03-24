@@ -318,22 +318,23 @@ END;
 $$;
 
 CREATE TABLE symboldb.java_interface (
-  class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
+  class_id INTEGER NOT NULL REFERENCES symboldb.java_class ON DELETE CASCADE,
   name TEXT NOT NULL CHECK(LENGTH(name) > 0) COLLATE "C",
   PRIMARY KEY (class_id, name)
 );
 CREATE INDEX ON symboldb.java_interface (name);
 
 CREATE TABLE symboldb.java_class_reference (
-  class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
+  class_id INTEGER NOT NULL REFERENCES symboldb.java_class ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   PRIMARY KEY (name, class_id)
 );
 CREATE INDEX ON symboldb.java_class_reference (class_id);
 
 CREATE TABLE symboldb.java_class_contents (
-  contents_id INTEGER NOT NULL REFERENCES symboldb.file_contents,
-  class_id INTEGER NOT NULL REFERENCES symboldb.java_class,
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE cascade,
+  class_id INTEGER NOT NULL REFERENCES symboldb.java_class ON DELETE CASCADE,
   PRIMARY KEY (contents_id, class_id)
 );
 CREATE INDEX ON symboldb.java_class_contents (class_id);
