@@ -36,6 +36,7 @@
 #include <cxxll/source_sink.hpp>
 #include <cxxll/tee_sink.hpp>
 #include <cxxll/base16.hpp>
+#include <cxxll/java_class.hpp>
 
 #include <map>
 #include <sstream>
@@ -285,6 +286,19 @@ prepare_load(const char *rpm_path, const rpm_file_entry &file,
 				      file.contents.size()));
 }
 
+static void
+do_load_formats(const symboldb_options &opt, database &db,
+		database::contents_id cid, const rpm_file_entry &file)
+{
+  if (is_elf(file.contents)) {
+    load_elf(opt, db, cid, file);
+  }
+  if (java_class::has_signature(file.contents)) {
+    java_class jc(&file.contents);
+    db.add_java_class(cid, jc);
+  }
+}
+
 static database::contents_id
 load_contents(const symboldb_options &opt, database &db,
 	      const char *rpm_path, const rpm_file_entry &file)
@@ -294,9 +308,7 @@ load_contents(const symboldb_options &opt, database &db,
   prepare_load(rpm_path, file, digest, preview);
   database::contents_id cid;
   if (db.intern_file_contents(*file.info, digest, preview, cid)) {
-    if (is_elf(file.contents)) {
-      load_elf(opt, db, cid, file);
-    }
+    do_load_formats(opt, db, cid, file);
   }
   return cid;
 }
@@ -313,8 +325,8 @@ add_file(const symboldb_options &opt, database &db,
   database::contents_id cid;
   bool added;
   db.add_file(pkg, *file.info, digest, preview, fid, cid, added);
-  if (added && is_elf(file.contents)) {
-    load_elf(opt, db, cid, file);
+  if (added) {
+    do_load_formats(opt, db, cid, file);
   }
 }
 
