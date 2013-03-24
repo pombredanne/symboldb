@@ -331,6 +331,14 @@ CREATE TABLE symboldb.java_class_reference (
 );
 CREATE INDEX ON symboldb.java_class_reference (class_id);
 
+CREATE TABLE symboldb.java_error (
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
+  message TEXT NOT NULL CHECK (LENGTH(message) > 0),
+  path TEXT CHECK (LENGTH(path) > 0) COLLATE "C"
+);
+CREATE INDEX ON symboldb.java_error (contents_id, path);
+
 CREATE TABLE symboldb.java_class_contents (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE cascade,
