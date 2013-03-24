@@ -27,7 +27,9 @@ test()
   using namespace cxxll;
   {
     std::vector<unsigned char> buffer;
+    CHECK(!zip_file::has_signature(buffer));
     read_file("test/data/test.zip", buffer);
+    CHECK(zip_file::has_signature(buffer));
     zip_file zip(&buffer);
     CHECK(zip.next());
     COMPARE_STRING(zip.name(), "data1");
