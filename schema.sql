@@ -293,7 +293,7 @@ CREATE TABLE symboldb.java_class (
   class_id SERIAL NOT NULL PRIMARY KEY,
   access_flags INTEGER NOT NULL CHECK (access_flags BETWEEN 0 AND 65536),
   name TEXT NOT NULL CHECK(LENGTH(name) > 0) COLLATE "C",
-  digest BYTEA NOT NULL CHECK(LENGTH(digest) = 32),
+  digest BYTEA NOT NULL UNIQUE CHECK(LENGTH(digest) = 32),
   super_class TEXT NOT NULL COLLATE "C"
 );
 CREATE INDEX ON symboldb.java_class (name);
