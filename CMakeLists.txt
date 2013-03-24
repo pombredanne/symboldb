@@ -112,6 +112,7 @@ add_library (CXXLL
   lib/cxxll/tee_sink.cpp
   lib/cxxll/url.cpp
   lib/cxxll/utf8.cpp
+  lib/cxxll/vector_extract.cpp
   lib/cxxll/vector_sink.cpp
   lib/cxxll/zlib.cpp
   lib/cxxll/zlib_inflate_exception.cpp
@@ -203,6 +204,7 @@ add_executable (runtests
   test/test-subprocess.cpp
   test/test-task.cpp
   test/test-utf8.cpp
+  test/test-vector_extract.cpp
   test/test.cpp
 )
 
