@@ -95,6 +95,56 @@ test_java_class(database &db, pgconn_handle &conn)
       }
     }
   }
+
+  res.exec
+    (conn, "SELECT jc.name FROM symboldb.java_class jc"
+     " JOIN symboldb.java_class_contents USING (class_id)"
+     " JOIN symboldb.file f USING (contents_id)"
+     " JOIN symboldb.package p USING (package_id)"
+     " WHERE symboldb.nevra(p) = 'objectweb-asm4-0:4.1-2.fc18.noarch'"
+     " AND f.name = '/usr/share/java/objectweb-asm4/asm.jar'"
+     " ORDER BY jc.name");
+  {
+    const char *expected[] = {
+      "org/objectweb/asm/AnnotationVisitor",
+      "org/objectweb/asm/AnnotationWriter",
+      "org/objectweb/asm/Attribute",
+      "org/objectweb/asm/ByteVector",
+      "org/objectweb/asm/ClassReader",
+      "org/objectweb/asm/ClassVisitor",
+      "org/objectweb/asm/ClassWriter",
+      "org/objectweb/asm/Context",
+      "org/objectweb/asm/Edge",
+      "org/objectweb/asm/FieldVisitor",
+      "org/objectweb/asm/FieldWriter",
+      "org/objectweb/asm/Frame",
+      "org/objectweb/asm/Handle",
+      "org/objectweb/asm/Handler",
+      "org/objectweb/asm/Item",
+      "org/objectweb/asm/Label",
+      "org/objectweb/asm/MethodVisitor",
+      "org/objectweb/asm/MethodWriter",
+      "org/objectweb/asm/Opcodes",
+      "org/objectweb/asm/Type",
+      "org/objectweb/asm/signature/SignatureReader",
+      "org/objectweb/asm/signature/SignatureVisitor",
+      "org/objectweb/asm/signature/SignatureWriter",
+      NULL
+    };
+    unsigned end = res.ntuples();
+    CHECK(end > 0);
+    for (unsigned i = 0; i <= end; ++i) {
+      if (i == end) {
+	CHECK(expected[i] == NULL);
+      } else if (expected[i] == NULL) {
+	CHECK(false);
+	break;
+      } else {
+	COMPARE_STRING(res.getvalue(i, 0), expected[i]);
+      }
+    }
+  }
+
 }
 
 static void
@@ -204,6 +254,9 @@ test()
 	continue;
       } else if (r1.getvalue(i, 1) == std::string("openbios")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "1.0.svn1063");
+	continue;
+      } else if (r1.getvalue(i, 1) == std::string("objectweb-asm4")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "4.1");
 	continue;
       }
 

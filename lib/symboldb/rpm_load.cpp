@@ -37,6 +37,7 @@
 #include <cxxll/tee_sink.hpp>
 #include <cxxll/base16.hpp>
 #include <cxxll/java_class.hpp>
+#include <cxxll/zip_file.hpp>
 
 #include <map>
 #include <sstream>
@@ -287,6 +288,21 @@ prepare_load(const char *rpm_path, const rpm_file_entry &file,
 }
 
 static void
+load_zip(database &db,
+	 database::contents_id cid, const rpm_file_entry &file)
+{
+  zip_file zip(&file.contents);
+  std::vector<unsigned char> data;
+  while (zip.next()) {
+    zip.data(data);
+    if (java_class::has_signature(data)) {
+      java_class jc(&data);
+      db.add_java_class(cid, jc);
+    }
+  }
+}
+
+static void
 do_load_formats(const symboldb_options &opt, database &db,
 		database::contents_id cid, const rpm_file_entry &file)
 {
@@ -296,6 +312,9 @@ do_load_formats(const symboldb_options &opt, database &db,
   if (java_class::has_signature(file.contents)) {
     java_class jc(&file.contents);
     db.add_java_class(cid, jc);
+  }
+  if (zip_file::has_signature(file.contents)) {
+    load_zip(db, cid, file);
   }
 }
 
