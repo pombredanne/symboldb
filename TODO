@@ -11,8 +11,9 @@
 
 * Parallelize downloading.
 
-* Support extracting Java symbols (class, method, field definitions
-  and references).
+* Extend Java support: extract method, field references and
+  definitions.  Recursively descend into WAR and EAR archives and
+  process classes found there.
 
 * Support for extracting Python symbols.  This probably needs flow
   analysis to give good results.
