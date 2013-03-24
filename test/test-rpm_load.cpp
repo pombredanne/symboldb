@@ -47,15 +47,17 @@ test_java_class(database &db, pgconn_handle &conn)
   db.txn_commit();
   pgresult_handle res;
   res.execBinary
-    (conn, "SELECT class_id, name, super_class FROM symboldb.java_class"
+    (conn, "SELECT class_id, name, super_class, access_flags"
+     " FROM symboldb.java_class"
      " JOIN symboldb.java_class_contents USING (class_id)"
      " WHERE contents_id = 1");
   CHECK(res.ntuples() == 1);
-  int classid;
+  int classid, access_flags;
   std::string name, super_class;
-  pg_response(res, 0, classid, name, super_class);
+  pg_response(res, 0, classid, name, super_class, access_flags);
   COMPARE_STRING(name, "com/redhat/symboldb/test/JavaClass");
   COMPARE_STRING(super_class, "java/lang/Thread");
+  CHECK(access_flags == 1 + 16 + 32);
   pg_query_binary
     (conn, res, "SELECT name FROM symboldb.java_interface"
      " WHERE class_id = $1 ORDER BY name", classid);

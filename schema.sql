@@ -291,6 +291,7 @@ CREATE INDEX ON symboldb.elf_closure (needed);
 
 CREATE TABLE symboldb.java_class (
   class_id SERIAL NOT NULL PRIMARY KEY,
+  access_flags INTEGER NOT NULL CHECK (access_flags BETWEEN 0 AND 65536),
   name TEXT NOT NULL CHECK(LENGTH(name) > 0),
   digest BYTEA NOT NULL CHECK(LENGTH(digest) = 32),
   super_class TEXT NOT NULL
@@ -299,7 +300,7 @@ CREATE INDEX ON symboldb.java_class (name);
 CREATE INDEX ON symboldb.java_class (super_class);
 
 CREATE FUNCTION symboldb.intern_java_class (
-  digest BYTEA, name TEXT, super_class TEXT,
+  digest BYTEA, name TEXT, super_class TEXT, access_flags INTEGER,
   OUT cid INTEGER, OUT added BOOLEAN
 ) LANGUAGE plpgsql AS $$
 BEGIN
@@ -309,8 +310,8 @@ BEGIN
     added := FALSE;
     RETURN;
   END IF;
-  INSERT INTO symboldb.java_class (digest, name, super_class)
-     VALUES ($1, $2, $3) RETURNING class_id INTO cid;
+  INSERT INTO symboldb.java_class (digest, name, super_class, access_flags)
+     VALUES ($1, $2, $3, $4) RETURNING class_id INTO cid;
   added := TRUE;
   RETURN;
 END;

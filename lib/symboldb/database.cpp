@@ -546,8 +546,9 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
   pgresult_handle res;
   std::vector<unsigned char> digest(hash(hash_sink::sha256, jc.buffer()));
   pg_query_binary
-    (impl_->conn, res, "SELECT * FROM symboldb.intern_java_class($1, $2, $3)",
-     digest, jc.this_class(), jc.super_class());
+    (impl_->conn, res, "SELECT * FROM symboldb.intern_java_class"
+     " ($1, $2, $3, $4)", digest,
+     jc.this_class(), jc.super_class(), static_cast<int>(jc.access_flags()));
   int classid;
   bool added;
   pg_response(res, 0, classid, added);
