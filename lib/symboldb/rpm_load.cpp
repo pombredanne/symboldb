@@ -296,8 +296,12 @@ load_zip(database &db,
   while (zip.next()) {
     zip.data(data);
     if (java_class::has_signature(data)) {
-      java_class jc(&data);
-      db.add_java_class(cid, jc);
+      try {
+	java_class jc(&data);
+	db.add_java_class(cid, jc);
+      } catch (java_class::exception &e) {
+	db.add_java_error(cid, e.what(), zip.name().c_str());
+      }
     }
   }
 }
@@ -310,8 +314,12 @@ do_load_formats(const symboldb_options &opt, database &db,
     load_elf(opt, db, cid, file);
   }
   if (java_class::has_signature(file.contents)) {
-    java_class jc(&file.contents);
-    db.add_java_class(cid, jc);
+    try {
+      java_class jc(&file.contents);
+      db.add_java_class(cid, jc);
+    } catch (java_class::exception &e) {
+      db.add_java_error(cid, e.what(), "");
+    }
   }
   if (zip_file::has_signature(file.contents)) {
     load_zip(db, cid, file);
