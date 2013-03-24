@@ -56,6 +56,9 @@ cxxll::java_class::java_class(const std::vector<unsigned char> *vec)
     {
       unsigned short constant_pool_count;
       extract(*vec, offset, constant_pool_count);
+      if (constant_pool_count < 2) {
+	throw exception("constant pool is empty");
+      }
       constant_pool_offsets.reserve(constant_pool_count - 1);
       for (unsigned i = 1; i < constant_pool_count; ++i ) {
 	constant_pool_offsets.push_back(offset);
