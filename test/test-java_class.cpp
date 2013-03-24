@@ -19,6 +19,8 @@
 #include <cxxll/java_class.hpp>
 #include <cxxll/read_file.hpp>
 
+#include <algorithm>
+
 #include "test.hpp"
 
 using namespace cxxll;
@@ -35,6 +37,36 @@ test()
     CHECK(jc.interface_count() == 2);
     COMPARE_STRING(jc.interface(0), "java/lang/Runnable");
     COMPARE_STRING(jc.interface(1), "java/lang/AutoCloseable");
+    {
+      std::vector<std::string> classes(jc.class_references());
+      std::sort(classes.begin(), classes.end());
+      const char *expected[] = {
+	"com/redhat/symboldb/test/JavaClass",
+	"java/lang/AutoCloseable",
+	"java/lang/Byte",
+	"java/lang/Double",
+	"java/lang/Exception",
+	"java/lang/Float",
+	"java/lang/Integer",
+	"java/lang/Long",
+	"java/lang/Runnable",
+	"java/lang/Short",
+	"java/lang/StackOverflowError",
+	"java/lang/StringBuilder",
+	"java/lang/Thread",
+	NULL
+      };
+      for (unsigned i = 0; i <= classes.size(); ++i) {
+	if (i == classes.size()) {
+	  CHECK(expected[i] == NULL);
+	} else if (expected[i] == NULL) {
+	  CHECK(false);
+	  break;
+	} else {
+	  COMPARE_STRING(classes.at(i), expected[i]);
+	}
+      }
+    }
   }
 }
 

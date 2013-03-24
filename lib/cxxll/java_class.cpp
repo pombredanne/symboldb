@@ -190,6 +190,23 @@ cxxll::java_class::interface(unsigned index) const
   return class_name(interface_indexes.at(index));
 }
 
+std::vector<std::string>
+cxxll::java_class::class_references() const
+{
+  std::vector<std::string> result;
+  for (std::vector<unsigned>::const_iterator
+	 p = constant_pool_offsets.begin(), end = constant_pool_offsets.end();
+       p != end; ++p) {
+    if (*p != 0 && buffer().at(*p) == CONSTANT_Class) {
+      size_t offset = *p + 1;
+      unsigned short name_idx;
+      big_endian::extract(buffer(), offset, name_idx);
+      result.push_back(utf8_string(name_idx));
+    }
+  }
+  return result;
+}
+
 //////////////////////////////////////////////////////////////////////
 // cxxll::java_class::exception
 

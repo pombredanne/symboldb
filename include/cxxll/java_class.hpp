@@ -77,6 +77,9 @@ public:
   std::string this_class() const;
   std::string super_class() const;
 
+  // Returns a vector containing the names of all referenced classes.
+  std::vector<std::string> class_references() const;
+
   // Returns the number of implemented interfaces and the name of the
   // implemented interface with the specified number.
   unsigned interface_count() const;

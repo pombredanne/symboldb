@@ -36,6 +36,19 @@ public final class JavaClass extends Thread implements Runnable, AutoCloseable {
     public void close() {
     }
 
+    // Type reference in return type only.
+    static VirtualMachineError vmError() {
+	return null;
+    }
+
+    // Type reference in parameter only.
+    static void oom(OutOfMemoryError e) {
+    }
+
+    Object returnClass() {
+	return StackOverflowError.class;
+    }
+
     static public void main(String[] args) throws Exception {
     }
 
