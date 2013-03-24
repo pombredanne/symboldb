@@ -10,6 +10,7 @@ development packages:
 - elfutils-libelf-devel
 - expat-devel
 - gawk (for /usr/bin/awk)
+- libarchive-devel
 - nss-devel
 - postgresql-devel
 - postgresql-server
