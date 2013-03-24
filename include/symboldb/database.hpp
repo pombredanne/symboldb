@@ -145,6 +145,7 @@ public:
 
   // Java support.
   void add_java_class(contents_id, const cxxll::java_class &);
+  void add_java_error(contents_id, const char *message, const char *path);
 
   // Package sets.
   struct package_set_tag {};

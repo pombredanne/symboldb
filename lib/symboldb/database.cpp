@@ -582,6 +582,18 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
      " (class_id, contents_id) VALUES ($1, $2)", classid, cid.value());
 }
 
+void
+database::add_java_error(contents_id cid,
+			 const char *message, const char *path)
+{
+  pgresult_handle res;
+  pg_query
+    (impl_->conn, res,
+     "INSERT INTO symboldb.java_error (contents_id, message, path)"
+     " VALUES ($1, $2, $3)", cid.value(), message, path);
+}
+
+
 //////////////////////////////////////////////////////////////////////
 // Package sets.
 
