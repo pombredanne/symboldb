@@ -97,7 +97,9 @@ cxxll::zip_file::next()
   if (ret == ARCHIVE_EOF) {
     return false;
   } else if (ret != ARCHIVE_OK) {
-    throw std::runtime_error("archive_read_next_header2");
+    throw os_exception(archive_errno(impl_->archive_))
+      .message(archive_error_string(impl_->archive_))
+      .function(archive_read_next_header2);
   }
   return true;
 }
