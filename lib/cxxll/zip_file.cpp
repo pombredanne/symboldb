@@ -73,7 +73,10 @@ cxxll::zip_file::impl::read(unsigned char *buffer, size_t length)
 {
   ssize_t ret = archive_read_data(archive_, buffer, length);
   if (ret < 0) {
-    throw os_exception().function(archive_read_data).length(length);
+    throw os_exception(archive_errno(archive_))
+      .message(archive_error_string(archive_))
+      .path2(archive_entry_pathname(entry_))
+      .function(archive_read_data).length(length);
   }
   return ret;
 }
