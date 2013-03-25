@@ -294,7 +294,18 @@ load_zip(database &db,
 {
   zip_file zip(&file.contents);
   std::vector<unsigned char> data;
-  while (zip.next()) {
+  while (true) {
+    try {
+      if (!zip.next()) {
+	break;
+      }
+    } catch (os_exception &e) {
+      // FIXME: Use proper, zip_file-specific exception.
+      // zip.name() is not necessarily valid at this point.
+      db.add_java_error(cid, e.what(), NULL);
+      // Exit the loop because the file is likely corrupted significantly.
+      break;
+    }
     try {
       zip.data(data);
     } catch (os_exception &e) {
