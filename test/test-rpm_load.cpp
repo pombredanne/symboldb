@@ -147,7 +147,7 @@ test_java_class(database &db, pgconn_handle &conn)
 
   db.txn_begin();
   db.add_java_error(database::contents_id(1), "error message", "/path");
-  db.add_java_error(database::contents_id(2), "error message", NULL);
+  db.add_java_error(database::contents_id(2), "error message", "");
   db.txn_rollback();
 }
 

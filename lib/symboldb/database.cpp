@@ -584,7 +584,7 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
 
 void
 database::add_java_error(contents_id cid,
-			 const char *message, const char *path)
+			 const char *message, const std::string &path)
 {
   pgresult_handle res;
   pg_query

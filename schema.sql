@@ -335,7 +335,7 @@ CREATE TABLE symboldb.java_error (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,
   message TEXT NOT NULL CHECK (LENGTH(message) > 0),
-  path TEXT CHECK (LENGTH(path) > 0) COLLATE "C"
+  path TEXT NOT NULL COLLATE "C"
 );
 CREATE INDEX ON symboldb.java_error (contents_id, path);
 

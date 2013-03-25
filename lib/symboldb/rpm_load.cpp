@@ -302,7 +302,7 @@ load_zip(database &db,
     } catch (os_exception &e) {
       // FIXME: Use proper, zip_file-specific exception.
       // zip.name() is not necessarily valid at this point.
-      db.add_java_error(cid, e.what(), NULL);
+      db.add_java_error(cid, e.what(), "");
       // Exit the loop because the file is likely corrupted significantly.
       break;
     }
@@ -310,14 +310,14 @@ load_zip(database &db,
       zip.data(data);
     } catch (os_exception &e) {
       // FIXME: Use proper, zip_file-specific exception.
-      db.add_java_error(cid, e.what(), zip.name().c_str());
+      db.add_java_error(cid, e.what(), zip.name());
     }
     if (java_class::has_signature(data)) {
       try {
 	java_class jc(&data);
 	db.add_java_class(cid, jc);
       } catch (java_class::exception &e) {
-	db.add_java_error(cid, e.what(), zip.name().c_str());
+	db.add_java_error(cid, e.what(), zip.name());
       }
     }
   }
