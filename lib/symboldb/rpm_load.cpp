@@ -38,6 +38,7 @@
 #include <cxxll/base16.hpp>
 #include <cxxll/java_class.hpp>
 #include <cxxll/zip_file.hpp>
+#include <cxxll/os_exception.hpp>
 
 #include <map>
 #include <sstream>
@@ -294,7 +295,12 @@ load_zip(database &db,
   zip_file zip(&file.contents);
   std::vector<unsigned char> data;
   while (zip.next()) {
-    zip.data(data);
+    try {
+      zip.data(data);
+    } catch (os_exception &e) {
+      // FIXME: Use proper, zip_file-specific exception.
+      db.add_java_error(cid, e.what(), zip.name().c_str());
+    }
     if (java_class::has_signature(data)) {
       try {
 	java_class jc(&data);
