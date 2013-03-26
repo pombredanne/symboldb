@@ -66,6 +66,10 @@ following commands as the "postgres" user:
 places, so re-using an existing database with another collation scheme
 is possible without a performance loss.)
 
+If you plan to load large repositories (such as Fedora releases), you
+need to tune your PostgreSQL installation.  At least the very least,
+increase the "shared_buffers" and "checkpoint_segments" values.
+
 Afterwards, as "USER", run "psql" to check if you can access the
 database.  The following commands have to be invoked as "USER", too.
 
