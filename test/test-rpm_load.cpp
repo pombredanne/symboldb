@@ -481,6 +481,12 @@ test()
       CHECK(db.package_by_digest(digest).value() == 0);
     }
 
+    db.txn_begin();
+    db.expire_packages();
+    db.expire_file_contents();
+    db.expire_java_classes();
+    db.txn_rollback();
+
     test_java_class(db, dbh);
   }
 

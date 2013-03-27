@@ -772,6 +772,36 @@ database::referenced_package_digests
   }
 }
 
+void
+database::expire_packages()
+{
+  pgresult_handle res;
+  res.exec
+    (impl_->conn, "DELETE FROM symboldb.package p"
+     " WHERE NOT EXISTS (SELECT 1 FROM symboldb.package_set_member psm"
+     " WHERE psm.package_id = p.package_id LIMIT 1)");
+}
+
+void
+database::expire_file_contents()
+{
+  pgresult_handle res;
+  res.exec
+    (impl_->conn, "DELETE FROM symboldb.file_contents fc"
+     " WHERE NOT EXISTS (SELECT 1 FROM symboldb.file f"
+     " WHERE f.contents_id = fc.contents_id LIMIT 1)");
+}
+
+void
+database::expire_java_classes()
+{
+  pgresult_handle res;
+  res.exec
+    (impl_->conn, "DELETE FROM symboldb.java_class jc"
+     " WHERE NOT EXISTS (SELECT 1 FROM symboldb.java_class_contents j"
+     " WHERE j.class_id = jc.class_id LIMIT 1)");
+}
+
 namespace {
   struct fc_entry {
     std::string file;

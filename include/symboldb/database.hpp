@@ -189,6 +189,11 @@ public:
 
   void referenced_package_digests(std::vector<std::vector<unsigned char> > &);
 
+  // Expire unreferenced data.
+  void expire_packages();
+  void expire_file_contents();
+  void expire_java_classes();
+
   // Debugging functions.
   void print_elf_soname_conflicts(package_set_id);
 
