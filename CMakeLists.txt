@@ -125,6 +125,7 @@ add_library (SymbolDB
   lib/symboldb/database.cpp
   lib/symboldb/download.cpp
   lib/symboldb/download_repo.cpp
+  lib/symboldb/expire.cpp
   lib/symboldb/options.cpp
   lib/symboldb/repomd.cpp
   lib/symboldb/repomd_primary.cpp

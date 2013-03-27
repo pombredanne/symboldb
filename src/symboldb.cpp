@@ -33,6 +33,7 @@
 #include <symboldb/options.hpp>
 #include <symboldb/download_repo.hpp>
 #include <symboldb/show_source_packages.hpp>
+#include <symboldb/expire.hpp>
 #include <cxxll/os.hpp>
 #include <cxxll/base16.hpp>
 #include <cxxll/curl_exception.hpp>
@@ -318,6 +319,7 @@ namespace {
       show_source_packages,
       show_stale_cached_rpms,
       show_soname_conflicts,
+      expire,
       run_example,
     } type;
   };
@@ -353,6 +355,7 @@ main(int argc, char **argv)
        command::show_stale_cached_rpms},
       {"show-soname-conflicts", required_argument, 0,
        command::show_soname_conflicts},
+      {"expire", no_argument, 0, command::expire},
       {"run-example", no_argument, 0, command::run_example},
       {"exclude-name", required_argument, 0, options::exclude_name},
       {"randomize", no_argument, 0, options::randomize},
@@ -400,6 +403,7 @@ main(int argc, char **argv)
       case command::show_primary:
       case command::show_source_packages:
       case command::show_stale_cached_rpms:
+      case command::expire:
       case command::run_example:
 	cmd = static_cast<command::type>(ch);
 	break;
@@ -431,6 +435,7 @@ main(int argc, char **argv)
       break;
     case command::create_schema:
     case command::show_soname_conflicts:
+    case command::expire:
       if (argc != optind) {
 	usage(argv[0]);
       }
@@ -483,6 +488,9 @@ main(int argc, char **argv)
       return do_show_stale_cached_rpms(opt, db);
     case command::show_soname_conflicts:
       return do_show_soname_conflicts(opt, db);
+    case command::expire:
+      expire(opt, db);
+      return 0;
     case command::run_example:
       return do_run_example(opt, db, argv + optind);
     case command::undefined:

@@ -86,6 +86,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </cmdsynopsis>
     <cmdsynopsis>
       <command>symboldb</command>
+      <arg choice="plain">--expire</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
       <arg choice="plain">--show-stale-cached-rpms</arg>
     </cmdsynopsis>
     <cmdsynopsis>
@@ -238,6 +242,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    file from the <filename>repodata/repomd.xml</filename>
 	    file, downloads and decompresses it, and writes it to
 	    standard output.  (The local cache is used if possible.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--expire</command>
+	</term>
+	<listitem>
+	  <para>
+	    Removes packages which are not part of any package set and
+	    other unreferenced database contents.  RPM files for
+	    packages which are not package set members are deleted as
+	    well.
 	  </para>
 	</listitem>
       </varlistentry>
