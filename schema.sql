@@ -123,6 +123,7 @@ COMMENT ON COLUMN symboldb.file_contents.contents IS
   'preview of the file contents';
 COMMENT ON COLUMN symboldb.file_contents.row_hash IS
   'internal hash used for deduplication';
+CREATE INDEX ON symboldb.file_contents (digest);
 
 CREATE FUNCTION symboldb.intern_file_contents (
   row_hash BYTEA, length BIGINT, mode INTEGER, 
