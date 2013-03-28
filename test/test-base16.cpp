@@ -34,6 +34,9 @@ test()
   str = "2f3FfFFe";
   base16_decode(str.begin(), str.end(), result.begin());
   COMPARE_STRING(result, "/?\377\376Y");
+  result = "XXXXY";
+  base16_decode(str.c_str(), result.begin());
+  COMPARE_STRING(result, "/?\377\376Y");
 }
 
 static test_register t("base16", test);
