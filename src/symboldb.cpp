@@ -39,6 +39,7 @@
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/curl_exception_dump.hpp>
 #include <cxxll/file_handle.hpp>
+#include <symboldb/get_file.hpp>
 
 #include <getopt.h>
 #include <stdio.h>
@@ -141,6 +142,30 @@ do_update_set(const symboldb_options &opt, database &db, char **argv)
   }
   db.txn_commit();
   return 0;
+}
+
+static int
+do_file(const symboldb_options &opt, database &db, const char *arg)
+{
+  std::string file(arg);
+  if (file.size() == 64) {
+    std::vector<unsigned char> digest;
+    try {
+      base16_decode(file.begin(), file.end(), std::back_inserter(digest));
+    } catch (base16_decode_exception &) {
+    }
+    if (!digest.empty()) {
+      fd_sink target(1);
+      if (!get_file(opt, db, digest, target)) {
+	fprintf(stderr, "error: could not locate file with digest %s\n",
+		file.c_str());
+	return 1;
+      }
+      return 0;
+    }
+  }
+  fprintf(stderr, "error: not a hexadecimal SHA-256 digest: %s\n", arg);
+  return 1;
 }
 
 static int
@@ -314,6 +339,7 @@ namespace {
       download,
       download_repo,
       load_repo,
+      file,
       show_repomd,
       show_primary,
       show_source_packages,
@@ -348,6 +374,7 @@ main(int argc, char **argv)
       {"download", no_argument, 0, command::download},
       {"download-repo", no_argument, 0, command::download_repo},
       {"load-repo", no_argument, 0, command::load_repo},
+      {"file", no_argument, 0, command::file},
       {"show-repomd", no_argument, 0, command::show_repomd},
       {"show-primary", no_argument, 0, command::show_primary},
       {"show-source-packages", no_argument, 0, command::show_source_packages},
@@ -399,6 +426,7 @@ main(int argc, char **argv)
       case command::download:
       case command::download_repo:
       case command::load_repo:
+      case command::file:
       case command::show_repomd:
       case command::show_primary:
       case command::show_source_packages:
@@ -447,6 +475,7 @@ main(int argc, char **argv)
     case command::show_stale_cached_rpms:
       break;
     case command::download:
+    case command::file:
     case command::show_repomd:
     case command::show_primary:
       if (argc - optind != 1) {
@@ -478,6 +507,8 @@ main(int argc, char **argv)
     case command::load_repo:
     case command::update_set_from_repo:
       return symboldb_download_repo(opt, db, argv + optind, true);
+    case command::file:
+      return do_file(opt, db, argv[optind]);
     case command::show_repomd:
       return do_show_repomd(opt, db, argv[optind]);
     case command::show_primary:

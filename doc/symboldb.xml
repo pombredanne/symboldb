@@ -66,6 +66,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </cmdsynopsis>
     <cmdsynopsis>
       <command>symboldb</command>
+      <arg choice="plain">--file</arg>
+      <arg choice="plain"><replaceable>hash</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
       <arg choice="plain">--show-repomd</arg>
       <arg choice="plain"><replaceable>URL</replaceable></arg>
     </cmdsynopsis>
@@ -217,6 +222,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    RPMs into the database as well.  The RPMs are not
 	    associated with any package set, see
 	    <command>--update-set-from-repo</command> for that.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--file</command>
+	<replaceable class="parameter">hash</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    Obtains the file with the specified SHA-256 hash and
+	    writes it to standard output.  The package must be both in
+	    the database and the RPM cache.
 	  </para>
 	</listitem>
       </varlistentry>
