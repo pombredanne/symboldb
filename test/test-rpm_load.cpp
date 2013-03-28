@@ -30,7 +30,10 @@
 #include <cxxll/string_support.hpp>
 #include <cxxll/read_file.hpp>
 #include <cxxll/java_class.hpp>
+#include <cxxll/base16.hpp>
+#include <cxxll/hash.hpp>
 #include <symboldb/options.hpp>
+#include <symboldb/get_file.hpp>
 
 #include "test.hpp"
 
@@ -479,6 +482,33 @@ test()
       std::vector<unsigned char> digest;
       digest.resize(32);
       CHECK(db.package_by_digest(digest).value() == 0);
+    }
+
+    // Test get_file().
+    {
+      std::vector<unsigned char> digest;
+      base16_decode("8fd9d1fdf0bcee5715e347313f5e43a9"
+		    "207f3404c03f4e0fe5c1108e0d0f6c4d",
+		    std::back_inserter(digest));
+      {
+	hash_sink hash(hash_sink::sha256);
+	CHECK(get_file(opt, db, digest, hash));
+	std::vector<unsigned char> result;
+	hash.digest(result);
+	CHECK(result == digest);
+      }
+
+      digest.clear();
+      base16_decode("b75fc6cd2359b0d7d3468be0499ca897"
+		   "87234c72fe5b9cf36e4b28cd9a56025c",
+		    std::back_inserter(digest));
+      {
+	hash_sink hash(hash_sink::sha256);
+	CHECK(get_file(opt, db, digest, hash));
+	std::vector<unsigned char> result;
+	hash.digest(result);
+	CHECK(result == digest);
+      }
     }
 
     db.txn_begin();
