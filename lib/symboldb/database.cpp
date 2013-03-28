@@ -893,3 +893,62 @@ database::create_schema()
 {
   exec_sql(SCHEMA);
 }
+
+//////////////////////////////////////////////////////////////////////
+// database::file_with_digest
+
+struct database::files_with_digest::impl {
+  std::tr1::shared_ptr<database::impl> impl_;
+  std::vector<unsigned char> rpm_digest_;
+  std::string file_name_;
+  pgresult_handle res_;
+  int row_;
+  impl(database &, const std::vector<unsigned char> &);
+};
+
+database::files_with_digest::impl::impl
+  (database &db, const std::vector<unsigned char> &digest)
+  : impl_(db.impl_), row_(0)
+{
+  pg_query_binary
+    (impl_->conn, res_,
+     "SELECT pd.digest, f.name"
+     " FROM symboldb.package_digest pd"
+     " JOIN symboldb.file f USING (package_id)"
+     " JOIN symboldb.file_contents fc USING (contents_id)"
+     " WHERE fc.digest = $1", digest);
+}
+
+database::files_with_digest::files_with_digest
+  (database &db, const std::vector<unsigned char> &digest)
+  : impl_(new impl(db, digest))
+{
+}
+
+database::files_with_digest::~files_with_digest()
+{
+}
+
+bool
+database::files_with_digest::next()
+{
+  if (impl_->row_ <= impl_->res_.ntuples()) {
+    pg_response(impl_->res_, impl_->row_,
+		impl_->rpm_digest_, impl_->file_name_);
+    ++impl_->row_;
+    return true;
+  }
+  return false;
+}
+
+const std::vector<unsigned char> &
+database::files_with_digest::rpm_digest() const
+{
+  return impl_->rpm_digest_;
+}
+
+const std::string &
+database::files_with_digest::file_name() const
+{
+  return impl_->file_name_;
+}

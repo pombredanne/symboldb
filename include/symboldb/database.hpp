@@ -199,6 +199,28 @@ public:
 
   // Trap door into the database.
   void exec_sql(const char *command);
+
+  // Obtains files with the specified digest.  Call next() until it
+  // returns false, and call rpm_digest() and file_name() to obtain
+  // the location of individual files.
+  class files_with_digest {
+    struct impl;
+    std::tr1::shared_ptr<impl> impl_;
+    files_with_digest(const files_with_digest &); // not implemented
+    files_with_digest &operator=(const files_with_digest &); // not implemented
+  public:
+    files_with_digest(database &, const std::vector<unsigned char> &);
+    ~files_with_digest();
+
+    bool next();
+
+    // The outer digest of the RPM package.  Can be used to locate the
+    // file in the file cache.
+    const std::vector<unsigned char> &rpm_digest() const;
+
+    // The path within the RPM file.
+    const std::string &file_name() const;
+  };
 };
 
 template <class RandomAccessIterator> database::advisory_lock
