@@ -13,7 +13,7 @@ versions of the system calls:
       JOIN symboldb.package p USING (package_id)
       JOIN symboldb.file f USING (package_id)
       JOIN symboldb.elf_reference er USING (contents_id)
-      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm.set_id = symboldb.package_set('Fedora/18/i686')
       AND er.name IN ('__xstat', '__lxstat', '__fxstat')
       ORDER BY 1;
 
