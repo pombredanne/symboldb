@@ -68,6 +68,17 @@ cxxll::home_directory()
   throw std::runtime_error("could not determine HOME directory");
 }
 
+std::string
+cxxll::temporary_directory_path()
+{
+  const char *tmp = getenv("TMPDIR");
+  if (tmp != NULL && is_directory(tmp)
+      && access(tmp, R_OK | W_OK | X_OK) == 0) {
+    return tmp;
+  }
+  return "/tmp";
+}
+
 bool
 cxxll::make_directory_hierarchy(const char *path, unsigned mode)
 {

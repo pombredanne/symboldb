@@ -43,6 +43,9 @@ std::string home_directory();
 // false.
 bool make_directory_hierarchy(const char *path, unsigned mode);
 
+// Returns a directory used for temporary files.
+std::string temporary_directory_path();
+
 // Creates a temporary directory with the indicated prefix (which
 // shall not contain any XXXXXX characters).  Throws os_exception on
 // failure.
