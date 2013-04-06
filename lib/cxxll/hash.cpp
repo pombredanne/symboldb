@@ -19,6 +19,7 @@
 #include <cxxll/hash.hpp>
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/os.hpp>
+#include <cxxll/checksum.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -172,4 +173,24 @@ cxxll::hash_file(hash_sink::type t,
     sink.write(buf, ret);
   }
   sink.digest(digest);
+}
+
+void
+cxxll::hash_file(hash_sink::type t, const char *path, checksum &csum)
+{
+  hash_sink sink(t);
+  fd_handle fd;
+  fd.open_read_only(path);
+
+  unsigned char buf[8192];
+  while (true) {
+    size_t ret = fd.read(buf, sizeof(buf));
+    if (ret == 0) {
+      break;
+    }
+    sink.write(buf, ret);
+  }
+  sink.digest(csum.value);
+  csum.type = t;
+  csum.length = sink.octets();
 }

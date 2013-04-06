@@ -26,6 +26,8 @@
 
 namespace cxxll {
 
+class checksum;
+
 // Hashing sink implementation.
 // On NSS errors, an exception is thrown.
 class hash_sink : public sink {
@@ -69,5 +71,9 @@ std::vector<unsigned char> hash(hash_sink::type,
 // result in os_exception.
 void hash_file(hash_sink::type, const char *path,
 	       std::vector<unsigned char> &digest);
+
+// Similar to hash_file() above, except that the result is stored in a
+// checksum object.
+void hash_file(hash_sink::type, const char *path, checksum &);
 
 } // namespace cxxll
