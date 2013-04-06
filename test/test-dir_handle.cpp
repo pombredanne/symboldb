@@ -19,6 +19,7 @@
 #include <cxxll/dir_handle.hpp>
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/os.hpp>
+#include <cxxll/temporary_directory.hpp>
 
 #include <set>
 #include <string>
@@ -48,16 +49,17 @@ test()
     }
   }
 
-  std::string tempdir = make_temporary_directory("/tmp/test-dir_handle-");
-  try {
+  {
+    temporary_directory tempdir
+      ((temporary_directory_path() + "/test-dir_handle-").c_str());
     {
-      dir_handle h(tempdir.c_str());
+      dir_handle h(tempdir.path().c_str());
       CHECK(h.readdir() == NULL);
     }
 
     {
       std::set<std::string> files;
-      dir_handle h(tempdir.c_str());
+      dir_handle h(tempdir.path().c_str());
       while (dirent *e = h.readdir_all()) {
 	files.insert(e->d_name);
       }
@@ -66,10 +68,10 @@ test()
       COMPARE_STRING(*++files.begin(), "..");
     }
 
-    make_directory_hierarchy((tempdir + "/subdir").c_str(), 0700);
+    make_directory_hierarchy((tempdir.path("subdir")).c_str(), 0700);
     {
       std::set<std::string> files;
-      dir_handle h(tempdir.c_str());
+      dir_handle h(tempdir.path().c_str());
       dirent *e = h.readdir();
       CHECK(e != NULL);
       COMPARE_STRING(e->d_name, "subdir");
@@ -78,7 +80,7 @@ test()
 
     {
       std::set<std::string> files;
-      dir_handle h(tempdir.c_str());
+      dir_handle h(tempdir.path().c_str());
       while (dirent *e = h.readdir_all()) {
 	files.insert(e->d_name);
       }
@@ -87,12 +89,7 @@ test()
       COMPARE_STRING(*++files.begin(), "..");
       COMPARE_STRING(*++(++files .begin()), "subdir");
     }
-
-  } catch (...) {
-    remove_directory_tree(tempdir.c_str());
-    throw;
   }
-  remove_directory_tree(tempdir.c_str());
 }
 
 static test_register t("dir_handle", test);
