@@ -31,6 +31,7 @@
 #include <cxxll/dir_handle.hpp>
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/file_handle.hpp>
+#include <cxxll/temporary_directory.hpp>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -109,7 +110,7 @@ namespace {
 
 struct pg_testdb::impl {
   std::string program_prefix;
-  std::string directory;
+  temporary_directory directory;
   std::string logfile;
   std::vector<std::string> notices;
   subprocess server;
@@ -127,8 +128,8 @@ struct pg_testdb::impl {
 
 pg_testdb::impl::impl()
   : program_prefix(postgresql_prefix()),
-    directory(make_temporary_directory("/tmp/pg_testdb-")),
-    logfile(directory + "/server.log")
+    directory((temporary_directory_path() + "/pg_testdb-").c_str()),
+    logfile(directory.path("server.log"))
 {
   try {
     initdb();
@@ -137,11 +138,6 @@ pg_testdb::impl::impl()
     wait_for_socket();
   } catch (...) {
     server.destroy_nothrow();
-    try {
-      remove_directory_tree(directory.c_str());
-    } catch (...) {
-      // FIXME: log
-    }
     throw;
   }
 }
@@ -149,11 +145,6 @@ pg_testdb::impl::impl()
 pg_testdb::impl::~impl()
 {
   server.destroy_nothrow();
-  try {
-    remove_directory_tree(directory.c_str());
-  } catch(...) {
-    // FIXME: log
-  }
 }
 
 void
@@ -165,7 +156,7 @@ pg_testdb::impl::initdb()
   initdb.redirect(subprocess::out, subprocess::pipe);
   initdb
     .arg("-A").arg("ident")
-    .arg("-D").arg(directory.c_str())
+    .arg("-D").arg(directory.path().c_str())
     .arg("-E").arg("UTF8")
     .arg("--locale").arg("en_US.UTF-8");
   initdb.start();
@@ -181,8 +172,7 @@ pg_testdb::impl::initdb()
 void
 pg_testdb::impl::configure()
 {
-  std::string confpath(directory);
-  confpath += "/postgresql.conf";
+  std::string confpath(directory.path("postgresql.conf"));
 
   // Older PostgreSQL versions use "unix_socket_directory", but 9.2
   // and later use "unix_socket_directories" (and recognize only this
@@ -191,7 +181,7 @@ pg_testdb::impl::configure()
 
   file_handle conf(confpath.c_str(), "a");
   fprintf(conf.get(), "unix_socket_director%s = '%s'\n",
-	  sockdir_plural ? "ies" : "y", directory.c_str());
+	  sockdir_plural ? "ies" : "y", directory.path().c_str());
   fprintf(conf.get(), "unix_socket_permissions = 0700\n");
   fprintf(conf.get(), "log_directory = '.'\n");
   fprintf(conf.get(), "log_filename = 'server.log'\n");
@@ -206,7 +196,7 @@ pg_testdb::impl::start()
   fd_handle fd;
   fd.open(logfile.c_str(), O_WRONLY | O_APPEND | O_CREAT | O_TRUNC, 0600);
   server.command((program_prefix + POSTMASTER).c_str())
-    .arg("-D").arg(directory.c_str())
+    .arg("-D").arg(directory.path().c_str())
     .arg("-h").arg("") // no TCP socket
     .arg("-F")  // disable fsync()
     .redirect_to(subprocess::out, fd.get())
@@ -217,8 +207,7 @@ pg_testdb::impl::start()
 void
 pg_testdb::impl::wait_for_socket()
 {
-  std::string socket(directory);
-  socket += "/.s.PGSQL.5432";
+  std::string socket(directory.path(".s.PGSQL.5432"));
   for (unsigned i = 0; i < 150; ++i) {
     if (path_exists(socket.c_str())) {
       return;
@@ -284,7 +273,7 @@ pg_testdb::notices() const
 const std::string &
 pg_testdb::directory()
 {
-  return impl_->directory;
+  return impl_->directory.path();
 }
 
 const std::string &
@@ -300,7 +289,7 @@ pg_testdb::connect(const char *dbname)
     "host", "port", "dbname", NULL
   };
   const char *values[] = {
-    impl_->directory.c_str(), "5432", dbname, NULL
+    impl_->directory.path().c_str(), "5432", dbname, NULL
   };
   pgconn_handle handle(PQconnectdbParams(keys, values, 0));
   PQsetNoticeProcessor(handle.get(), impl::notice_processor, impl_.get());
