@@ -32,6 +32,11 @@
 #include <cxxll/java_class.hpp>
 #include <cxxll/base16.hpp>
 #include <cxxll/hash.hpp>
+#include <cxxll/checksum.hpp>
+#include <cxxll/fd_handle.hpp>
+#include <cxxll/fd_source.hpp>
+#include <cxxll/source_sink.hpp>
+#include <cxxll/temporary_directory.hpp>
 #include <symboldb/options.hpp>
 #include <symboldb/get_file.hpp>
 
@@ -166,7 +171,9 @@ test()
     res.exec(db, database::SCHEMA);
   }
 
+  temporary_directory cachedir;
   symboldb_options opt;
+  opt.cache_path = cachedir.path();
   opt.output = symboldb_options::quiet;
   database db(testdb.directory().c_str(), DBNAME);
 
@@ -179,16 +186,31 @@ test()
     while (dirent *e = rpmdir.readdir()) {
       if (ends_with(std::string(e->d_name), ".rpm")
 	  && !ends_with(std::string(e->d_name), ".src.rpm")) {
+	std::string rpmpath(rpmdir_prefix + e->d_name);
+	checksum csum;
+	hash_file(hash_sink::sha256, rpmpath.c_str(), csum);
+	csum.type = hash_sink::sha256;
+	// Copy the RPM file into the RPM cache.
+	{
+	  std::tr1::shared_ptr<file_cache> fcache(opt.rpm_cache());
+	  file_cache::add_sink sink(*fcache, csum);
+	  fd_handle fd;
+	  fd.open_read_only(rpmpath.c_str());
+	  fd_source source(fd.get());
+	  copy_source_to_sink(source, sink);
+	  std::string p;
+	  sink.finish(p);
+	}
 	rpm_package_info info;
 	database::package_id pkg
-	  (rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info, NULL));
+	  (rpm_load(opt, db, rpmpath.c_str(), info, &csum));
 	CHECK(pkg > last_pkg_id);
 	last_pkg_id = pkg;
-	pkg = rpm_load(opt, db, (rpmdir_prefix + e->d_name).c_str(), info,
-		       NULL);
+	pkg = rpm_load(opt, db, rpmpath.c_str(), info, &csum);
 	CHECK(pkg == last_pkg_id);
       }
     }
+    opt.output = symboldb_options::standard;
   }
 
   {
