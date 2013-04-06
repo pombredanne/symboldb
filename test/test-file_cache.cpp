@@ -19,6 +19,7 @@
 #include <cxxll/file_cache.hpp>
 #include <cxxll/checksum.hpp>
 #include <cxxll/base16.hpp>
+#include <cxxll/temporary_directory.hpp>
 
 #include <cxxll/os.hpp>
 #include "test.hpp"
@@ -31,9 +32,11 @@ using namespace cxxll;
 static void
 test()
 {
-  std::string tempdir(make_temporary_directory("/tmp/test-file_cache-"));
-  try {
-    file_cache fc(tempdir.c_str());
+  temporary_directory tempdir
+    ((temporary_directory_path() + "/test-file_cache-").c_str());
+
+  {
+    file_cache fc(tempdir.path().c_str());
     static const char valid[] = "valid";
     std::vector<unsigned char> data(valid, valid + sizeof(valid));
     checksum csum;
@@ -48,8 +51,9 @@ test()
     csum.length = sizeof(valid);
     std::string path;
     fc.add(csum, data, path);
-    COMPARE_STRING(path, tempdir + '/' +
-		   base16_encode(csum.value.begin(), csum.value.end()));
+    COMPARE_STRING(path,
+		   tempdir.path(base16_encode(csum.value.begin(),
+					      csum.value.end()).c_str()));
     CHECK(access(path.c_str(), R_OK) == 0);
     std::vector<std::vector<unsigned char> > digests;
     fc.digests(digests);
@@ -85,11 +89,7 @@ test()
     COMPARE_STRING(path, "abc");
     CHECK(access(old_path.c_str(), R_OK) == -1 && errno == ENOENT);
     CHECK(access((old_path + ".tmp").c_str(), R_OK) == -1 && errno == ENOENT);
-  } catch (...) {
-    remove_directory_tree(tempdir.c_str());
-    throw;
   }
-  remove_directory_tree(tempdir.c_str());
 }
 
 static test_register t("file_cache", test);
