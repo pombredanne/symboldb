@@ -158,9 +158,13 @@ test(void)
     std::string prefix("/tmp/test-fd_handle-");
     std::string path(fd.mkstemp(prefix.c_str()));
     CHECK(path.size() > prefix.size());
-    path.resize(prefix.size());
-    COMPARE_STRING(path, prefix);
+    std::string pathpfx(path);
+    pathpfx.resize(prefix.size());
+    COMPARE_STRING(pathpfx, prefix);
     CHECK(fd.close_on_exec());
+    CHECK(path_exists(path.c_str()));
+    fd.unlinkat(path.c_str(), 0);
+    CHECK(!path_exists(path.c_str()));
   }
 }
 
