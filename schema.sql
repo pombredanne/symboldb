@@ -353,9 +353,9 @@ CREATE INDEX ON symboldb.java_class_contents (class_id);
 CREATE TABLE symboldb.url_cache (
   url TEXT NOT NULL PRIMARY KEY CHECK (url LIKE '%:%') COLLATE "C",
   http_time BIGINT NOT NULL,
-  data BYTEA,
-  last_change TIMESTAMP WITHOUT TIME ZONE,
-  last_access TIMESTAMP WITHOUT TIME ZONE
+  data BYTEA NOT NULL,
+  last_change TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+  last_access TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 COMMENT ON TABLE symboldb.url_cache IS 'cache for URL downloads';
 
