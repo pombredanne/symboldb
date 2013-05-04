@@ -354,7 +354,8 @@ CREATE TABLE symboldb.url_cache (
   url TEXT NOT NULL PRIMARY KEY CHECK (url LIKE '%:%') COLLATE "C",
   http_time BIGINT NOT NULL,
   data BYTEA,
-  last_change TIMESTAMP WITHOUT TIME ZONE
+  last_change TIMESTAMP WITHOUT TIME ZONE,
+  last_access TIMESTAMP WITHOUT TIME ZONE
 );
 COMMENT ON TABLE symboldb.url_cache IS 'cache for URL downloads';
 

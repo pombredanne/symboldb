@@ -696,6 +696,15 @@ database::update_package_set_caches(package_set_id set)
   update_elf_closure(impl_->conn, set, NULL);
 }
 
+static void
+update_url_last_access(pgconn_handle &db, pgresult_handle &res,
+		       const char *url)
+{
+  pg_query(db, res, "UPDATE " URL_CACHE_TABLE
+	   " SET last_access = NOW() AT TIME ZONE 'UTC'"
+	   " WHERE url = $1", url);
+}
+
 bool
 database::url_cache_fetch(const char *url, size_t expected_length,
 			  long long expected_time,
@@ -713,6 +722,7 @@ database::url_cache_fetch(const char *url, size_t expected_length,
     return false;
   } else {
     pg_response(res, 0, data);
+    update_url_last_access(impl_->conn, res, url);
     return true;
   }
 }
@@ -729,6 +739,7 @@ database::url_cache_fetch(const char *url,
     return false;
   }
   pg_response(res, 0, data);
+  update_url_last_access(impl_->conn, res, url);
   return true;
 }
 
@@ -745,13 +756,16 @@ database::url_cache_update(const char *url,
   if (res.ntuples() == 1) {
     pg_query
       (impl_->conn, res, "UPDATE " URL_CACHE_TABLE
-       " SET http_time = $2, data = $3, last_change = NOW() AT TIME ZONE 'UTC'"
+       " SET http_time = $2, data = $3,"
+       " last_change = NOW() AT TIME ZONE 'UTC',"
+       " last_access = NOW() AT TIME ZONE 'UTC'"
        " WHERE url = $1", url, time, data);
   } else {
     pg_query
       (impl_->conn, res, "INSERT INTO " URL_CACHE_TABLE
-       " (url, http_time, data, last_change)"
-       " VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC')", url, time, data);
+       " (url, http_time, data, last_change, last_access)"
+       " VALUES ($1, $2, $3, NOW() AT TIME ZONE 'UTC', "
+       "NOW() AT TIME ZONE 'UTC')", url, time, data);
   }
 }
 
