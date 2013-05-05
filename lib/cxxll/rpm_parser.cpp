@@ -142,6 +142,9 @@ rpm_parser_state::impl::get_header()
   pkg.source_rpm = get_string(header, "SOURCERPM", RPMTAG_SOURCERPM);
   pkg.hash = get_string(header, "SHA1HEADER", RPMTAG_SHA1HEADER);
   pkg.build_host = get_string(header, "BUILDHOST", RPMTAG_BUILDHOST);
+  pkg.summary = get_string(header, "SUMMARY", RPMTAG_SUMMARY);
+  pkg.description = get_string(header, "DESCRIPTION", RPMTAG_DESCRIPTION);
+  pkg.license = get_string(header, "LICENSE", RPMTAG_LICENSE);
 
   {
     rpmtd_wrapper td;

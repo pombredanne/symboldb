@@ -54,7 +54,10 @@ CREATE TABLE symboldb.package (
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
   source TEXT NOT NULL CHECK (LENGTH(source) > 0) COLLATE "C",
   build_host TEXT NOT NULL CHECK (LENGTH(build_host) > 0) COLLATE "C",
-  build_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL
+  build_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
+  summary TEXT NOT NULL COLLATE "C",
+  description TEXT NOT NULL COLLATE "C",
+  license TEXT NOT NULL COLLATE "C"
 );
 COMMENT ON COLUMN symboldb.package.source IS
   'file name of the source RPM package';
