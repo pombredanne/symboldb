@@ -26,6 +26,7 @@
 #include <vector>
 
 namespace cxxll {
+  class rpm_dependency;
   class rpm_file_info;
   class rpm_package_info;
   class elf_image;
@@ -112,6 +113,9 @@ public:
   // Looks up a package ID by the external SHA-1 or SHA-256 digest.
   // Returns 0 if the package ID was not found.
   package_id package_by_digest(const std::vector<unsigned char> &digest);
+
+  // Adds a dependency for the package.
+  void add_package_dependency(package_id, const cxxll::rpm_dependency &);
 
   file_id add_file(package_id, const std::string &name, bool normalized,
 		   long long mtime, int inode, contents_id);

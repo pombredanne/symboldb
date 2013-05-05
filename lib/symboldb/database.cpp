@@ -18,6 +18,7 @@
 
 #include <symboldb/database.hpp>
 #include <symboldb/update_elf_closure.hpp>
+#include <cxxll/rpm_dependency.hpp>
 #include <cxxll/rpm_file_info.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/elf_image.hpp>
@@ -49,6 +50,7 @@ using namespace cxxll;
 
 #define PACKAGE_TABLE "symboldb.package"
 #define PACKAGE_DIGEST_TABLE "symboldb.package_digest"
+#define PACKAGE_REQUIRE_TABLE "symboldb.package_require"
 #define FILE_TABLE "symboldb.file"
 #define FILE_CONTENTS_TABLE "symboldb.file_contents"
 #define DIRECTORY_TABLE "symboldb.directory"
@@ -324,6 +326,25 @@ database::package_by_digest(const std::vector<unsigned char> &digest)
      "SELECT package_id FROM " PACKAGE_DIGEST_TABLE " WHERE digest = $1",
      digest);
   return package_id(get_id(res));
+}
+
+void
+database::add_package_dependency(package_id pkg, const rpm_dependency &dep)
+{
+  pgresult_handle res;
+  const char *op = dep.op.empty() ? NULL : dep.op.c_str();
+  const char *version = dep.version.empty() ? NULL : dep.version.c_str();
+  switch (dep.kind) {
+  case rpm_dependency::requires:
+    pg_query(impl_->conn, res,
+	     "INSERT INTO " PACKAGE_REQUIRE_TABLE
+	     " (package_id, capability, op, version, pre, build)"
+	     " VALUES ($1, $2, $3, $4, $5, $6)",
+	     pkg.value(), dep.capability, op, version, dep.pre, dep.build);
+    break;
+  default:
+    abort();
+  }
 }
 
 database::file_id
