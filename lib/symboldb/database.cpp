@@ -52,6 +52,7 @@ using namespace cxxll;
 #define PACKAGE_DIGEST_TABLE "symboldb.package_digest"
 #define PACKAGE_REQUIRE_TABLE "symboldb.package_require"
 #define PACKAGE_PROVIDE_TABLE "symboldb.package_provide"
+#define PACKAGE_OBSOLETE_TABLE "symboldb.package_obsolete"
 #define FILE_TABLE "symboldb.file"
 #define FILE_CONTENTS_TABLE "symboldb.file_contents"
 #define DIRECTORY_TABLE "symboldb.directory"
@@ -351,6 +352,13 @@ database::add_package_dependency(package_id pkg, const rpm_dependency &dep)
   case rpm_dependency::provides:
     pg_query(impl_->conn, res,
 	     "INSERT INTO " PACKAGE_PROVIDE_TABLE
+	     " (package_id, capability, op, version, pre, build)"
+	     " VALUES ($1, $2, $3, $4, $5, $6)",
+	     pkg.value(), dep.capability, op, version, dep.pre, dep.build);
+    break;
+  case rpm_dependency::obsoletes:
+    pg_query(impl_->conn, res,
+	     "INSERT INTO " PACKAGE_OBSOLETE_TABLE
 	     " (package_id, capability, op, version, pre, build)"
 	     " VALUES ($1, $2, $3, $4, $5, $6)",
 	     pkg.value(), dep.capability, op, version, dep.pre, dep.build);
