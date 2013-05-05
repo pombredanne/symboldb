@@ -173,6 +173,12 @@ test()
        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
     CHECK(r.ntuples() == 1);
     COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9,10,11,12}");
+    pg_query
+      (h, r, "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,"
+       " $13]",
+       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9,10,11,12,13}");
 
     pg_query_binary(h, r, "SELECT ARRAY[$1]::text", 1);
     CHECK(r.ntuples() == 1);
@@ -229,6 +235,12 @@ test()
 		    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
     CHECK(r.ntuples() == 1);
     COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9,10,11,12}");
+    pg_query_binary(h, r,
+		    "SELECT ARRAY[$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,"
+		    " $11, $12, $13]::text",
+		    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13);
+    CHECK(r.ntuples() == 1);
+    COMPARE_STRING(r.getvalue(0, 0), "{1,2,3,4,5,6,7,8,9,10,11,12,13}");
 
     ////////////////////////////////////////////////////////////////////
     // Response decoding

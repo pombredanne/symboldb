@@ -645,6 +645,95 @@ namespace pg_private {
       (conn, sql, 12, paramTypes, paramValues, paramLengths, paramFormats, fmt);
   }
 
+  template <class T1, class T2, class T3, class T4, class T5, class T6,
+	    class T7, class T8, class T9, class T10, class T11, class T12,
+	    class T13> void
+  pg_query(int fmt, pgconn_handle &conn, pgresult_handle &res, const char *sql,
+	   typename dispatch<T1>::arg t1, typename dispatch<T2>::arg t2,
+	   typename dispatch<T3>::arg t3, typename dispatch<T4>::arg t4,
+	   typename dispatch<T5>::arg t5, typename dispatch<T6>::arg t6,
+	   typename dispatch<T7>::arg t7, typename dispatch<T8>::arg t8,
+	   typename dispatch<T9>::arg t9, typename dispatch<T10>::arg t10,
+	   typename dispatch<T11>::arg t11, typename dispatch<T12>::arg t12,
+	   typename dispatch<T13>::arg t13)
+  {
+    char s1[pg_private::dispatch<T1>::storage];
+    char s2[pg_private::dispatch<T2>::storage];
+    char s3[pg_private::dispatch<T3>::storage];
+    char s4[pg_private::dispatch<T4>::storage];
+    char s5[pg_private::dispatch<T5>::storage];
+    char s6[pg_private::dispatch<T6>::storage];
+    char s7[pg_private::dispatch<T7>::storage];
+    char s8[pg_private::dispatch<T8>::storage];
+    char s9[pg_private::dispatch<T9>::storage];
+    char s10[pg_private::dispatch<T10>::storage];
+    char s11[pg_private::dispatch<T11>::storage];
+    char s12[pg_private::dispatch<T12>::storage];
+    char s13[pg_private::dispatch<T13>::storage];
+    const Oid paramTypes[] = {
+      pg_private::dispatch<T1>::oid,
+      pg_private::dispatch<T2>::oid,
+      pg_private::dispatch<T3>::oid,
+      pg_private::dispatch<T4>::oid,
+      pg_private::dispatch<T5>::oid,
+      pg_private::dispatch<T6>::oid,
+      pg_private::dispatch<T7>::oid,
+      pg_private::dispatch<T8>::oid,
+      pg_private::dispatch<T9>::oid,
+      pg_private::dispatch<T10>::oid,
+      pg_private::dispatch<T11>::oid,
+      pg_private::dispatch<T12>::oid,
+      pg_private::dispatch<T13>::oid,
+    };
+    const char * paramValues[] = {
+      pg_private::dispatch<T1>::store(s1, t1),
+      pg_private::dispatch<T2>::store(s2, t2),
+      pg_private::dispatch<T3>::store(s3, t3),
+      pg_private::dispatch<T4>::store(s4, t4),
+      pg_private::dispatch<T5>::store(s5, t5),
+      pg_private::dispatch<T6>::store(s6, t6),
+      pg_private::dispatch<T7>::store(s7, t7),
+      pg_private::dispatch<T8>::store(s8, t8),
+      pg_private::dispatch<T9>::store(s9, t9),
+      pg_private::dispatch<T10>::store(s10, t10),
+      pg_private::dispatch<T11>::store(s11, t11),
+      pg_private::dispatch<T12>::store(s12, t12),
+      pg_private::dispatch<T13>::store(s13, t13),
+    };
+    const int paramLengths[] = {
+      pg_private::dispatch<T1>::length(t1),
+      pg_private::dispatch<T2>::length(t2),
+      pg_private::dispatch<T3>::length(t3),
+      pg_private::dispatch<T4>::length(t4),
+      pg_private::dispatch<T5>::length(t5),
+      pg_private::dispatch<T6>::length(t6),
+      pg_private::dispatch<T7>::length(t7),
+      pg_private::dispatch<T8>::length(t8),
+      pg_private::dispatch<T9>::length(t9),
+      pg_private::dispatch<T10>::length(t10),
+      pg_private::dispatch<T11>::length(t11),
+      pg_private::dispatch<T12>::length(t12),
+      pg_private::dispatch<T13>::length(t13),
+    };
+    const int paramFormats[] = {
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+    };
+    res.execParamsCustom
+      (conn, sql, 13, paramTypes, paramValues, paramLengths, paramFormats, fmt);
+  }
+
 } // pg_private
 
 template <class T1> inline void
@@ -878,6 +967,36 @@ pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
   return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11,
 			      T12>
     (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12);
+}
+
+template <class T1, class T2, class T3, class T4, class T5, class T6,
+	  class T7, class T8, class T9, class T10, class T11,
+	  class T12, class T13> inline void
+pg_query(pgconn_handle &conn, pgresult_handle &res, const char *sql,
+	 const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
+	 const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8,
+	 const T9 &t9, const T10 &t10, const T11 &t11, const T12 &t12,
+	 const T13 &t13)
+{
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11,
+			      T12, T13>
+    (0, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12,
+     t13);
+}
+
+template <class T1, class T2, class T3, class T4, class T5, class T6,
+	  class T7, class T8, class T9, class T10, class T11,
+	  class T12, class T13> inline void
+pg_query_binary(pgconn_handle &conn, pgresult_handle &res, const char *sql,
+		const T1 &t1, const T2 &t2, const T3 &t3, const T4 &t4,
+		const T5 &t5, const T6 &t6, const T7 &t7, const T8 &t8,
+		const T9 &t9, const T10 &t10, const T11 &t11, const T12 &t12,
+		const T13 &t13)
+{
+  return pg_private::pg_query<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11,
+			      T12, T13>
+    (1, conn, res, sql, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12,
+     t13);
 }
 
 } // namespace cxxll
