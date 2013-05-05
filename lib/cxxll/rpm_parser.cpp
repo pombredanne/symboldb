@@ -52,6 +52,7 @@ cxxll::rpm_parser_deinit()
 struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
+  std::vector<rpm_dependency> dependencies;
   bool payload_is_open;
 
   impl()
@@ -77,6 +78,7 @@ struct rpm_parser_state::impl {
   file_map files;
   void get_header();
   void get_files_from_header(); // called on demand by open_payload()
+  void get_dependencies(); // populate the dependencies member
   void open_payload(); // called on demand by read_file()
 };
 
@@ -308,6 +310,54 @@ rpm_parser_state::impl::get_files_from_header()
 }
 
 void
+rpm_parser_state::impl::get_dependencies()
+{
+  const headerGetFlags hflags = HEADERGET_ALLOC | HEADERGET_EXT;
+  rpmtd_wrapper name;
+  rpmtd_wrapper flags;
+  rpmtd_wrapper version;
+  if (!headerGet(header, RPMTAG_REQUIRENAME, name.raw, hflags)) {
+    throw rpm_parser_exception("could not get REQUIRENAME header");
+  }
+  if (!headerGet(header, RPMTAG_REQUIREFLAGS, flags.raw, hflags)) {
+    throw rpm_parser_exception("could not get REQUIREFLAGS header");
+  }
+  if (!headerGet(header, RPMTAG_REQUIREVERSION, version.raw, hflags)) {
+    throw rpm_parser_exception("could not get REQUIREVERSION header");
+  }
+  while (true) {
+    const char *namestr = rpmtdNextString(name.raw);
+    if (namestr == NULL) {
+      break;
+    }
+
+    const uint32_t *flagsuint = rpmtdNextUint32(flags.raw);
+    if (flagsuint == NULL) {
+      throw rpm_parser_exception("missing entries in REQUIREFlAGS header");
+    }
+    const char *versionstr =rpmtdNextString(version.raw);
+    if (versionstr == NULL) {
+      throw rpm_parser_exception("missing entries in REQUIREVERSION header");
+    }
+    dependencies.push_back(rpm_dependency());
+    rpm_dependency &dep = dependencies.back();
+    dep.kind = rpm_dependency::requires;
+    dep.capability = namestr;
+    if (*flagsuint & RPMSENSE_LESS) {
+      dep.op += '<';
+    }
+    if (*flagsuint & RPMSENSE_GREATER) {
+      dep.op += '>';
+    }
+    if (*flagsuint & RPMSENSE_EQUAL) {
+      dep.op += '=';
+    }
+    dep.pre = (*flagsuint & RPMSENSE_PREREQ) != 0;
+    dep.version = versionstr;
+  }
+}
+
+void
 rpm_parser_state::impl::open_payload()
 {
   get_files_from_header();
@@ -359,6 +409,7 @@ rpm_parser_state::rpm_parser_state(const char *path)
   }
 
   impl_->get_header();
+  impl_->get_dependencies();
 }
 
 rpm_parser_state::~rpm_parser_state()
@@ -375,6 +426,12 @@ const rpm_package_info &
 rpm_parser_state::package() const
 {
   return impl_->pkg;
+}
+
+const std::vector<rpm_dependency> &
+rpm_parser_state::dependencies() const
+{
+  return impl_->dependencies;
 }
 
 bool

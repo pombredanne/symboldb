@@ -19,6 +19,7 @@
 #pragma once
 
 #include "rpm_file_info.hpp"
+#include "rpm_dependency.hpp"
 
 #include <stdexcept>
 #include <tr1/memory>
@@ -53,6 +54,8 @@ public:
 
   const char *nevra() const;
   const rpm_package_info &package() const;
+
+  const std::vector<rpm_dependency> &dependencies() const;
 
   // Reads the next payload entry.  Returns true if an entry has been
   // read, false on EOF.  Throws rpm_parser_exception on read errors.
