@@ -51,7 +51,9 @@ public:
   database(const char *host, const char *dbname);
 
   // The database schema, as a sequence of PostgreSQL DDL statements.
-  static const char SCHEMA[];
+  // The base schema lacks indexes.
+  static const char SCHEMA_BASE[];
+  static const char SCHEMA_INDEX[];
   
   void txn_begin();
   void txn_commit();
@@ -88,7 +90,7 @@ public:
   typedef cxxll::tagged<int, file_id_tag> file_id;
 
   // Creates the "symboldb" database schema.
-  void create_schema();
+  void create_schema(bool base, bool index);
 
   // Returns true if the package_id was freshly added to the database.
   // FIXME: add source URI

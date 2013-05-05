@@ -42,7 +42,8 @@ test()
     // Run this directly, to suppress notices.
     pgconn_handle db(testdb.connect(DBNAME));
     pgresult_handle res;
-    res.exec(db, database::SCHEMA);
+    res.exec(db, database::SCHEMA_BASE);
+    res.exec(db, database::SCHEMA_INDEX);
   }
 
   static const char FILE[] = "test/data/primary.xml";

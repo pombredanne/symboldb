@@ -49,9 +49,15 @@ add_custom_command (
 )
 
 add_custom_command (
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
-  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
-  DEPENDS schema.sql
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema-base.sql.inc
+  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema-base.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema-base.sql.inc
+  DEPENDS schema-base.sql
+)
+
+add_custom_command (
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema-index.sql.inc
+  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema-index.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema-index.sql.inc
+  DEPENDS schema-index.sql
 )
 
 add_library (CXXLL
@@ -136,7 +142,8 @@ add_library (SymbolDB
   lib/symboldb/rpm_load.cpp
   lib/symboldb/show_source_packages.cpp
   lib/symboldb/update_elf_closure.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
+  ${CMAKE_CURRENT_BINARY_DIR}/schema-base.sql.inc
+  ${CMAKE_CURRENT_BINARY_DIR}/schema-index.sql.inc
 )
 
 target_link_libraries (CXXLL

@@ -66,9 +66,9 @@ load_rpms(const symboldb_options &opt, database &db, char **argv,
   return true;
 }
 
-static int do_create_schema(database &db)
+static int do_create_schema(database &db, bool base, bool index)
 {
-  db.create_schema();
+  db.create_schema(base, index);
   return 0;
 }
 
@@ -303,6 +303,8 @@ usage(const char *progname, const char *error = NULL)
   }
   fprintf(stderr, "Usage:\n\n"
 "  %1$s --create-schema\n"
+"  %1$s --create-schema-base\n"
+"  %1$s --create-schema-index\n"
 "  %1$s --load-rpm [OPTIONS] RPM-FILE...\n"
 "  %1$s --create-set=NAME [OPTIONS] RPM-FILE...\n"
 "  %1$s --update-set=NAME [OPTIONS] RPM-FILE...\n"
@@ -332,6 +334,8 @@ namespace {
     typedef enum {
       undefined = 1000,
       create_schema,
+      create_schema_base,
+      create_schema_index,
       load_rpm,
       create_set,
       update_set,
@@ -367,6 +371,8 @@ main(int argc, char **argv)
   {
     static const struct option long_options[] = {
       {"create-schema", no_argument, 0, command::create_schema},
+      {"create-schema-base", no_argument, 0, command::create_schema_base},
+      {"create-schema-index", no_argument, 0, command::create_schema_index},
       {"load-rpm", no_argument, 0, command::load_rpm},
       {"create-set", required_argument, 0, command::create_set},
       {"update-set", required_argument, 0, command::update_set},
@@ -422,6 +428,8 @@ main(int argc, char **argv)
 	opt.set_name = optarg;
 	break;
       case command::create_schema:
+      case command::create_schema_base:
+      case command::create_schema_index:
       case command::load_rpm:
       case command::download:
       case command::download_repo:
@@ -462,6 +470,8 @@ main(int argc, char **argv)
       }
       break;
     case command::create_schema:
+    case command::create_schema_base:
+    case command::create_schema_index:
     case command::show_soname_conflicts:
     case command::expire:
       if (argc != optind) {
@@ -492,7 +502,11 @@ main(int argc, char **argv)
 
     switch (cmd) {
     case command::create_schema:
-      return do_create_schema(db);
+      return do_create_schema(db, true, true);
+    case command::create_schema_base:
+      return do_create_schema(db, true, false);
+    case command::create_schema_index:
+      return do_create_schema(db, false, true);
     case command::load_rpm:
       do_load_rpm(opt, db, argv + optind);
       break;

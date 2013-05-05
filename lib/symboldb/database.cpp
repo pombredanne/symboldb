@@ -67,8 +67,13 @@ using namespace cxxll;
 #define URL_CACHE_TABLE "symboldb.url_cache"
 
 // Include the schema.sql file.
-const char database::SCHEMA[] = {
-#include "schema.sql.inc"
+const char database::SCHEMA_BASE[] = {
+#include "schema-base.sql.inc"
+  , 0
+};
+
+const char database::SCHEMA_INDEX[] = {
+#include "schema-index.sql.inc"
   , 0
 };
 
@@ -933,9 +938,16 @@ database::exec_sql(const char *command)
 }
 
 void
-database::create_schema()
+database::create_schema(bool base, bool index)
 {
-  exec_sql(SCHEMA);
+  txn_begin();
+  if (base) {
+    exec_sql(SCHEMA_BASE);
+  }
+  if (index) {
+    exec_sql(SCHEMA_INDEX);
+  }
+  txn_commit();
 }
 
 //////////////////////////////////////////////////////////////////////
