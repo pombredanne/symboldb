@@ -21,6 +21,7 @@
 using namespace cxxll;
 
 rpm_package_info::rpm_package_info()
+  : epoch(-1)
 {
 }
 
