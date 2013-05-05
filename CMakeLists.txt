@@ -96,6 +96,7 @@ add_library (CXXLL
   lib/cxxll/read_file.cpp
   lib/cxxll/regex_handle.cpp
   lib/cxxll/rpm_evr.cpp
+  lib/cxxll/rpm_dependency.cpp
   lib/cxxll/rpm_file_entry.cpp
   lib/cxxll/rpm_file_info.cpp
   lib/cxxll/rpm_package_info.cpp
