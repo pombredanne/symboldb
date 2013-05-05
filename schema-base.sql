@@ -97,6 +97,16 @@ CREATE TABLE symboldb.package_require (
   build BOOLEAN NOT NULL
 );
 
+CREATE TABLE symboldb.package_provide (
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  capability TEXT NOT NULL COLLATE "C",
+  op TEXT COLLATE "C",
+  version TEXT COLLATE "C",
+  pre BOOLEAN NOT NULL,
+  build BOOLEAN NOT NULL
+);
+
 CREATE TABLE symboldb.package_set (
   set_id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE COLLATE "C"

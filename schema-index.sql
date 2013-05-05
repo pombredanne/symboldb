@@ -25,6 +25,9 @@ CREATE INDEX ON symboldb.package_digest (package_id);
 CREATE INDEX ON symboldb.package_require (package_id);
 CREATE INDEX ON symboldb.package_require (capability);
 
+CREATE INDEX ON symboldb.package_provide (package_id);
+CREATE INDEX ON symboldb.package_provide (capability);
+
 CREATE INDEX ON symboldb.package_set_member (set_id);
 CREATE INDEX ON symboldb.package_set_member (package_id);
 
