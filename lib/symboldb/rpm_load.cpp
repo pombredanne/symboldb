@@ -374,6 +374,17 @@ add_file(const symboldb_options &opt, database &db,
   }
 }
 
+static void
+dependencies(const symboldb_options &, database &db,
+	     database::package_id pkg, rpm_parser_state &st)
+{
+  const std::vector<rpm_dependency> &deps(st.dependencies());
+  for (std::vector<rpm_dependency>::const_iterator
+	 p = deps.begin(), end = deps.end(); p != end; ++p) {
+    db.add_package_dependency(pkg, *p);
+  }
+}
+
 
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
@@ -398,6 +409,8 @@ load_rpm_internal(const symboldb_options &opt, database &db,
   if (opt.output != symboldb_options::quiet) {
     fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
   }
+
+  dependencies(opt, db, pkg, rpmst);
 
   inode_map inodes;
 

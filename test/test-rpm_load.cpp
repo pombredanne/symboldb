@@ -447,6 +447,34 @@ test()
     COMPARE_STRING(r1.getvalue(2, 0),
 		   "/usr/share/qemu/openbios-sparc64:sparc64");
 
+    r1.exec(dbh,
+	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
+	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"
+	    " FROM symboldb.package JOIN symboldb.package_require r"
+	    " USING (package_id)"
+	    " WHERE symboldb.nevra(package)"
+	    " = 'sysvinit-tools-2.88-9.dsf.fc18.i686' ORDER BY 1");
+    CHECK(r1.ntuples() == 16);
+    {
+      int row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.0),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.1),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.1.3),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.11),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.2),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.3),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.3.4),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.4),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.7),-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6,-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "libcrypt.so.1,-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(CompressedFileNames),<=,3.0.4-1,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(FileDigests),<=,4.6.0-1,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(PayloadFilesHavePrefix),<=,4.0-1,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(PayloadIsXz),<=,5.2-1,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "rtld(GNU_HASH),-,-,false,false");
+    }
+
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set"));
