@@ -37,9 +37,14 @@ struct rpm_package_info {
   std::string group;
   long long build_time;
   int epoch;			// -1 if no epoch
+  bool normalized;
 
   rpm_package_info();
   ~rpm_package_info();
+
+  // Force invalid encodings in header fields to UTF-8.
+  // Currently, this covers the license member only.
+  void normalize();
 };
 
 } // namespace cxxll

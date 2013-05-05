@@ -17,14 +17,24 @@
  */
 
 #include <cxxll/rpm_package_info.hpp>
+#include <cxxll/utf8.hpp>
 
 using namespace cxxll;
 
 rpm_package_info::rpm_package_info()
-  : epoch(-1)
+  : epoch(-1), normalized(false)
 {
 }
 
 rpm_package_info::~rpm_package_info()
 {
+}
+
+void
+rpm_package_info::normalize()
+{
+  if (!is_valid_utf8(license)) {
+    license = latin1_to_utf8(license);
+    normalized = true;
+  }
 }

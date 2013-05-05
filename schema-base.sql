@@ -58,12 +58,15 @@ CREATE TABLE symboldb.package (
   summary TEXT NOT NULL COLLATE "C",
   description TEXT NOT NULL COLLATE "C",
   license TEXT NOT NULL COLLATE "C",
-  rpm_group TEXT NOT NULL COLLATE "C"
+  rpm_group TEXT NOT NULL COLLATE "C",
+  normalized BOOLEAN NOT NULL
 );
 COMMENT ON COLUMN symboldb.package.source IS
   'file name of the source RPM package';
 COMMENT ON COLUMN symboldb.package.hash IS
   'internal SHA1HEADER hash of the RPM contents';
+COMMENT ON COLUMN symboldb.package.normalized IS
+  'indicates that a textual header has been forced to UTF-8 encoding';
 
 CREATE FUNCTION symboldb.nvra (symboldb.package) RETURNS TEXT AS $$
   SELECT

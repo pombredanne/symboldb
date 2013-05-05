@@ -189,6 +189,8 @@ rpm_parser_state::impl::get_header()
       }
     }
   }
+
+  pkg.normalize();
 }
 
 void
