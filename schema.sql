@@ -94,6 +94,18 @@ CREATE INDEX ON symboldb.package_digest (package_id);
 COMMENT ON table symboldb.package_digest IS
   'SHA-1 and SHA-256 hashes of multiple representations of the same RPM package';
 
+CREATE TABLE symboldb.package_require (
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  capability TEXT NOT NULL COLLATE "C",
+  op TEXT COLLATE "C",
+  version TEXT COLLATE "C",
+  pre BOOLEAN NOT NULL,
+  build BOOLEAN NOT NULL
+);
+CREATE INDEX ON symboldb.package_require (package_id);
+CREATE INDEX ON symboldb.package_require (capability);
+
 CREATE TABLE symboldb.package_set (
   set_id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE COLLATE "C"
