@@ -787,6 +787,15 @@ database::referenced_package_digests
 }
 
 void
+database::expire_url_cache()
+{
+  pgresult_handle res;
+  res.exec
+    (impl_->conn, "DELETE FROM " URL_CACHE_TABLE
+     " WHERE AGE(last_access) > '3 days'");
+}
+
+void
 database::expire_packages()
 {
   pgresult_handle res;

@@ -32,6 +32,11 @@ void
 expire(const symboldb_options &opt, database &db)
 {
   if (opt.output != symboldb_options::quiet) {
+    fprintf(stderr, "info: expiring URL cache\n");
+  }
+  db.expire_url_cache();
+
+  if (opt.output != symboldb_options::quiet) {
     fprintf(stderr, "info: expiring unreferenced packages\n");
   }
   db.expire_packages();

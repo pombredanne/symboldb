@@ -534,6 +534,7 @@ test()
     }
 
     db.txn_begin();
+    db.expire_url_cache();
     db.expire_packages();
     db.expire_file_contents();
     db.expire_java_classes();

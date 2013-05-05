@@ -190,6 +190,7 @@ public:
   void referenced_package_digests(std::vector<std::vector<unsigned char> > &);
 
   // Expire unreferenced data.
+  void expire_url_cache();
   void expire_packages();
   void expire_file_contents();
   void expire_java_classes();
