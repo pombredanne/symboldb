@@ -57,7 +57,8 @@ CREATE TABLE symboldb.package (
   build_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
   summary TEXT NOT NULL COLLATE "C",
   description TEXT NOT NULL COLLATE "C",
-  license TEXT NOT NULL COLLATE "C"
+  license TEXT NOT NULL COLLATE "C",
+  rpm_group TEXT NOT NULL COLLATE "C"
 );
 COMMENT ON COLUMN symboldb.package.source IS
   'file name of the source RPM package';

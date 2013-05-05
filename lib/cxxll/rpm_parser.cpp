@@ -145,6 +145,7 @@ rpm_parser_state::impl::get_header()
   pkg.summary = get_string(header, "SUMMARY", RPMTAG_SUMMARY);
   pkg.description = get_string(header, "DESCRIPTION", RPMTAG_DESCRIPTION);
   pkg.license = get_string(header, "LICENSE", RPMTAG_LICENSE);
+  pkg.group = get_string(header, "GROUP", RPMTAG_GROUP);
 
   {
     rpmtd_wrapper td;

@@ -34,6 +34,7 @@ struct rpm_package_info {
   std::string summary;
   std::string description;
   std::string license;
+  std::string group;
   long long build_time;
   int epoch;			// -1 if no epoch
 

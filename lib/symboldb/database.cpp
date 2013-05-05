@@ -223,14 +223,14 @@ database::intern_package(const rpm_package_info &pkg,
     (impl_->conn, res,
      "INSERT INTO " PACKAGE_TABLE
      " (name, epoch, version, release, arch, hash, source,"
-     " build_host, build_time, summary, description, license)"
+     " build_host, build_time, summary, description, license, rpm_group)"
      " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7,"
      " $8, 'epoch'::TIMESTAMP WITHOUT TIME ZONE + '1 second'::interval * $9,"
-     " $10, $11, $12)"
+     " $10, $11, $12, $13)"
      " RETURNING package_id",
      pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
      pkg.arch, pkg.hash, pkg.source_rpm, pkg.build_host, pkg.build_time,
-     pkg.summary, pkg.description, pkg.license);
+     pkg.summary, pkg.description, pkg.license, pkg.group);
   pkg_id = package_id(get_id_force(res));
   return true;
 }
