@@ -309,21 +309,31 @@ rpm_parser_state::impl::get_files_from_header()
   }
 }
 
-void
-rpm_parser_state::impl::get_dependencies()
+static void get_deps(Header header,
+		     std::vector<rpm_dependency> &dependencies,
+		     rpm_dependency::kind_type kind, bool optional,
+		     int nametag, const char *namename,
+		     int flagstag, const char *flagsname,
+		     int versiontag, const char *versionname)
 {
   const headerGetFlags hflags = HEADERGET_ALLOC | HEADERGET_EXT;
   rpmtd_wrapper name;
   rpmtd_wrapper flags;
   rpmtd_wrapper version;
-  if (!headerGet(header, RPMTAG_REQUIRENAME, name.raw, hflags)) {
-    throw rpm_parser_exception("could not get REQUIRENAME header");
+  if (!headerGet(header, nametag, name.raw, hflags)) {
+    if (optional) {
+      return;
+    }
+    throw rpm_parser_exception
+      ("could not get " + std::string(namename) + " header");
   }
-  if (!headerGet(header, RPMTAG_REQUIREFLAGS, flags.raw, hflags)) {
-    throw rpm_parser_exception("could not get REQUIREFLAGS header");
+  if (!headerGet(header, flagstag, flags.raw, hflags)) {
+    throw rpm_parser_exception
+      ("could not get " + std::string(flagsname) + " header");
   }
-  if (!headerGet(header, RPMTAG_REQUIREVERSION, version.raw, hflags)) {
-    throw rpm_parser_exception("could not get REQUIREVERSION header");
+  if (!headerGet(header, versiontag, version.raw, hflags)) {
+    throw rpm_parser_exception
+      ("could not get " + std::string(versionname) + " header");
   }
   while (true) {
     const char *namestr = rpmtdNextString(name.raw);
@@ -333,15 +343,17 @@ rpm_parser_state::impl::get_dependencies()
 
     const uint32_t *flagsuint = rpmtdNextUint32(flags.raw);
     if (flagsuint == NULL) {
-      throw rpm_parser_exception("missing entries in REQUIREFlAGS header");
+      throw rpm_parser_exception
+	("missing entries in " + std::string(flagsname) + " header");
     }
     const char *versionstr =rpmtdNextString(version.raw);
     if (versionstr == NULL) {
-      throw rpm_parser_exception("missing entries in REQUIREVERSION header");
+      throw rpm_parser_exception
+	("missing entries in " + std::string(versionname) + " header");
     }
     dependencies.push_back(rpm_dependency());
     rpm_dependency &dep = dependencies.back();
-    dep.kind = rpm_dependency::requires;
+    dep.kind = kind;
     dep.capability = namestr;
     if (*flagsuint & RPMSENSE_LESS) {
       dep.op += '<';
@@ -355,6 +367,19 @@ rpm_parser_state::impl::get_dependencies()
     dep.pre = (*flagsuint & RPMSENSE_PREREQ) != 0;
     dep.version = versionstr;
   }
+}
+
+void
+rpm_parser_state::impl::get_dependencies()
+{
+  get_deps(header, dependencies, rpm_dependency::requires, false,
+	   RPMTAG_REQUIRENAME, "REQUIRENAME",
+	   RPMTAG_REQUIREFLAGS, "REQUIREFLAGS",
+	   RPMTAG_REQUIREVERSION, "REQUIREVERSION");
+  get_deps(header, dependencies, rpm_dependency::provides, true,
+	   RPMTAG_PROVIDENAME, "PROVIDENAME",
+	   RPMTAG_PROVIDEFLAGS, "PROVIDEFLAGS",
+	   RPMTAG_PROVIDEVERSION, "PROVIDEVERSION");
 }
 
 void

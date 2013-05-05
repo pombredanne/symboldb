@@ -476,6 +476,20 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "rtld(GNU_HASH),-,-,false,false");
     }
 
+    r1.exec(dbh,
+	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
+	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"
+	    " FROM symboldb.package JOIN symboldb.package_provide r"
+	    " USING (package_id)"
+	    " WHERE symboldb.nevra(package)"
+	    " = 'sysvinit-tools-2.88-9.dsf.fc18.i686' ORDER BY 1");
+    CHECK(r1.ntuples() == 2);
+    {
+      int row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-tools(x86-32),=,2.88-9.dsf.fc18,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-tools,=,2.88-9.dsf.fc18,false,false");
+    }
+
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set"));
