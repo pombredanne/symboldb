@@ -490,6 +490,22 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-tools,=,2.88-9.dsf.fc18,false,false");
     }
 
+    r1.exec(dbh,
+	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
+	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"
+	    " FROM symboldb.package JOIN symboldb.package_obsolete r"
+	    " USING (package_id)"
+	    " WHERE symboldb.nevra(package)"
+	    " = 'openbios-1.0.svn1063-1.fc18.noarch' ORDER BY 1");
+    CHECK(r1.ntuples() == 4);
+    {
+      int row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-common,-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-ppc,-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-sparc32,-,-,false,false");
+      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-sparc64,-,-,false,false");
+    }
+
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set"));

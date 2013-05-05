@@ -380,6 +380,10 @@ rpm_parser_state::impl::get_dependencies()
 	   RPMTAG_PROVIDENAME, "PROVIDENAME",
 	   RPMTAG_PROVIDEFLAGS, "PROVIDEFLAGS",
 	   RPMTAG_PROVIDEVERSION, "PROVIDEVERSION");
+  get_deps(header, dependencies, rpm_dependency::obsoletes, true,
+	   RPMTAG_OBSOLETENAME, "OBSOLETENAME",
+	   RPMTAG_OBSOLETEFLAGS, "OBSOLETEFLAGS",
+	   RPMTAG_OBSOLETEVERSION, "OBSOLETEVERSION");
 }
 
 void
