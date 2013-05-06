@@ -19,6 +19,11 @@
 CREATE INDEX ON symboldb.package (name, version);
 CREATE INDEX ON symboldb.package (symboldb.nvra(package));
 CREATE INDEX ON symboldb.package (symboldb.nevra(package));
+CREATE INDEX ON symboldb.package USING GIN (name gin_trgm_ops);
+CREATE INDEX ON symboldb.package USING GIN (summary gin_trgm_ops);
+CREATE INDEX ON symboldb.package USING GIN (description gin_trgm_ops);
+CREATE INDEX ON symboldb.package USING GIN (license gin_trgm_ops);
+CREATE INDEX ON symboldb.package USING GIN (rpm_group gin_trgm_ops);
 
 CREATE INDEX ON symboldb.package_digest (package_id);
 
