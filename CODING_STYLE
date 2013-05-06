@@ -1,0 +1,74 @@
+Syntactic considerations
+────────────────────────
+
+Most identifiers are lower-case.  Constants are sometimes in
+UPPERCASE.  Identifiers consisting of multiple words use
+underscore_separation.
+
+Identitation is two spaces.  Braces in if/for/do/while/switch are
+mandatory.  The body of top-level namespaces in headers is not
+indented.
+
+Source lines should be shorter than 80 characters if possible.
+
+Physical layout
+───────────────
+
+There are two major components: the cxxll library in include/cxxll and
+lib/cxxll, and the symboldb library in include/symboldb and
+lib/symboldb.  The latter includes all the pieces that depend on the
+symboldb database schema.
+
+We put each class into its own source code file.  References to
+classes which do not require a class definition should use a forward
+declaration if including the header file can be avoided.
+
+We use the PIMPL idiom quite heavily, in a variant which includes a
+"struct impl;" forward declaration in the header file in the private
+section section of the class (along with the definition of a
+"std::tr1::shared_ptr<impl> impl_;" member).  The implementation
+contains an out-of-line definition of the impl struct.  This avoids
+virtual function dispatching overhead.
+
+Wrapping C libraries
+────────────────────
+
+C libraries are accessed through thin wrappers whose primary purpose
+is resource management via the RAII idiom.
+
+We have thicker wrappers for libcurl and Expat, to deal with
+structurally difficult APIs (libcurl is fairly complex, and Expat uses
+callbacks instead of an iterator).
+
+Error handling
+──────────────
+
+We use exceptions for out-of-memory errors (most of the time even
+std::bad_alloc), so there is no question that the code can be made
+exception-free, ever.  We experimented a bit with a "std::string &"
+error paramete, together with a "bool" result, but we are moving away
+from that, towards reasonably detailed exceptions.
+
+C++11 Conversion
+────────────────
+
+C++11 adaption needs the obvious changes (NULL -> null_ptr, const
+std::string & to std::string in many parameters along with std::move,
+std::tr1::shared_ptr -> std::unique_ptr or std::shared_ptr with
+std::make_shared).  Several enums can be switched to enum classes.
+Custom thread support facilities can be removed.
+
+pg_query and pg_response will benefite from variadic templates.
+pg_query can be optimized using perfect forwarding (instead of inlining
+and the arg typedef), and constexpr functions can check the number of
+placeholders against the parameter count.
+
+Apart from that, the *_handle classes need to be made moveable.  After
+that, many constructors can be replaced by ordinary functions (a bit
+like std::make_shared).
+
+With rvalue references and the efficiency gains, a lot of std::string
+objects could be replaced with a thin wrapper around a char *.
+
+std::exception_ptr should be used to tunnel exceptions from C
+callbacks (particularly in libcurl).
