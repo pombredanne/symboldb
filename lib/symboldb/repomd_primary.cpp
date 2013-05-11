@@ -77,7 +77,7 @@ struct repomd::primary::impl {
 
   void check_attr(const char *name, const std::string &);
 
-   bool next()
+  bool next()
   {
     clear();
 
