@@ -65,7 +65,8 @@ struct repomd::primary::impl {
     }
     check_attr("<version>", info_.version); // covers release
     check_attr("<arch>", info_.arch);
-    check_attr("<format>/<rpm:sourcerpm>", info_.source_rpm);
+    // SRPM repositories do not have this attribute.
+    // check_attr("<format>/<rpm:sourcerpm>", info_.source_rpm);
     check_attr("<location>/href", href_);
     if (checksum_.value.empty()) {
       throw std::runtime_error("missing <checksum> element");
@@ -181,7 +182,9 @@ struct repomd::primary::impl {
       }
       if (source_.name() == "rpm:sourcerpm") {
 	source_.next();
-	info_.source_rpm = source_.text_and_next();
+	if (source_.state() == expat_source::TEXT) {
+	  info_.source_rpm = source_.text_and_next();
+	}
 	source_.unnest();
       } else {
 	source_.skip();
