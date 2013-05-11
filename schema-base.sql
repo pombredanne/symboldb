@@ -14,6 +14,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 CREATE SCHEMA symboldb;
 
 CREATE TYPE symboldb.rpm_arch AS ENUM (
