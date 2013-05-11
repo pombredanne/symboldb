@@ -30,6 +30,8 @@ CREATE TYPE symboldb.elf_arch AS ENUM (
   'sparc', 'sparc64'
 );
 
+CREATE TYPE symboldb.rpm_kind AS ENUM ('binary', 'source');
+
 CREATE TYPE symboldb.elf_visibility AS ENUM
   ('default', 'internal', 'hidden', 'protected');
 
@@ -48,13 +50,14 @@ CREATE DOMAIN symboldb.elf_section_type AS SMALLINT;
 
 CREATE TABLE symboldb.package (
   package_id SERIAL NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
+  kind symboldb.rpm_kind NOT NULL,
   epoch INTEGER CHECK (epoch >= 0),
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
   arch symboldb.rpm_arch NOT NULL,
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
-  source TEXT NOT NULL CHECK (LENGTH(source) > 0) COLLATE "C",
+  source TEXT CHECK (LENGTH(source) > 0) COLLATE "C",
   build_host TEXT NOT NULL CHECK (LENGTH(build_host) > 0) COLLATE "C",
   build_time TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
   summary TEXT NOT NULL COLLATE "C",
@@ -70,9 +73,16 @@ COMMENT ON COLUMN symboldb.package.hash IS
 COMMENT ON COLUMN symboldb.package.normalized IS
   'indicates that a textual header has been forced to UTF-8 encoding';
 
+CREATE FUNCTION symboldb.arch_src (symboldb.package) RETURNS TEXT AS $$
+  SELECT CASE WHEN $1.kind = 'source' THEN 'src'
+    ELSE $1.arch::text
+  END;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+
 CREATE FUNCTION symboldb.nvra (symboldb.package) RETURNS TEXT AS $$
   SELECT
-    $1.name || '-' || $1.version || '-' || $1.release || '.' || $1.arch
+    $1.name || '-' || $1.version || '-' || $1.release || '.'
+      || symboldb.arch_src($1)
   ;
 $$ IMMUTABLE STRICT LANGUAGE SQL;
 
@@ -81,7 +91,7 @@ CREATE FUNCTION symboldb.nevra (symboldb.package) RETURNS TEXT AS $$
     CASE
       WHEN $1.epoch IS NULL THEN symboldb.nvra ($1)
       ELSE $1.name || '-' || $1.epoch || ':' || $1.version
-        || '-' || $1.release || '.' || $1.arch
+        || '-' || $1.release || '.' || symboldb.arch_src($1)
     END
   ;
 $$ IMMUTABLE STRICT LANGUAGE SQL;

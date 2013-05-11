@@ -218,20 +218,40 @@ database::intern_package(const rpm_package_info &pkg,
     return false;
   }
 
+  const char *kind;
+  switch (pkg.kind) {
+  case rpm_package_info::binary:
+    kind = "binary";
+    break;
+  case rpm_package_info::source:
+    kind = "source";
+    break;
+  default:
+    abort();
+  }
+
+  const char *source_rpm;
+  if (pkg.source_rpm.empty()) {
+    source_rpm = NULL;
+  } else {
+    source_rpm = pkg.source_rpm.c_str();
+  }
+
   // Insert new row.
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " PACKAGE_TABLE
      " (name, epoch, version, release, arch, hash, source,"
      " build_host, build_time, summary, description, license, rpm_group,"
-     " normalized)"
+     " normalized, kind)"
      " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7,"
      " $8, 'epoch'::TIMESTAMP WITHOUT TIME ZONE + '1 second'::interval * $9,"
-     " $10, $11, $12, $13, $14)"
+     " $10, $11, $12, $13, $14, $15::symboldb.rpm_kind)"
      " RETURNING package_id",
      pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
-     pkg.arch, pkg.hash, pkg.source_rpm, pkg.build_host, pkg.build_time,
-     pkg.summary, pkg.description, pkg.license, pkg.group, pkg.normalized);
+     pkg.arch, pkg.hash, source_rpm, pkg.build_host, pkg.build_time,
+     pkg.summary, pkg.description, pkg.license, pkg.group, pkg.normalized,
+     kind);
   pkg_id = package_id(get_id_force(res));
   return true;
 }

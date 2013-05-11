@@ -185,8 +185,7 @@ test()
     rpmdir_prefix += '/';
     dir_handle rpmdir(RPMDIR);
     while (dirent *e = rpmdir.readdir()) {
-      if (ends_with(std::string(e->d_name), ".rpm")
-	  && !ends_with(std::string(e->d_name), ".src.rpm")) {
+      if (ends_with(std::string(e->d_name), ".rpm")) {
 	std::string rpmpath(rpmdir_prefix + e->d_name);
 	checksum csum;
 	hash_file(hash_sink::sha256, rpmpath.c_str(), csum);
@@ -266,12 +265,19 @@ test()
 		     "\\x800c58cb4760a42c310dbb450455dac8"
 		     "3e673598db83d7daefdeb94fce652a62");
       COMPARE_STRING(res.getvalue(1, 1), "63824");
+
+      res.exec(dbh, "SELECT symboldb.nevra(package), symboldb.nvra(package)"
+	       " FROM symboldb.package"
+	       " WHERE hash = '\\x751e170fd4872df174cd60a5f6379201a295f4e6'");
+      CHECK(res.ntuples() == 1);
+      COMPARE_STRING(res.getvalue(0, 0), "unzip-6.0-7.fc18.src");
+      COMPARE_STRING(res.getvalue(0, 1), "unzip-6.0-7.fc18.src");
     }
 
     std::vector<database::package_id> pids;
     pgresult_handle r1;
     r1.exec(dbh, "SELECT package_id, name, version, release"
-	    " FROM symboldb.package");
+	    " FROM symboldb.package WHERE kind = 'binary'");
     for (int i = 0, endi = r1.ntuples(); i < endi; ++i) {
       {
 	int pkg = 0;
@@ -557,7 +563,7 @@ test()
 
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
-    CHECK(digests.size() == 10); // 5 packages with 2 digests each
+    CHECK(digests.size() == 16); // 8 packages with 2 digests each
 
     {
       std::vector<unsigned char> digest;

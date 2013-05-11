@@ -13,10 +13,6 @@
   database table (or multiple tables, not clear what would be the best
   approach).
 
-* Import source RPMs, initially without unpacking the archives
-  contained within them.  This will allow us to extract build
-  requirements.
-
 * Parallelize downloading.
 
 * Extend Java support: extract method, field references and
