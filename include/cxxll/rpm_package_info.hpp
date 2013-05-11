@@ -37,6 +37,7 @@ struct rpm_package_info {
   std::string group;
   long long build_time;
   int epoch;			// -1 if no epoch
+  enum {binary, source} kind;
   bool normalized;
 
   rpm_package_info();
