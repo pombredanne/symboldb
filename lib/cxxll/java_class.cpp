@@ -30,10 +30,9 @@ cxxll::java_class::has_signature(const std::vector<unsigned char> &vec)
   size_t offset = 0;
   unsigned magic;
   unsigned short minor, major;
-  using namespace cxxll::big_endian;
-  extract(vec, offset, magic);
-  extract(vec, offset, minor);
-  extract(vec, offset, major);
+  big_endian::extract(vec, offset, magic);
+  big_endian::extract(vec, offset, minor);
+  big_endian::extract(vec, offset, major);
   return magic == 0xCAFEBABEU && major < 100;
 }
 
@@ -42,20 +41,19 @@ cxxll::java_class::java_class(const std::vector<unsigned char> *vec)
 {
   size_t offset = 0;
   try {
-    using namespace cxxll::big_endian;
     {
       unsigned magic;
-      extract(*vec, offset, magic);
+      big_endian::extract(*vec, offset, magic);
       if (magic != 0xCAFEBABEU) {
 	throw exception("class file magic value not found");
       }
     }
-    extract(*vec, offset, minor_version_);
-    extract(*vec, offset, major_version_);
+    big_endian::extract(*vec, offset, minor_version_);
+    big_endian::extract(*vec, offset, major_version_);
 
     {
       unsigned short constant_pool_count;
-      extract(*vec, offset, constant_pool_count);
+      big_endian::extract(*vec, offset, constant_pool_count);
       if (constant_pool_count < 2) {
 	throw exception("constant pool is empty");
       }
@@ -87,7 +85,7 @@ cxxll::java_class::java_class(const std::vector<unsigned char> *vec)
 	case CONSTANT_Utf8:
 	  {
 	    unsigned short len;
-	    extract(*vec, offset, len);
+	    big_endian::extract(*vec, offset, len);
 	    offset += len;
 	  }
 	  break;
@@ -102,17 +100,17 @@ cxxll::java_class::java_class(const std::vector<unsigned char> *vec)
       }
     }
 
-    extract(*vec, offset, access_flags_);
-    extract(*vec, offset, this_class_);
-    extract(*vec, offset, super_class_);
+    big_endian::extract(*vec, offset, access_flags_);
+    big_endian::extract(*vec, offset, this_class_);
+    big_endian::extract(*vec, offset, super_class_);
 
     {
       unsigned short interface_count;
-      extract(*vec, offset, interface_count);
+      big_endian::extract(*vec, offset, interface_count);
       interface_indexes.resize(interface_count);
       for (unsigned i = 0; i < interface_count; ++i) {
 	unsigned short idx;
-	extract(*vec, offset, idx);
+	big_endian::extract(*vec, offset, idx);
 	interface_indexes.at(i) = idx;
       }
     }
