@@ -264,7 +264,7 @@ intern_hash(const rpm_file_info &info,
   std::vector<unsigned char> to_hash(digest);
   union {
     unsigned mtime;
-    char data_bytes[sizeof(mtime)];
+    char data_bytes[sizeof(unsigned)];
   } u;
   u.mtime = cpu_to_le_32(info.mtime);
   to_hash.insert(to_hash.end(),
