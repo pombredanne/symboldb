@@ -80,7 +80,8 @@ namespace {
     }
     // Prefer libraries in the same file system area, with a shared
     // initial path.
-    for (unsigned i = 0; name[i] && name[i] == needed_path[i]; ++i) {
+    size_t sz = std::min(name.size(), strlen(needed_path));
+    for (unsigned i = 0; i < sz && name.at(i) == needed_path[i]; ++i) {
       prio += 2;
     }
     // Deeply nested libraries are less prefered.
