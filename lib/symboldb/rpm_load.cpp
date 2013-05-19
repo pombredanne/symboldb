@@ -343,15 +343,23 @@ do_load_formats(const symboldb_options &opt, database &db,
   }
 }
 
+static inline bool
+unpack_files(const rpm_package_info &pkginfo)
+{
+  return pkginfo.kind == rpm_package_info::binary;
+}
+
 static database::contents_id
 load_contents(const symboldb_options &opt, database &db,
+	      const rpm_package_info &pkginfo,
 	      const char *rpm_path, const rpm_file_entry &file)
 {
   std::vector<unsigned char> digest;
   std::vector<unsigned char> preview;
   prepare_load(rpm_path, file, digest, preview);
   database::contents_id cid;
-  if (db.intern_file_contents(*file.info, digest, preview, cid)) {
+  if (db.intern_file_contents(*file.info, digest, preview, cid)
+      && unpack_files(pkginfo)) {
     do_load_formats(opt, db, cid, file);
   }
   return cid;
@@ -359,7 +367,7 @@ load_contents(const symboldb_options &opt, database &db,
 
 static void
 add_file(const symboldb_options &opt, database &db,
-	 database::package_id pkg,
+	 const rpm_package_info &pkginfo, database::package_id pkg,
 	 const char *rpm_path, const rpm_file_entry &file)
 {
   std::vector<unsigned char> digest;
@@ -369,7 +377,7 @@ add_file(const symboldb_options &opt, database &db,
   database::contents_id cid;
   bool added;
   db.add_file(pkg, *file.info, digest, preview, fid, cid, added);
-  if (added) {
+  if (added && unpack_files(pkginfo)) {
     do_load_formats(opt, db, cid, file);
   }
 }
@@ -442,7 +450,8 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	    // This is the last entry for this inode, and it comes
 	    // with the contents.  Load it and patch in the previous
 	    // references.
-	    database::contents_id cid = load_contents(opt, db, rpm_path, file);
+	    database::contents_id cid = load_contents
+	      (opt, db, info, rpm_path, file);
 	    for (std::vector<dentry>::const_iterator
 		   q = p->second.entries.begin(), end = p->second.entries.end();
 		 q != end; ++q) {
@@ -452,7 +461,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	}
       } else {
 	// No hardlinks.
-	add_file(opt, db, pkg, rpm_path, file);
+	add_file(opt, db, info, pkg, rpm_path, file);
       }
     }
   }

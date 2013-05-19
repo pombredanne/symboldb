@@ -365,7 +365,7 @@ test()
 	    " JOIN symboldb.java_class_contents USING (contents_id)"
 	    " WHERE kind = 'source'");
     CHECK(r1.ntuples() == 1);
-    COMPARE_STRING(r1.getvalue(0, 0), "4");
+    COMPARE_STRING(r1.getvalue(0, 0), "0");
 
     r1.exec(dbh,
 	    "SELECT DISTINCT"
