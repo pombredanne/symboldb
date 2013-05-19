@@ -49,6 +49,9 @@ public:
   void add_producer();
   void remove_producer();
 
+  // Returns the number of registered producers.  Initially 1.
+  unsigned producers() const;
+
   // Adds an element to the queue.
   void push(const Key &, const Value &);
 
@@ -103,6 +106,12 @@ bounded_ordered_queue<Key, Value>::remove_producer()
   }
 }
 
+template <class Key, class Value> unsigned
+bounded_ordered_queue<Key, Value>::producers() const
+{
+  mutex::locker ml(&mutex_);
+  return producers_;
+}
 
 template <class Key, class Value> void
 bounded_ordered_queue<Key, Value>::push(const Key &key, const Value &value)

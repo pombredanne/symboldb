@@ -54,9 +54,13 @@ test()
   {
     bounded_ordered_queue<int, int> boq(5);
     CHECK(boq.size_estimate() == 0);
+    CHECK(boq.producers() == 1);
     boq.add_producer();
+    CHECK(boq.producers() == 2);
     boq.remove_producer();
+    CHECK(boq.producers() == 1);
     boq.remove_producer();
+    CHECK(boq.producers() == 0);
     try {
       boq.remove_producer();
       CHECK(false);
