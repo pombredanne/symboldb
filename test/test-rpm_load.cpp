@@ -345,6 +345,18 @@ test()
     COMPARE_STRING(r1.getvalue(0, 0), "x86-05.phx2.fedoraproject.org");
     COMPARE_STRING(r1.getvalue(0, 1), "2012-09-13 15:46:22");
 
+    r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
+	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
+    CHECK(r1.ntuples() == 5);
+    {
+      int row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-1.0.svn1063-1.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-6.dsf.fc17.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-9.dsf.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "unzip-6.0-7.fc18.src");
+    }
+
     r1.exec(dbh,
 	    "SELECT DISTINCT"
 	    " length, user_name, group_name, mtime, mode,"
