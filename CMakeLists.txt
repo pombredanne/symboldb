@@ -63,6 +63,7 @@ add_custom_command (
 add_library (CXXLL
   lib/cxxll/checksum.cpp
   lib/cxxll/base16.cpp
+  lib/cxxll/cond.cpp
   lib/cxxll/cpio_reader.cpp
   lib/cxxll/curl_exception.cpp
   lib/cxxll/curl_exception_dump.cpp
