@@ -127,9 +127,8 @@ namespace {
 			 std::set<database::package_id> &pids,
 			 std::vector<rpm_url> &urls, bool load)
     : opt_(opt), pids_(pids), urls_(urls),
-      queue_(opt.download_threads), count_(0), load_(load)
+      queue_(opt.download_threads, 0), count_(0), load_(load)
   {
-    queue_.remove_producer(); // initial producer
     dopts_no_cache_.cache_mode = download_options::no_cache;
     process(db);
   }
