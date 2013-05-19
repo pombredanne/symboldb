@@ -294,6 +294,9 @@ test()
       } else if (r1.getvalue(i, 1) == std::string("objectweb-asm4")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "4.1");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("xml-writer")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "0.2");
+	continue;
       }
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
@@ -347,7 +350,7 @@ test()
 
     r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
 	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
-    CHECK(r1.ntuples() == 5);
+    CHECK(r1.ntuples() == 6);
     {
       int row = 0;
       COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
@@ -355,7 +358,14 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-6.dsf.fc17.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-9.dsf.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "unzip-6.0-7.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "xml-writer-0.2-5.fc18.src");
     }
+    r1.exec(dbh, "SELECT COUNT(*) FROM symboldb.package"
+	    " JOIN symboldb.file USING (package_id)"
+	    " JOIN symboldb.java_class_contents USING (contents_id)"
+	    " WHERE kind = 'source'");
+    CHECK(r1.ntuples() == 1);
+    COMPARE_STRING(r1.getvalue(0, 0), "4");
 
     r1.exec(dbh,
 	    "SELECT DISTINCT"
