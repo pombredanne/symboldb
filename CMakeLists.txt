@@ -198,6 +198,7 @@ install (TARGETS pgtestshell DESTINATION bin)
 add_executable (runtests
   test/runtests.cpp
   test/test-base16.cpp
+  test/test-bounded_ordered_queue.cpp
   test/test-dir_handle.cpp
   test/test-download.cpp
   test/test-fd_handle.cpp
