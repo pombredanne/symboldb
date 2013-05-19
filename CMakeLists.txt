@@ -86,6 +86,7 @@ add_library (CXXLL
   lib/cxxll/hash.cpp
   lib/cxxll/java_class.cpp
   lib/cxxll/memory_range_source.cpp
+  lib/cxxll/mutex.cpp
   lib/cxxll/os.cpp
   lib/cxxll/os_error_string.cpp
   lib/cxxll/os_exception.cpp

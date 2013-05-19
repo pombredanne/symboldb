@@ -16,50 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cxxll/task.hpp>
 #include <cxxll/mutex.hpp>
-#include "test.hpp"
+#include <cxxll/os_exception.hpp>
 
-#include <vector>
-
-#include <pthread.h>
-
-using namespace cxxll;
-
-static void
-callback(int *i) throw()
+void
+cxxll::mutex::throw_init_error(int errcode)
 {
-  ++*i;
+  throw os_exception(errcode).function(pthread_mutex_init).defaults();
 }
 
-
-static mutex lock;
-
-static void
-background_test() throw()
+void
+cxxll::mutex::throw_lock_error(int errcode)
 {
-  int i = 0;
-  for (int j = 0; j < 100; ++j) {
-    int old = i;
-    task t(std::tr1::bind(&callback, &i));
-    t.wait();
-    if (i != old + 1) {
-      mutex::locker ml(&lock);
-      CHECK(i == old + 1);
-    }
-  }
+  throw os_exception(errcode).function(pthread_mutex_lock).defaults();
 }
-
-static void
-test()
-{
-  std::vector<std::tr1::shared_ptr<task> > tasks;
-  for (int k = 0; k < 5; ++k) {
-    tasks.push_back(std::tr1::shared_ptr<task>(new task(background_test)));
-  }
-  for (int k = 0; k < 5; ++k) {
-    tasks.at(k)->wait();
-  }
-}
-
-static test_register t("task", test);
