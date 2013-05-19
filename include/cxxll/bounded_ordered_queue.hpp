@@ -111,7 +111,7 @@ bounded_ordered_queue<Key, Value>::remove_producer()
   }
   --producers_;
   if (producers_ == 0) {
-    cond_.signal();
+    cond_.broadcast();
   }
 }
 
@@ -133,26 +133,26 @@ bounded_ordered_queue<Key, Value>::push(const Key &key, const Value &value)
     cond_.wait(mutex_);
   }
   map_.insert(std::make_pair(key, value));
-  cond_.signal();
+  cond_.broadcast();
 }
 
 template <class Key, class Value> bool
 bounded_ordered_queue<Key, Value>::pop(Key &key, Value &value)
 {
   mutex::locker ml(&mutex_);
-  while (map_.empty()) {
-    while (producers_ > 0) {
+  do {
+    while (map_.empty() && producers_ > 0) {
       cond_.wait(mutex_);
     }
     if (map_.empty() && producers_ == 0) {
       return false;
     }
-  }
+  } while (map_.empty());
   typename map::iterator p(map_.begin());
   key = p->first;
   value = p->second;
   map_.erase(p);
-  cond_.signal();
+  cond_.broadcast();
   return true;
 }
 

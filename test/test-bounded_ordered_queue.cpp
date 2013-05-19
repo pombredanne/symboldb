@@ -23,6 +23,8 @@
 #include <vector>
 #include <set>
 
+#include <unistd.h>
+
 using namespace cxxll;
 
 namespace {
@@ -42,6 +44,9 @@ namespace {
     {
       for (int i = 0; i < count; ++i) {
 	boq.push(i * max_id + id, id);
+	if (i % (count / 5) == 0) {
+	  usleep(10 * 1000);
+	}
       }
       boq.remove_producer();
     }
@@ -126,6 +131,9 @@ test()
       CHECK((k % max_id) == v);
       CHECK(boq.size_estimate() <= static_cast<unsigned>(max_id));
       results.insert(k);
+      if (results.size() % (max_id * count / 3) == 0) {
+	usleep(10 * 1000);
+      }
     }
   }
   CHECK(results.size() == max_id * count);
