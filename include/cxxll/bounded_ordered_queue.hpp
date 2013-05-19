@@ -34,7 +34,8 @@ class queue_without_producers : public std::exception {
 template <class Key, class Value>
 class bounded_ordered_queue {
   mutable mutex mutex_;
-  cond cond_;
+  cond reader_;
+  cond writer_;
   typedef std::multimap<Key, Value> map;
   map map_;
   unsigned capacity_;
@@ -111,7 +112,7 @@ bounded_ordered_queue<Key, Value>::remove_producer()
   }
   --producers_;
   if (producers_ == 0) {
-    cond_.broadcast();
+    reader_.broadcast();
   }
 }
 
@@ -130,10 +131,10 @@ bounded_ordered_queue<Key, Value>::push(const Key &key, const Value &value)
     throw std::logic_error("bounded_ordered_queue push without producers");
   }
   while (map_.size() >= capacity_) {
-    cond_.wait(mutex_);
+    writer_.wait(mutex_);
   }
   map_.insert(std::make_pair(key, value));
-  cond_.broadcast();
+  reader_.signal();
 }
 
 template <class Key, class Value> bool
@@ -142,7 +143,7 @@ bounded_ordered_queue<Key, Value>::pop(Key &key, Value &value)
   mutex::locker ml(&mutex_);
   do {
     while (map_.empty() && producers_ > 0) {
-      cond_.wait(mutex_);
+      reader_.wait(mutex_);
     }
     if (map_.empty() && producers_ == 0) {
       return false;
@@ -152,7 +153,7 @@ bounded_ordered_queue<Key, Value>::pop(Key &key, Value &value)
   key = p->first;
   value = p->second;
   map_.erase(p);
-  cond_.broadcast();
+  writer_.signal();
   return true;
 }
 
