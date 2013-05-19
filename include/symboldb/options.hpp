@@ -36,6 +36,8 @@ public:
 
   std::string set_name;
   std::string cache_path;
+  unsigned download_threads;
+
   bool no_net;
 
   // If true, incomplete package sets with download errors are still
