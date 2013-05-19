@@ -36,3 +36,9 @@ cxxll::cond::throw_signal_error(int errcode)
 {
   throw os_exception(errcode).function(pthread_cond_signal).defaults();
 }
+
+void
+cxxll::cond::throw_broadcast_error(int errcode)
+{
+  throw os_exception(errcode).function(pthread_cond_broadcast).defaults();
+}

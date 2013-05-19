@@ -32,6 +32,7 @@ class cond {
   static void throw_init_error(int errcode) __attribute__((noreturn));
   static void throw_wait_error(int errcode) __attribute__((noreturn));
   static void throw_signal_error(int errcode) __attribute__((noreturn));
+  static void throw_broadcast_error(int errcode) __attribute__((noreturn));
 public:
   cond();
   ~cond() throw();
@@ -45,7 +46,11 @@ public:
   void wait(mutex &);
   void wait(pthread_mutex_t *);
 
+  // Wake up at least one waiter.
   void signal();
+
+  // Wake up all waiters.
+  void broadcast();
 };
 
 inline
@@ -93,6 +98,13 @@ cond::signal()
   }
 }
 
-
+inline void
+cond::broadcast()
+{
+  int ret = pthread_cond_broadcast(&cond_);
+  if (ret != 0) {
+    throw_broadcast_error(ret);
+  }
+}
 
 } // namespace cxxll
