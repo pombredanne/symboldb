@@ -114,13 +114,11 @@ test()
     }
   }
 
-  bounded_ordered_queue<int, int> boq(max_id);
+  bounded_ordered_queue<int, int> boq(max_id, max_id);
   std::vector<std::tr1::shared_ptr<task> > tasks;
   for (int k = 0; k < max_id; ++k) {
-    boq.add_producer();
     tasks.push_back(std::tr1::shared_ptr<task>(new task(background(boq, k))));
   }
-  boq.remove_producer(); // initial producer
   std::set<int> results;
   {
     int k, v;

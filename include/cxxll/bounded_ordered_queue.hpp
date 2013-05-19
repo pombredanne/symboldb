@@ -41,9 +41,12 @@ class bounded_ordered_queue {
   unsigned producers_;
   bounded_ordered_queue(const bounded_ordered_queue &); // not implemented
   bounded_ordered_queue &operator=(const bounded_ordered_queue &); // same
+  void check() const;
 public:
   // Creates a new queue with one producer.
   explicit bounded_ordered_queue(unsigned capacity);
+  // Creates a new queue with the indicated number of producers.
+  explicit bounded_ordered_queue(unsigned capacity, unsigned producers);
   ~bounded_ordered_queue();
 
   void add_producer();
@@ -73,9 +76,15 @@ template <class Key, class Value>
 bounded_ordered_queue<Key, Value>::bounded_ordered_queue(unsigned capacity)
   : capacity_(capacity), producers_(1)
 {
-  if (capacity == 0) {
-    throw std::logic_error("bounded_ordered_queue capacity must not be zero");
-  }
+  check();
+}
+
+template <class Key, class Value>
+bounded_ordered_queue<Key, Value>::bounded_ordered_queue
+  (unsigned capacity, unsigned producers)
+  : capacity_(capacity), producers_(producers)
+{
+  check();
 }
 
 template <class Key, class Value>
@@ -163,6 +172,14 @@ bounded_ordered_queue<Key, Value>::size_estimate() const
 {
   mutex::locker ml(&mutex_);
   return map_.size();
+}
+
+template <class Key, class Value> void
+bounded_ordered_queue<Key, Value>::check() const
+{
+  if (capacity_ == 0) {
+    throw std::logic_error("bounded_ordered_queue capacity must not be zero");
+  }
 }
 
 } // namespace cxxll
