@@ -26,8 +26,12 @@
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/curl_exception_dump.hpp>
 #include <cxxll/regex_handle.hpp>
+#include <cxxll/task.hpp>
+#include <cxxll/mutex.hpp>
+#include <cxxll/bounded_ordered_queue.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdio>
 #include <set>
 #include <vector>
@@ -70,114 +74,198 @@ namespace {
   }
 
   //////////////////////////////////////////////////////////////////////
-  // database_filter
+  // downloader
 
-  struct database_filter {
+  struct downloader {
+    // Tries to perform all the downloads in the vector.  Afterwards,
+    // urls_ contains those URLs for which the download failed.
+    downloader(const symboldb_options &, database &,
+	       std::set<database::package_id> &,
+	       std::vector<rpm_url> &, bool load);
+
+    size_t count() const;
+
+  private:
     const symboldb_options &opt_;
-    database &db_;
-    std::set<database::package_id> &pids_;
 
-    database_filter(const symboldb_options &, database &,
-		    std::set<database::package_id> &);
-    bool operator()(const rpm_url &);
+    // The following are guarded by mutex_.
+    std::set<database::package_id> &pids_;
+    std::vector<rpm_url> &urls_;
+    std::vector<rpm_url> failed_urls_;
+    mutex mutex_;
+
+    struct load_info {
+      std::string rpm_path; // path in the file system
+      checksum csum;
+    };
+    bounded_ordered_queue<std::string, load_info> queue_; // key: RPM name
+    size_t count_;
+
+    const bool load_;
+
+    // Cache bypass for RPM downloads.
+    download_options dopts_no_cache_;
+
+    // Called by the constructor to do the actual work.
+    void process(database &);
+
+    // The individual download helper tasks.
+    void download_helper_task();
+
+    // Called by download_helper_task() to download one URL.
+    void download_url(database &, file_cache &, const rpm_url &);
+
+    // Called by download_url() to skip URLs already in the database.
+    bool download_fast_track(database &, const rpm_url &);
+
+    static mutex stderr_mutex;
   };
 
-  inline
-  database_filter::database_filter(const symboldb_options &opt, database &db,
-				   std::set<database::package_id> &pids)
-    : opt_(opt), db_(db), pids_(pids)
+  mutex downloader::stderr_mutex;
+
+  downloader::downloader(const symboldb_options &opt, database &db,
+			 std::set<database::package_id> &pids,
+			 std::vector<rpm_url> &urls, bool load)
+    : opt_(opt), pids_(pids), urls_(urls),
+      queue_(opt.download_threads), count_(0), load_(load)
   {
+    queue_.remove_producer(); // initial producer
+    dopts_no_cache_.cache_mode = download_options::no_cache;
+    process(db);
   }
 
-  inline bool
-  database_filter::operator()(const rpm_url &rurl)
+  size_t
+  downloader::count() const
   {
-    database::package_id pid = db_.package_by_digest(rurl.csum.value);
+    return count_;
+  }
+
+  void
+  downloader::process(database &db)
+  {
+    // download_helper_task() removes URLs from the pack of the vector.
+    std::reverse(urls_.begin(), urls_.end());
+
+    // Retry three times or until we downloaded all URLs.
+    for (int round = 0; round < 3; ++ round) {
+      std::vector<std::tr1::shared_ptr<task> > tasks;
+      for (unsigned tid = 0; tid < opt_.download_threads; ++tid) {
+	queue_.add_producer();
+	std::tr1::shared_ptr<task> dtask
+	  (new task(std::tr1::bind(&downloader::download_helper_task, this)));
+	tasks.push_back(dtask);
+      }
+      std::string name;
+      load_info to_load;
+      while (queue_.pop(name, to_load)) {
+	++count_;
+	if (load_) {
+	  rpm_package_info info;
+	  database::package_id pid = rpm_load
+	    (opt_, db, to_load.rpm_path.c_str(), info, &to_load.csum);
+	  assert(pid != database::package_id());
+	  mutex::locker ml(&mutex_);
+	  pids_.insert(pid);
+	}
+      }
+
+      assert(queue_.producers() == 0);
+      assert(urls_.empty());
+      if (failed_urls_.empty()) {
+	break;
+      }
+      // Retry failed URLs.
+      std::swap(failed_urls_, urls_);
+    }
+  }
+
+  void
+  downloader::download_helper_task()
+  {
+    // Per-task database and cache objects.
+    database db;
+    std::tr1::shared_ptr<file_cache> fcache(opt_.rpm_cache());
+
+    while (true) {
+      rpm_url url;
+      {
+	mutex::locker ml(&mutex_);
+	if (urls_.empty()) {
+	  break;
+	}
+	url = urls_.back();
+	urls_.pop_back();
+      }
+      download_url(db, *fcache, url);
+    }
+    queue_.remove_producer();
+  }
+
+  bool
+  downloader::download_fast_track(database &db, const rpm_url &url)
+  {
+    database::package_id pid = db.package_by_digest(url.csum.value);
     if (pid != database::package_id()) {
       if (opt_.output == symboldb_options::verbose) {
-	fprintf(stderr, "info: skipping %s\n", rurl.href.c_str());
+	mutex::locker ml(&stderr_mutex);
+	fprintf(stderr, "info: skipping %s\n", url.href.c_str());
       }
+      mutex::locker ml(&mutex_);
       pids_.insert(pid);
       return true;
     }
     return false;
   }
 
-  //////////////////////////////////////////////////////////////////////
-  // download_filter
-
-  struct download_filter : database_filter {
-    std::tr1::shared_ptr<file_cache> fcache_;
-    size_t &count_;
-    bool load_;
-
-    // Cache bypass for RPM downloads.
-    download_options dopts_no_cache_;
-
-    download_filter(const symboldb_options &, database &,
-		    std::set<database::package_id> &,
-		    size_t &count, bool load);
-    bool operator()(const rpm_url &);
-  };
-
-  inline
-  download_filter::download_filter(const symboldb_options &opt, database &db,
-				   std::set<database::package_id> &pids,
-				   size_t &count, bool load)
-    : database_filter(opt, db, pids),
-      fcache_(opt.rpm_cache()), count_(count), load_(load)
+  void
+  downloader::download_url(database &db, file_cache &fcache, const rpm_url &url)
   {
-    dopts_no_cache_.cache_mode = download_options::no_cache;
-  }
-
-  inline bool
-  download_filter::operator()(const rpm_url &rurl)
-  {
-    try {
-      std::string rpm_path;
-      database::advisory_lock lock
-	(db_.lock_digest(rurl.csum.value.begin(), rurl.csum.value.end()));
-      if (database_filter::operator()(rurl)) {
-	return true;
-      } else if (!fcache_->lookup_path(rurl.csum, rpm_path)) {
-	if (opt_.output != symboldb_options::quiet) {
-	  if (rurl.csum.length != checksum::no_length) {
-	    fprintf(stderr, "info: downloading %s (%llu bytes)\n",
-		    rurl.href.c_str(), rurl.csum.length);
-	  } else {
-	    fprintf(stderr, "info: downloading %s\n", rurl.href.c_str());
-	  }
+    database::advisory_lock lock
+      (db.lock_digest(url.csum.value.begin(), url.csum.value.end()));
+    if (download_fast_track(db, url)) {
+      return;
+    }
+    load_info to_load;
+    to_load.csum = url.csum;
+    if (!fcache.lookup_path(url.csum, to_load.rpm_path)) {
+      if (opt_.output != symboldb_options::quiet) {
+	mutex::locker ml(&stderr_mutex);
+	if (url.csum.length != checksum::no_length) {
+	  fprintf(stderr, "info: downloading %s (%llu bytes)\n",
+		  url.href.c_str(), url.csum.length);
+	} else {
+	  fprintf(stderr, "info: downloading %s\n", url.href.c_str());
 	}
-	file_cache::add_sink sink(*fcache_, rurl.csum);
-	download(dopts_no_cache_, db_, rurl.href.c_str(), &sink);
-	sink.finish(rpm_path);
-	++count_;
       }
-
-      if (load_) {
-	rpm_package_info info;
-	database::package_id pid = rpm_load(opt_, db_, rpm_path.c_str(), info,
-					    &rurl.csum);
-	if (pid == database::package_id()) {
-	  return false;
-	}
-	pids_.insert(pid);
+      bool good = false;
+      try {
+	file_cache::add_sink sink(fcache, url.csum);
+	download(dopts_no_cache_, db, url.href.c_str(), &sink);
+	sink.finish(to_load.rpm_path);
+	good = true;
+      } catch (curl_exception &e) {
+	mutex::locker ml(&stderr_mutex);
+	dump("error: ", e, stderr);
+      } catch (file_cache::unsupported_hash &e) {
+	mutex::locker ml(&stderr_mutex);
+	fprintf(stderr, "error: unsupported hash for %s: %s\n",
+		url.href.c_str(), e.what());
+      } catch (file_cache::checksum_mismatch &e) {
+	mutex::locker ml(&stderr_mutex);
+	fprintf(stderr, "error: checksum mismatch for %s: %s\n",
+		url.href.c_str(), e.what());
       }
-      return true;
-    } catch (curl_exception &e) {
-      dump("error: ", e, stderr);
-      return false;
-    } catch (file_cache::unsupported_hash &e) {
-      fprintf(stderr, "error: unsupported hash for %s: %s\n",
-	      rurl.href.c_str(), e.what());
-      return false;
-    } catch (file_cache::checksum_mismatch &e) {
-      fprintf(stderr, "error: checksum mismatch for %s: %s\n",
-	      rurl.href.c_str(), e.what());
-      return false;
+      if (good) {
+	queue_.push(url.name, to_load);
+      } else {
+	mutex::locker ml(&mutex_);
+	failed_urls_.push_back(url);
+	return;
+      }
     }
   }
-}
+
+} // anonymous namespace
 
 int
 symboldb_download_repo(const symboldb_options &opt, database &db,
@@ -231,34 +319,16 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     }
   }
 
-  {
-    database_filter filter(opt, db, pids);
-    std::vector<rpm_url>::iterator p = std::remove_if
-      (urls.begin(), urls.end(), filter);
-    urls.erase(p, urls.end());
-    if (opt.output != symboldb_options::quiet) {
-      fprintf(stderr,
-	      "info: %zu packages to download after database comparison\n",
-	      urls.size());
-    }
+  if (opt.randomize) {
+    std::random_shuffle(urls.begin(), urls.end());
   }
 
   {
     size_t start_count = urls.size();
-    size_t download_count = 0;
-    download_filter filter(opt, db, pids, download_count, load);
-    for (unsigned iteration = 1;
-	 iteration <= 3 && !urls.empty(); ++iteration) {
-      if (opt.randomize) {
-	std::random_shuffle(urls.begin(), urls.end());
-      }
-      std::vector<rpm_url>::iterator p = std::remove_if
-	(urls.begin(), urls.end(), filter);
-      urls.erase(p, urls.end());
-    }
+    downloader dl(opt, db, pids, urls, load);
     if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: downloaded %zu of %zu packages\n",
-	      download_count, start_count);
+	      dl.count(), start_count);
     }
   }
 
