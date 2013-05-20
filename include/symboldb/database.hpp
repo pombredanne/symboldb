@@ -112,6 +112,10 @@ public:
   void add_package_digest(package_id, const std::vector<unsigned char> &digest,
 			  unsigned long long length);
 
+  // Adds the URL for an RPM package (that is, a location where it can
+  // be downloaded).
+  void add_package_url(package_id, const char *);
+
   // Looks up a package ID by the external SHA-1 or SHA-256 digest.
   // Returns 0 if the package ID was not found.
   package_id package_by_digest(const std::vector<unsigned char> &digest);

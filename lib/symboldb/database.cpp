@@ -344,6 +344,14 @@ database::add_package_digest(package_id pkg,
      pkg.value(), digest, static_cast<long long>(length));
 }
 
+void
+database::add_package_url(package_id pkg, const char *url)
+{
+  pgresult_handle res;
+  pg_query(impl_->conn, res, "SELECT symboldb.add_package_url($1, $2)",
+	   pkg.value(), url);
+}
+
 database::package_id
 database::package_by_digest(const std::vector<unsigned char> &digest)
 {
