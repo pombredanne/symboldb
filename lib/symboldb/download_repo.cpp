@@ -211,6 +211,9 @@ namespace {
 	mutex::locker ml(&stderr_mutex);
 	fprintf(stderr, "info: skipping %s\n", url.href.c_str());
       }
+      db.txn_begin_no_sync();
+      db.add_package_url(pid, url.href.c_str());
+      db.txn_commit();
       mutex::locker ml(&mutex_);
       pids_.insert(pid);
       return true;
