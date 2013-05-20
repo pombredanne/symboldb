@@ -106,6 +106,31 @@ CREATE TABLE symboldb.package_digest (
 COMMENT ON table symboldb.package_digest IS
   'SHA-1 and SHA-256 hashes of multiple representations of the same RPM package';
 
+CREATE TABLE symboldb.package_url (
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  url TEXT NOT NULL CHECK (LENGTH(url) > 0) COLLATE "C",
+  PRIMARY KEY (package_id, url)
+);
+COMMENT ON TABLE symboldb.package_url IS
+  'download source for a package';
+
+CREATE FUNCTION symboldb.add_package_url (INTEGER, TEXT) RETURNS BOOLEAN
+  LANGUAGE 'plpgsql' AS $$
+DECLARE
+  dummy BOOLEAN;
+BEGIN
+  SELECT TRUE INTO dummy FROM symboldb.package_url
+    WHERE package_id = $1 AND url = $2;
+  IF FOUND THEN
+    RETURN FALSE;
+  END IF;
+  INSERT INTO symboldb.package_url (package_id, url) VALUES ($1, $2);
+  RETURN TRUE;
+END;
+$$;
+
+
 CREATE TABLE symboldb.package_require (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
