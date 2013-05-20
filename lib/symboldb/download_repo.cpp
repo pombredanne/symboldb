@@ -95,6 +95,7 @@ namespace {
     mutex mutex_;
 
     struct load_info {
+      std::string url; // location on the network
       std::string rpm_path; // path in the file system
       checksum csum;
     };
@@ -161,7 +162,8 @@ namespace {
 	if (load_) {
 	  rpm_package_info info;
 	  database::package_id pid = rpm_load
-	    (opt_, db, to_load.rpm_path.c_str(), info, &to_load.csum);
+	    (opt_, db, to_load.rpm_path.c_str(), info, &to_load.csum,
+	     to_load.url.c_str());
 	  assert(pid != database::package_id());
 	  mutex::locker ml(&mutex_);
 	  pids_.insert(pid);
@@ -225,6 +227,7 @@ namespace {
       return;
     }
     load_info to_load;
+    to_load.url = url.href;
     to_load.csum = url.csum;
     if (!fcache.lookup_path(url.csum, to_load.rpm_path)) {
       if (opt_.output != symboldb_options::quiet) {

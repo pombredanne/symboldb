@@ -27,9 +27,11 @@ namespace cxxll {
 class symboldb_options;
 
 // Loads the RPM file PATH into the database and returns metadata in
-// INFO.  Reports some errors on standard error.  The database must
-// not have an open transaction.  The return value is the package ID,
-// or 0 on error.
+// INFO.  If URL is not NULL, this location is added to the database
+// as a potential future download source for the package.  Reports
+// some errors on standard error.  The database must not have an open
+// transaction.  The return value is the package ID, or 0 on error.
 database::package_id rpm_load(const symboldb_options &opt, database &db,
 			      const char *path, cxxll::rpm_package_info &info,
-			      const cxxll::checksum *expected);
+			      const cxxll::checksum *expected,
+			      const char *url);

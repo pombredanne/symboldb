@@ -471,7 +471,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 database::package_id
 rpm_load(const symboldb_options &opt, database &db,
 	 const char *path, rpm_package_info &info,
-	 const checksum *expected)
+	 const checksum *expected, const char *url)
 {
   if (expected && (expected->type != hash_sink::sha256
 		   && expected->type != hash_sink::sha1)) {
@@ -508,6 +508,9 @@ rpm_load(const symboldb_options &opt, database &db,
   if (expected && expected->type == hash_sink::sha1
       && expected->value != digest) {
     throw std::runtime_error("checksum mismatch");
+  }
+  if (url != NULL) {
+    db.add_package_url(pkg, url);
   }
 
   db.txn_commit();

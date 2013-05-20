@@ -203,10 +203,11 @@ test()
 	}
 	rpm_package_info info;
 	database::package_id pkg
-	  (rpm_load(opt, db, rpmpath.c_str(), info, &csum));
+	  (rpm_load(opt, db, rpmpath.c_str(), info, &csum,
+		    ("file://" + rpmpath).c_str()));
 	CHECK(pkg > last_pkg_id);
 	last_pkg_id = pkg;
-	pkg = rpm_load(opt, db, rpmpath.c_str(), info, &csum);
+	pkg = rpm_load(opt, db, rpmpath.c_str(), info, &csum, NULL);
 	CHECK(pkg == last_pkg_id);
       }
     }
