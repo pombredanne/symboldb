@@ -36,6 +36,8 @@
 #include <set>
 #include <vector>
 
+#include <unistd.h>
+
 using namespace cxxll;
 
 namespace {
@@ -98,6 +100,7 @@ namespace {
       std::string url; // location on the network
       std::string rpm_path; // path in the file system
       checksum csum;
+      bool download; // RPM file came from the network
     };
     bounded_ordered_queue<std::string, load_info> queue_; // key: RPM name
     size_t count_;
@@ -165,6 +168,9 @@ namespace {
 	    (opt_, db, to_load.rpm_path.c_str(), info, &to_load.csum,
 	     to_load.url.c_str());
 	  assert(pid != database::package_id());
+	  if (to_load.download && load_ && opt_.transient_rpms) {
+	    unlink(to_load.rpm_path.c_str());
+	  }
 	  mutex::locker ml(&mutex_);
 	  pids_.insert(pid);
 	}
@@ -232,7 +238,8 @@ namespace {
     load_info to_load;
     to_load.url = url.href;
     to_load.csum = url.csum;
-    if (!fcache.lookup_path(url.csum, to_load.rpm_path)) {
+    to_load.download = !fcache.lookup_path(url.csum, to_load.rpm_path);
+    if (to_load.download) {
       if (opt_.output != symboldb_options::quiet) {
 	mutex::locker ml(&stderr_mutex);
 	if (url.csum.length != checksum::no_length) {
@@ -267,6 +274,9 @@ namespace {
 	failed_urls_.push_back(url);
 	return;
       }
+    } else {
+      // Not downloaded.
+      queue_.push(url.name, to_load);
     }
   }
 
