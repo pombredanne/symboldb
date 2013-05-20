@@ -318,6 +318,7 @@ usage(const char *progname, const char *error = NULL)
 "  %1$s --show-stale-cached-rpms [OPTIONS]\n"
 "  %1$s --show-soname-conflicts=PACKAGE-SET [OPTIONS]\n"
 "\nOptions:\n"
+"  --delete-rpms          delete downloaded RPMs after database loading\n"
 "  --randomize            perform downloads in random order\n"
 "  --exclude-name=REGEXP  exclude packages whose name matches REGEXP\n"
 "  --quiet, -q            less output\n"
@@ -359,6 +360,7 @@ namespace {
       exclude_name,
       ignore_download_errors,
       randomize,
+      delete_rpms,
     } type;
   }
 }
@@ -392,6 +394,7 @@ main(int argc, char **argv)
       {"run-example", no_argument, 0, command::run_example},
       {"exclude-name", required_argument, 0, options::exclude_name},
       {"randomize", no_argument, 0, options::randomize},
+      {"delete-rpms", no_argument, 0, options::delete_rpms},
       {"cache", required_argument, 0, 'C'},
       {"no-net", no_argument, 0, 'N'},
       {"ignore-download-errors", no_argument, 0,
@@ -448,6 +451,9 @@ main(int argc, char **argv)
 	break;
       case options::randomize:
 	opt.randomize = true;
+	break;
+      case options::delete_rpms:
+	opt.transient_rpms = true;
 	break;
       case options::ignore_download_errors:
 	opt.ignore_download_errors = true;
