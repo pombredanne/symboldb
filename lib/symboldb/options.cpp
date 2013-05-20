@@ -25,7 +25,8 @@ using namespace cxxll;
 
 symboldb_options::symboldb_options()
   : output(standard), download_threads(3),
-    no_net(false), ignore_download_errors(false), randomize(false)
+    no_net(false), ignore_download_errors(false), randomize(false),
+    transient_rpms(false)
 {
 }
 

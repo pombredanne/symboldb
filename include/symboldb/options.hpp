@@ -47,6 +47,9 @@ public:
   // Randomize the download order.
   bool randomize;
 
+  // Delete RPMs if they were downloaded just before loading.
+  bool transient_rpms;
+
   symboldb_options();
   ~symboldb_options();
 
