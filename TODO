@@ -13,8 +13,6 @@
   database table (or multiple tables, not clear what would be the best
   approach).
 
-* Parallelize downloading.
-
 * Extend Java support: extract method, field references and
   definitions.  Recursively descend into WAR and EAR archives and
   process classes found there.

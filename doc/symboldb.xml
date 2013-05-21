@@ -356,6 +356,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>--download-threads</option>
+	<replaceable class="parameter">number</replaceable></term>
+	<listitem>
+	  <para>
+	    Use <replaceable class="parameter">number</replaceable>
+	    threads when downloading RPMs from repositories.  By
+	    default, three threads are used, which should result in
+	    adequate performance in most cases.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>--cache</option></term>
 	<term><option>-C</option></term>
 	<listitem>

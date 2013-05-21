@@ -321,6 +321,7 @@ usage(const char *progname, const char *error = NULL)
 "  --delete-rpms          delete downloaded RPMs after database loading\n"
 "  --randomize            perform downloads in random order\n"
 "  --exclude-name=REGEXP  exclude packages whose name matches REGEXP\n"
+"  --download-threads=N   number of parallel downloads (default: 3)\n"
 "  --quiet, -q            less output\n"
 "  --cache=DIR, -C        path to the cache (default: ~/.cache/symboldb)\n"
 "  --ignore-download-errors   process repositories with download errors\n"
@@ -358,6 +359,7 @@ namespace {
     typedef enum {
       undefined = 2000,
       exclude_name,
+      download_threads,
       ignore_download_errors,
       randomize,
       delete_rpms,
@@ -393,6 +395,7 @@ main(int argc, char **argv)
       {"expire", no_argument, 0, command::expire},
       {"run-example", no_argument, 0, command::run_example},
       {"exclude-name", required_argument, 0, options::exclude_name},
+      {"download-threads", required_argument, 0, options::download_threads},
       {"randomize", no_argument, 0, options::randomize},
       {"delete-rpms", no_argument, 0, options::delete_rpms},
       {"cache", required_argument, 0, 'C'},
@@ -448,6 +451,12 @@ main(int argc, char **argv)
 	break;
       case options::exclude_name:
 	opt.add_exclude_name(optarg);
+	break;
+      case options::download_threads:
+	opt.download_threads = atoi(optarg);
+	if (opt.download_threads == 0) {
+	  usage(argv[0]);
+	}
 	break;
       case options::randomize:
 	opt.randomize = true;
