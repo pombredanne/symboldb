@@ -66,6 +66,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </cmdsynopsis>
     <cmdsynopsis>
       <command>symboldb</command>
+      <arg choice="plain">--file</arg>
+      <arg choice="plain"><replaceable>hash</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
       <arg choice="plain">--show-repomd</arg>
       <arg choice="plain"><replaceable>URL</replaceable></arg>
     </cmdsynopsis>
@@ -83,6 +88,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <command>symboldb</command>
       <arg choice="plain">--load-repo</arg>
       <arg choice="plain" rep="repeat"><replaceable>URL</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--expire</arg>
     </cmdsynopsis>
     <cmdsynopsis>
       <command>symboldb</command>
@@ -217,6 +226,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><command>--file</command>
+	<replaceable class="parameter">hash</replaceable>
+	</term>
+	<listitem>
+	  <para>
+	    Obtains the file with the specified SHA-256 hash and
+	    writes it to standard output.  The package must be both in
+	    the database and the RPM cache.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><command>--show-repomd</command>
 	<replaceable class="parameter">URL</replaceable>
 	</term>
@@ -238,6 +259,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    file from the <filename>repodata/repomd.xml</filename>
 	    file, downloads and decompresses it, and writes it to
 	    standard output.  (The local cache is used if possible.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--expire</command>
+	</term>
+	<listitem>
+	  <para>
+	    Removes packages which are not part of any package set and
+	    other unreferenced database contents.  RPM files for
+	    packages which are not package set members are deleted as
+	    well.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -276,7 +309,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    This command prints sonames which are provided by multiple
 	    shared libraries.  Due to such conflicts, the ELF closure
 	    computed by <command>symboldb</command> may not accurately
-	    reflect reality.
+	    reflect reality.  References to sonames which cannot be
+	    resolved are also printed.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -318,6 +352,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    regular expression which is matched in a case-insensitive
 	    manner and anchored at both ends.  This option can be
 	    repeated multiple times.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--download-threads</option>
+	<replaceable class="parameter">number</replaceable></term>
+	<listitem>
+	  <para>
+	    Use <replaceable class="parameter">number</replaceable>
+	    threads when downloading RPMs from repositories.  By
+	    default, three threads are used, which should result in
+	    adequate performance in most cases.
 	  </para>
 	</listitem>
       </varlistentry>

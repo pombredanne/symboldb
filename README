@@ -10,7 +10,9 @@ development packages:
 - elfutils-libelf-devel
 - expat-devel
 - gawk (for /usr/bin/awk)
+- libarchive-devel
 - nss-devel
+- postgresql-contrib
 - postgresql-devel
 - postgresql-server
 - rpm-devel
@@ -60,10 +62,18 @@ following commands as the "postgres" user:
 
   createuser USER
   createdb --lc-collate=C USER
+  psql -c "CREATE EXTENSION pg_trgm" USER
 
-(The symboldb SQL schema contains COLLATE "C" annotations in many
+If the final command files with an error message, your system likely
+lacks the postgresql-contrib package.
+
+The symboldb SQL schema contains COLLATE "C" annotations in many
 places, so re-using an existing database with another collation scheme
-is possible without a performance loss.)
+is possible without a performance loss.
+
+If you plan to load large repositories (such as Fedora releases), you
+need to tune your PostgreSQL installation.  At least the very least,
+increase the "shared_buffers" and "checkpoint_segments" values.
 
 Afterwards, as "USER", run "psql" to check if you can access the
 database.  The following commands have to be invoked as "USER", too.

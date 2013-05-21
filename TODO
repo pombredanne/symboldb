@@ -9,16 +9,16 @@
   information in expat_source, and a stack of open tags.  (Hopefully,
   this will not cause too much of a slowdown.)
 
-* Parallelize downloading.
+* Extract requires/provides/conflicts/obsoletes and store them in a
+  database table (or multiple tables, not clear what would be the best
+  approach).
 
-* Store sizes of files inside RPMs.  Handle symbolic links and
-  possibly hard links.
+* Extend Java support: extract method, field references and
+  definitions.  Recursively descend into WAR and EAR archives and
+  process classes found there.
 
-* Support extracting Java symbols (class, method, field definitions
-  and references).
-
-* Support for extracting Python symbols.  This probably needs a some
-  flow analysis to give good results.
+* Support for extracting Python symbols.  This probably needs flow
+  analysis to give good results.
 
 * Parallelize RPM parsing and database loading.  It is not entirely
   clear if this is beneficial on small systems, but it will probably
@@ -32,18 +32,14 @@
 
 * More test cases, including loading of sample RPMs.
 
-* Follow the cryptographic chain starting with the repomd.xml file and
-  verify all hashes up to the RPM files along the way.
-
 * Accelerate downloads of re-signed RPMs by combining the new header
   with the existing compressed cpio data.
-
-* The ELF closure update is non-deterministic under file conflicts (as
-  seen with MariaDB vs MySQL).  We need to add another tie-braker,
-  potentially based on the package name.
-
-* Store the ELF build ID in the database.
 
 * Use the libpq binary interface for bulk data transfers.  This should
   lead to a measurable speedup when transferring mostly integer
   columns (e.g., when computing the ELF closure).
+
+* Retry database transactions on unique constraint failures.  This
+  means re-opening the RPM file and re-start processing, expecting
+  that the race condition will not reappear (because the row is now
+  present).

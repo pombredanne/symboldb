@@ -24,6 +24,7 @@ find_path (
 )
 
 include_directories (
+  ${PROJECT_SOURCE_DIR}/include
   ${NSS_INCLUDE_DIR}
   ${NSPR_INCLUDE_DIR}
   ${PQ_INCLUDE_DIR}
@@ -48,83 +49,122 @@ add_custom_command (
 )
 
 add_custom_command (
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
-  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
-  DEPENDS schema.sql
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema-base.sql.inc
+  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema-base.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema-base.sql.inc
+  DEPENDS schema-base.sql
+)
+
+add_custom_command (
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema-index.sql.inc
+  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/schema-index.sql > ${CMAKE_CURRENT_BINARY_DIR}/schema-index.sql.inc
+  DEPENDS schema-index.sql
+)
+
+add_library (CXXLL
+  lib/cxxll/checksum.cpp
+  lib/cxxll/backtrace.cpp
+  lib/cxxll/base16.cpp
+  lib/cxxll/cond.cpp
+  lib/cxxll/cpio_reader.cpp
+  lib/cxxll/curl_exception.cpp
+  lib/cxxll/curl_exception_dump.cpp
+  lib/cxxll/curl_fetch_result.cpp
+  lib/cxxll/curl_handle.cpp
+  lib/cxxll/dir_handle.cpp
+  lib/cxxll/elf_exception.cpp
+  lib/cxxll/elf_image.cpp
+  lib/cxxll/elf_symbol.cpp
+  lib/cxxll/elf_symbol_definition.cpp
+  lib/cxxll/elf_symbol_reference.cpp
+  lib/cxxll/expat_handle.cpp
+  lib/cxxll/expat_minidom.cpp
+  lib/cxxll/expat_source.cpp
+  lib/cxxll/fd_handle.cpp
+  lib/cxxll/fd_sink.cpp
+  lib/cxxll/fd_source.cpp
+  lib/cxxll/file_cache.cpp
+  lib/cxxll/file_handle.cpp
+  lib/cxxll/gunzip_source.cpp
+  lib/cxxll/hash.cpp
+  lib/cxxll/java_class.cpp
+  lib/cxxll/memory_range_source.cpp
+  lib/cxxll/mutex.cpp
+  lib/cxxll/os.cpp
+  lib/cxxll/os_error_string.cpp
+  lib/cxxll/os_exception.cpp
+  lib/cxxll/os_exception_function.cpp
+  lib/cxxll/os_exception_defaults.cpp
+  lib/cxxll/os_current_directory.cpp
+  lib/cxxll/os_readlink.cpp
+  lib/cxxll/os_remove_directory_tree.cpp
+  lib/cxxll/os_ticks.cpp
+  lib/cxxll/pg_exception.cpp
+  lib/cxxll/pg_private.cpp
+  lib/cxxll/pg_testdb.cpp
+  lib/cxxll/pgconn_handle.cpp
+  lib/cxxll/pgresult_handle.cpp
+  lib/cxxll/read_file.cpp
+  lib/cxxll/regex_handle.cpp
+  lib/cxxll/rpm_evr.cpp
+  lib/cxxll/rpm_dependency.cpp
+  lib/cxxll/rpm_file_entry.cpp
+  lib/cxxll/rpm_file_info.cpp
+  lib/cxxll/rpm_package_info.cpp
+  lib/cxxll/rpm_parser.cpp
+  lib/cxxll/rpm_parser_exception.cpp
+  lib/cxxll/rpmtd_wrapper.cpp
+  lib/cxxll/sink.cpp
+  lib/cxxll/source.cpp
+  lib/cxxll/source_sink.cpp
+  lib/cxxll/string_sink.cpp
+  lib/cxxll/string_source.cpp
+  lib/cxxll/string_support.cpp
+  lib/cxxll/subprocess.cpp
+  lib/cxxll/task.cpp
+  lib/cxxll/tee_sink.cpp
+  lib/cxxll/temporary_directory.cpp
+  lib/cxxll/url.cpp
+  lib/cxxll/utf8.cpp
+  lib/cxxll/vector_extract.cpp
+  lib/cxxll/vector_sink.cpp
+  lib/cxxll/zip_file.cpp
+  lib/cxxll/zlib.cpp
+  lib/cxxll/zlib_inflate_exception.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
 )
 
 add_library (SymbolDB
-  backtrace.cpp
-  base16.cpp
-  checksum.cpp
-  cpio_reader.cpp
-  curl_exception.cpp
-  curl_exception_dump.cpp
-  curl_fetch_result.cpp
-  curl_handle.cpp
-  database.cpp
-  database_elf_closure.cpp
-  dir_handle.cpp
-  download.cpp
-  elf_exception.cpp
-  elf_image.cpp
-  elf_symbol.cpp
-  elf_symbol_definition.cpp
-  elf_symbol_reference.cpp
-  expat_handle.cpp
-  expat_minidom.cpp
-  expat_source.cpp
-  fd_handle.cpp
-  fd_sink.cpp
-  fd_source.cpp
-  file_cache.cpp
-  gunzip_source.cpp
-  hash.cpp
-  memory_range_source.cpp
-  os.cpp
-  os_error_string.cpp
-  os_exception.cpp
-  os_exception_function.cpp
-  os_exception_defaults.cpp
-  os_current_directory.cpp
-  os_readlink.cpp
-  os_remove_directory_tree.cpp
-  pg_exception.cpp
-  pg_private.cpp
-  pg_testdb.cpp
-  pgconn_handle.cpp
-  pgresult_handle.cpp
-  regex_handle.cpp
-  repomd.cpp
-  repomd_primary.cpp
-  repomd_primary_xml.cpp
-  rpm_evr.cpp
-  rpm_file_entry.cpp
-  rpm_file_info.cpp
-  rpm_load.cpp
-  rpm_package_info.cpp
-  rpm_parser.cpp
-  rpm_parser_exception.cpp
-  rpmtd_wrapper.cpp
-  sink.cpp
-  source.cpp
-  source_sink.cpp
-  string_sink.cpp
-  string_source.cpp
-  string_support.cpp
-  subprocess.cpp
-  symboldb_download_repo.cpp
-  symboldb_options.cpp
-  symboldb_show_source_packages.cpp
-  task.cpp
-  tee_sink.cpp
-  url.cpp
-  utf8.cpp
-  vector_sink.cpp
-  zlib.cpp
-  zlib_inflate_exception.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
-  ${CMAKE_CURRENT_BINARY_DIR}/schema.sql.inc
+  lib/symboldb/database.cpp
+  lib/symboldb/download.cpp
+  lib/symboldb/download_repo.cpp
+  lib/symboldb/expire.cpp
+  lib/symboldb/get_file.cpp
+  lib/symboldb/options.cpp
+  lib/symboldb/repomd.cpp
+  lib/symboldb/repomd_primary.cpp
+  lib/symboldb/repomd_primary_xml.cpp
+  lib/symboldb/rpm_load.cpp
+  lib/symboldb/show_source_packages.cpp
+  lib/symboldb/update_elf_closure.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/schema-base.sql.inc
+  ${CMAKE_CURRENT_BINARY_DIR}/schema-index.sql.inc
+)
+
+target_link_libraries (CXXLL
+  -larchive
+  -lcurl
+  -ldl
+  -lelf
+  -lexpat
+  -lnss3
+  -lpq
+  -lrpm -lrpmio
+  -lrt
+  -lz
+)
+
+target_link_libraries (SymbolDB
+  CXXLL
 )
 
 target_link_libraries (SymbolDB
@@ -139,7 +179,7 @@ target_link_libraries (SymbolDB
 )
 
 add_executable (symboldb
-  symboldb.cpp
+  src/symboldb.cpp
 )
 
 target_link_libraries (symboldb
@@ -149,40 +189,46 @@ target_link_libraries (symboldb
 install (TARGETS symboldb DESTINATION bin)
 
 add_executable (pgtestshell
-  pgtestshell.cpp
+  src/pgtestshell.cpp
 )
 
 target_link_libraries (pgtestshell
-  SymbolDB
+  CXXLL
 )
 
 install (TARGETS pgtestshell DESTINATION bin)
 
 add_executable (runtests
-  runtests.cpp
-  test-base16.cpp
-  test-dir_handle.cpp
-  test-download.cpp
-  test-fd_handle.cpp
-  test-fd_sink.cpp
-  test-fd_source.cpp
-  test-file_cache.cpp
-  test-endian.cpp
-  test-expat_minidom.cpp
-  test-expat_source.cpp
-  test-gunzip_source.cpp
-  test-os.cpp
-  test-os_exception.cpp
-  test-pg_testdb.cpp
-  test-regex_handle.cpp
-  test-repomd.cpp
-  test-rpm_load.cpp
-  test-string_source.cpp
-  test-string_support.cpp
-  test-subprocess.cpp
-  test-task.cpp
-  test-utf8.cpp
-  test.cpp
+  test/runtests.cpp
+  test/test-base16.cpp
+  test/test-bounded_ordered_queue.cpp
+  test/test-dir_handle.cpp
+  test/test-download.cpp
+  test/test-fd_handle.cpp
+  test/test-fd_sink.cpp
+  test/test-fd_source.cpp
+  test/test-file_cache.cpp
+  test/test-endian.cpp
+  test/test-expat_minidom.cpp
+  test/test-expat_source.cpp
+  test/test-gunzip_source.cpp
+  test/test-java_class.cpp
+  test/test-os.cpp
+  test/test-os_exception.cpp
+  test/test-pg_testdb.cpp
+  test/test-read_file.cpp
+  test/test-regex_handle.cpp
+  test/test-repomd.cpp
+  test/test-rpm_load.cpp
+  test/test-string_source.cpp
+  test/test-string_support.cpp
+  test/test-subprocess.cpp
+  test/test-task.cpp
+  test/test-temporary_directory.cpp
+  test/test-utf8.cpp
+  test/test-vector_extract.cpp
+  test/test-zip_file.cpp
+  test/test.cpp
 )
 
 target_link_libraries (runtests
