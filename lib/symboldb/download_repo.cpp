@@ -29,6 +29,7 @@
 #include <cxxll/task.hpp>
 #include <cxxll/mutex.hpp>
 #include <cxxll/bounded_ordered_queue.hpp>
+#include <cxxll/os.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -86,6 +87,8 @@ namespace {
 	       std::vector<rpm_url> &, bool load);
 
     size_t count() const;
+    double total_time() const;
+    double wait_time() const;
 
   private:
     const symboldb_options &opt_;
@@ -104,6 +107,8 @@ namespace {
     };
     bounded_ordered_queue<std::string, load_info> queue_; // key: RPM name
     size_t count_;
+    double total_time_;
+    double wait_time_;
 
     const bool load_;
 
@@ -131,7 +136,7 @@ namespace {
 			 std::set<database::package_id> &pids,
 			 std::vector<rpm_url> &urls, bool load)
     : opt_(opt), pids_(pids), urls_(urls),
-      queue_(opt.download_threads, 0), count_(0), load_(load)
+      queue_(opt.download_threads, 0), count_(0), wait_time_(0), load_(load)
   {
     dopts_no_cache_.cache_mode = download_options::no_cache;
     process(db);
@@ -143,9 +148,23 @@ namespace {
     return count_;
   }
 
+  double
+  downloader::total_time() const
+  {
+    return total_time_;
+  }
+
+  double
+  downloader::wait_time() const
+  {
+    return wait_time_;
+  }
+
   void
   downloader::process(database &db)
   {
+    double start_time = ticks();
+
     // download_helper_task() removes URLs from the pack of the vector.
     std::reverse(urls_.begin(), urls_.end());
 
@@ -160,7 +179,15 @@ namespace {
       }
       std::string name;
       load_info to_load;
-      while (queue_.pop(name, to_load)) {
+      while (true) {
+	{
+	  double before_pop = ticks();
+	  if (!queue_.pop(name, to_load)) {
+	    break;
+	  }
+	  double after_pop = ticks();
+	  wait_time_ += after_pop - before_pop;
+	}
 	++count_;
 	if (load_) {
 	  rpm_package_info info;
@@ -184,6 +211,9 @@ namespace {
       // Retry failed URLs.
       std::swap(failed_urls_, urls_);
     }
+
+    double end_time = ticks();
+    total_time_ = end_time - start_time;
   }
 
   void
@@ -342,8 +372,9 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
     size_t start_count = urls.size();
     downloader dl(opt, db, pids, urls, load);
     if (opt.output != symboldb_options::quiet) {
-      fprintf(stderr, "info: downloaded %zu of %zu packages\n",
-	      dl.count(), start_count);
+      fprintf(stderr,
+	      "info: downloaded %zu of %zu packages in %.f s (%.f s waiting)\n",
+	      dl.count(), start_count, dl.total_time(), dl.wait_time());
     }
   }
 
