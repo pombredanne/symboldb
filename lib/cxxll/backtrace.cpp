@@ -174,7 +174,7 @@ namespace {
       }
       write_string(info.dli_fname);
       formatted_address addr;
-      addr.set(dlid.offset);
+      addr.set(uptr - reinterpret_cast<uintptr_t>(info.dli_fbase));
       write_concat("+", addr.text, "\n");
       return true;
     }
@@ -190,8 +190,9 @@ namespace {
       strncpy(last_file, info.dli_fname, sizeof(last_file));
       last_file_shown = false;
     }
-    addrs[addrs_len].set(dlid.offset);
-    fprintf(stderr, "%016zx [%016zx] -- [%s]\n", size_t(uptr), size_t(dlid.offset), addrs[addrs_len].text);
+    addrs[addrs_len].set(uptr - reinterpret_cast<uintptr_t>(info.dli_fbase));
+    fprintf(stderr, "%016zx [%016zx] -- [%s] (dli_fbase: %016p)\n", size_t(uptr), size_t(dlid.offset),
+	    addrs[addrs_len].text, info.dli_fbase);
     ++addrs_len;
     return true;
   }
