@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 // Records an error if EXPR evaluates to false.
 #define CHECK(expr) test_check((expr), #expr, __FILE__, __LINE__);
@@ -39,6 +40,33 @@ void test_compare_string(const char *left, const std::string &right,
 void test_compare_string(const std::string &left, const char *right,
 			 const char *left_str, const char *right_str,
 			 const char *file, unsigned line);
+
+#define COMPARE_NUMBER(left, right) \
+  test_compare_number((left), (right), #left, #right, __FILE__, __LINE__)
+
+void test_compare_number_fail
+  (const std::string &left, const std::string &right,
+   const char *left_str, const char *right_str,
+   const char *file, unsigned line);
+void test_compare_number_success();
+
+template <class Left, class Right> void
+test_compare_number(Left left, Right right,
+		    const char *left_str, const char *right_str,
+		    const char *file, unsigned line)
+{
+  if (left != right) {
+    std::ostringstream leftstream;
+    leftstream << left;
+    std::ostringstream rightstream;
+    rightstream << right;
+    test_compare_number_fail(leftstream.str(), rightstream.str(),
+			     left_str, right_str,
+			     file, line);
+  } else {
+    test_compare_number_success();
+  }
+}
 
 // Registers a test case in the test suite.  This is supposed to be
 // used to define a file-level static object per test case.

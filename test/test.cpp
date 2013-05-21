@@ -171,6 +171,25 @@ void test_compare_string(const std::string &left, const char *right,
 		      left_str, right_str, file, line);
 }
 
+void
+test_compare_number_fail(const std::string &left, const std::string &right,
+			 const char *left_str, const char *right_str,
+			 const char *file, unsigned line)
+{
+  ++failure_count;
+  test_header();
+  fprintf(stderr, "%s:%u: numeric comparison failure\n", file, line);
+  fprintf(stderr, "%s:%u:   left:  %s\n", file, line, left.c_str());
+  fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, left_str);
+  fprintf(stderr, "%s:%u:   right: %s\n", file, line, right.c_str());
+  fprintf(stderr, "%s:%u:     evaluated from: %s\n", file, line, right_str);
+}
+
+void test_compare_number_success()
+{
+  ++success_count;
+}
+
 static std::vector<int>
 file_descriptors()
 {
