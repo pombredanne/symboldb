@@ -96,6 +96,7 @@ add_library (CXXLL
   lib/cxxll/os_current_directory.cpp
   lib/cxxll/os_readlink.cpp
   lib/cxxll/os_remove_directory_tree.cpp
+  lib/cxxll/os_ticks.cpp
   lib/cxxll/pg_exception.cpp
   lib/cxxll/pg_private.cpp
   lib/cxxll/pg_testdb.cpp
@@ -157,6 +158,7 @@ target_link_libraries (CXXLL
   -lnss3
   -lpq
   -lrpm -lrpmio
+  -lrt
   -lz
 )
 

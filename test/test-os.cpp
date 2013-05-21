@@ -106,6 +106,17 @@ test(void)
   COMPARE_STRING(error_string(ERANGE), "ERANGE");
   COMPARE_STRING(error_string_or_null(ERANGE), "ERANGE");
 
+  {
+    double first = ticks();
+    CHECK(first >= 0);
+    usleep(100 * 1000);
+    double last = ticks();
+    CHECK(last >= 0);
+    double elapsed = last - first;
+    CHECK(elapsed >= 0.1);
+    CHECK(elapsed <= 0.11);
+  }
+
   // Check for file descriptor leaks.
   {
     fd_handle h;

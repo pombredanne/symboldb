@@ -66,6 +66,10 @@ std::string readlink(const char *path);
 // and std::bad_alloc for memory allocation errors.
 std::string realpath(const char *path);
 
+// Returns the number of seconds since some arbitrary point in the
+// past.
+double ticks();
+
 // Turns an errno code into a string.  Uses ERROR(nnn) for unknown
 // errors.  Can throw std::bad_alloc.
 std::string error_string(int);
