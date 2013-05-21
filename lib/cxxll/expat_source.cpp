@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
+#include <sstream>
 
 using namespace cxxll;
 
@@ -61,6 +62,12 @@ struct expat_source::impl {
   size_t consumed_bytes_;
   std::vector<char> upcoming_;
   size_t upcoming_pos_;
+
+  struct position {
+    unsigned line;
+    unsigned column;
+  };
+  position position_;
 
   size_t elem_start_;
   size_t elem_len_;		// only covers the name for START
@@ -100,6 +107,13 @@ struct expat_source::impl {
   // Throws an exception if an error occured.
   void check_error(enum XML_Status status, const char *, size_t);
 
+  // Adds line and column to the end of upcoming_, based on the state
+  // of handle_.
+  void push_position();
+
+  // Reads position_ from upcoming_ (at upcoming_pos_).
+  void pop_position();
+
   // Expat callback functions.
   static void EntityDeclHandler(void *userData,
 				const XML_Char *, int,
@@ -119,6 +133,7 @@ expat_source::impl::impl(source *src)
   : source_(src), consumed_bytes_(0),
     upcoming_pos_(0), state_(INIT), bad_alloc_(false)
 {
+  position_.line = position_.column = 0;
   XML_SetUserData(handle_.raw, this);
   XML_SetEntityDeclHandler(handle_.raw, EntityDeclHandler);
   XML_SetElementHandler(handle_.raw, StartElementHandler, EndElementHandler);
@@ -159,7 +174,7 @@ void
 expat_source::impl::check_state(state_type expected) const
 {
   if (state_ != expected) {
-    throw illegal_state(state_, expected);
+    throw illegal_state(this, expected);
   }
 }
 
@@ -220,6 +235,28 @@ expat_source::impl::check_error(enum XML_Status status,
   }
 }
 
+void
+expat_source::impl::push_position()
+{
+  position pos;
+  pos.line = XML_GetCurrentLineNumber(handle_.raw);
+  pos.column = XML_GetCurrentColumnNumber(handle_.raw);
+  unsigned char *buf = reinterpret_cast<unsigned char *>(&pos);
+  upcoming_.insert(upcoming_.end(), buf, buf + sizeof(pos));
+}
+
+void
+expat_source::impl::pop_position()
+{
+  if (upcoming_.size() - upcoming_pos_ < sizeof(position_)) {
+    abort();
+  }
+  std::copy(upcoming_.begin() + upcoming_pos_,
+	    upcoming_.begin() + upcoming_pos_ + sizeof(position_),
+	    reinterpret_cast<unsigned char *>(&position_));
+  upcoming_pos_ += sizeof(position_);
+}
+
 //////////////////////////////////////////////////////////////////////
 // Expat callbacks
 
@@ -248,6 +285,7 @@ expat_source::impl::StartElementHandler(void *userData,
   impl *impl_ = static_cast<impl *>(userData);
   try {
     impl_->upcoming_.push_back(ENC_START);
+    impl_->push_position();
     impl_->append_cstr(name);
     while (*attrs) {
       impl_->upcoming_.push_back(ENC_ATTRIBUTE);
@@ -268,6 +306,7 @@ expat_source::impl::EndElementHandler(void *userData, const XML_Char *)
   impl *impl_ = static_cast<impl *>(userData);
   try {
     impl_->upcoming_.push_back(ENC_END);
+    impl_->push_position();
   } catch (std::bad_alloc &) {
     impl_->bad_alloc_ = true;
     XML_StopParser(impl_->handle_.raw, XML_FALSE);
@@ -283,6 +322,7 @@ expat_source::impl::CharacterDataHandler(void *userData,
   impl *impl_ = static_cast<impl *>(userData);
   try {
     impl_->upcoming_.push_back(ENC_TEXT);
+    impl_->push_position();
     impl_->upcoming_.insert(impl_->upcoming_.end(), s, s + len);
     impl_->upcoming_.push_back(0);
   } catch (std::bad_alloc &) {
@@ -318,6 +358,7 @@ expat_source::next()
   switch (impl_->tag()) {
   case ENC_START:
     ++impl_->upcoming_pos_;
+    impl_->pop_position();
     impl_->elem_start_ = impl_->upcoming_pos_;
     impl_->elem_len_ = strlen(impl_->string_at_pos());
     impl_->upcoming_pos_ += impl_->elem_len_ + 1;
@@ -331,6 +372,7 @@ expat_source::next()
     break;
   case ENC_TEXT:
     ++impl_->upcoming_pos_;
+    impl_->pop_position();
     impl_->elem_start_ = impl_->upcoming_pos_;
     impl_->elem_len_ = strlen(impl_->string_at_pos());
     impl_->upcoming_pos_ += impl_->elem_len_ + 1;
@@ -338,6 +380,7 @@ expat_source::next()
     break;
   case ENC_END:
     ++impl_->upcoming_pos_;
+    impl_->pop_position();
     impl_->state_ = END;
     break;
   case ENC_EOD:
@@ -354,6 +397,24 @@ expat_source::state_type
 expat_source::state() const
 {
   return impl_->state_;
+}
+
+unsigned
+expat_source::line() const
+{
+  return impl_->position_.line;
+}
+
+unsigned
+expat_source::column() const
+{
+  // For some reason, the location of the closing tag is off by one.
+  unsigned column = impl_->position_.column;
+  if (impl_->state_ == END && column > 0) {
+    return column + 1;
+  } else {
+    return column + 1;
+  }
 }
 
 std::string
@@ -518,13 +579,14 @@ expat_source::state_string(state_type e)
 }
 
 
-expat_source::illegal_state::illegal_state(state_type actual,
+expat_source::illegal_state::illegal_state(const impl *p,
 					   state_type expected)
+  : line_(p->position_.line), column_(p->position_.column)
 {
-  what_ = "actual=";
-  what_ += state_string(actual);
-  what_ += " expected=";
-  what_ += state_string(expected);
+  std::stringstream str;
+  str << line_ << ':' << column_ << ": actual=" << state_string(p->state_)
+      << " expected=" << state_string(expected);
+  what_ = str.str();
 }
 
 expat_source::illegal_state::~illegal_state() throw ()

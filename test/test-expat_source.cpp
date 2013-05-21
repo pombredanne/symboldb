@@ -28,16 +28,21 @@ test()
 {
   {
     string_source xml("<root></root>");
+    //                 1234567890123
     expat_source src(&xml);
     CHECK(src.state() == expat_source::INIT);
     CHECK(src.next());
     CHECK(src.state() == expat_source::START);
+    COMPARE_NUMBER(src.line(), 1U);
+    COMPARE_NUMBER(src.column(), 1U);
     COMPARE_STRING(src.name(), "root");
     COMPARE_STRING(src.name_ptr(), "root");
     CHECK(src.attributes().empty());
     COMPARE_STRING(src.attribute("attribute"), "");
     CHECK(src.next());
     CHECK(src.state() == expat_source::END);
+    COMPARE_NUMBER(src.line(), 1U);
+    COMPARE_NUMBER(src.column(), 7U);
     CHECK(!src.next());
     CHECK(src.state() == expat_source::EOD);
     CHECK(!src.next());
@@ -46,19 +51,26 @@ test()
 
   {
     string_source xml("<root attribute='value'>text-element</root>");
+    //                 1234567890123456789012345678901234567890123
     expat_source src(&xml);
     CHECK(src.state() == expat_source::INIT);
     CHECK(src.next());
     CHECK(src.state() == expat_source::START);
+    COMPARE_NUMBER(src.line(), 1U);
+    COMPARE_NUMBER(src.column(), 1U);
     COMPARE_STRING(src.name(), "root");
     CHECK(src.attributes().size() == 1);
     COMPARE_STRING(src.attributes()["attribute"], "value");
     COMPARE_STRING(src.attribute("attribute"), "value");
     CHECK(src.next());
     CHECK(src.state() == expat_source::TEXT);
+    COMPARE_NUMBER(src.line(), 1U);
+    COMPARE_NUMBER(src.column(), 25U);
     COMPARE_STRING(src.text(), "text-element");
     CHECK(src.next());
     CHECK(src.state() == expat_source::END);
+    COMPARE_NUMBER(src.line(), 1U);
+    COMPARE_NUMBER(src.column(), 37U);
     CHECK(!src.next());
     CHECK(src.state() == expat_source::EOD);
     CHECK(!src.next());
@@ -89,7 +101,8 @@ test()
     CHECK(src.state() == expat_source::EOD);
   }
   {
-    string_source xml("<root>text<n>-</n>element</root>");
+    string_source xml("<root>text<n\n>-</n>element\n</root>");
+    //                 123456789012  12345678901234 1234567
     expat_source src(&xml);
     CHECK(src.state() == expat_source::INIT);
     CHECK(src.next());
@@ -98,6 +111,8 @@ test()
     CHECK(src.attributes().empty());
     CHECK(src.next());
     CHECK(src.state() == expat_source::TEXT);
+    COMPARE_NUMBER(src.line(), 1U);
+    COMPARE_NUMBER(src.column(), 7U);
     COMPARE_STRING(src.text(), "text");
     CHECK(src.next());
     CHECK(src.state() == expat_source::START);
@@ -105,14 +120,27 @@ test()
     CHECK(src.attributes().empty());
     CHECK(src.next());
     CHECK(src.state() == expat_source::TEXT);
+    COMPARE_NUMBER(src.line(), 2U);
+    COMPARE_NUMBER(src.column(), 2U);
     COMPARE_STRING(src.text(), "-");
     CHECK(src.next());
     CHECK(src.state() == expat_source::END);
+    COMPARE_NUMBER(src.line(), 2U);
+    COMPARE_NUMBER(src.column(), 3U);
     CHECK(src.next());
     CHECK(src.state() == expat_source::TEXT);
+    COMPARE_NUMBER(src.line(), 2U);
+    COMPARE_NUMBER(src.column(), 7U);
     COMPARE_STRING(src.text(), "element");
     CHECK(src.next());
+    CHECK(src.state() == expat_source::TEXT);
+    COMPARE_NUMBER(src.line(), 2U);
+    COMPARE_NUMBER(src.column(), 14U);
+    COMPARE_STRING(src.text(), "\n");
+    CHECK(src.next());
     CHECK(src.state() == expat_source::END);
+    COMPARE_NUMBER(src.line(), 3U);
+    COMPARE_NUMBER(src.column(), 1U);
     CHECK(~src.next());
     CHECK(src.state() == expat_source::EOD);
     CHECK(!src.next());

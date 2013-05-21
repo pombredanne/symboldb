@@ -56,6 +56,14 @@ public:
   // return value, name()/attributes()/attribute()/text() are valid.
   state_type state() const;
 
+  // Returns the line number at the current position.  Line numbers
+  // start at 1.
+  unsigned line() const;
+
+  // Returns the column number at the current position.  Colum numbers
+  // start at 1.
+  unsigned column() const;
+
   // Returns the element name.  Only valid with state() == START.
   std::string name() const;
 
@@ -101,11 +109,27 @@ public:
   // Thrown when the accessors are used in the wrong state.
   class illegal_state : public std::exception {
     std::string what_;
+    unsigned line_;
+    unsigned column_;
   public:
-    illegal_state(state_type actual, state_type expected);
+    illegal_state(const impl *, state_type expected);
     ~illegal_state() throw();
+    unsigned line() const;
+    unsigned column() const;
     const char *what() const throw ();
   };
 };
+
+inline unsigned
+expat_source::illegal_state::line() const
+{
+  return line_;
+}
+
+inline unsigned
+expat_source::illegal_state::column() const
+{
+  return column_;
+}
 
 } // namespace cxxll
