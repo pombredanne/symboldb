@@ -49,7 +49,7 @@ class rpm_parser_state {
   std::tr1::shared_ptr<impl> impl_;
 public:
   // Opens the RPM file at PATH.
-  rpm_parser_state(const char *path);
+  explicit rpm_parser_state(const char *path);
   ~rpm_parser_state();
 
   const char *nevra() const;
