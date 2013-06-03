@@ -25,7 +25,7 @@
 using namespace cxxll;
 
 rpm_file_info::rpm_file_info()
-  : mode(0), mtime(0), ino(0), nlinks(0), normalized(false)
+  : mode(0), mtime(0), ino(0), nlinks(0), flags(0), normalized(false)
 {
 }
 

@@ -38,6 +38,7 @@ struct rpm_file_info {
   uint32_t mtime;
   uint32_t ino;
   uint32_t nlinks;
+  uint32_t flags; // from the FILEFLAGS header
   bool normalized; // See normalize_name() below.
 
   rpm_file_info();
