@@ -539,6 +539,16 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "openbios-sparc64,-,-,false,false");
     }
 
+    r1.exec(dbh,
+	    "SELECT symboldb.nevra(package), length, flags FROM symboldb.file"
+	    " JOIN symboldb.file_contents USING (contents_id)"
+	    " JOIN symboldb.package USING (package_id)"
+	    " WHERE file.name = '/usr/share/mime/types'");
+    CHECK(r1.ntuples() == 1);
+    COMPARE_STRING(r1.getvalue(0, 0), "shared-mime-info-1.1-1.fc18.x86_64");
+    COMPARE_STRING(r1.getvalue(0, 1), "0");
+    COMPARE_STRING(r1.getvalue(0, 2), "64"); // ghost file
+
     CHECK(!pids.empty());
     db.txn_begin();
     database::package_set_id pset(db.create_package_set("test-set"));

@@ -262,11 +262,18 @@ intern_hash(const rpm_file_info &info,
 	    std::vector<unsigned char> &result)
 {
   std::vector<unsigned char> to_hash(digest);
-  union {
+
+  struct data {
     unsigned mtime;
-    char data_bytes[sizeof(unsigned)];
+    unsigned flags;
+  };
+  union {
+    data dat;
+    char data_bytes[sizeof(data)];
   } u;
-  u.mtime = cpu_to_le_32(info.mtime);
+  u.dat.mtime = cpu_to_le_32(info.mtime);
+  u.dat.flags = cpu_to_le_32(info.flags);
+
   to_hash.insert(to_hash.end(),
 		 u.data_bytes + 0, u.data_bytes + sizeof(u.data_bytes));
   to_hash.insert(to_hash.end(),
@@ -302,8 +309,10 @@ database::intern_file_contents(const rpm_file_info &info,
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "SELECT * FROM symboldb.intern_file_contents($1, $2, $3, $4, $5, $6, $7)",
-     row_hash, length, mode, info.user, info.group, digest, contents);
+     "SELECT * FROM symboldb.intern_file_contents"
+     "($1, $2, $3, $4, $5, $6, $7, $8)",
+     row_hash, length, mode, static_cast<int>(info.flags),
+     info.user, info.group, digest, contents);
   int id;
   bool added;
   pg_response(res, 0, id, added);
@@ -447,8 +456,9 @@ database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
   pg_query_binary
     (impl_->conn, res,
      "SELECT * FROM symboldb.add_file"
-     "($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
-     row_hash, length, mode, info.user, info.group, digest, contents,
+     "($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
+     row_hash, length, mode, static_cast<int>(info.flags),
+     info.user, info.group, digest, contents,
      pkg.value(), ino, mtime, info.name, info.normalized);
   int fidint;
   int cidint;

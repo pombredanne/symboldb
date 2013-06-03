@@ -33,6 +33,7 @@
 
 #include <map>
 #include <tr1/memory>
+#include <sstream>
 
 using namespace cxxll;
 
@@ -53,10 +54,13 @@ struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
   std::vector<rpm_dependency> dependencies;
+  unsigned archive_entry_count;
   bool payload_is_open;
+  bool reached_ghosts;
 
   impl()
-    : fd(0), header(0), payload_is_open(false)
+    : fd(0), header(0), archive_entry_count(0), payload_is_open(false),
+      reached_ghosts(false), ghost_index(0)
   {
   }
 
@@ -76,10 +80,14 @@ struct rpm_parser_state::impl {
 
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
+  std::vector<std::tr1::shared_ptr<rpm_file_info> > ghosts;
+  unsigned ghost_index;
   void get_header();
   void get_files_from_header(); // called on demand by open_payload()
   void get_dependencies(); // populate the dependencies member
   void open_payload(); // called on demand by read_file()
+  void check_trailer(); // consistency check at end of CPIO archive
+  bool read_file_ghost(rpm_file_entry &file);
 };
 
 // Missing from <rpm/rpmtd.h>, see rpmtdNextUint32.
@@ -260,6 +268,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (!headerGet(header, RPMTAG_FILEDIGESTS, digests.raw, hflags)) {
     throw rpm_parser_exception("could not get FILEDIGESTS header");
   }
+  rpmtd_wrapper fileflags;
+  if (!headerGet(header, RPMTAG_FILEFLAGS, fileflags.raw, hflags)) {
+    throw rpm_parser_exception("could not get FILEFLAGS header");
+  }
 
   while (true) {
     const char *name = rpmtdNextString(names.raw);
@@ -298,6 +310,10 @@ rpm_parser_state::impl::get_files_from_header()
     if (digest == NULL) {
       throw rpm_parser_exception("missing entries in FILEDIGESTS header");
     }
+    const uint32_t *fileflag = rpmtdNextUint32(fileflags.raw);
+    if (fileflag == NULL) {
+      throw rpm_parser_exception("missing entries in FILEFLAGS header");
+    }
 
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
     p->name = name;
@@ -307,8 +323,18 @@ rpm_parser_state::impl::get_files_from_header()
     p->mode = *mode;
     p->ino = *inode;
     p->nlinks = *nlinks;
-    p->digest.set_hexadecimal(digest_algo.c_str(), *size, digest);
-    files[p->name] = p;
+    p->flags = *fileflag;
+    if (p->ghost()) {
+      // The size and digest from ghost files comes from the build
+      // root, which is no longer available.
+      const char *empty =
+	"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+      p->digest.set_hexadecimal("sha256", 0, empty);
+      ghosts.push_back(p);
+    } else {
+      p->digest.set_hexadecimal(digest_algo.c_str(), *size, digest);
+      files[p->name] = p;
+    }
   }
 
   if (rpmtdNextUint64(sizes.raw) != NULL) {
@@ -330,6 +356,10 @@ rpm_parser_state::impl::get_files_from_header()
   if (rpmtdNextUint32(modes.raw) != NULL) {
     throw rpm_parser_exception
       ("FILEMODES header contains too many elements");
+  }
+  if (rpmtdNextUint32(fileflags.raw) != NULL) {
+    throw rpm_parser_exception
+      ("FILEFLAGS header contains too many elements");
   }
 }
 
@@ -435,6 +465,29 @@ rpm_parser_state::impl::open_payload()
   }
 }
 
+void
+rpm_parser_state::impl::check_trailer()
+{
+  if (archive_entry_count != files.size()) {
+    std::ostringstream st;
+    st << "CPIO archive with " << archive_entry_count
+       << " entries instead of " << files.size();
+    throw rpm_parser_exception(st.str());
+  }
+}
+
+bool
+rpm_parser_state::impl::read_file_ghost(rpm_file_entry &file)
+{
+  if (ghost_index == ghosts.size()) {
+    return false;
+  }
+  file.info = ghosts.at(ghost_index);
+  file.contents.clear();
+  ++ghost_index;
+  return true;
+}
+
 rpm_parser_state::rpm_parser_state(const char *path)
   : impl_(new impl)
 {
@@ -492,6 +545,10 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 {
   if (!impl_->payload_is_open) {
     impl_->open_payload();
+  }
+
+  if (impl_->reached_ghosts) {
+    return impl_->read_file_ghost(file);
   }
 
   // Read cpio header magic.
@@ -560,7 +617,9 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   const char *trailer = "TRAILER!!!";
   if (name.size() == strlen(trailer) + 1
       && memcmp(name.data(), trailer, strlen(trailer)) == 0) {
-    return false;
+    impl_->check_trailer();
+    impl_->reached_ghosts = true;
+    return impl_->read_file_ghost(file);
   }
 
   // Normalize file name.
@@ -579,6 +638,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
     }
     file.info = p->second;
   }
+  ++impl_->archive_entry_count;
   
   // Read contents.
   file.contents.resize(header.filesize);

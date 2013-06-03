@@ -176,12 +176,15 @@ CREATE TABLE symboldb.file_contents (
   contents_id SERIAL NOT NULL PRIMARY KEY,
   mode INTEGER NOT NULL CHECK (mode >= 0),
   length BIGINT NOT NULL CHECK(length >= 0),
+  flags INTEGER NOT NULL,
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
   contents BYTEA NOT NULL,
   row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
 );
+COMMENT ON COLUMN symboldb.file_contents.flags IS
+  'from the FILEFLAGS header of the RPM file; indicates ghost status etc.';
 COMMENT ON COLUMN symboldb.file_contents.digest IS
   'SHA-256 digest of the entire file contents';
 COMMENT ON COLUMN symboldb.file_contents.contents IS
@@ -191,7 +194,7 @@ COMMENT ON COLUMN symboldb.file_contents.row_hash IS
 CREATE INDEX ON symboldb.file_contents (digest);
 
 CREATE FUNCTION symboldb.intern_file_contents (
-  row_hash BYTEA, length BIGINT, mode INTEGER, 
+  row_hash BYTEA, length BIGINT, mode INTEGER,  flags INTEGER,
   user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
   OUT cid INTEGER, OUT added BOOLEAN
 ) LANGUAGE 'plpgsql' AS $$
@@ -203,8 +206,8 @@ BEGIN
     RETURN;
   END IF;
   INSERT INTO symboldb.file_contents
-     (row_hash, length, mode, user_name, group_name, digest, contents)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING contents_id INTO cid;
+     (row_hash, length, mode, flags, user_name, group_name, digest, contents)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING contents_id INTO cid;
   added := TRUE;
   RETURN;
 END;
@@ -226,7 +229,7 @@ COMMENT ON COLUMN symboldb.file.inode IS
   'intra-package inode number (used to indicate hardlinks)';
 
 CREATE FUNCTION symboldb.add_file (
-  row_hash BYTEA, length BIGINT, mode INTEGER,
+  row_hash BYTEA, length BIGINT, mode INTEGER, flags INTEGER,
   user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
   package_id INTEGER, inode INTEGER, mtime INTEGER,
   name TEXT, normalized BOOLEAN,
@@ -234,9 +237,9 @@ CREATE FUNCTION symboldb.add_file (
 ) LANGUAGE 'plpgsql' AS $$
 BEGIN
   SELECT ifc.cid, ifc.added INTO cid, added FROM symboldb.intern_file_contents
-    ($1, $2, $3, $4, $5, $6, $7) ifc;
+    ($1, $2, $3, $4, $5, $6, $7, $8) ifc;
   INSERT INTO symboldb.file VALUES
-    (DEFAULT, $8, cid, $9, $10, $11, $12) RETURNING file_id INTO fid;
+    (DEFAULT, $9, cid, $10, $11, $12, $13) RETURNING file_id INTO fid;
 END;
 $$;
 
