@@ -298,6 +298,9 @@ test()
       } else if (r1.getvalue(i, 1) == std::string("xml-writer")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "0.2");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("shared-mime-info")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "1.1");
+	continue;
       }
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
@@ -351,11 +354,12 @@ test()
 
     r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
 	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
-    CHECK(r1.ntuples() == 6);
+    CHECK(r1.ntuples() == 7);
     {
       int row = 0;
       COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "openbios-1.0.svn1063-1.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "shared-mime-info-1.1-1.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-6.dsf.fc17.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-9.dsf.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "unzip-6.0-7.fc18.src");
@@ -586,7 +590,7 @@ test()
 
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
-    CHECK(digests.size() == 16); // 8 packages with 2 digests each
+    CHECK(digests.size() == 20); // 10 packages with 2 digests each
 
     {
       std::vector<unsigned char> digest;
