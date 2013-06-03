@@ -55,6 +55,9 @@ struct rpm_file_info {
   // by re-encoding from ISO-8859-1 to UTF-8.  Sets normalized to
   // true.
   void normalize_name();
+
+  // Return true if the flags indicate that this is a ghost file.
+  bool ghost() const;
 };
 
 } // namespace cxxll

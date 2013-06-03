@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <rpm/rpmfi.h>
 
 using namespace cxxll;
 
@@ -52,4 +53,10 @@ rpm_file_info::normalize_name()
     name = latin1_to_utf8(name);
     normalized = true;
   }
+}
+
+bool
+rpm_file_info::ghost() const
+{
+  return (flags & RPMFILE_GHOST) != 0;
 }
