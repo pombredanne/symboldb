@@ -55,13 +55,12 @@ struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
   std::vector<rpm_dependency> dependencies;
-  unsigned archive_entry_count;
   bool payload_is_open;
   bool reached_ghosts;
 
   impl()
-    : fd(0), header(0), archive_entry_count(0), payload_is_open(false),
-      reached_ghosts(false), ghost_index(0)
+    : fd(0), header(0), payload_is_open(false),
+      reached_ghosts(false), ghost_files(files.end())
   {
   }
 
@@ -78,15 +77,27 @@ struct rpm_parser_state::impl {
   rpmtd_wrapper nevra;
   rpm_package_info pkg;
 
-  typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
+  rpmfi_handle fi;
+
+  // Pointer inside fi.
+  struct findex {
+    int fx_;
+    bool seen_;
+
+    explicit findex(int fx = -1)
+      : fx_(fx), seen_(false)
+    {
+    }
+  };
+
+  typedef std::map<std::string, findex> file_map;
   file_map files;
-  std::vector<std::tr1::shared_ptr<rpm_file_info> > ghosts;
-  unsigned ghost_index;
+  file_map::iterator ghost_files;
   void get_header();
   void get_files_from_header(); // called on demand by open_payload()
+  void get_file_info(const findex &, rpm_file_info &);
   void get_dependencies(); // populate the dependencies member
   void open_payload(); // called on demand by read_file()
-  void check_trailer(); // consistency check at end of CPIO archive
   bool read_file_ghost(rpm_file_entry &file);
 };
 
@@ -178,55 +189,68 @@ rpm_parser_state::impl::get_header()
 void
 rpm_parser_state::impl::get_files_from_header()
 {
-  rpmfi_handle fi(header);
+  fi.reset_header(header);
   while (fi.next()) {
-    std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
-    p->name = rpmfiFN(fi.get());
-    p->user = rpmfiFUser(fi.get());
-    p->group = rpmfiFGroup(fi.get());
-    p->mtime = rpmfiFMtime(fi.get());
-    p->mode = rpmfiFMode(fi.get());
-    p->ino = rpmfiFInode(fi.get());
-    p->nlinks = rpmfiFNlink(fi.get());
-    p->flags = rpmfiFFlags(fi.get());
-    if (p->is_symlink()) {
-      p->linkto = rpmfiFLink(fi.get());
-    }
-    if (p->ghost()) {
-      // The size and digest from ghost files comes from the build
-      // root, which is no longer available.
-      const char *empty =
-	"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-      p->digest.set_hexadecimal("sha256", 0, empty);
-      ghosts.push_back(p);
-    } else {
-      int algo_rpm;
-      size_t len;
-      const unsigned char *digest = rpmfiFDigest(fi.get(), &algo_rpm, &len);
+    files[rpmfiFN(fi.get())] = findex(rpmfiFX(fi.get()));
+  }
+}
 
-      switch (algo_rpm) {
-      case PGPHASHALGO_MD5:
-	p->digest.type = hash_sink::md5;
-	break;
-      case PGPHASHALGO_SHA1:
-	p->digest.type = hash_sink::sha1;
-	break;
-      case PGPHASHALGO_SHA256:
-	p->digest.type = hash_sink::sha256;
-	break;
-      default:
-	{
-	  char buf[128];
-	  snprintf(buf, sizeof(buf), "unknown file digest algorithm %d",
-		   algo_rpm);
-	  throw rpm_parser_exception(buf);
-	}
+void
+rpm_parser_state::impl::get_file_info(const findex &idx, rpm_file_info &info)
+{
+  rpmfiSetFX(fi.get(), idx.fx_);
+  // The rpmfiSetFX return value is not suitable for error checking.
+  if (rpmfiFX(fi.get()) != idx.fx_) {
+    throw rpm_parser_exception("rpmfiSetFX");
+  }
+  info.name = rpmfiFN(fi.get());
+  info.user = rpmfiFUser(fi.get());
+  info.group = rpmfiFGroup(fi.get());
+  info.mode = rpmfiFMode(fi.get());
+  info.mtime = rpmfiFMtime(fi.get());
+  info.ino = rpmfiFInode(fi.get());
+  info.nlinks = rpmfiFNlink(fi.get());
+  info.flags = rpmfiFFlags(fi.get());
+  info.normalized = false;
+
+  if (info.is_symlink()) {
+    info.linkto = rpmfiFLink(fi.get());
+  } else {
+    info.linkto.clear();
+  }
+
+  if (info.ghost()) {
+    // The size and digest from ghost files comes from the build
+    // root, which is no longer available.
+    const char *empty =
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    info.digest.set_hexadecimal("sha256", 0, empty);
+  } else {
+    int algo_rpm;
+    size_t len;
+    const unsigned char *digest = rpmfiFDigest(fi.get(), &algo_rpm, &len);
+
+    switch (algo_rpm) {
+    case PGPHASHALGO_MD5:
+      info.digest.type = hash_sink::md5;
+      break;
+    case PGPHASHALGO_SHA1:
+      info.digest.type = hash_sink::sha1;
+      break;
+    case PGPHASHALGO_SHA256:
+      info.digest.type = hash_sink::sha256;
+      break;
+    default:
+      {
+	char buf[128];
+	snprintf(buf, sizeof(buf), "unknown file digest algorithm %d",
+		 algo_rpm);
+	throw rpm_parser_exception(buf);
       }
-      p->digest.length = rpmfiFSize(fi.get());
-      p->digest.value.clear();
-      p->digest.value.insert(p->digest.value.end(), digest, digest + len);
-      files[p->name] = p;
     }
+    info.digest.length = rpmfiFSize(fi.get());
+    info.digest.value.clear();
+    info.digest.value.insert(info.digest.value.end(), digest, digest + len);
   }
 }
 
@@ -332,27 +356,23 @@ rpm_parser_state::impl::open_payload()
   }
 }
 
-void
-rpm_parser_state::impl::check_trailer()
-{
-  if (archive_entry_count != files.size()) {
-    std::ostringstream st;
-    st << "CPIO archive with " << archive_entry_count
-       << " entries instead of " << files.size();
-    throw rpm_parser_exception(st.str());
-  }
-}
-
 bool
 rpm_parser_state::impl::read_file_ghost(rpm_file_entry &file)
 {
-  if (ghost_index == ghosts.size()) {
-    return false;
+  while (ghost_files != files.end()) {
+    if (!ghost_files->second.seen_) {
+      get_file_info(ghost_files->second, file.info);
+      if (!file.info.ghost()) {
+	throw rpm_parser_exception("missing non-ghost file: "
+				   + ghost_files->first);
+      }
+      file.contents.clear();
+      ++ghost_files;
+      return true;
+    }
+    ++ghost_files;
   }
-  file.info = ghosts.at(ghost_index);
-  file.contents.clear();
-  ++ghost_index;
-  return true;
+  return false;
 }
 
 rpm_parser_state::rpm_parser_state(const char *path)
@@ -484,8 +504,8 @@ rpm_parser_state::read_file(rpm_file_entry &file)
   const char *trailer = "TRAILER!!!";
   if (name.size() == strlen(trailer) + 1
       && memcmp(name.data(), trailer, strlen(trailer)) == 0) {
-    impl_->check_trailer();
     impl_->reached_ghosts = true;
+    impl_->ghost_files = impl_->files.begin();
     return impl_->read_file_ghost(file);
   }
 
@@ -497,15 +517,19 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 
   // Obtain file information.
   {
-    impl::file_map::const_iterator p = impl_->files.find(name_normalized);
+    impl::file_map::iterator p = impl_->files.find(name_normalized);
     if (p == impl_->files.end()) {
       throw rpm_parser_exception
 	(std::string("cpio file not found in RPM header: ")
 	 + name.data());
+    } else if (p->second.seen_) {
+      throw rpm_parser_exception
+	(std::string("duplicate file in CPIO archive: ")
+	 + name.data());
     }
-    file.info = p->second;
+    p->second.seen_ = true;
+    impl_->get_file_info(p->second, file.info);
   }
-  ++impl_->archive_entry_count;
   
   // Read contents.
   file.contents.resize(header.filesize);

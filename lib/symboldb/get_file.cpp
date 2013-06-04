@@ -49,17 +49,17 @@ bool get_file(const symboldb_options &opt, database &db,
     if (fcache->lookup_path(csum, rpm_path)) {
       rpm_parser_state rps(rpm_path.c_str());
       while (rps.read_file(rfe)) {
-	if (rfe.info->name == fwd.file_name()) {
-	  if (rfe.info->digest.length != rfe.contents.size()) {
+	if (rfe.info.name == fwd.file_name()) {
+	  if (rfe.info.digest.length != rfe.contents.size()) {
 	    // If the file is hard-linked, we might have to continue
 	    // scanning.
-	    uint32_t ino = rfe.info->ino;
+	    uint32_t ino = rfe.info.ino;
 	    do {
 	      if (!rps.read_file(rfe)) {
 		return false;
 	      }
-	    } while (rfe.info->ino != ino
-		     && rfe.info->digest.length != rfe.contents.size());
+	    } while (rfe.info.ino != ino
+		     && rfe.info.digest.length != rfe.contents.size());
 	  }
 	  target.write(rfe.contents.data(), rfe.contents.size());
 	  return true;

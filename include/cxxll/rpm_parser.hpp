@@ -37,7 +37,7 @@ void rpm_parser_init();
 void rpm_parser_deinit();
 
 struct rpm_file_entry {
-  std::tr1::shared_ptr<rpm_file_info> info;
+  rpm_file_info info;
   std::vector<unsigned char> contents;
 
   rpm_file_entry();

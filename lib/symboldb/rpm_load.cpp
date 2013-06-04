@@ -108,7 +108,7 @@ load_elf(const symboldb_options &opt, database &db,
 	 database::contents_id cid, const rpm_file_entry &file)
 {
   try {
-    const char *elf_path = file.info->name.c_str();
+    const char *elf_path = file.info.name.c_str();
     elf_image image(file.contents.data(), file.contents.size());
     {
       elf_image::symbol_range symbols(image);
@@ -273,13 +273,13 @@ prepare_load(const char *rpm_path, const rpm_file_entry &file,
   checksum csum;
   csum.type = hash_sink::sha256;
   csum.value = hash(hash_sink::sha256, file.contents);
-  if (file.info->digest.type == hash_sink::sha256) {
-    check_digest(rpm_path, file.info->name, csum, file.info->digest);
+  if (file.info.digest.type == hash_sink::sha256) {
+    check_digest(rpm_path, file.info.name, csum, file.info.digest);
   } else {
     checksum chk_csum;
-    chk_csum.type = file.info->digest.type;
+    chk_csum.type = file.info.digest.type;
     chk_csum.value = hash(chk_csum.type, file.contents);
-    check_digest(rpm_path, file.info->name, chk_csum, file.info->digest);
+    check_digest(rpm_path, file.info.name, chk_csum, file.info.digest);
   }
   std::swap(digest, csum.value);
   preview.assign
@@ -358,7 +358,7 @@ load_contents(const symboldb_options &opt, database &db,
   std::vector<unsigned char> preview;
   prepare_load(rpm_path, file, digest, preview);
   database::contents_id cid;
-  if (db.intern_file_contents(*file.info, digest, preview, cid)
+  if (db.intern_file_contents(file.info, digest, preview, cid)
       && unpack_files(pkginfo)) {
     do_load_formats(opt, db, cid, file);
   }
@@ -376,7 +376,7 @@ add_file(const symboldb_options &opt, database &db,
   database::file_id fid;
   database::contents_id cid;
   bool added;
-  db.add_file(pkg, *file.info, digest, preview, fid, cid, added);
+  db.add_file(pkg, file.info, digest, preview, fid, cid, added);
   if (added && unpack_files(pkginfo)) {
     do_load_formats(opt, db, cid, file);
   }
@@ -427,25 +427,25 @@ load_rpm_internal(const symboldb_options &opt, database &db,
   while (rpmst.read_file(file)) {
     if (opt.output == symboldb_options::verbose) {
       fprintf(stderr, "%s %s %s %s %" PRIu32 " 0%o %llu\n",
-	      rpmst.nevra(), file.info->name.c_str(),
-	      file.info->user.c_str(), file.info->group.c_str(),
-	      file.info->mtime, file.info->mode,
+	      rpmst.nevra(), file.info.name.c_str(),
+	      file.info.user.c_str(), file.info.group.c_str(),
+	      file.info.mtime, file.info.mode,
 	      (unsigned long long)file.contents.size());
     }
-    file.info->normalize_name();
-    if (file.info->is_directory()) {
-      db.add_directory(pkg, *file.info);
-    } else if (file.info->is_symlink()) {
-      db.add_symlink(pkg, *file.info);
+    file.info.normalize_name();
+    if (file.info.is_directory()) {
+      db.add_directory(pkg, file.info);
+    } else if (file.info.is_symlink()) {
+      db.add_symlink(pkg, file.info);
     } else {
       // FIXME: deal with special files.
-      unsigned ino = file.info->ino;
-      if (file.info->nlinks > 1) {
+      unsigned ino = file.info.ino;
+      if (file.info.nlinks > 1) {
 	inode_map::iterator p(inodes.find(ino));
 	if (p == inodes.end()) {
-	  inodes.insert(std::make_pair(ino, inode(*file.info)));
+	  inodes.insert(std::make_pair(ino, inode(file.info)));
 	} else {
-	  p->second.add(*file.info);
+	  p->second.add(file.info);
 	  if (p->second.entries.size() == p->second.info.nlinks) {
 	    // This is the last entry for this inode, and it comes
 	    // with the contents.  Load it and patch in the previous
