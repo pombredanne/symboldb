@@ -22,6 +22,7 @@
 #include <cxxll/rpm_file_info.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpmtd_wrapper.hpp>
+#include <cxxll/rpmfi_handle.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -76,7 +77,6 @@ struct rpm_parser_state::impl {
 
   rpmtd_wrapper nevra;
   rpm_package_info pkg;
-  std::string digest_algo;
 
   typedef std::map<std::string, std::tr1::shared_ptr<rpm_file_info> > file_map;
   file_map files;
@@ -89,25 +89,6 @@ struct rpm_parser_state::impl {
   void check_trailer(); // consistency check at end of CPIO archive
   bool read_file_ghost(rpm_file_entry &file);
 };
-
-// Missing from <rpm/rpmtd.h>, see rpmtdNextUint32.
-static uint16_t *
-tdNextUint16(rpmtd td)
-{
-    assert(td != NULL);
-    uint16_t *res = NULL;
-    if (rpmtdNext(td) >= 0) {
-	res = rpmtdGetUint16(td);
-    }
-    return res;
-}
-
-static bool
-header_present(Header header, rpmTagVal tag)
-{
-  rpmtd_wrapper td;
-  return headerGet(header, tag, td.raw, HEADERGET_EXT);
-}
 
 static std::string
 get_string(Header header, const char *name, rpmTagVal tag)
@@ -190,31 +171,6 @@ rpm_parser_state::impl::get_header()
   }
 
   pkg.build_time = get_unsigned(header, "BUILDTIME", RPMTAG_BUILDTIME);
-  {
-    unsigned digalg;
-    try {
-      digalg = get_unsigned(header, "FILEDIGESTALGO", RPMTAG_FILEDIGESTALGO);
-    } catch (rpm_parser_exception &) {
-      digalg = PGPHASHALGO_MD5;
-    }
-    switch (digalg) {
-    case PGPHASHALGO_MD5:
-      digest_algo = "md5";
-      break;
-    case PGPHASHALGO_SHA1:
-      digest_algo = "sha1";
-      break;
-    case PGPHASHALGO_SHA256:
-      digest_algo = "sha256";
-      break;
-    default:
-      {
-	char buf[128];
-	snprintf(buf, sizeof(buf), "unknown file digest algorithm %u", digalg);
-	throw rpm_parser_exception(buf);
-      }
-    }
-  }
 
   pkg.normalize();
 }
@@ -222,108 +178,17 @@ rpm_parser_state::impl::get_header()
 void
 rpm_parser_state::impl::get_files_from_header()
 {
-  const headerGetFlags hflags = HEADERGET_ALLOC | HEADERGET_EXT;
-
-  rpmtd_wrapper names;
-  if (!headerGet(header, RPMTAG_FILENAMES, names.raw, hflags)) {
-    if (header_present(header, RPMTAG_FILEUSERNAME)
-	|| header_present(header, RPMTAG_FILEGROUPNAME)
-	|| header_present(header, RPMTAG_FILEMTIMES)
-	|| header_present(header, RPMTAG_FILEMODES)) {
-      throw rpm_parser_exception("could not get FILENAMES header");
-    } else {
-      // Nothing to do, empty package.
-      return;
-    }
-  }
-  rpmtd_wrapper sizes;
-  if (!headerGet(header, RPMTAG_LONGFILESIZES, sizes.raw, hflags)) {
-    throw rpm_parser_exception("could not get LONGFILESIZES header");
-  }
-  rpmtd_wrapper users;
-  if (!headerGet(header, RPMTAG_FILEUSERNAME, users.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEUSERNAME header");
-  }
-  rpmtd_wrapper groups;
-  if (!headerGet(header, RPMTAG_FILEGROUPNAME, groups.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEGROUPNAME header");
-  }
-  rpmtd_wrapper mtimes;
-  if (!headerGet(header, RPMTAG_FILEMTIMES, mtimes.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEMTIMES header");
-  }
-  rpmtd_wrapper modes;
-  if (!headerGet(header, RPMTAG_FILEMODES, modes.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEMODES header");
-  }
-  rpmtd_wrapper inodes;
-  if (!headerGet(header, RPMTAG_FILEINODES, inodes.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEINODES header");
-  }
-  rpmtd_wrapper nlinks_array;
-  if (!headerGet(header, RPMTAG_FILENLINKS, nlinks_array.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILENLINKS header");
-  }
-  rpmtd_wrapper digests;
-  if (!headerGet(header, RPMTAG_FILEDIGESTS, digests.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEDIGESTS header");
-  }
-  rpmtd_wrapper fileflags;
-  if (!headerGet(header, RPMTAG_FILEFLAGS, fileflags.raw, hflags)) {
-    throw rpm_parser_exception("could not get FILEFLAGS header");
-  }
-
-  while (true) {
-    const char *name = rpmtdNextString(names.raw);
-    if (name == NULL) {
-      break;
-    }
-    const uint64_t *size = rpmtdNextUint64(sizes.raw);
-    if (size == NULL) {
-      throw rpm_parser_exception("missing entries in LONGFILESIZES header");
-    }
-    const char *user = rpmtdNextString(users.raw);
-    if (name == NULL) {
-      throw rpm_parser_exception("missing entries in FILEUSERNAME header");
-    }
-    const char *group = rpmtdNextString(groups.raw);
-    if (name == NULL) {
-      throw rpm_parser_exception("missing entries in FILEUSERGROUP header");
-    }
-    const uint32_t *mtime = rpmtdNextUint32(mtimes.raw);
-    if (mtime == NULL) {
-      throw rpm_parser_exception("missing entries in FILEMTIMES header");
-    }
-    const uint16_t *mode = tdNextUint16(modes.raw);
-    if (mode == NULL) {
-      throw rpm_parser_exception("missing entries in FILEMODES header");
-    }
-    const uint32_t *inode = rpmtdNextUint32(inodes.raw);
-    if (inode == NULL) {
-      throw rpm_parser_exception("missing entries in FILEINODES header");
-    }
-    const uint32_t *nlinks = rpmtdNextUint32(nlinks_array.raw);
-    if (nlinks == NULL) {
-      throw rpm_parser_exception("missing entries in FILENLINKS header");
-    }
-    const char *digest = rpmtdNextString(digests.raw);
-    if (digest == NULL) {
-      throw rpm_parser_exception("missing entries in FILEDIGESTS header");
-    }
-    const uint32_t *fileflag = rpmtdNextUint32(fileflags.raw);
-    if (fileflag == NULL) {
-      throw rpm_parser_exception("missing entries in FILEFLAGS header");
-    }
-
+  rpmfi_handle fi(header);
+  while (fi.next()) {
     std::tr1::shared_ptr<rpm_file_info> p(new rpm_file_info);
-    p->name = name;
-    p->user = user;
-    p->group = group;
-    p->mtime = *mtime;
-    p->mode = *mode;
-    p->ino = *inode;
-    p->nlinks = *nlinks;
-    p->flags = *fileflag;
+    p->name = rpmfiFN(fi.get());
+    p->user = rpmfiFUser(fi.get());
+    p->group = rpmfiFGroup(fi.get());
+    p->mtime = rpmfiFMtime(fi.get());
+    p->mode = rpmfiFMode(fi.get());
+    p->ino = rpmfiFInode(fi.get());
+    p->nlinks = rpmfiFNlink(fi.get());
+    p->flags = rpmfiFFlags(fi.get());
     if (p->ghost()) {
       // The size and digest from ghost files comes from the build
       // root, which is no longer available.
@@ -332,34 +197,33 @@ rpm_parser_state::impl::get_files_from_header()
       p->digest.set_hexadecimal("sha256", 0, empty);
       ghosts.push_back(p);
     } else {
-      p->digest.set_hexadecimal(digest_algo.c_str(), *size, digest);
+      int algo_rpm;
+      size_t len;
+      const unsigned char *digest = rpmfiFDigest(fi.get(), &algo_rpm, &len);
+
+      switch (algo_rpm) {
+      case PGPHASHALGO_MD5:
+	p->digest.type = hash_sink::md5;
+	break;
+      case PGPHASHALGO_SHA1:
+	p->digest.type = hash_sink::sha1;
+	break;
+      case PGPHASHALGO_SHA256:
+	p->digest.type = hash_sink::sha256;
+	break;
+      default:
+	{
+	  char buf[128];
+	  snprintf(buf, sizeof(buf), "unknown file digest algorithm %d",
+		   algo_rpm);
+	  throw rpm_parser_exception(buf);
+	}
+      }
+      p->digest.length = rpmfiFSize(fi.get());
+      p->digest.value.clear();
+      p->digest.value.insert(p->digest.value.end(), digest, digest + len);
       files[p->name] = p;
     }
-  }
-
-  if (rpmtdNextUint64(sizes.raw) != NULL) {
-    throw rpm_parser_exception
-      ("LONGFILESIZES header contains too many elements");
-  }
-  if (rpmtdNextString(users.raw) != NULL) {
-    throw rpm_parser_exception
-      ("FILEUSERNAME header contains too many elements");
-  }
-  if (rpmtdNextString(groups.raw) != NULL) {
-    throw rpm_parser_exception
-      ("FILEGROUPNAME header contains too many elements");
-  }
-  if (rpmtdNextUint32(mtimes.raw) != NULL) {
-    throw rpm_parser_exception
-      ("FILEMTIMES header contains too many elements");
-  }
-  if (rpmtdNextUint32(modes.raw) != NULL) {
-    throw rpm_parser_exception
-      ("FILEMODES header contains too many elements");
-  }
-  if (rpmtdNextUint32(fileflags.raw) != NULL) {
-    throw rpm_parser_exception
-      ("FILEFLAGS header contains too many elements");
   }
 }
 
