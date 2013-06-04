@@ -189,6 +189,9 @@ rpm_parser_state::impl::get_files_from_header()
     p->ino = rpmfiFInode(fi.get());
     p->nlinks = rpmfiFNlink(fi.get());
     p->flags = rpmfiFFlags(fi.get());
+    if (p->is_symlink()) {
+      p->linkto = rpmfiFLink(fi.get());
+    }
     if (p->ghost()) {
       // The size and digest from ghost files comes from the build
       // root, which is no longer available.
