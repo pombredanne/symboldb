@@ -485,14 +485,12 @@ database::add_directory(package_id pkg, const rpm_file_info &info)
 }
 
 void
-database::add_symlink(package_id pkg, const rpm_file_info &info,
-		      const std::vector<unsigned char> &contents)
+database::add_symlink(package_id pkg, const rpm_file_info &info)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   assert(info.is_symlink());
-  std::string target(contents.begin(), contents.end());
-  if (target.empty() || target.find('\0') != std::string::npos) {
+  if (info.linkto.empty()) {
     throw std::runtime_error("symlink with invalid target");
   }
   pgresult_handle res;
@@ -501,7 +499,7 @@ database::add_symlink(package_id pkg, const rpm_file_info &info,
      "INSERT INTO " SYMLINK_TABLE
      " (package_id, name, target, user_name, group_name, mtime, normalized)"
      " VALUES ($1, $2, $3, $4, $5, $6, $7)",
-     pkg.value(), info.name, target, info.user, info.group,
+     pkg.value(), info.name, info.linkto, info.user, info.group,
      static_cast<long long>(info.mtime),
      info.normalized);
 }

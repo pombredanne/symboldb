@@ -436,7 +436,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     if (file.info->is_directory()) {
       db.add_directory(pkg, *file.info);
     } else if (file.info->is_symlink()) {
-      db.add_symlink(pkg, *file.info, file.contents);
+      db.add_symlink(pkg, *file.info);
     } else {
       // FIXME: deal with special files.
       unsigned ino = file.info->ino;

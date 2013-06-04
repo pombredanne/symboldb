@@ -134,8 +134,7 @@ public:
   void add_directory(package_id, const cxxll::rpm_file_info &);
 
   // Adds the symlink to the database.
-  void add_symlink(package_id, const cxxll::rpm_file_info &,
-		   const std::vector<unsigned char> &contents);
+  void add_symlink(package_id, const cxxll::rpm_file_info &);
 
   // Loading ELF-related tables.
 
