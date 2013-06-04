@@ -476,9 +476,11 @@ database::add_directory(package_id pkg, const rpm_file_info &info)
   pg_query
     (impl_->conn, res,
      "INSERT INTO " DIRECTORY_TABLE
-     " (package_id, name, user_name, group_name, mtime, mode, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
-     pkg.value(), info.name, info.user, info.group,
+     " (package_id, flags, name, user_name, group_name, mtime, mode,"
+     " normalized)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+     pkg.value(), static_cast<int>(info.flags),
+     info.name, info.user, info.group,
      static_cast<long long>(info.mtime),
      static_cast<long long>(info.mode),
      info.normalized);
@@ -497,9 +499,11 @@ database::add_symlink(package_id pkg, const rpm_file_info &info)
   pg_query
     (impl_->conn, res,
      "INSERT INTO " SYMLINK_TABLE
-     " (package_id, name, target, user_name, group_name, mtime, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7)",
-     pkg.value(), info.name, info.linkto, info.user, info.group,
+     " (package_id, flags, name, target, user_name, group_name, mtime,"
+     " normalized)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+     pkg.value(), static_cast<int>(info.flags),
+     info.name, info.linkto, info.user, info.group,
      static_cast<long long>(info.mtime),
      info.normalized);
 }
