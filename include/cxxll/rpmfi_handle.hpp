@@ -29,16 +29,29 @@ class rpmfi_handle {
   rpmfi_handle &operator=(const rpmfi_handle &); // not implemented
 public:
   // Throws rpm_parser_exception on failure.
+  rpmfi_handle();
   explicit rpmfi_handle(Header);
   ~rpmfi_handle();
 
   // Returns the raw rpmfi handle.
   rpmfi get();
 
+  // Frees the raw rpmfi handle.
+  void close();
+
+  // Switches this handle to a handle for the passed header.
+  void reset_header(Header);
+
   // Invokes rpmfiNext() and returns true if there was another file
   // element.
   bool next();
 };
+
+inline
+rpmfi_handle::rpmfi_handle()
+  : raw_(NULL)
+{
+}
 
 inline rpmfi
 rpmfi_handle::get()
