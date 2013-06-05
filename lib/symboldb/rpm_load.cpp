@@ -422,7 +422,9 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     } else {
       // FIXME: deal with special files.
       unsigned ino = file.info.ino;
-      if (file.info.nlinks > 1) {
+      // Zero inodes sometimes stem from ghost files and are not real
+      // hard links.
+      if (file.info.nlinks > 1 && ino != 0) {
 	inode_map::iterator p(inodes.find(ino));
 	if (p == inodes.end()) {
 	  inodes.insert(std::make_pair(ino, inode(file.info)));
