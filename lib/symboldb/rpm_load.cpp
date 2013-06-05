@@ -165,45 +165,32 @@ load_elf(const symboldb_options &opt, database &db,
 }
 
 namespace {
-  // Directory entries referring to inodes.  We put the mtime here to
-  // increase the deduplication potential.
-  struct dentry {
-    std::string name;
-    unsigned mtime;
-    bool normalized;
-    explicit dentry(const rpm_file_info &info);
-  };
-
-  dentry::dentry(const rpm_file_info &info)
-    : name(info.name), mtime(info.mtime), normalized(info.normalized)
-  {
-  }
-
   // Inode with the directory entries which point to it.  We use the
   // entries vector to insert all entries when we encounter the file
   // entry with the actual file contents.
   struct inode {
-    rpm_file_info info;
-    std::vector<dentry> entries;
+    std::vector<rpm_file_info> entries;
 
-    explicit inode(const rpm_file_info &i);
+    explicit inode(const rpm_file_info &);
 
     void check_consistency(const rpm_file_info &new_info) const;
     void add(const rpm_file_info &new_info);
   };
 
-  inode::inode(const rpm_file_info &i)
-    : info(i)
+  inode::inode(const rpm_file_info &info)
   {
     if (info.nlinks < 2) {
-      throw rpm_parser_exception("invalid link count for " + i.name);
+      throw rpm_parser_exception("invalid link count for " + info.name);
     }
-    entries.push_back(dentry(i));
+    entries.push_back(info);
   }
 
   void
   inode::check_consistency(const rpm_file_info &new_info) const
   {
+    const rpm_file_info &info(entries.front());
+    // We do not check info.flags because it is not consistent across
+    // hard links.
     if (info.nlinks == entries.size()) {
       throw rpm_parser_exception
 	("all inode references already seen at " + new_info.name);
@@ -242,7 +229,7 @@ namespace {
   inode::add(const rpm_file_info &new_info)
   {
     check_consistency(new_info);
-    entries.push_back(dentry(new_info));
+    entries.push_back(new_info);
   }
 
   typedef std::map<unsigned, inode> inode_map;
@@ -349,22 +336,6 @@ unpack_files(const rpm_package_info &pkginfo)
   return pkginfo.kind == rpm_package_info::binary;
 }
 
-static database::contents_id
-load_contents(const symboldb_options &opt, database &db,
-	      const rpm_package_info &pkginfo,
-	      const char *rpm_path, const rpm_file_entry &file)
-{
-  std::vector<unsigned char> digest;
-  std::vector<unsigned char> preview;
-  prepare_load(rpm_path, file, digest, preview);
-  database::contents_id cid;
-  if (db.intern_file_contents(file.info, digest, preview, cid)
-      && unpack_files(pkginfo)) {
-    do_load_formats(opt, db, cid, file);
-  }
-  return cid;
-}
-
 static void
 add_file(const symboldb_options &opt, database &db,
 	 const rpm_package_info &pkginfo, database::package_id pkg,
@@ -457,17 +428,20 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	  inodes.insert(std::make_pair(ino, inode(file.info)));
 	} else {
 	  p->second.add(file.info);
-	  if (p->second.entries.size() == p->second.info.nlinks) {
+	  if (p->second.entries.size() == p->second.entries.front().nlinks) {
 	    // This is the last entry for this inode, and it comes
 	    // with the contents.  Load it and patch in the previous
 	    // references.
-	    adjust_for_ghost(file);
-	    database::contents_id cid = load_contents
-	      (opt, db, info, rpm_path, file);
-	    for (std::vector<dentry>::const_iterator
+	    for (std::vector<rpm_file_info>::const_iterator
 		   q = p->second.entries.begin(), end = p->second.entries.end();
 		 q != end; ++q) {
-	      db.add_file(pkg, q->name, q->normalized, q->mtime, ino, cid);
+	      // We cannot cache the contents_id because the hard
+	      // links can differ in the ghost flag.
+	      rpm_file_entry file1;
+	      file1.info = *q;
+	      file1.contents = file.contents;
+	      adjust_for_ghost(file1);
+	      add_file(opt, db, info, pkg, rpm_path, file1);
 	    }
 	  }
 	}
