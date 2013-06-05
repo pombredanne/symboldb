@@ -393,6 +393,17 @@ dependencies(const symboldb_options &, database &db,
   }
 }
 
+static void
+adjust_for_ghost(rpm_file_entry &file)
+{
+  if (file.info.ghost() && file.contents.empty()) {
+    // The size and digest from ghost files comes from the build root,
+    // which is no longer available.
+    const char *empty =
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    file.info.digest.set_hexadecimal("sha256", 0, empty);
+  }
+}
 
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
@@ -450,6 +461,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	    // This is the last entry for this inode, and it comes
 	    // with the contents.  Load it and patch in the previous
 	    // references.
+	    adjust_for_ghost(file);
 	    database::contents_id cid = load_contents
 	      (opt, db, info, rpm_path, file);
 	    for (std::vector<dentry>::const_iterator
@@ -461,6 +473,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	}
       } else {
 	// No hardlinks.
+	adjust_for_ghost(file);
 	add_file(opt, db, info, pkg, rpm_path, file);
       }
     }

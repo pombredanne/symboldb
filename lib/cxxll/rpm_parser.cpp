@@ -219,39 +219,31 @@ rpm_parser_state::impl::get_file_info(const findex &idx, rpm_file_info &info)
     info.linkto.clear();
   }
 
-  if (info.ghost()) {
-    // The size and digest from ghost files comes from the build
-    // root, which is no longer available.
-    const char *empty =
-      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-    info.digest.set_hexadecimal("sha256", 0, empty);
-  } else {
-    int algo_rpm;
-    size_t len;
-    const unsigned char *digest = rpmfiFDigest(fi.get(), &algo_rpm, &len);
+  int algo_rpm;
+  size_t len;
+  const unsigned char *digest = rpmfiFDigest(fi.get(), &algo_rpm, &len);
 
-    switch (algo_rpm) {
-    case PGPHASHALGO_MD5:
-      info.digest.type = hash_sink::md5;
-      break;
-    case PGPHASHALGO_SHA1:
-      info.digest.type = hash_sink::sha1;
-      break;
-    case PGPHASHALGO_SHA256:
-      info.digest.type = hash_sink::sha256;
-      break;
-    default:
-      {
-	char buf[128];
-	snprintf(buf, sizeof(buf), "unknown file digest algorithm %d",
-		 algo_rpm);
-	throw rpm_parser_exception(buf);
-      }
+  switch (algo_rpm) {
+  case PGPHASHALGO_MD5:
+    info.digest.type = hash_sink::md5;
+    break;
+  case PGPHASHALGO_SHA1:
+    info.digest.type = hash_sink::sha1;
+    break;
+  case PGPHASHALGO_SHA256:
+    info.digest.type = hash_sink::sha256;
+    break;
+  default:
+    {
+      char buf[128];
+      snprintf(buf, sizeof(buf), "unknown file digest algorithm %d",
+	       algo_rpm);
+      throw rpm_parser_exception(buf);
     }
-    info.digest.length = rpmfiFSize(fi.get());
-    info.digest.value.clear();
-    info.digest.value.insert(info.digest.value.end(), digest, digest + len);
   }
+  info.digest.length = rpmfiFSize(fi.get());
+  info.digest.value.clear();
+  info.digest.value.insert(info.digest.value.end(), digest, digest + len);
 }
 
 static void get_deps(Header header,
