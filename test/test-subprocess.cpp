@@ -39,15 +39,21 @@ test()
   }
   {
     subprocess proc;
+    CHECK(!proc.running());
     proc.command("/bin/true");
+    CHECK(!proc.running());
     proc.start();
+    CHECK(proc.running());
     CHECK(proc.wait() == 0);
+    CHECK(!proc.running());
   }
   {
     subprocess proc;
     proc.command("/bin/false");
     proc.start();
+    CHECK(proc.running());
     CHECK(proc.wait() == 1);
+    CHECK(!proc.running());
   }
   {
     subprocess proc;
@@ -59,7 +65,9 @@ test()
     proc.command("/bin/cat");
     proc.start();
     proc.kill();
+    CHECK(proc.running());
     CHECK(proc.wait() == -SIGKILL);
+    CHECK(!proc.running());
   }
   {
     subprocess proc;

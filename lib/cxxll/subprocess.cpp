@@ -319,6 +319,12 @@ subprocess::start()
   }
 }
 
+bool
+subprocess::running() const
+{
+  return impl_->pid > 0;
+}
+
 int
 subprocess::pipefd(standard_fd fd) const
 {

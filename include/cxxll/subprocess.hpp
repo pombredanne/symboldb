@@ -78,6 +78,10 @@ public:
   // Creates the child process.
   void start();
 
+  // Returns true if the subprocess is running.  This information can
+  // be outdated.
+  bool running() const;
+
   // Waits for the termination of the child process.  A negative
   // return code corresponds to a signal number.
   int wait();
