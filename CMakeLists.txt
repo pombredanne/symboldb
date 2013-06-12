@@ -60,6 +60,12 @@ add_custom_command (
   DEPENDS schema-index.sql
 )
 
+add_custom_command (
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/python_imports.py.inc
+  COMMAND xxd -i < ${PROJECT_SOURCE_DIR}/lib/cxxll/python_imports.py > ${CMAKE_CURRENT_BINARY_DIR}/python_imports.py.inc
+  DEPENDS lib/cxxll/python_imports.py
+)
+
 add_library (CXXLL
   lib/cxxll/checksum.cpp
   lib/cxxll/base16.cpp
@@ -103,6 +109,7 @@ add_library (CXXLL
   lib/cxxll/pg_testdb.cpp
   lib/cxxll/pgconn_handle.cpp
   lib/cxxll/pgresult_handle.cpp
+  lib/cxxll/python_imports.cpp
   lib/cxxll/read_file.cpp
   lib/cxxll/regex_handle.cpp
   lib/cxxll/rpm_evr.cpp
@@ -132,6 +139,7 @@ add_library (CXXLL
   lib/cxxll/zlib.cpp
   lib/cxxll/zlib_inflate_exception.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/error-constants.inc
+  ${CMAKE_CURRENT_BINARY_DIR}/python_imports.py.inc
 )
 
 add_library (SymbolDB
@@ -217,6 +225,7 @@ add_executable (runtests
   test/test-os.cpp
   test/test-os_exception.cpp
   test/test-pg_testdb.cpp
+  test/test-python_imports.cpp
   test/test-read_file.cpp
   test/test-regex_handle.cpp
   test/test-repomd.cpp
