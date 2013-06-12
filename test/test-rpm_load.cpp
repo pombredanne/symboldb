@@ -650,6 +650,28 @@ test()
       db.txn_rollback();
     }
 
+    // Test Python import extraction.
+    {
+      r1.exec(dbh, "SELECT python_import.name FROM symboldb.python_import"
+	      " JOIN symboldb.file USING (contents_id)"
+	      " WHERE file.name = '/usr/sbin/firewalld'"
+	      " ORDER BY 1");
+      int row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "dbus");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.config");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.core.logger.FileLog");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.core.logger.log");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.errors.*");
+      COMPARE_STRING(r1.getvalue(row++, 0),
+		     "firewall.functions.firewalld_is_active");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.server.server");
+      COMPARE_STRING(r1.getvalue(row++, 0), "os");
+      COMPARE_STRING(r1.getvalue(row++, 0), "sys");
+      COMPARE_STRING(r1.getvalue(row++, 0), "syslog");
+      COMPARE_STRING(r1.getvalue(row++, 0), "traceback");
+      CHECK(row == r1.ntuples());
+    }
+
     db.txn_begin();
     db.expire_url_cache();
     db.expire_packages();

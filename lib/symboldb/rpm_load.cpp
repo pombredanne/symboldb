@@ -39,12 +39,14 @@
 #include <cxxll/java_class.hpp>
 #include <cxxll/zip_file.hpp>
 #include <cxxll/os_exception.hpp>
+#include <cxxll/python_imports.hpp>
 
 #include <map>
 #include <sstream>
 
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 
 #include <inttypes.h>
 #include <fcntl.h>
@@ -161,6 +163,33 @@ load_elf(const symboldb_options &opt, database &db,
     db.add_elf_image(cid, image, sonameptr);
   } catch (elf_exception e) {
     db.add_elf_error(cid, e.what());
+  }
+}
+
+// Returns true if the file looks like a Python program.
+// (Due to lack of a clear signature, we also need to test the file name.)
+static bool
+is_python(const std::vector<unsigned char> data)
+{
+  return data.size() > 10 && data.at(0) == '#'
+    && memmem(data.data(), std::min<size_t>(data.size(), 100U), "python", 6U) != 0;
+}
+
+// Loads python source code.
+static void
+load_python(const symboldb_options &, database &db, python_imports &pi,
+	    database::contents_id cid, const rpm_file_entry &file)
+{
+  if (db.has_python_imports(cid)) {
+    return;
+  }
+  if (!pi.parse(file.contents)) {
+    db.add_python_error(cid, pi.error_line(), pi.error_message().c_str());
+    return;
+  }
+  for (std::vector<std::string>::const_iterator
+	 p = pi.imports().begin(), end = pi.imports().end(); p != end; ++p) {
+    db.add_python_import(cid, p->c_str());
   }
 }
 
@@ -311,13 +340,14 @@ load_zip(database &db,
 }
 
 static void
-do_load_formats(const symboldb_options &opt, database &db,
+do_load_formats(const symboldb_options &opt, database &db, python_imports &pi,
 		database::contents_id cid, const rpm_file_entry &file)
 {
   if (is_elf(file.contents)) {
     load_elf(opt, db, cid, file);
-  }
-  if (java_class::has_signature(file.contents)) {
+  } else if (is_python(file.contents)) {
+    load_python(opt, db, pi, cid, file);
+  } else if (java_class::has_signature(file.contents)) {
     try {
       java_class jc(&file.contents);
       db.add_java_class(cid, jc);
@@ -337,7 +367,7 @@ unpack_files(const rpm_package_info &pkginfo)
 }
 
 static void
-add_file(const symboldb_options &opt, database &db,
+add_file(const symboldb_options &opt, database &db, python_imports &pi,
 	 const rpm_package_info &pkginfo, database::package_id pkg,
 	 const char *rpm_path, const rpm_file_entry &file)
 {
@@ -349,7 +379,7 @@ add_file(const symboldb_options &opt, database &db,
   bool added;
   db.add_file(pkg, file.info, digest, preview, fid, cid, added);
   if (added && unpack_files(pkginfo)) {
-    do_load_formats(opt, db, cid, file);
+    do_load_formats(opt, db, pi, cid, file);
   }
 }
 
@@ -381,6 +411,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &info)
 {
   rpm_parser_state rpmst(rpm_path);
+  python_imports pi;
   info = rpmst.package();
   // We can destroy the lock immediately because we are running in a
   // transaction.
@@ -443,14 +474,14 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 	      file1.info = *q;
 	      file1.contents = file.contents;
 	      adjust_for_ghost(file1);
-	      add_file(opt, db, info, pkg, rpm_path, file1);
+	      add_file(opt, db, pi, info, pkg, rpm_path, file1);
 	    }
 	  }
 	}
       } else {
 	// No hardlinks.
 	adjust_for_ghost(file);
-	add_file(opt, db, info, pkg, rpm_path, file);
+	add_file(opt, db, pi, info, pkg, rpm_path, file);
       }
     }
   }
