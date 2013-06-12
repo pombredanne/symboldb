@@ -670,6 +670,22 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "syslog");
       COMPARE_STRING(r1.getvalue(row++, 0), "traceback");
       CHECK(row == r1.ntuples());
+
+      r1.exec(dbh, "SELECT python_import.name FROM symboldb.python_import"
+	      " JOIN symboldb.file USING (contents_id)"
+	      " WHERE file.name = '/usr/lib/python2.7/site-packages"
+	      "/firewall/core/io/service.py'"
+	      " ORDER BY 1");
+      row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.config._");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.core.io.io_object.*");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.core.logger.log");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.errors.*");
+      COMPARE_STRING(r1.getvalue(row++, 0), "firewall.functions");
+      COMPARE_STRING(r1.getvalue(row++, 0), "os");
+      COMPARE_STRING(r1.getvalue(row++, 0), "shutil");
+      COMPARE_STRING(r1.getvalue(row++, 0), "xml.sax");
+      CHECK(row == r1.ntuples());
     }
 
     db.txn_begin();

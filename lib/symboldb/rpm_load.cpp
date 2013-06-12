@@ -40,6 +40,7 @@
 #include <cxxll/zip_file.hpp>
 #include <cxxll/os_exception.hpp>
 #include <cxxll/python_imports.hpp>
+#include <cxxll/string_support.hpp>
 
 #include <map>
 #include <sstream>
@@ -173,6 +174,12 @@ is_python(const std::vector<unsigned char> data)
 {
   return data.size() > 10 && data.at(0) == '#'
     && memmem(data.data(), std::min<size_t>(data.size(), 100U), "python", 6U) != 0;
+}
+
+static bool
+is_python_path(const rpm_file_info &info)
+{
+  return ends_with(info.name, ".py");
 }
 
 // Loads python source code.
@@ -345,7 +352,7 @@ do_load_formats(const symboldb_options &opt, database &db, python_imports &pi,
 {
   if (is_elf(file.contents)) {
     load_elf(opt, db, cid, file);
-  } else if (is_python(file.contents)) {
+  } else if (is_python(file.contents) || is_python_path(file.info)) {
     load_python(opt, db, pi, cid, file);
   } else if (java_class::has_signature(file.contents)) {
     try {
@@ -378,8 +385,16 @@ add_file(const symboldb_options &opt, database &db, python_imports &pi,
   database::contents_id cid;
   bool added;
   db.add_file(pkg, file.info, digest, preview, fid, cid, added);
-  if (added && unpack_files(pkginfo)) {
-    do_load_formats(opt, db, pi, cid, file);
+  if (added) {
+    if (unpack_files(pkginfo)) {
+      do_load_formats(opt, db, pi, cid, file);
+    }
+  } else {
+    // We might recognize additonal files as Python files if they are
+    // loaded later under a different name.
+    if (unpack_files(pkginfo) && is_python_path(file.info)) {
+      load_python(opt, db, pi, cid, file);
+    }
   }
 }
 
