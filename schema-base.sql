@@ -404,6 +404,7 @@ CREATE TABLE symboldb.python_import (
 );
 COMMENT ON COLUMN symboldb.python_import.name IS
   'qualified of the imported module/symbol, with leading . for relative import';
+CREATE INDEX ON symboldb.python_import (contents_id);
 
 CREATE TABLE symboldb.python_error (
   contents_id INTEGER NOT NULL

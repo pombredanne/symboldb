@@ -161,6 +161,9 @@ public:
   void add_python_import(contents_id, const char *name);
   void add_python_error(contents_id, int line, const char *message);
 
+  // Checks for already present Python imports, to prevent duplicates.
+  bool has_python_imports(contents_id);
+
   // Package sets.
   struct package_set_tag {};
   typedef cxxll::tagged<int, package_set_tag> package_set_id;

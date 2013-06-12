@@ -937,6 +937,17 @@ database::add_python_error(contents_id cid, int line, const char *message)
   }
 }
 
+bool
+database::has_python_imports(contents_id cid)
+{
+  pgresult_handle res;
+  pg_query_binary
+    (impl_->conn, res,
+     "SELECT TRUE FROM symboldb.python_import WHERE contents_id = $1 LIMIT 1",
+     cid.value());
+  return res.ntuples() > 0;
+}
+
 namespace {
   struct fc_entry {
     std::string file;
