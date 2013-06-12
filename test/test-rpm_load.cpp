@@ -639,6 +639,15 @@ test()
       }
     }
 
+    // Test SQL syntax for Python-related loadrs.
+    {
+      db.txn_begin();
+      db.add_python_import(database::contents_id(1), "abc");
+      db.add_python_error(database::contents_id(1), 17, "syntax error");
+      db.add_python_error(database::contents_id(1), 0, "other error");
+      db.txn_rollback();
+    }
+
     db.txn_begin();
     db.expire_url_cache();
     db.expire_packages();

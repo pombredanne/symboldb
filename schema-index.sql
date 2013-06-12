@@ -79,3 +79,6 @@ CREATE INDEX ON symboldb.java_error (contents_id, path);
 
 ALTER TABLE symboldb.java_class_contents ADD PRIMARY KEY (contents_id, class_id);
 CREATE INDEX ON symboldb.java_class_contents (class_id);
+
+CREATE INDEX ON symboldb.python_import (contents_id);
+CREATE INDEX ON symboldb.python_import (name);

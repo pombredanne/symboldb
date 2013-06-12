@@ -910,6 +910,33 @@ database::expire_java_classes()
      " WHERE j.class_id = jc.class_id LIMIT 1)");
 }
 
+//////////////////////////////////////////////////////////////////////
+// Python-related data.
+
+void
+database::add_python_import(contents_id cid, const char *name)
+{
+  pgresult_handle res;
+  pg_query(impl_->conn, res,
+	   "INSERT INTO symboldb.python_import (contents_id, name)"
+	   " VALUES ($1, $2)", cid.value(), name);
+}
+
+void
+database::add_python_error(contents_id cid, int line, const char *message)
+{
+  pgresult_handle res;
+  if (line == 0) {
+    pg_query(impl_->conn, res,
+	     "INSERT INTO symboldb.python_error (contents_id, message)"
+	     " VALUES ($1, $2)", cid.value(), message);
+  } else {
+    pg_query(impl_->conn, res,
+	     "INSERT INTO symboldb.python_error (contents_id, line, message)"
+	     " VALUES ($1, $2, $3)", cid.value(), line, message);
+  }
+}
+
 namespace {
   struct fc_entry {
     std::string file;
