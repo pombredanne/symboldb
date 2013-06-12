@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/string_source.hpp>
+#include <cxxll/eof_exception.hpp>
 #include "test.hpp"
 
 using namespace cxxll;
@@ -60,6 +61,20 @@ test()
     CHECK(src.read(buf, 3) == 0);
     COMPARE_STRING(std::string(buf, buf + sizeof(buf)),
 		   std::string("eect", 5));
+  }
+  {
+    string_source src("abcde");
+    unsigned char buf[5] = "xyzt";
+    read_exactly(src, buf, 3);
+    COMPARE_STRING(std::string(buf, buf + sizeof(buf)),
+		   std::string("abct", 5));
+    try {
+      read_exactly(src, buf, 3);
+      CHECK(false);
+    } catch (eof_exception &) {
+      COMPARE_STRING(std::string(buf, buf + sizeof(buf)),
+		     std::string("dect", 5));
+    }
   }
 }
 

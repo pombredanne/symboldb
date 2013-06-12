@@ -30,4 +30,9 @@ struct source {
   virtual size_t read(unsigned char *, size_t) = 0;
 };
 
+// Read the required amount of bytes.  Throws eof_exception if not
+// enough bytes are available.  May throw other exceptions, depending
+// on the source.
+void read_exactly(source &, unsigned char *, size_t);
+
 } // namespace cxxll

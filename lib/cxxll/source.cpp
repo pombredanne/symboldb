@@ -17,9 +17,23 @@
  */
 
 #include <cxxll/source.hpp>
+#include <cxxll/eof_exception.hpp>
 
 using namespace cxxll;
 
 source::~source()
 {
+}
+
+void
+cxxll::read_exactly(source &src, unsigned char *p, size_t count)
+{
+  unsigned char *end = p + count;
+  while (p != end) {
+    size_t ret = src.read(p, end - p);
+    if (ret == 0) {
+      throw eof_exception();
+    }
+    p += ret;
+  }
 }
