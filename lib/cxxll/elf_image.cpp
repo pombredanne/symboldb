@@ -701,6 +701,9 @@ elf_image::symbol_range::reference() const
   return state_->ref;
 }
 
+//////////////////////////////////////////////////////////////////////
+// elf_image::dynamic_section_range
+
 struct elf_image::dynamic_section_range::state {
   std::tr1::shared_ptr<impl> impl_;
   GElf_Shdr *shdr;
@@ -708,11 +711,13 @@ struct elf_image::dynamic_section_range::state {
   size_t cnt;
   size_t entries;
   GElf_Shdr shdr_mem;
-  std::string value;
+  unsigned long long tag;
+  std::string text;
+  unsigned long long number;
   kind type;
 
   state(const elf_image &image)
-    : impl_(image.impl_), cnt(0), entries(0)
+    : impl_(image.impl_), cnt(0), entries(0), number(0), type(other)
   {
     for (size_t i = 0; i < impl_->phnum; ++i) {
       GElf_Phdr phdr_mem;
@@ -737,11 +742,14 @@ struct elf_image::dynamic_section_range::state {
 
   bool next()
   {
-    value.clear();
+    tag = 0;
+    text.clear();
+    number = 0;
     while (cnt < entries) {
       GElf_Dyn dynmem;
       GElf_Dyn *dyn = gelf_getdyn (data, cnt, &dynmem);
       ++cnt;
+      tag = dyn->d_tag;
       switch (dyn->d_tag) {
       case DT_NEEDED:
 	type = needed;
@@ -756,10 +764,11 @@ struct elf_image::dynamic_section_range::state {
 	type = runpath;
 	break;
       default:
-	// Nothing useful found, try again.
-	continue;
+	type = other;
+	number = dyn->d_un.d_val;
+	return true;
       }
-      value = elf_strptr (impl_->elf, shdr->sh_link, dyn->d_un.d_val);
+      text = elf_strptr (impl_->elf, shdr->sh_link, dyn->d_un.d_val);
       return true;
     }
     return false;
@@ -788,8 +797,20 @@ elf_image::dynamic_section_range::type() const
   return state_->type;
 }
 
-const std::string &
-elf_image::dynamic_section_range::value() const
+unsigned long long
+elf_image::dynamic_section_range::tag() const
 {
-  return state_->value;
+  return state_->tag;
+}
+
+const std::string &
+elf_image::dynamic_section_range::text() const
+{
+  return state_->text;
+}
+
+unsigned long long
+elf_image::dynamic_section_range::number() const
+{
+  return state_->number;
 }

@@ -132,28 +132,29 @@ load_elf(const symboldb_options &opt, database &db,
       while (dyn.next()) {
 	switch (dyn.type()) {
 	case elf_image::dynamic_section_range::needed:
-	  db.add_elf_needed(cid, dyn.value().c_str());
+	  db.add_elf_needed(cid, dyn.text().c_str());
 	  break;
 	case elf_image::dynamic_section_range::soname:
 	  if (soname_seen) {
 	    // The linker ignores some subsequent sonames, but
 	    // not all of them.  Multiple sonames are rare.
-	    if (dyn.value() != soname) {
+	    if (dyn.text() != soname) {
 	      std::ostringstream out;
-	      out << "duplicate soname ignored: " << dyn.value()
+	      out << "duplicate soname ignored: " << dyn.text()
 		  << ", previous soname: " << soname;
 	      db.add_elf_error(cid, out.str().c_str());
 	    }
 	  } else {
-	    soname = dyn.value();
+	    soname = dyn.text();
 	    soname_seen = true;
 	  }
 	  break;
 	case elf_image::dynamic_section_range::rpath:
-	  db.add_elf_rpath(cid, dyn.value().c_str());
+	  db.add_elf_rpath(cid, dyn.text().c_str());
 	  break;
 	case elf_image::dynamic_section_range::runpath:
-	  db.add_elf_runpath(cid, dyn.value().c_str());
+	  db.add_elf_runpath(cid, dyn.text().c_str());
+	  break;
 	  break;
 	}
       }

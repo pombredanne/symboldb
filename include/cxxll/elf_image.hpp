@@ -102,11 +102,20 @@ public:
     bool next();
 
     typedef enum {
-      needed, soname, rpath, runpath
+      needed, soname, rpath, runpath, other
     } kind;
 
+    // Symbolic type value.
     kind type() const;
-    const std::string &value() const;
+
+    // Raw type value.
+    unsigned long long tag() const;
+
+    // Extracted string.
+    const std::string &text() const;
+
+    // Extracted number.
+    unsigned long long number() const;
   };
 };
 
