@@ -284,6 +284,7 @@ CREATE TABLE symboldb.elf_file (
   e_machine symboldb.elf_short NOT NULL,
   arch symboldb.elf_arch,
   soname TEXT COLLATE "C",
+  interp TEXT COLLATE "C",
   build_id BYTEA CHECK (LENGTH(build_id) > 0)
 );
 

@@ -551,6 +551,14 @@ test()
       CHECK(!executable);
     }
 
+    r1.exec
+      (dbh, "SELECT interp"
+       " FROM symboldb.file_contents"
+       " JOIN symboldb.elf_file USING (contents_id)"
+       " WHERE digest = '\\x4df4ba37989b27afe6b7aeb45f6b854321af968ac23004027e9fcd6bda20a775'");
+    COMPARE_NUMBER(r1.ntuples(), 1);
+    COMPARE_STRING(r1.getvalue(0, 0), "/lib64/ld-linux-x86-64.so.2");
+ 
     r1.exec(dbh,
 	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
 	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"

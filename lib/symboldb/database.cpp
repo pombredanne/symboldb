@@ -514,13 +514,19 @@ database::add_elf_image(contents_id cid, const elf_image &image,
 			const char *soname)
 {
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  const char *interp;
+  if (image.interp().empty()) {
+    interp = NULL;
+  } else {
+    interp = image.interp().c_str();
+  }
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
      "INSERT INTO " ELF_FILE_TABLE
      " (contents_id, ei_class, ei_data, e_type, e_machine, arch, soname,"
-     " build_id)"
-     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_arch, $7, $8)",
+     " interp, build_id)"
+     " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_arch, $7, $8, $9)",
      cid.value(),
      static_cast<int>(image.ei_class()),
      static_cast<int>(image.ei_data()),
@@ -528,6 +534,7 @@ database::add_elf_image(contents_id cid, const elf_image &image,
      static_cast<int>(image.e_machine()),
      image.arch(),
      soname,
+     interp,
      image.build_id().empty() ? NULL : &image.build_id());
 
   elf_image::program_header_range phdr(image);
