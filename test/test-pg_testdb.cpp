@@ -589,7 +589,7 @@ test()
 
     // Result order.
     {
-      int t1, t2, t3, t4, t5, t6, t7, t8, t9;
+      int t1, t2, t3, t4, t5, t6, t7, t8, t9, t10;
 
       r.exec(h, "SELECT 1, 2");
       t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = 0;
@@ -666,6 +666,20 @@ test()
       CHECK(t7 == 7);
       CHECK(t8 == 8);
       CHECK(t9 == 9);
+
+      r.exec(h, "SELECT 1, 2, 3, 4, 5, 6, 7, 8, 9, 10");
+      t1 = t2 = t3 = t4 = t5 = t6 = t7 = t8 = t9 = t10 = 0;
+      pg_response(r, 0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
+      CHECK(t1 == 1);
+      CHECK(t2 == 2);
+      CHECK(t3 == 3);
+      CHECK(t4 == 4);
+      CHECK(t5 == 5);
+      CHECK(t6 == 6);
+      CHECK(t7 == 7);
+      CHECK(t8 == 8);
+      CHECK(t9 == 9);
+      COMPARE_NUMBER(t10, 10);
     }
   }
 }
