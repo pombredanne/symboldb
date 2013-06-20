@@ -58,6 +58,7 @@ using namespace cxxll;
 #define DIRECTORY_TABLE "symboldb.directory"
 #define SYMLINK_TABLE "symboldb.symlink"
 #define ELF_FILE_TABLE "symboldb.elf_file"
+#define ELF_PROGRAM_HEADER_TABLE "symboldb.elf_program_header"
 #define ELF_DEFINITION_TABLE "symboldb.elf_definition"
 #define ELF_REFERENCE_TABLE "symboldb.elf_reference"
 #define ELF_NEEDED_TABLE "symboldb.elf_needed"
@@ -528,6 +529,24 @@ database::add_elf_image(contents_id cid, const elf_image &image,
      image.arch(),
      soname,
      image.build_id().empty() ? NULL : &image.build_id());
+
+  elf_image::program_header_range phdr(image);
+  while (phdr.next()) {
+    pg_query(impl_->conn, res,
+	     "INSERT INTO " ELF_PROGRAM_HEADER_TABLE
+	     " (contents_id, type, file_offset, virt_addr, phys_addr,"
+	     " file_size, memory_size, align, readable, writable, executable)"
+	     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+	     cid.value(),
+	     static_cast<long long>(phdr.type()),
+	     static_cast<long long>(phdr.file_offset()),
+	     static_cast<long long>(phdr.virt_addr()),
+	     static_cast<long long>(phdr.phys_addr()),
+	     static_cast<long long>(phdr.file_size()),
+	     static_cast<long long>(phdr.memory_size()),
+	     static_cast<int>(phdr.align()),
+	     phdr.readable(), phdr.writable(), phdr.executable());
+  }
 }
 
 void

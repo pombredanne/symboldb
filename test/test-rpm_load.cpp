@@ -485,6 +485,72 @@ test()
     COMPARE_STRING(r1.getvalue(2, 0),
 		   "/usr/share/qemu/openbios-sparc64:sparc64");
 
+    r1.exec
+      (dbh, "SELECT type, file_offset, virt_addr, phys_addr, file_size,"
+       " memory_size, align, readable, writable, executable"
+       " FROM symboldb.file_contents"
+       " JOIN symboldb.elf_program_header USING (contents_id)"
+       " WHERE digest = '\\x4df4ba37989b27afe6b7aeb45f6b854321af968ac23004027e9fcd6bda20a775'"
+       " ORDER BY file_offset, type");
+    COMPARE_NUMBER(r1.ntuples(), 8);
+    {
+      long long type, file_offset, virt_addr, phys_addr, file_size, memory_size;
+      int align;
+      bool readable, writable, executable;
+
+      pg_response(r1, 0, type, file_offset, virt_addr, phys_addr, file_size,
+		  memory_size, align, readable, writable, executable);
+      COMPARE_NUMBER(type, 1LL); // PT_LOAD
+      COMPARE_NUMBER(file_offset, 0LL);
+      COMPARE_NUMBER(virt_addr, 0x0000000000400000LL);
+      COMPARE_NUMBER(phys_addr, 0x0000000000400000LL);
+      COMPARE_NUMBER(file_size, 0x00217cLL);
+      COMPARE_NUMBER(memory_size, 0x00217cLL);
+      COMPARE_NUMBER(align, 0x200000);
+      CHECK(readable);
+      CHECK(!writable);
+      CHECK(executable);
+
+      pg_response(r1, 1, type, file_offset, virt_addr, phys_addr, file_size,
+		  memory_size, align, readable, writable, executable);
+      COMPARE_NUMBER(type, 0x6474e551LL); // PT_GNU_STACK
+      COMPARE_NUMBER(file_offset, 0LL);
+      COMPARE_NUMBER(virt_addr, 0LL);
+      COMPARE_NUMBER(phys_addr, 0LL);
+      COMPARE_NUMBER(file_size, 0LL);
+      COMPARE_NUMBER(memory_size, 0LL);
+      COMPARE_NUMBER(align, 8);
+      CHECK(readable);
+      CHECK(writable);
+      CHECK(!executable);
+
+      pg_response(r1, 2, type, file_offset, virt_addr, phys_addr, file_size,
+		  memory_size, align, readable, writable, executable);
+      COMPARE_NUMBER(type, 6LL); // PT_PHDR
+      COMPARE_NUMBER(file_offset, 0x40LL);
+      COMPARE_NUMBER(virt_addr, 0x0000000000400040LL);
+      COMPARE_NUMBER(phys_addr, 0x0000000000400040LL);
+      COMPARE_NUMBER(file_size, 0x1c0LL);
+      COMPARE_NUMBER(memory_size, 0x1c0LL);
+      COMPARE_NUMBER(align, 8);
+      CHECK(readable);
+      CHECK(!writable);
+      CHECK(executable);
+
+      pg_response(r1, 6, type, file_offset, virt_addr, phys_addr, file_size,
+		  memory_size, align, readable, writable, executable);
+      COMPARE_NUMBER(type, 1LL); // PT_LOAD
+      COMPARE_NUMBER(file_offset, 0x2180LL);
+      COMPARE_NUMBER(virt_addr, 0x602180LL);
+      COMPARE_NUMBER(phys_addr, 0x602180LL);
+      COMPARE_NUMBER(file_size, 0x3b8LL);
+      COMPARE_NUMBER(memory_size, 0x508LL);
+      COMPARE_NUMBER(align, 0x200000);
+      CHECK(readable);
+      CHECK(writable);
+      CHECK(!executable);
+    }
+
     r1.exec(dbh,
 	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
 	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"

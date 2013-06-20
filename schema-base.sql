@@ -287,6 +287,21 @@ CREATE TABLE symboldb.elf_file (
   build_id BYTEA CHECK (LENGTH(build_id) > 0)
 );
 
+CREATE TABLE symboldb.elf_program_header (
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
+  type int8 NOT NULL,
+  file_offset int8 NOT NULL,
+  virt_addr int8 NOT NULL,
+  phys_addr int8 NOT NULL,
+  file_size int8 NOT NULL,
+  memory_size int8 NOT NULL,
+  align INTEGER NOT NULL,
+  readable BOOLEAN NOT NULL,
+  writable BOOLEAN NOT NULL,
+  executable BOOLEAN NOT NULL
+);
+
 CREATE TABLE symboldb.elf_definition (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,

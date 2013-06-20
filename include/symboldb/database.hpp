@@ -139,6 +139,7 @@ public:
   // Loading ELF-related tables.
 
   // Populates the elf_file table.  SONAME can be NULL.
+  // Loads the elf_program_header table as well.
   void add_elf_image(contents_id, const cxxll::elf_image &, const char *soname);
 
   void add_elf_symbol_definition(contents_id,

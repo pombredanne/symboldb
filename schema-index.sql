@@ -50,6 +50,8 @@ CREATE INDEX ON symboldb.symlink (target);
 ALTER TABLE symboldb.directory ADD PRIMARY KEY (package_id, name);
 CREATE INDEX ON symboldb.directory (name);
 
+CREATE INDEX ON symboldb.elf_program_header (contents_id);
+
 CREATE INDEX ON symboldb.elf_definition (contents_id);
 CREATE INDEX ON symboldb.elf_definition (name, version);
 
