@@ -31,6 +31,7 @@ class pg_exception : public std::exception {
 public:
   // Minimal error message.
   explicit pg_exception(const char *);
+  explicit pg_exception(const std::string &);
 
   // Minimal error message from the connection.
   explicit pg_exception(PGconn *);

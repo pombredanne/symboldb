@@ -51,6 +51,15 @@ pg_exception::pg_exception(const char *message)
   sqlstate_ = "58000";
 }
 
+pg_exception::pg_exception(const std::string &message)
+  : statement_position_(-1), internal_position_(-1), source_line_(-1)
+{
+  status_ = PGRES_FATAL_ERROR;
+  message_ = message;
+  severity_ = "FATAL";
+  sqlstate_ = "58000";
+}
+
 pg_exception::pg_exception(PGconn *conn)
   : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
