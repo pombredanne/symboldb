@@ -558,6 +558,53 @@ test()
        " WHERE digest = '\\x4df4ba37989b27afe6b7aeb45f6b854321af968ac23004027e9fcd6bda20a775'");
     COMPARE_NUMBER(r1.ntuples(), 1);
     COMPARE_STRING(r1.getvalue(0, 0), "/lib64/ld-linux-x86-64.so.2");
+
+    r1.exec
+      (dbh, "SELECT tag, value"
+       " FROM symboldb.file_contents"
+       " JOIN symboldb.elf_dynamic USING (contents_id)"
+       " WHERE digest = '\\x4df4ba37989b27afe6b7aeb45f6b854321af968ac23004027e9fcd6bda20a775'"
+       " ORDER BY 1, 2");
+    {
+      struct entry {
+	long long tag;
+	long long value;
+      };
+      static const entry entries[] = {
+	{2, 1152},		    // PLTRELSZ
+	{3, 0x0000000000602390LL},  // PLTGOT
+	{5, 0x00000000004007d8LL},  // STRTAB
+	{6, 0x0000000000400298LL},  // SYMTAB
+	{7, 0x0000000000400b58LL},  // RELA
+	{8, 96},		    // RELASZ
+	{9, 24},		    // RELAENT
+	{10, 649},		    // STRSZ
+	{11, 24},		    // SYMENT
+	{12, 0x0000000000401038LL}, // INIT
+	{13, 0x0000000000401e74LL}, // FINI
+	{20, 7},		    // PLTREL
+	{21, 0},		    // DEBUG
+	{23, 0x0000000000400bb8LL}, // JMPREL
+	{25, 0x0000000000602180LL}, // INIT_ARRAY
+	{26, 0x0000000000602188LL}, // FINI_ARRAY
+	{27, 8},		    // INIT_ARRAYSZ
+	{28, 8},		    // FINI_ARRAYSZ
+	{0x6ffffef5LL, 0x400260LL}, // GNU_HASH
+	{0x6ffffff0LL, 0x400a62LL}, // VERSYM
+	{0x6ffffffeLL, 0x400ad8LL}, // VERNEED
+	{0x6fffffffLL, 2},	    // VERNEEDNUM
+	{-1, -1}		    // sentinel
+      };
+      int row = 0;
+      const struct entry *expected;
+      for (expected = entries; expected->tag > 0; ++expected) {
+	entry actual;
+	pg_response(r1, row++, actual.tag, actual.value);
+	COMPARE_NUMBER(actual.tag, expected->tag);
+	COMPARE_NUMBER(actual.value, expected->value);
+      }
+      COMPARE_NUMBER(r1.ntuples(), expected - entries);
+    }
  
     r1.exec(dbh,
 	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"

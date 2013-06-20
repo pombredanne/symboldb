@@ -155,6 +155,15 @@ load_elf(const symboldb_options &opt, database &db,
 	case elf_image::dynamic_section_range::runpath:
 	  db.add_elf_runpath(cid, dyn.text().c_str());
 	  break;
+	case elf_image::dynamic_section_range::other:
+	  {
+	    long long tag = dyn.tag();
+	    long long number = dyn.number();
+	    // Skip NULL entries.
+	    if (tag != 0 || number != 0) {
+	      db.add_elf_dynamic(cid, dyn.tag(), dyn.number());
+	    }
+	  }
 	  break;
 	}
       }
