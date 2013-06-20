@@ -41,6 +41,7 @@ public:
   unsigned short e_type() const;
   unsigned short e_machine() const;
 
+  const std::string &interp() const;
   const std::vector<unsigned char> &build_id() const;
 
   // Architecture from the e_machine field.  The possible values

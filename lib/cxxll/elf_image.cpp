@@ -89,6 +89,7 @@ struct elf_image::impl {
   unsigned short e_type;
   unsigned short e_machine;
   const char *arch;
+  std::string interp;
   std::vector<unsigned char> build_id;
 
   impl(const void *start, size_t size)
@@ -118,6 +119,7 @@ struct elf_image::impl {
       throw elf_exception();
     }
 
+    set_interp();
     set_build_id();
   }
 
@@ -126,9 +128,28 @@ struct elf_image::impl {
     elf_end(elf);
   }
 
+  void set_interp();
   void set_build_id();
   void set_build_id_from_section(Elf_Data *data);
 };
+
+void
+elf_image::impl::set_interp()
+{
+  for (size_t i = 0; i < phnum; ++i) {
+    GElf_Phdr mem;
+    GElf_Phdr *phdr = gelf_getphdr (elf, i, &mem);
+    if (phdr != NULL && phdr->p_type == PT_INTERP) {
+      size_t maxsize;
+      char *fileptr = elf_rawfile (elf, &maxsize);
+      if (fileptr == NULL || phdr->p_offset >= maxsize) {
+	throw elf_exception();
+      }
+      interp = fileptr + phdr->p_offset;
+      break;
+    }
+  }
+}
 
 void
 elf_image::impl::set_build_id()
@@ -239,6 +260,12 @@ const char *
 elf_image::arch() const
 {
   return impl_->arch;
+}
+
+const std::string &
+elf_image::interp() const
+{
+  return impl_->interp;
 }
 
 const std::vector<unsigned char> &
