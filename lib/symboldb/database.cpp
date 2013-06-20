@@ -64,6 +64,7 @@ using namespace cxxll;
 #define ELF_NEEDED_TABLE "symboldb.elf_needed"
 #define ELF_RPATH_TABLE "symboldb.elf_rpath"
 #define ELF_RUNPATH_TABLE "symboldb.elf_runpath"
+#define ELF_DYNAMIC_TABLE "symboldb.elf_dynamic"
 #define ELF_ERROR_TABLE "symboldb.elf_error"
 #define PACKAGE_SET_TABLE "symboldb.package_set"
 #define PACKAGE_SET_MEMBER_TABLE "symboldb.package_set_member"
@@ -633,6 +634,19 @@ database::add_elf_runpath(contents_id cid, const char *name)
     (impl_->conn, res,
      "INSERT INTO " ELF_RUNPATH_TABLE " (contents_id, path) VALUES ($1, $2)",
      cid.value(), name);
+}
+
+void
+database::add_elf_dynamic(contents_id cid,
+			  unsigned long long tag, unsigned long long value)
+{
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  pgresult_handle res;
+  pg_query
+    (impl_->conn, res,
+     "INSERT INTO " ELF_DYNAMIC_TABLE
+     " (contents_id, tag, value) VALUES ($1, $2, $3)",
+     cid.value(), static_cast<long long>(tag), static_cast<long long>(value));
 }
 
 void

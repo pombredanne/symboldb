@@ -149,6 +149,8 @@ public:
   void add_elf_needed(contents_id, const char *);
   void add_elf_rpath(contents_id, const char *);
   void add_elf_runpath(contents_id, const char *);
+  void add_elf_dynamic(contents_id,
+		       unsigned long long tag, unsigned long long value);
   void add_elf_error(contents_id, const char *);
 
   // Java support.
