@@ -347,6 +347,13 @@ CREATE TABLE symboldb.elf_runpath (
   path TEXT NOT NULL COLLATE "C"
 );
 
+CREATE TABLE symboldb.elf_dynamic (
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
+  tag int8 NOT NULL,
+  value int8 NOT NULL
+);
+
 CREATE TABLE symboldb.elf_error (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,

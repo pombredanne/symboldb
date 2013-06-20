@@ -65,6 +65,8 @@ ALTER TABLE symboldb.elf_rpath ADD PRIMARY KEY (contents_id, path);
 
 ALTER TABLE symboldb.elf_runpath ADD PRIMARY KEY (contents_id, path);
 
+CREATE INDEX ON symboldb.elf_dynamic (contents_id);
+
 CREATE INDEX ON symboldb.elf_closure (file_id);
 CREATE INDEX ON symboldb.elf_closure (needed);
 
