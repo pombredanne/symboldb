@@ -24,6 +24,8 @@
 #include <climits>
 #include <cstdlib>
 
+#include <sstream>
+
 using namespace cxxll;
 
 const Oid pg_private::dispatch<short>::oid;
@@ -75,7 +77,10 @@ pg_private::dispatch<bool>::load(PGresult *res, int row, int col,
     throw pg_exception("format mismatch for boolean column");
   }
   if (PQgetisnull(res, row, col)) {
-    throw pg_exception("NULL value in non-null boolean column");
+    std::ostringstream str;
+    str << "NULL value in non-null boolean column " << col 
+	<< " of row " << row;
+    throw pg_exception(str.str());
   }
   const char *ptr =PQgetvalue(res, row, col);
   if (binary) {
