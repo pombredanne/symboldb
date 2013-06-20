@@ -247,6 +247,118 @@ elf_image::build_id() const
   return impl_->build_id;
 }
 
+//////////////////////////////////////////////////////////////////////
+// elf_image::program_header_range
+
+struct elf_image::program_header_range::state {
+  std::tr1::shared_ptr<elf_image::impl> impl_;
+  size_t cnt;
+  GElf_Phdr mem;
+
+  state(std::tr1::shared_ptr<elf_image::impl>);
+  bool next();
+};
+
+inline
+elf_image::program_header_range::state::state(std::tr1::shared_ptr<elf_image::impl> i)
+{
+  std::swap(impl_, i);
+  memset(&mem, 0, sizeof(mem));
+  cnt = 0;
+}
+
+inline bool
+elf_image::program_header_range::state::next()
+{
+  if (cnt >= impl_->phnum) {
+    return false;
+  }
+  GElf_Phdr *phdr = gelf_getphdr (impl_->elf, cnt, &mem);
+  ++cnt;
+  if (phdr == NULL) {
+    return false;
+  }
+  return true;
+}
+
+elf_image::program_header_range::program_header_range(const elf_image &elf)
+  : state_(new state(elf.impl_))
+{
+}
+
+elf_image::program_header_range::~program_header_range()
+{
+}
+
+bool
+elf_image::program_header_range::next()
+{
+  return state_->next();
+}
+
+unsigned long long
+elf_image::program_header_range::type() const
+{
+  return state_->mem.p_type;
+}
+
+unsigned long long
+elf_image::program_header_range::file_offset() const
+{
+  return state_->mem.p_offset;
+}
+
+unsigned long long
+elf_image::program_header_range::virt_addr() const
+{
+  return state_->mem.p_vaddr;
+}
+
+unsigned long long
+elf_image::program_header_range::phys_addr() const
+{
+  return state_->mem.p_paddr;
+}
+
+unsigned long long
+elf_image::program_header_range::file_size() const
+{
+  return state_->mem.p_filesz;
+}
+
+unsigned long long
+elf_image::program_header_range::memory_size() const
+{
+  return state_->mem.p_memsz;
+}
+
+unsigned int
+elf_image::program_header_range::align() const
+{
+  return state_->mem.p_align;
+}
+
+bool
+elf_image::program_header_range::readable() const
+{
+  return (state_->mem.p_flags & PF_R) != 0;
+}
+
+bool
+elf_image::program_header_range::writable() const
+{
+  return (state_->mem.p_flags & PF_W) != 0;
+}
+
+bool
+elf_image::program_header_range::executable() const
+{
+  return (state_->mem.p_flags & PF_X) != 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// elf_image::symbol_range
+
 struct elf_image::symbol_range::state {
   // The following are set up by next_section().
   bool eof;

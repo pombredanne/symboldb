@@ -49,6 +49,29 @@ public:
   // instead).
   const char *arch() const;
 
+  // Iterates over the program header.
+  class program_header_range {
+    struct state;
+    std::tr1::shared_ptr<state> state_;
+  public:
+    explicit program_header_range(const elf_image &);
+    ~program_header_range();
+
+    // Advances to the next entry.
+    bool next();
+
+    unsigned long long type() const;
+    unsigned long long file_offset() const;
+    unsigned long long virt_addr() const;
+    unsigned long long phys_addr() const;
+    unsigned long long file_size() const;
+    unsigned long long memory_size() const;
+    unsigned int align() const;
+    bool readable() const;
+    bool writable() const;
+    bool executable() const;
+  };
+
   class symbol_range {
     std::tr1::shared_ptr<impl> impl_;
     struct state;
