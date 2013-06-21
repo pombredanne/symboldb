@@ -118,7 +118,9 @@ symboldb_options::rpm_cache() const
   if (!make_directory_hierarchy(fcache_path.c_str(), 0700)) {
     throw usage_error("could not create cache directory: " + rpm_cache_path());
   }
-  return std::tr1::shared_ptr<file_cache>(new file_cache(fcache_path.c_str()));
+  std::tr1::shared_ptr<file_cache> ptr(new file_cache(fcache_path.c_str()));
+  ptr->enable_fsync(!transient_rpms);
+  return ptr;
 }
 
 //////////////////////////////////////////////////////////////////////
