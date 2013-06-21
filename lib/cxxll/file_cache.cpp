@@ -39,8 +39,9 @@ using namespace cxxll;
 struct file_cache::impl {
   std::string root;
   fd_handle dirfd;
+  bool do_fsync;
   impl(const char *path)
-    : root(path)
+    : root(path), do_fsync(true)
   {
     if (root.size() > 0 && root.at(root.size() - 1) != '/') {
       root += '/';
@@ -93,6 +94,12 @@ file_cache::digests(std::vector<std::vector<unsigned char> > &digests)
     }
     digests.push_back(decoded);
   }
+}
+
+void
+file_cache::enable_fsync(bool on)
+{
+  impl_->do_fsync = on;
 }
 
 struct file_cache::add_sink::add_impl {
@@ -161,7 +168,9 @@ file_cache::add_sink::finish(std::string &path)
   if (digest != impl_->csum.value) {
     throw checksum_mismatch("digest");
   }
-  impl_->handle.fsync();
+  if (impl_->cache->do_fsync) {
+    impl_->handle.fsync();
+  }
   impl_->handle.close();
   renameat(impl_->cache->dirfd, impl_->temp_file.c_str(),
 	   impl_->cache->dirfd, impl_->hex.c_str());

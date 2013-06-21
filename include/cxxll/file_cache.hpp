@@ -54,6 +54,9 @@ public:
   void add(const checksum &, const std::vector<unsigned char> &data,
 	   std::string &path);
 
+  // Switch fsync calls on or off.  fsync is enabled by default.
+  void enable_fsync(bool);
+
   // Creates a sink for data with the specified checksum.
   // FIXME: Does not use locking yet.
   class add_sink : public sink {
