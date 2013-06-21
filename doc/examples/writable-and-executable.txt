@@ -1,0 +1,28 @@
+Writable and executable sections
+--------------------------------
+
+This query identifies ELF files which contain sections which are both
+writable and executable:
+
+    SELECT symboldb.nevra(package), file.name, type
+      FROM symboldb.elf_program_header
+      JOIN symboldb.file USING (contents_id)
+      JOIN symboldb.package USING (package_id)
+      JOIN symboldb.package_set_member USING (package_id)
+    WHERE writable AND executable
+      AND set_id = symboldb.package_set('Fedora/18/x86_64')
+    ORDER BY 1, 2, 3;
+
+If an object file lacks a GNU_STACK section, the stack is implicitly
+marked as writable and executable:
+
+    SELECT symboldb.nevra(package), f.name
+      FROM symboldb.file f
+      JOIN symboldb.elf_file USING (contents_id)
+      JOIN symboldb.package USING (package_id)
+      JOIN symboldb.package_set_member USING (package_id)
+    WHERE NOT EXISTS (SELECT 1 FROM symboldb.elf_program_header eph
+                      WHERE eph.contents_id = f.contents_id
+                      AND type = 1685382481)
+      AND set_id = symboldb.package_set('Fedora/18/x86_64')
+    ORDER BY 1, 2;
