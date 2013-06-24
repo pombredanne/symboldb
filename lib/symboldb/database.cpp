@@ -480,7 +480,6 @@ database::update_contents_preview(contents_id cid,
   pg_query(impl_->conn, res,
 	   "UPDATE " FILE_CONTENTS_TABLE " SET contents = $2"
 	   " WHERE contents_id = $1", cid.value(), buf);
-  assert(res.ntuples() == 1);
 }
 
 void
