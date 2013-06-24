@@ -116,7 +116,9 @@ load_integer(PGresult *res, int row, int col, T &val)
   bool binary = is_binary(res, col);
   if (binary && (PQftype(res, col) != dispatch<T>::oid
 		 || PQgetlength(res, row, col) != dispatch<T>::storage)) {
-    throw pg_exception("format mismatch for integer column");
+    std::ostringstream str;
+    str << "format mismatch for integer column " << col << " of row " << row;
+    throw pg_exception(str.str());
   }
   if (PQgetisnull(res, row, col)) {
     throw pg_exception("NULL value in non-null integer column");
