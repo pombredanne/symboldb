@@ -67,6 +67,18 @@ is_binary(PGresult *res, int col)
   }
 }
 
+// Throws pg_exception after appending " column COL of row ROW" to the
+// message.
+static void throw_mismatch_exception(const char *msg, int row, int col)
+  __attribute__((noreturn));
+static void
+throw_mismatch_exception(const char *msg, int row, int col)
+{
+    std::ostringstream str;
+    str << msg << " column " << col << " of row " << row;
+    throw pg_exception(str.str());
+}
+
 void
 pg_private::dispatch<bool>::load(PGresult *res, int row, int col,
 				       bool &val)
@@ -77,10 +89,7 @@ pg_private::dispatch<bool>::load(PGresult *res, int row, int col,
     throw pg_exception("format mismatch for boolean column");
   }
   if (PQgetisnull(res, row, col)) {
-    std::ostringstream str;
-    str << "NULL value in non-null boolean column " << col 
-	<< " of row " << row;
-    throw pg_exception(str.str());
+    throw_mismatch_exception("NULL value in non-null boolean", row, col);
   }
   const char *ptr =PQgetvalue(res, row, col);
   if (binary) {
@@ -116,9 +125,7 @@ load_integer(PGresult *res, int row, int col, T &val)
   bool binary = is_binary(res, col);
   if (binary && (PQftype(res, col) != dispatch<T>::oid
 		 || PQgetlength(res, row, col) != dispatch<T>::storage)) {
-    std::ostringstream str;
-    str << "format mismatch for integer column " << col << " of row " << row;
-    throw pg_exception(str.str());
+    throw_mismatch_exception("format mismatch for integer", row, col);
   }
   if (PQgetisnull(res, row, col)) {
     throw pg_exception("NULL value in non-null integer column");
