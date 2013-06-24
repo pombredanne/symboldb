@@ -128,7 +128,7 @@ load_integer(PGresult *res, int row, int col, T &val)
     throw_mismatch_exception("format mismatch for integer", row, col);
   }
   if (PQgetisnull(res, row, col)) {
-    throw pg_exception("NULL value in non-null integer column");
+    throw_mismatch_exception("NULL value in non-null integer", row, col);
   }
   if (binary) {
     const unsigned char *ptr =
