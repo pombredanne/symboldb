@@ -210,6 +210,39 @@ load_python(const symboldb_options &, database &db, python_imports &pi,
   }
 }
 
+static const size_t FILE_CONTENTS_PREVIEW_SIZE = 64;
+
+// Return true if the full contents of the file should be preserved in
+// the database.  (Usually, only the first FILE_CONTENTS_PREVIEW_SIZE
+// bytes will be stored.)  Affected files are configuration and
+// service registration files.
+static bool
+keep_full_contents(const rpm_file_info &info)
+{
+  const std::string &path(info.name);
+  return starts_with(path, "/etc/")
+    || starts_with(path, "/usr/share/dbus-1/system-services/")
+    || starts_with(path, "/usr/share/dbus-1/services/")
+    || starts_with(path, "/usr/share/polkit-1/actions/")
+    || ends_with(path, ".service")
+    || ends_with(path, ".desktop")
+    || ends_with(path, ".protocol");
+}
+
+static void
+update_contents_preview(const rpm_file_entry &file,
+			std::vector<unsigned char> &preview)
+{
+  if (keep_full_contents(file.info)) {
+    preview = file.contents;
+  } else {
+    size_t restricted_size = std::min(FILE_CONTENTS_PREVIEW_SIZE,
+				      file.contents.size());
+    preview.assign(file.contents.begin(),
+		   file.contents.begin() + restricted_size);
+  }
+}
+
 namespace {
   // Inode with the directory entries which point to it.  We use the
   // entries vector to insert all entries when we encounter the file
@@ -315,10 +348,7 @@ prepare_load(const char *rpm_path, const rpm_file_entry &file,
     check_digest(rpm_path, file.info.name, chk_csum, file.info.digest);
   }
   std::swap(digest, csum.value);
-  preview.assign
-    (file.contents.begin(),
-     file.contents.begin() + std::min(static_cast<size_t>(64),
-				      file.contents.size()));
+  update_contents_preview(file, preview);
 }
 
 static void
@@ -394,7 +424,9 @@ add_file(const symboldb_options &opt, database &db, python_imports &pi,
   database::file_id fid;
   database::contents_id cid;
   bool added;
-  db.add_file(pkg, file.info, digest, preview, fid, cid, added);
+  int contents_length;
+  db.add_file(pkg, file.info, digest, preview, fid, cid,
+	      added, contents_length);
   if (added) {
     if (unpack_files(pkginfo)) {
       do_load_formats(opt, db, pi, cid, file);
@@ -405,6 +437,11 @@ add_file(const symboldb_options &opt, database &db, python_imports &pi,
     if (unpack_files(pkginfo) && is_python_path(file.info)) {
       load_python(opt, db, pi, cid, file);
     }
+  }
+  // If the contents in the database was truncated, update it with the
+  // longer version.
+  if (static_cast<size_t>(contents_length) < preview.size()) {
+    db.update_contents_preview(cid, preview);
   }
 }
 

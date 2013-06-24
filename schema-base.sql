@@ -196,10 +196,10 @@ CREATE INDEX ON symboldb.file_contents (digest);
 CREATE FUNCTION symboldb.intern_file_contents (
   row_hash BYTEA, length BIGINT, mode INTEGER,  flags INTEGER,
   user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
-  OUT cid INTEGER, OUT added BOOLEAN
+  OUT cid INTEGER, OUT added BOOLEAN, OUT contents_length INTEGER
 ) LANGUAGE 'plpgsql' AS $$
 BEGIN
-  SELECT contents_id INTO cid
+  SELECT contents_id, LENGTH(fc.contents) INTO cid, contents_length
     FROM symboldb.file_contents fc WHERE fc.row_hash = $1;
   IF FOUND THEN
     added := FALSE;
@@ -209,6 +209,7 @@ BEGIN
      (row_hash, length, mode, flags, user_name, group_name, digest, contents)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING contents_id INTO cid;
   added := TRUE;
+  contents_length := LENGTH(contents);
   RETURN;
 END;
 $$;
@@ -233,11 +234,14 @@ CREATE FUNCTION symboldb.add_file (
   user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
   package_id INTEGER, inode INTEGER, mtime INTEGER,
   name TEXT, normalized BOOLEAN,
-  OUT fid INTEGER, OUT cid INTEGER, OUT added BOOLEAN
+  OUT fid INTEGER, OUT cid INTEGER, OUT added BOOLEAN,
+  OUT contents_length INTEGER
 ) LANGUAGE 'plpgsql' AS $$
 BEGIN
-  SELECT ifc.cid, ifc.added INTO cid, added FROM symboldb.intern_file_contents
-    ($1, $2, $3, $4, $5, $6, $7, $8) ifc;
+  SELECT ifc.cid, ifc.added, ifc.contents_length
+    INTO cid, added, contents_length
+    FROM symboldb.intern_file_contents
+      ($1, $2, $3, $4, $5, $6, $7, $8) ifc;
   INSERT INTO symboldb.file VALUES
     (DEFAULT, $9, cid, $10, $11, $12, $13) RETURNING file_id INTO fid;
 END;

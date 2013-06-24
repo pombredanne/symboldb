@@ -760,6 +760,16 @@ test()
       }
     }
 
+    // Test contents preservation for files in /etc.
+    {
+      r1.exec(dbh, "SELECT LENGTH(contents) FROM symboldb.file_contents"
+	      " WHERE digest = "
+	      "'\\xf96d066e6deb9c21b0e5d42b704e9b32"
+	      "22c365185e83593133c0115db69e16c8'");
+      COMPARE_NUMBER(r1.ntuples(), 1);
+      COMPARE_STRING(r1.getvalue(0, 0), "72");
+    }
+
     // Test SQL syntax for Python-related loaders.
     {
       db.txn_begin();

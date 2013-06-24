@@ -430,7 +430,8 @@ void
 database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
 		   const std::vector<unsigned char> &digest,
 		   const std::vector<unsigned char> &contents,
-		   file_id &fid, contents_id &cid, bool &added)
+		   file_id &fid, contents_id &cid, bool &added,
+		   int &contents_length)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -464,9 +465,22 @@ database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
      pkg.value(), ino, mtime, info.name, info.normalized);
   int fidint;
   int cidint;
-  pg_response(res, 0, fidint, cidint, added);
+  pg_response(res, 0, fidint, cidint, added, contents_length);
   fid = file_id(fidint);
   cid = contents_id(cidint);
+}
+
+void
+database::update_contents_preview(contents_id cid,
+				  const std::vector<unsigned char> &buf)
+{
+  // FIXME: This needs a transaction.
+  assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  pgresult_handle res;
+  pg_query(impl_->conn, res,
+	   "UPDATE " FILE_CONTENTS_TABLE " SET contents = $2"
+	   " WHERE contents_id = $1", cid.value(), buf);
+  assert(res.ntuples() == 1);
 }
 
 void

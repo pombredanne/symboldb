@@ -128,7 +128,14 @@ public:
   void add_file(package_id, const cxxll::rpm_file_info &,
 		const std::vector<unsigned char> &digest,
 		const std::vector<unsigned char> &contents,
-		file_id &, contents_id &, bool &added);
+		file_id &, contents_id &, bool &added, int &contents_length);
+
+  // Replace the contents in the database with the supplied one.  This
+  // can be called to fix up a truncated contents preview when we
+  // encounter the same contents under a different name, and the name
+  // indicates that we need to preserve the contents in full.
+  void update_contents_preview(contents_id,
+			       const std::vector<unsigned char> &);
 
   // Adds the directory to the database.
   void add_directory(package_id, const cxxll::rpm_file_info &);
