@@ -221,12 +221,21 @@ keep_full_contents(const rpm_file_info &info)
 {
   const std::string &path(info.name);
   return starts_with(path, "/etc/")
-    || starts_with(path, "/usr/share/dbus-1/system-services/")
+    || starts_with(path, "/usr/lib/binfmt.d/")
+    || starts_with(path, "/usr/lib/sysctl.d/")
+    || starts_with(path, "/usr/lib/tmpfiles.d/")
+    || starts_with(path, "/usr/lib/udev/rules.d/")
     || starts_with(path, "/usr/share/dbus-1/services/")
+    || starts_with(path, "/usr/share/dbus-1/system-services/")
     || starts_with(path, "/usr/share/polkit-1/actions/")
-    || ends_with(path, ".service")
+    || starts_with(path, "/usr/share/polkit-1/rules.d/")
+    || ends_with(path, ".conf")
     || ends_with(path, ".desktop")
-    || ends_with(path, ".protocol");
+    || ends_with(path, ".pkla")
+    || ends_with(path, ".protocol")
+    || ends_with(path, ".service")
+    || ends_with(path, ".spec")
+    ;
 }
 
 static void
