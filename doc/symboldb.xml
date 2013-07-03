@@ -95,6 +95,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </cmdsynopsis>
     <cmdsynopsis>
       <command>symboldb</command>
+      <arg choice="plain">--create-schema-base</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
+      <arg choice="plain">--create-schema-index</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>symboldb</command>
       <arg choice="plain">--show-stale-cached-rpms</arg>
     </cmdsynopsis>
     <cmdsynopsis>
@@ -130,7 +138,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<listitem>
 	  <para>
 	    Connects to the PostgreSQL database and creates the
-	    <database>symboldb</database> schema.
+	    <database>symboldb</database> schema.  This is a
+	    combination of the <command>--create-schema-base</command>
+	    and <command>--create-schema-index</command> commands.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -271,6 +281,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	    other unreferenced database contents.  RPM files for
 	    packages which are not package set members are deleted as
 	    well.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--create-schema-base</command></term>
+	<listitem>
+	  <para>
+	    Creates the database tables and indexes required for
+	    loading (but not querying) data.  Due to the reduced
+	    number of indexes, loading will be faster, but most
+	    queries will run very slowly, including the
+	    <command>--expire</command> command, so this command is
+	    mainly useful for the initial database load.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>--create-schema-index</command></term>
+	<listitem>
+	  <para>
+	    Adds the indexes left out by
+	    <command>---create-schema-base</command>.  This command is
+	    typically run once after the initial database load.
 	  </para>
 	</listitem>
       </varlistentry>
