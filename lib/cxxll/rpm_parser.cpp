@@ -55,6 +55,11 @@ struct rpm_parser_state::impl {
   FD_t fd;
   Header header;
   std::vector<rpm_dependency> dependencies;
+
+  // Corrected link counts only covering files actually in the
+  // payload.
+  std::map<uint32_t, uint32_t> non_ghost_inode_links;
+
   bool payload_is_open;
   bool reached_ghosts;
 
@@ -190,8 +195,40 @@ void
 rpm_parser_state::impl::get_files_from_header()
 {
   fi.reset_header(header);
+  std::map<uint32_t, uint32_t> total_inode_links;
   while (fi.next()) {
-    files[rpmfiFN(fi.get())] = findex(rpmfiFX(fi.get()));
+    const char *name = rpmfiFN(fi.get());
+    files[name] = findex(rpmfiFX(fi.get()));
+    uint32_t nlinks = rpmfiFNlink(fi.get());
+    if (nlinks > 1 && rpmfiWhatis(rpmfiFMode(fi.get())) == REG) {
+      uint32_t ino = rpmfiFInode(fi.get());
+      if (ino > 0) {
+	if ((rpmfiFFlags(fi.get()) & RPMFILE_GHOST) == 0) {
+	  ++non_ghost_inode_links[ino];
+	}
+	++total_inode_links[ino];
+      }
+    }
+  }
+  if (!total_inode_links.empty()) {
+    fi.reset_header(header);
+    while (fi.next()) {
+      uint32_t nlinks = rpmfiFNlink(fi.get());
+      if (nlinks > 1 && rpmfiWhatis(rpmfiFMode(fi.get())) == REG) {
+	uint32_t ino = rpmfiFInode(fi.get());
+	if (ino > 0) {
+	  std::map<uint32_t, uint32_t>::const_iterator p =
+	    non_ghost_inode_links.find(ino);
+	  if (p == non_ghost_inode_links.end() || nlinks != p->second) {
+	    p = total_inode_links.find(ino);
+	    if (nlinks != p->second) {
+	      throw rpm_parser_exception("invalid link count for "
+					 + std::string(rpmfiFN(fi.get())));
+	    }
+	  }
+	}
+      }
+    }
   }
 }
 
@@ -209,7 +246,15 @@ rpm_parser_state::impl::get_file_info(const findex &idx, rpm_file_info &info)
   info.mode = rpmfiFMode(fi.get());
   info.mtime = rpmfiFMtime(fi.get());
   info.ino = rpmfiFInode(fi.get());
-  info.nlinks = rpmfiFNlink(fi.get());
+  {
+    std::map<uint32_t, uint32_t>::const_iterator p =
+      non_ghost_inode_links.find(info.ino);
+    if (p == non_ghost_inode_links.end()) {
+      info.nlinks = 1;
+    } else {
+      info.nlinks = p->second;
+    }
+  }
   info.flags = rpmfiFFlags(fi.get());
   info.normalized = false;
 
