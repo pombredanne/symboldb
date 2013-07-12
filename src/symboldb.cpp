@@ -523,8 +523,7 @@ main(int argc, char **argv)
     case command::create_schema_index:
       return do_create_schema(db, false, true);
     case command::load_rpm:
-      do_load_rpm(opt, db, argv + optind);
-      break;
+      return do_load_rpm(opt, db, argv + optind);
     case command::create_set:
       return do_create_set(opt, db, argv + optind);
     case command::update_set:
