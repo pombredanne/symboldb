@@ -22,6 +22,7 @@
 #include <cxxll/string_sink.hpp>
 #include <cxxll/source_sink.hpp>
 #include <cxxll/fd_handle.hpp>
+#include <cxxll/os.hpp>
 
 #include <signal.h>
 #include <stdlib.h>
@@ -130,7 +131,7 @@ test()
     string_sink sink;
     copy_source_to_sink(source, sink);
     CHECK(proc.wait() == 0);
-    CHECK(sink.data != "/dev/null\n");
+    COMPARE_STRING(sink.data, readlink("/proc/self/fd/0") + "\n");
     proc.redirect(subprocess::in, subprocess::null);
     proc.start();
     sink.data.clear();
