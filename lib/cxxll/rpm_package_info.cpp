@@ -22,7 +22,7 @@
 using namespace cxxll;
 
 rpm_package_info::rpm_package_info()
-  : epoch(-1), kind(binary), normalized(false)
+  : build_time(0), epoch(-1), kind(binary), normalized(false)
 {
 }
 
