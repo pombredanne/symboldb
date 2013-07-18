@@ -144,7 +144,7 @@ curl_fetch_result::perform(curl_handle &h, const char *url)
 }
 
 curl_fetch_result::curl_fetch_result(sink *t)
-  : target(t)
+  : target(t), http_date(0), http_size(0)
 {
 }
 
