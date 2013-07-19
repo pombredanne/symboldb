@@ -141,7 +141,7 @@ test()
     CHECK(src.state() == expat_source::END);
     COMPARE_NUMBER(src.line(), 3U);
     COMPARE_NUMBER(src.column(), 1U);
-    CHECK(~src.next());
+    CHECK(!src.next());
     CHECK(src.state() == expat_source::EOD);
     CHECK(!src.next());
     CHECK(src.state() == expat_source::EOD);
