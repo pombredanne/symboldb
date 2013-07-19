@@ -24,7 +24,7 @@
 using namespace cxxll;
 
 checksum::checksum()
-  : type(hash_sink::sha256)
+  : length(checksum::no_length), type(hash_sink::sha256)
 {
 }
 
