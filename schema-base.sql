@@ -20,6 +20,7 @@ CREATE SCHEMA symboldb;
 
 CREATE TYPE symboldb.rpm_arch AS ENUM (
   'noarch',
+  'armv7hl',
   'i386', 'i686', 'x86_64',
   'ppc', 'ppc64', 'ppc64p7',
   's390', 's390x');
