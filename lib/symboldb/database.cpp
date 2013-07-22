@@ -246,7 +246,7 @@ database::intern_package(const rpm_package_info &pkg,
      " (name, epoch, version, release, arch, hash, source,"
      " build_host, build_time, summary, description, license, rpm_group,"
      " normalized, kind)"
-     " VALUES ($1, $2, $3, $4, $5::symboldb.rpm_arch, decode($6, 'hex'), $7,"
+     " VALUES ($1, $2, $3, $4, $5, decode($6, 'hex'), $7,"
      " $8, 'epoch'::TIMESTAMP WITHOUT TIME ZONE + '1 second'::interval * $9,"
      " $10, $11, $12, $13, $14, $15::symboldb.rpm_kind)"
      " RETURNING package_id",

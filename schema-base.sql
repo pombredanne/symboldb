@@ -18,12 +18,6 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE SCHEMA symboldb;
 
-CREATE TYPE symboldb.rpm_arch AS ENUM (
-  'noarch',
-  'armv7hl',
-  'i386', 'i686', 'x86_64',
-  'ppc', 'ppc64', 'ppc64p7',
-  's390', 's390x');
 CREATE TYPE symboldb.elf_arch AS ENUM (
   'i386', 'x86_64',
   'ppc', 'ppc64',
@@ -56,7 +50,7 @@ CREATE TABLE symboldb.package (
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   version TEXT NOT NULL CHECK (LENGTH(version) > 0),
   release TEXT NOT NULL CHECK (LENGTH(release) > 0),
-  arch symboldb.rpm_arch NOT NULL,
+  arch TEXT NOT NULL CHECK (LENGTH(arch) > 0),
   hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(hash) = 20),
   source TEXT CHECK (LENGTH(source) > 0) COLLATE "C",
   build_host TEXT NOT NULL CHECK (LENGTH(build_host) > 0) COLLATE "C",
