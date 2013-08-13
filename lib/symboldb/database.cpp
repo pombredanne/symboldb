@@ -266,14 +266,12 @@ intern_hash(const rpm_file_info &info,
   std::vector<unsigned char> to_hash(digest);
 
   struct data {
-    unsigned mtime;
     unsigned flags;
   };
   union {
     data dat;
     char data_bytes[sizeof(data)];
   } u;
-  u.dat.mtime = cpu_to_le_32(info.mtime);
   u.dat.flags = cpu_to_le_32(info.flags);
 
   to_hash.insert(to_hash.end(),
