@@ -267,12 +267,14 @@ intern_hash(const rpm_file_info &info,
 
   struct data {
     unsigned flags;
+    unsigned mode;
   };
   union {
     data dat;
     char data_bytes[sizeof(data)];
   } u;
   u.dat.flags = cpu_to_le_32(info.flags);
+  u.dat.mode = cpu_to_le_32(info.mode);
 
   to_hash.insert(to_hash.end(),
 		 u.data_bytes + 0, u.data_bytes + sizeof(u.data_bytes));
