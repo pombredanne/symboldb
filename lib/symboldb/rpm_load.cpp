@@ -433,19 +433,6 @@ dependencies(const symboldb_options &, database &db,
   }
 }
 
-static void
-adjust_for_ghost(rpm_file_entry &file)
-{
-  assert(file.infos.size() == 1);
-  if (file.infos.front().ghost() && file.contents.empty()) {
-    // The size and digest from ghost files comes from the build root,
-    // which is no longer available.
-    const char *empty =
-      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-    file.infos.front().digest.set_hexadecimal("sha256", 0, empty);
-  }
-}
-
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &pkginfo)
@@ -490,7 +477,6 @@ load_rpm_internal(const symboldb_options &opt, database &db,
       db.add_symlink(pkg, info);
     } else {
       // FIXME: deal with special files.
-      adjust_for_ghost(file);
       add_files(opt, db, pi, pkginfo, pkg, rpm_path, file);
     }
   }
