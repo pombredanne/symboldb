@@ -586,11 +586,15 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 
     p->second.seen_ = true;
 
+    // Hardlink processing.  We use the inode number from the CPIO
+    // header, ignoring a potential ghost state of the current CPIO
+    // entry.
+    std::pair<impl::hardlink_map::iterator,
+	      impl::hardlink_map::iterator> links =
+      impl_->hardlinks.equal_range(header.ino);
     impl_->seek_fi(p->second.fx_);
-    uint32_t ino = hardlink_ino(impl_->fi);
-    if (ino == 0) {
-      // This file is not a hardlink, or it is an empty hard-linked
-      // file.
+    if (links.first == links.second) {
+      // This file is not treated as a hardlink.
       file.infos.resize(1);
       get_file_info(impl_->fi, file.infos.front());
       return true;
@@ -600,13 +604,6 @@ rpm_parser_state::read_file(rpm_file_entry &file)
       if (fsize == file.contents.size()) {
 	// We have found the real file contents.  Provide all the hard
 	// links to the caller.
-	std::pair<impl::hardlink_map::iterator,
-		  impl::hardlink_map::iterator> links =
-	  impl_->hardlinks.equal_range(ino);
-	if (links.first == links.second) {
-	  throw rpm_parser_exception
-	    (std::string("hard links not found: ") + name.data());
-	}
 	file.infos.resize(std::distance(links.first, links.second));
 	size_t i = 0;
 	for (impl::hardlink_map::iterator q = links.first; q != links.second; ++q) {
@@ -627,7 +624,7 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 	}
 	return true;
       } else if (file.contents.empty()) {
-	// Just another hardlink.
+	// Just another hardlink without contents.
 	continue;
       } else {
 	throw rpm_parser_exception
