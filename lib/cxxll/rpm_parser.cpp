@@ -83,7 +83,7 @@ struct rpm_parser_state::impl {
 
   // Pointer inside fi.
   struct findex {
-    int fx_;
+    uint32_t fx_;
     bool seen_;
 
     explicit findex(int fx = -1)
