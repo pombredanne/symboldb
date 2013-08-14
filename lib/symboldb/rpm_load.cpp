@@ -380,14 +380,16 @@ add_files(const symboldb_options &opt, database &db, python_imports &pi,
   std::vector<unsigned char> digest;
   std::vector<unsigned char> preview;
   prepare_load(rpm_path, file, digest, preview);
+
+  file.infos.front().normalize_name();
+
   database::file_id fid;
   database::contents_id cid;
   bool added;
   int contents_length;
-
-  file.infos.front().normalize_name();
   db.add_file(pkg, file.infos.front(), digest, preview, fid, cid,
 	      added, contents_length);
+
   bool looks_like_python =
     unpack_files(pkginfo) && is_python_path(file.infos.front());
 
