@@ -304,6 +304,9 @@ test()
       } else if (r1.getvalue(i, 1) == std::string("firewalld")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "0.2.12");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("kphotobymail")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "0.4.1");
+	continue;
       }
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
@@ -357,10 +360,11 @@ test()
 
     r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
 	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
-    COMPARE_NUMBER(r1.ntuples(), 8);
+    COMPARE_NUMBER(r1.ntuples(), 9);
     {
       int row = 0;
       COMPARE_STRING(r1.getvalue(row++, 0), "firewalld-0.2.12-5.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "kphotobymail-0.4.1-11.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "openbios-1.0.svn1063-1.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "shared-mime-info-1.1-1.fc18.src");

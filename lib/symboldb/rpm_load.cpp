@@ -111,7 +111,9 @@ load_elf(const symboldb_options &opt, database &db,
 	 database::contents_id cid, const rpm_file_entry &file)
 {
   try {
-    const char *elf_path = file.info.name.c_str();
+    // Used for error reporting.
+    const char *elf_path = file.infos.front().name.c_str();
+
     elf_image image(file.contents.data(), file.contents.size());
     {
       elf_image::symbol_range symbols(image);
@@ -239,11 +241,25 @@ keep_full_contents(const rpm_file_info &info)
     ;
 }
 
+static bool
+check_any(const std::vector<rpm_file_info> &infos,
+	  bool (*func)(const rpm_file_info &))
+{
+  typedef std::vector<rpm_file_info>::const_iterator iterator;
+  const iterator end = infos.end();
+  for (iterator p = infos.begin(); p != end; ++p) {
+    if (func(*p)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static void
 update_contents_preview(const rpm_file_entry &file,
 			std::vector<unsigned char> &preview)
 {
-  if (keep_full_contents(file.info)) {
+  if (check_any(file.infos, keep_full_contents)) {
     preview = file.contents;
   } else {
     size_t restricted_size = std::min(FILE_CONTENTS_PREVIEW_SIZE,
@@ -251,77 +267,6 @@ update_contents_preview(const rpm_file_entry &file,
     preview.assign(file.contents.begin(),
 		   file.contents.begin() + restricted_size);
   }
-}
-
-namespace {
-  // Inode with the directory entries which point to it.  We use the
-  // entries vector to insert all entries when we encounter the file
-  // entry with the actual file contents.
-  struct inode {
-    std::vector<rpm_file_info> entries;
-
-    explicit inode(const rpm_file_info &);
-
-    void check_consistency(const rpm_file_info &new_info) const;
-    void add(const rpm_file_info &new_info);
-  };
-
-  inode::inode(const rpm_file_info &info)
-  {
-    if (info.nlinks < 2) {
-      throw rpm_parser_exception("invalid link count for " + info.name);
-    }
-    entries.push_back(info);
-  }
-
-  void
-  inode::check_consistency(const rpm_file_info &new_info) const
-  {
-    const rpm_file_info &info(entries.front());
-    // We do not check info.flags because it is not consistent across
-    // hard links.
-    if (info.nlinks == entries.size()) {
-      throw rpm_parser_exception
-	("all inode references already seen at " + new_info.name);
-    }
-    if (info.digest.length != new_info.digest.length) {
-      throw rpm_parser_exception
-	("intra-inode length mismatch for " + new_info.name);
-    }
-    if (info.digest.value != new_info.digest.value) {
-      throw rpm_parser_exception
-	("intra-inode checksum mismatch for " + new_info.name);
-    }
-    if (info.nlinks != new_info.nlinks) {
-      throw rpm_parser_exception
-	("intra-inode link count mismatch for " + new_info.name);
-    }
-    if (info.user != new_info.user) {
-      throw rpm_parser_exception
-	("intra-inode user mismatch for " + new_info.name);
-    }
-    if (info.group != new_info.group) {
-      throw rpm_parser_exception
-	("intra-inode user mismatch for " + new_info.name);
-    }
-    if (info.mtime != new_info.mtime) {
-      throw rpm_parser_exception
-	("intra-inode mtime mismatch for " + new_info.name);
-    }
-    if (info.mode != new_info.mode) {
-      throw rpm_parser_exception
-	("intra-inode mode mismatch for " + new_info.name);
-    }
-  }
-
-  void
-  inode::add(const rpm_file_info &new_info)
-  {
-    check_consistency(new_info);
-    entries.push_back(new_info);
-  }
-
-  typedef std::map<unsigned, inode> inode_map;
 }
 
 static void
@@ -349,13 +294,16 @@ prepare_load(const char *rpm_path, const rpm_file_entry &file,
   checksum csum;
   csum.type = hash_sink::sha256;
   csum.value = hash(hash_sink::sha256, file.contents);
-  if (file.info.digest.type == hash_sink::sha256) {
-    check_digest(rpm_path, file.info.name, csum, file.info.digest);
+  // We only need to check the first file, our RPM parser
+  // has performed the internal consistency check.
+  const rpm_file_info &info = file.infos.front();
+  if (info.digest.type == hash_sink::sha256) {
+    check_digest(rpm_path, info.name, csum, info.digest);
   } else {
     checksum chk_csum;
-    chk_csum.type = file.info.digest.type;
+    chk_csum.type = info.digest.type;
     chk_csum.value = hash(chk_csum.type, file.contents);
-    check_digest(rpm_path, file.info.name, chk_csum, file.info.digest);
+    check_digest(rpm_path, info.name, chk_csum, info.digest);
   }
   std::swap(digest, csum.value);
   update_contents_preview(file, preview);
@@ -402,7 +350,8 @@ do_load_formats(const symboldb_options &opt, database &db, python_imports &pi,
 {
   if (is_elf(file.contents)) {
     load_elf(opt, db, cid, file);
-  } else if (is_python(file.contents) || is_python_path(file.info)) {
+  } else if (is_python(file.contents)
+	     || check_any(file.infos, is_python_path)) {
     load_python(opt, db, pi, cid, file);
   } else if (java_class::has_signature(file.contents)) {
     try {
@@ -424,9 +373,9 @@ unpack_files(const rpm_package_info &pkginfo)
 }
 
 static void
-add_file(const symboldb_options &opt, database &db, python_imports &pi,
-	 const rpm_package_info &pkginfo, database::package_id pkg,
-	 const char *rpm_path, const rpm_file_entry &file)
+add_files(const symboldb_options &opt, database &db, python_imports &pi,
+	  const rpm_package_info &pkginfo, database::package_id pkg,
+	  const char *rpm_path, rpm_file_entry &file)
 {
   std::vector<unsigned char> digest;
   std::vector<unsigned char> preview;
@@ -435,8 +384,26 @@ add_file(const symboldb_options &opt, database &db, python_imports &pi,
   database::contents_id cid;
   bool added;
   int contents_length;
-  db.add_file(pkg, file.info, digest, preview, fid, cid,
+
+  file.infos.front().normalize_name();
+  db.add_file(pkg, file.infos.front(), digest, preview, fid, cid,
 	      added, contents_length);
+  bool looks_like_python =
+    unpack_files(pkginfo) && is_python_path(file.infos.front());
+
+  if (file.infos.size() > 1) {
+    assert(!file.infos.front().ghost());
+    for (std::vector<rpm_file_info>::iterator
+	 p = file.infos.begin() + 1, end = file.infos.end();
+	 p != end; ++p) {
+      assert(!p->ghost());
+      p->normalize_name();
+      db.add_file(pkg, p->name, p->normalized, p->mtime, p->ino, cid);
+      looks_like_python = looks_like_python
+	|| (unpack_files(pkginfo) && is_python_path(file.infos.front()));
+    }
+  }
+
   if (added) {
     if (unpack_files(pkginfo)) {
       do_load_formats(opt, db, pi, cid, file);
@@ -444,7 +411,7 @@ add_file(const symboldb_options &opt, database &db, python_imports &pi,
   } else {
     // We might recognize additonal files as Python files if they are
     // loaded later under a different name.
-    if (unpack_files(pkginfo) && is_python_path(file.info)) {
+    if (looks_like_python) {
       load_python(opt, db, pi, cid, file);
     }
   }
@@ -469,25 +436,26 @@ dependencies(const symboldb_options &, database &db,
 static void
 adjust_for_ghost(rpm_file_entry &file)
 {
-  if (file.info.ghost() && file.contents.empty()) {
+  assert(file.infos.size() == 1);
+  if (file.infos.front().ghost() && file.contents.empty()) {
     // The size and digest from ghost files comes from the build root,
     // which is no longer available.
     const char *empty =
       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-    file.info.digest.set_hexadecimal("sha256", 0, empty);
+    file.infos.front().digest.set_hexadecimal("sha256", 0, empty);
   }
 }
 
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
-		  const char *rpm_path, rpm_package_info &info)
+		  const char *rpm_path, rpm_package_info &pkginfo)
 {
   rpm_parser_state rpmst(rpm_path);
   python_imports pi;
-  info = rpmst.package();
+  pkginfo = rpmst.package();
   // We can destroy the lock immediately because we are running in a
   // transaction.
-  lock_rpm(db, info);
+  lock_rpm(db, pkginfo);
   rpm_file_entry file;
 
   database::package_id pkg;
@@ -505,56 +473,25 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 
   dependencies(opt, db, pkg, rpmst);
 
-  inode_map inodes;
-
   // FIXME: We should not read arbitrary files into memory, only ELF
   // files.
   while (rpmst.read_file(file)) {
-    if (opt.output == symboldb_options::verbose) {
-      fprintf(stderr, "%s %s %s %s %" PRIu32 " 0%o %llu\n",
-	      rpmst.nevra(), file.info.name.c_str(),
-	      file.info.user.c_str(), file.info.group.c_str(),
-	      file.info.mtime, file.info.mode,
-	      (unsigned long long)file.contents.size());
+    if (file.infos.size() > 1) {
+      // Hard links, so this is a real file.
+      add_files(opt, db, pi, pkginfo, pkg, rpm_path, file);
+      continue;
     }
-    file.info.normalize_name();
-    if (file.info.is_directory()) {
-      db.add_directory(pkg, file.info);
-    } else if (file.info.is_symlink()) {
-      db.add_symlink(pkg, file.info);
+
+    assert(!file.infos.empty());
+    rpm_file_info &info(file.infos.front());
+    if (info.is_directory()) {
+      db.add_directory(pkg, info);
+    } else if (info.is_symlink()) {
+      db.add_symlink(pkg, info);
     } else {
       // FIXME: deal with special files.
-      unsigned ino = file.info.ino;
-      // Zero inodes sometimes stem from ghost files and are not real
-      // hard links.
-      if (file.info.nlinks > 1 && ino != 0) {
-	inode_map::iterator p(inodes.find(ino));
-	if (p == inodes.end()) {
-	  inodes.insert(std::make_pair(ino, inode(file.info)));
-	} else {
-	  p->second.add(file.info);
-	  if (p->second.entries.size() == p->second.entries.front().nlinks) {
-	    // This is the last entry for this inode, and it comes
-	    // with the contents.  Load it and patch in the previous
-	    // references.
-	    for (std::vector<rpm_file_info>::const_iterator
-		   q = p->second.entries.begin(), end = p->second.entries.end();
-		 q != end; ++q) {
-	      // We cannot cache the contents_id because the hard
-	      // links can differ in the ghost flag.
-	      rpm_file_entry file1;
-	      file1.info = *q;
-	      file1.contents = file.contents;
-	      adjust_for_ghost(file1);
-	      add_file(opt, db, pi, info, pkg, rpm_path, file1);
-	    }
-	  }
-	}
-      } else {
-	// No hardlinks.
-	adjust_for_ghost(file);
-	add_file(opt, db, pi, info, pkg, rpm_path, file);
-      }
+      adjust_for_ghost(file);
+      add_files(opt, db, pi, pkginfo, pkg, rpm_path, file);
     }
   }
   return pkg;

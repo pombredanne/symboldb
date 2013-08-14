@@ -49,20 +49,13 @@ bool get_file(const symboldb_options &opt, database &db,
     if (fcache->lookup_path(csum, rpm_path)) {
       rpm_parser_state rps(rpm_path.c_str());
       while (rps.read_file(rfe)) {
-	if (rfe.info.name == fwd.file_name()) {
-	  if (rfe.info.digest.length != rfe.contents.size()) {
-	    // If the file is hard-linked, we might have to continue
-	    // scanning.
-	    uint32_t ino = rfe.info.ino;
-	    do {
-	      if (!rps.read_file(rfe)) {
-		return false;
-	      }
-	    } while (rfe.info.ino != ino
-		     && rfe.info.digest.length != rfe.contents.size());
+	typedef std::vector<rpm_file_info>::const_iterator iterator;
+	const iterator end = rfe.infos.end();
+	for (iterator p = rfe.infos.begin(); p != end; ++p) {
+	  if (p->name == fwd.file_name()) {
+	    target.write(rfe.contents.data(), rfe.contents.size());
+	    return true;
 	  }
-	  target.write(rfe.contents.data(), rfe.contents.size());
-	  return true;
 	}
       }
     }
