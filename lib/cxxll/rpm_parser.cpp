@@ -584,28 +584,34 @@ rpm_parser_state::read_file(rpm_file_entry &file)
       throw rpm_parser_exception
 	(std::string("cpio file not found in RPM header: ")
 	 + name.data());
-    } else if (p->second.seen_) {
-      throw rpm_parser_exception
-	(std::string("duplicate file in CPIO archive: ")
-	 + name.data());
     }
 
-    p->second.seen_ = true;
-
-    // Hardlink processing.  We use the inode number from the CPIO
-    // header, ignoring a potential ghost state of the current CPIO
-    // entry.
+    // Hardlink processing.  We use the unfiltered inode number,
+    // ignoring a potential ghost state of the current CPIO entry.
+    impl_->seek_fi(p->second.fx_);
     std::pair<impl::hardlink_map::iterator,
 	      impl::hardlink_map::iterator> links =
-      impl_->hardlinks.equal_range(header.ino);
-    impl_->seek_fi(p->second.fx_);
+      impl_->hardlinks.equal_range(rpmfiFInode(impl_->fi.get()));
     if (links.first == links.second) {
       // This file is not treated as a hardlink.
+      if (p->second.seen_) {
+	throw rpm_parser_exception
+	  (std::string("duplicate file in CPIO archive: ")
+	   + name.data());
+      }
       file.infos.resize(1);
-      get_file_info(impl_->fi, file.infos.front());
+      rpm_file_info &info(file.infos.front());
+      get_file_info(impl_->fi, info);
+      if (info.ghost()) {
+	// Bizarrely, RPM ships some ghost files with contents.
+	file.contents.clear();
+      }
+      p->second.seen_ = true;
       return true;
     } else {
       // This file is hard-linked.  Check that the size matches.
+      bool current_is_ghost =
+	(rpmfiFFlags(impl_->fi.get()) & RPMFILE_GHOST) != 0;
       size_t fsize = rpmfiFSize(impl_->fi.get());
       if (fsize == file.contents.size()) {
 	// We have found the real file contents.  Provide all the hard
@@ -614,8 +620,30 @@ rpm_parser_state::read_file(rpm_file_entry &file)
 	size_t i = 0;
 	for (impl::hardlink_map::iterator q = links.first; q != links.second; ++q) {
 	  impl_->seek_fi(q->second);
-	  get_file_info(impl_->fi, file.infos.at(i++));
+	  rpm_file_info &info(file.infos.at(i));
+	  get_file_info(impl_->fi, info);
+	  assert(!info.ghost());
+
+	  impl::file_map::iterator p1(impl_->files.find(info.name));
+	  if (p1->second.seen_) {
+	    throw rpm_parser_exception
+	      ("duplicate file in CPIO archive: " + info.name);
+	  }
+	  p1->second.seen_ = true;
+
+	  ++i;
 	}
+
+	if (!p->second.seen_) {
+	  // Ghosts are not marked as seen, so that they are reported
+	  // again later on.
+	  if (!current_is_ghost) {
+	    throw rpm_parser_exception
+	      (std::string("file not found in hard link group:")
+	       + name.data());
+	  }
+	}
+
 	// Check checksums for consistency.
 	const checksum &ref = file.infos.front().digest;
 	for (std::vector<rpm_file_info>::const_iterator
