@@ -198,6 +198,7 @@ static uint32_t
 hardlink_ino(rpmfi_handle &fi)
 {
   if (rpmfiFNlink(fi.get()) > 1 && rpmfiWhatis(rpmfiFMode(fi.get())) == REG
+      && rpmfiFSize(fi.get()) != 0
       && !(rpmfiFFlags(fi.get()) & RPMFILE_GHOST)) {
     return rpmfiFInode(fi.get());
   }
@@ -584,7 +585,8 @@ rpm_parser_state::read_file(rpm_file_entry &file)
     impl_->seek_fi(p->second.fx_);
     uint32_t ino = hardlink_ino(impl_->fi);
     if (ino == 0) {
-      // This file is not a hardlink.
+      // This file is not a hardlink, or it is an empty hard-linked
+      // file.
       file.infos.resize(1);
       get_file_info(impl_->fi, file.infos.front());
       return true;
@@ -592,7 +594,8 @@ rpm_parser_state::read_file(rpm_file_entry &file)
       // This file is hard-linked.  Check that the size matches.
       size_t fsize = rpmfiFSize(impl_->fi.get());
       if (fsize == file.contents.size()) {
-	// The real file contents.  Could be empty.
+	// We have found the real file contents.  Provide all the hard
+	// links to the caller.
 	std::pair<impl::hardlink_map::iterator,
 		  impl::hardlink_map::iterator> links =
 	  impl_->hardlinks.equal_range(ino);
