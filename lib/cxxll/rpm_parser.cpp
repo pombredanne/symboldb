@@ -272,6 +272,10 @@ get_file_info(rpmfi_handle &fi, rpm_file_info &info)
   info.digest.length = rpmfiFSize(fi.get());
   info.digest.value.clear();
   info.digest.value.insert(info.digest.value.end(), digest, digest + len);
+
+  if (info.ghost()) {
+    info.ino = 0;
+  }
 }
 
 static void get_deps(Header header,
