@@ -26,7 +26,7 @@ BuildRequires:  python
 BuildRequires:  python3
 
 Requires:       python
-BuildRequires:  python3
+Requires:  	python3
 
 %description
 symboldb extracts definitions of and references to ELF symbols,
