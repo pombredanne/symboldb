@@ -15,6 +15,8 @@ development packages:
 - postgresql-contrib
 - postgresql-devel
 - postgresql-server
+- python
+- python3
 - rpm-devel
 - vim-common (for /usr/bin/xxd)
 - xmlto
