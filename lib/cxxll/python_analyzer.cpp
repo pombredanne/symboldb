@@ -65,6 +65,7 @@ namespace {
       unsigned error_line_;
       std::vector<std::string> imports_;
       std::vector<std::string> attributes_;
+      std::vector<std::string> functions_;
     } result_;
     unsigned version_;
 
@@ -97,6 +98,7 @@ namespace {
     result_.error_line_ = read_number(src);
     read_array(src, result_.imports_);
     read_array(src, result_.attributes_);
+    read_array(src, result_.functions_);
     return result_.error_line_ == 0;
   }
 
@@ -256,6 +258,16 @@ python_analyzer::attributes() const
 {
   if (impl_->active_ != NULL) {
     return impl_->active_->result_.attributes_;
+  }
+  static const std::vector<std::string> empty;
+  return empty;
+}
+
+const std::vector<std::string> &
+python_analyzer::functions() const
+{
+  if (impl_->active_ != NULL) {
+    return impl_->active_->result_.functions_;
   }
   static const std::vector<std::string> empty;
   return empty;

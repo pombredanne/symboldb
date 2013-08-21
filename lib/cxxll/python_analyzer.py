@@ -59,6 +59,7 @@ class ImportVisitor(ast.NodeVisitor):
         super(ImportVisitor, self).__init__()
         self.imports = []
         self.attributes = set()
+        self.functions = set()
     def visit_Import(self, node):
         for alias in node.names:
             self.imports.append(alias.name)
@@ -74,6 +75,8 @@ class ImportVisitor(ast.NodeVisitor):
         self.attributes.add(node.attr)
         self.generic_visit(node)
     def visit_FunctionDef(self, node):
+        self.functions.add(node.name)
+        self.generic_visit(node)
 
 while True:
     source = read_string()
@@ -84,6 +87,7 @@ while True:
         write_number(e.lineno)
         write_number(0) # imports
         write_number(0) # attributes
+        write_number(0) # functions
         outstream.flush()
         continue
     v = ImportVisitor()
@@ -93,4 +97,5 @@ while True:
     write_number(0) # error line number
     write_array(v.imports)
     write_array(sorted(v.attributes))
+    write_array(sorted(v.functions))
     outstream.flush()

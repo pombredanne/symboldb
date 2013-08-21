@@ -59,6 +59,13 @@ static const char *const attributes[] = {
   NULL
 };
 
+static const char *const functions[] = {
+  "classmember",
+  "inner",
+  "outer",
+  NULL
+};
+
 static void
 test_one(python_analyzer &pya, const char *path)
 {
@@ -80,6 +87,12 @@ test_one(python_analyzer &pya, const char *path)
   }
   count = p - attributes;
   COMPARE_NUMBER(pya.attributes().size(), count);
+
+  for (p = functions; *p; ++p) {
+    COMPARE_STRING(*p, pya.functions().at(p - functions));
+  }
+  count = p - functions;
+  COMPARE_NUMBER(pya.functions().size(), count);
 }
 
 static void
