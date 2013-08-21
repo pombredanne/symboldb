@@ -20,3 +20,4 @@ from ..relative4 import id10
 direct.call()
 print(direct.read)
 direct.write = 1
+nestedattr0.nestedattr1.nestedattr2 = nestedattr3.nestedattr4.nestedattr5

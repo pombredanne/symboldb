@@ -50,6 +50,10 @@ static const char *const imports[] = {
 
 static const char *const attributes[] = {
   "call",
+  "nestedattr1",
+  "nestedattr2",
+  "nestedattr4",
+  "nestedattr5",
   "read",
   "write",
   NULL

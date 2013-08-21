@@ -67,6 +67,8 @@ class ImportVisitor(ast.NodeVisitor):
             self.imports.append(module + alias.name)
     def visit_Attribute(self, node):
         self.attributes.add(node.attr)
+        self.generic_visit(node)
+    def visit_FunctionDef(self, node):
 
 while True:
     source = read_string()
