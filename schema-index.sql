@@ -89,3 +89,5 @@ CREATE INDEX ON symboldb.python_import (name);
 CREATE INDEX ON symboldb.python_attribute (name);
 
 CREATE INDEX ON symboldb.python_function_def (name);
+
+CREATE INDEX ON symboldb.python_class_def (name);
