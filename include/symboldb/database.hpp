@@ -169,6 +169,7 @@ public:
   void add_python_import(contents_id, const char *name);
   void add_python_attribute(contents_id, const char *name);
   void add_python_function_def(contents_id, const char *name);
+  void add_python_class_def(contents_id, const char *name);
   void add_python_error(contents_id, int line, const char *message);
 
   // Checks for already present Python analysis results, to prevent

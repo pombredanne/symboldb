@@ -994,6 +994,15 @@ database::add_python_function_def(contents_id cid, const char *name)
 }
 
 void
+database::add_python_class_def(contents_id cid, const char *name)
+{
+  pgresult_handle res;
+  pg_query(impl_->conn, res,
+	   "INSERT INTO symboldb.python_class_def (contents_id, name)"
+	   " VALUES ($1, $2)", cid.value(), name);
+}
+
+void
 database::add_python_error(contents_id cid, int line, const char *message)
 {
   pgresult_handle res;
@@ -1019,6 +1028,8 @@ database::has_python_analysis(contents_id cid)
      "UNION ALL (SELECT TRUE FROM symboldb.python_attribute "
      "WHERE contents_id = $1 LIMIT 1)"
      "UNION ALL (SELECT TRUE FROM symboldb.python_function_def "
+     "WHERE contents_id = $1 LIMIT 1)"
+     "UNION ALL (SELECT TRUE FROM symboldb.python_class_def "
      "WHERE contents_id = $1 LIMIT 1)",
      cid.value());
   return res.ntuples() > 0;

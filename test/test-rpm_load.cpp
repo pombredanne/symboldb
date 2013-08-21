@@ -818,6 +818,11 @@ test()
       db.add_python_function_def(cid, "func");
       CHECK(db.has_python_analysis(cid));
 
+      increment_non_python_cid(dbh, cid);
+      CHECK(!db.has_python_analysis(cid));
+      db.add_python_class_def(cid, "Class");
+      CHECK(db.has_python_analysis(cid));
+
       db.txn_rollback();
     }
 
