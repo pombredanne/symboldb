@@ -1,4 +1,4 @@
-# Test file for extracting import statements, Python 3 version
+# Test file for extracting Python syntactical properties (Python 3 version)
 
 import direct
 import direct1, direct2

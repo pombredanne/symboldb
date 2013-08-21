@@ -88,7 +88,7 @@ test_byte(unsigned char byte, const char *msg)
   CHECK(!pya.parse(src));
   COMPARE_STRING(pya.error_message(), msg);
   COMPARE_NUMBER(pya.error_line(), 2U);
-  test_one(pya, "test/data/imports.py");
+  test_one(pya, "test/data/analysis.py");
 }
 
 static void
@@ -99,11 +99,11 @@ test()
     CHECK(!pya.good());
     COMPARE_STRING(pya.error_message(), "");
     COMPARE_NUMBER(pya.version(), 0U);
-    test_one(pya, "test/data/imports.py");
+    test_one(pya, "test/data/analysis.py");
     COMPARE_NUMBER(pya.version(), 2U);
-    test_one(pya, "test/data/imports3.py");
+    test_one(pya, "test/data/analysis3.py");
     COMPARE_NUMBER(pya.version(), 3U);
-    test_one(pya, "test/data/imports.py");
+    test_one(pya, "test/data/analysis.py");
     COMPARE_NUMBER(pya.version(), 2U);
   }
   {
@@ -111,11 +111,11 @@ test()
     CHECK(!pya.good());
     COMPARE_STRING(pya.error_message(), "");
     COMPARE_NUMBER(pya.version(), 0U);
-    test_one(pya, "test/data/imports3.py");
+    test_one(pya, "test/data/analysis3.py");
     COMPARE_NUMBER(pya.version(), 3U);
-    test_one(pya, "test/data/imports.py");
+    test_one(pya, "test/data/analysis.py");
     COMPARE_NUMBER(pya.version(), 2U);
-    test_one(pya, "test/data/imports3.py");
+    test_one(pya, "test/data/analysis3.py");
     COMPARE_NUMBER(pya.version(), 3U);
   }
   test_byte(0, "source code contains NUL character");
