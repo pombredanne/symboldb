@@ -160,6 +160,24 @@ test_java_class(database &db, pgconn_handle &conn)
 }
 
 static void
+increment_non_python_cid(pgconn_handle &dbh, database::contents_id &cid)
+{
+  pgresult_handle res;
+  int cid1 = cid.value();
+  pg_query_binary
+    (dbh, res, "SELECT contents_id FROM symboldb.file_contents"
+     " WHERE contents_id > $1 AND contents_id NOT IN"
+     " (SELECT contents_id FROM symboldb.python_error"
+     " UNION ALL SELECT contents_id FROM symboldb.python_import"
+     " UNION ALL SELECT contents_id FROM symboldb.python_attribute"
+     " UNION ALL SELECT contents_id FROM symboldb.python_function_def)"
+     " ORDER BY contents_id LIMIT 1",
+     cid1);
+  pg_response(res, 0, cid1);
+  cid = database::contents_id(cid1);
+}
+
+static void
 test()
 {
   static const char DBNAME[] = "template1";
@@ -777,14 +795,24 @@ test()
     // Test SQL syntax for Python-related loaders.
     {
       db.txn_begin();
-      CHECK(!db.has_python_analysis(database::contents_id(1)));
-      db.add_python_import(database::contents_id(1), "abc");
-      CHECK(db.has_python_analysis(database::contents_id(1)));
-      db.add_python_error(database::contents_id(2), 17, "syntax error");
-      db.add_python_error(database::contents_id(2), 0, "other error");
-      CHECK(!db.has_python_analysis(database::contents_id(3)));
-      db.add_python_attribute(database::contents_id(3), "attr");
-      CHECK(db.has_python_analysis(database::contents_id(3)));
+      database::contents_id cid;
+
+      increment_non_python_cid(dbh, cid);
+      CHECK(!db.has_python_analysis(cid));
+      db.add_python_import(cid, "abc");
+      CHECK(db.has_python_analysis(cid));
+
+      increment_non_python_cid(dbh, cid);
+      CHECK(!db.has_python_analysis(cid));
+      db.add_python_error(cid, 17, "syntax error");
+      db.add_python_error(cid, 0, "other error");
+      CHECK(!db.has_python_analysis(cid));
+
+      increment_non_python_cid(dbh, cid);
+      CHECK(!db.has_python_analysis(cid));
+      db.add_python_attribute(cid, "attr");
+      CHECK(db.has_python_analysis(cid));
+
       db.txn_rollback();
     }
 
