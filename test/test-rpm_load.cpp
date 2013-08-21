@@ -809,6 +809,58 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "traceback");
       CHECK(row == r1.ntuples());
 
+      {
+	static const char *const attributes[] = {
+	  "DBusException",
+	  "DEBUG_MAX",
+	  "ERROR",
+	  "FATAL",
+	  "FIREWALLD_LOGFILE",
+	  "INFO_MAX",
+	  "NO_DEBUG",
+	  "NO_INFO",
+	  "WARNING",
+	  "addDebugLogging",
+	  "addInfoLogging",
+	  "argv",
+	  "chdir",
+	  "close",
+	  "errno",
+	  "error",
+	  "exit",
+	  "fatal",
+	  "fork",
+	  "format_exc",
+	  "getpid",
+	  "getuid",
+	  "remove",
+	  "run_server",
+	  "setDateFormat",
+	  "setDebugLogLevel",
+	  "setDebugLogging",
+	  "setFormat",
+	  "setInfoLogLevel",
+	  "setInfoLogging",
+	  "setsid",
+	  "stdout",
+	  "strerror",
+	  "syslog",
+	  "umask",
+	  "write",
+	  NULL
+	};
+
+	r1.exec(dbh, "SELECT python_attribute.name"
+		" FROM symboldb.python_attribute"
+		" JOIN symboldb.file USING (contents_id)"
+		" WHERE file.name = '/usr/sbin/firewalld'"
+		" ORDER BY 1");
+	for (row = 0; attributes[row]; ++row) {
+	  COMPARE_STRING(r1.getvalue(row, 0), attributes[row]);
+	}
+	COMPARE_NUMBER(row, r1.ntuples());
+      }
+
       r1.exec(dbh, "SELECT python_import.name FROM symboldb.python_import"
 	      " JOIN symboldb.file USING (contents_id)"
 	      " WHERE file.name = '/usr/lib/python2.7/site-packages"
