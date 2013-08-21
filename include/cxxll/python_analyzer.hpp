@@ -28,15 +28,15 @@ namespace cxxll {
 // program, then error() or imports() to obtain the list of imports.
 // Member functions may throw os_exception in case of unexpected
 // errors.
-class python_imports {
+class python_analyzer {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  python_imports(const python_imports &); // not implemented
-  python_imports &operator=(const python_imports &); // not implemented
+  python_analyzer(const python_analyzer &); // not implemented
+  python_analyzer &operator=(const python_analyzer &); // not implemented
 public:
   // Throws os_exception if no Python interpreter can be found.
-  python_imports();
-  ~python_imports();
+  python_analyzer();
+  ~python_analyzer();
 
   // Parses the Python source code SOURCE.  Returns true on success,
   // false on failure.
@@ -48,7 +48,7 @@ public:
   // Returns a vector with the imports.  Relative imports contain one
   // or more leading '.'.
   const std::vector<std::string> &imports() const;
-  
+
   // Returns the Python version which successfully parsed the source
   // code, or zero on error.
   unsigned version() const;

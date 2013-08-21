@@ -169,8 +169,9 @@ public:
   void add_python_import(contents_id, const char *name);
   void add_python_error(contents_id, int line, const char *message);
 
-  // Checks for already present Python imports, to prevent duplicates.
-  bool has_python_imports(contents_id);
+  // Checks for already present Python analysis results, to prevent
+  // duplicates.
+  bool has_python_analysis(contents_id);
 
   // Package sets.
   struct package_set_tag {};

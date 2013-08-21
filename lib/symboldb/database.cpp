@@ -991,7 +991,7 @@ database::add_python_error(contents_id cid, int line, const char *message)
 }
 
 bool
-database::has_python_imports(contents_id cid)
+database::has_python_analysis(contents_id cid)
 {
   pgresult_handle res;
   pg_query_binary

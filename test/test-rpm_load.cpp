@@ -777,9 +777,9 @@ test()
     // Test SQL syntax for Python-related loaders.
     {
       db.txn_begin();
-      CHECK(!db.has_python_imports(database::contents_id(1)));
+      CHECK(!db.has_python_analysis(database::contents_id(1)));
       db.add_python_import(database::contents_id(1), "abc");
-      CHECK(db.has_python_imports(database::contents_id(1)));
+      CHECK(db.has_python_analysis(database::contents_id(1)));
       db.add_python_error(database::contents_id(2), 17, "syntax error");
       db.add_python_error(database::contents_id(2), 0, "other error");
       db.txn_rollback();

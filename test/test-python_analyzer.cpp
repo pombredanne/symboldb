@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cxxll/python_imports.hpp>
+#include <cxxll/python_analyzer.hpp>
 #include <cxxll/read_file.hpp>
 
 #include "test.hpp"
@@ -49,19 +49,19 @@ static const char *const imports[] = {
 };
 
 static void
-test_one(python_imports &pi, const char *path)
+test_one(python_analyzer &pya, const char *path)
 {
   std::vector<unsigned char> src;
   read_file(path, src);
-  CHECK(pi.parse(src));
-  CHECK(pi.good());
-  COMPARE_STRING(pi.error_message(), "");
+  CHECK(pya.parse(src));
+  CHECK(pya.good());
+  COMPARE_STRING(pya.error_message(), "");
   const char*const *p;
   for (p = imports; *p; ++p) {
-    COMPARE_STRING(*p, pi.imports().at(p - imports));
+    COMPARE_STRING(*p, pya.imports().at(p - imports));
   }
   size_t count = p - imports;
-  COMPARE_NUMBER(pi.imports().size(), count);
+  COMPARE_NUMBER(pya.imports().size(), count);
 }
 
 static void
@@ -70,43 +70,43 @@ test_byte(unsigned char byte, const char *msg)
   std::vector<unsigned char> src;
   src.push_back('\n');
   src.push_back(byte);
-  python_imports pi;
-  CHECK(!pi.parse(src));
-  COMPARE_STRING(pi.error_message(), msg);
-  COMPARE_NUMBER(pi.error_line(), 2U);
-  test_one(pi, "test/data/imports.py");
+  python_analyzer pya;
+  CHECK(!pya.parse(src));
+  COMPARE_STRING(pya.error_message(), msg);
+  COMPARE_NUMBER(pya.error_line(), 2U);
+  test_one(pya, "test/data/imports.py");
 }
 
 static void
 test()
 {
   {
-    python_imports pi;
-    CHECK(!pi.good());
-    COMPARE_STRING(pi.error_message(), "");
-    COMPARE_NUMBER(pi.version(), 0U);
-    test_one(pi, "test/data/imports.py");
-    COMPARE_NUMBER(pi.version(), 2U);
-    test_one(pi, "test/data/imports3.py");
-    COMPARE_NUMBER(pi.version(), 3U);
-    test_one(pi, "test/data/imports.py");
-    COMPARE_NUMBER(pi.version(), 2U);
+    python_analyzer pya;
+    CHECK(!pya.good());
+    COMPARE_STRING(pya.error_message(), "");
+    COMPARE_NUMBER(pya.version(), 0U);
+    test_one(pya, "test/data/imports.py");
+    COMPARE_NUMBER(pya.version(), 2U);
+    test_one(pya, "test/data/imports3.py");
+    COMPARE_NUMBER(pya.version(), 3U);
+    test_one(pya, "test/data/imports.py");
+    COMPARE_NUMBER(pya.version(), 2U);
   }
   {
-    python_imports pi;
-    CHECK(!pi.good());
-    COMPARE_STRING(pi.error_message(), "");
-    COMPARE_NUMBER(pi.version(), 0U);
-    test_one(pi, "test/data/imports3.py");
-    COMPARE_NUMBER(pi.version(), 3U);
-    test_one(pi, "test/data/imports.py");
-    COMPARE_NUMBER(pi.version(), 2U);
-    test_one(pi, "test/data/imports3.py");
-    COMPARE_NUMBER(pi.version(), 3U);
+    python_analyzer pya;
+    CHECK(!pya.good());
+    COMPARE_STRING(pya.error_message(), "");
+    COMPARE_NUMBER(pya.version(), 0U);
+    test_one(pya, "test/data/imports3.py");
+    COMPARE_NUMBER(pya.version(), 3U);
+    test_one(pya, "test/data/imports.py");
+    COMPARE_NUMBER(pya.version(), 2U);
+    test_one(pya, "test/data/imports3.py");
+    COMPARE_NUMBER(pya.version(), 3U);
   }
   test_byte(0, "source code contains NUL character");
   test_byte('=', "invalid syntax");
 }
 
-static test_register t("python_imports", test);
+static test_register t("python_analyzer", test);
 

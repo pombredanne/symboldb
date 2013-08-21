@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cxxll/python_imports.hpp>
+#include <cxxll/python_analyzer.hpp>
 #include <cxxll/os_exception.hpp>
 #include <cxxll/subprocess.hpp>
 #include <cxxll/fd_sink.hpp>
@@ -53,7 +53,7 @@
 using namespace cxxll;
 
 static const char PYTHON_SCRIPT[] = {
-#include "python_imports.py.inc"
+#include "python_analyzer.py.inc"
   , 0
 };
 
@@ -147,7 +147,7 @@ namespace {
   }
 }
 
-struct python_imports::impl {
+struct python_analyzer::impl {
   std::tr1::shared_ptr<interpreter> python2_;
   std::tr1::shared_ptr<interpreter> python3_;
   const interpreter *active_;
@@ -158,13 +158,13 @@ struct python_imports::impl {
   bool bad_string(const std::vector<unsigned char> &);
 };
 
-python_imports::impl::impl()
+python_analyzer::impl::impl()
   : active_(NULL)
 {
 }
 
 void
-python_imports::impl::maybe_start(std::tr1::shared_ptr<interpreter> &interp,
+python_analyzer::impl::maybe_start(std::tr1::shared_ptr<interpreter> &interp,
 				  const char *path, unsigned version)
 {
   if (!(interp && interp->process_.running())) {
@@ -173,7 +173,7 @@ python_imports::impl::maybe_start(std::tr1::shared_ptr<interpreter> &interp,
 }
 
 bool
-python_imports::impl::bad_string(const std::vector<unsigned char> &source)
+python_analyzer::impl::bad_string(const std::vector<unsigned char> &source)
 {
   std::vector<unsigned char>::const_iterator nul
     (std::find(source.begin(), source.end(), '\0'));
@@ -187,17 +187,17 @@ python_imports::impl::bad_string(const std::vector<unsigned char> &source)
   return false;
 }
 
-python_imports::python_imports()
+python_analyzer::python_analyzer()
   : impl_(new impl)
 {
 }
 
-python_imports::~python_imports()
+python_analyzer::~python_analyzer()
 {
 }
 
 bool
-python_imports::parse(const std::vector<unsigned char> &source)
+python_analyzer::parse(const std::vector<unsigned char> &source)
 {
   impl_->active_ = NULL;
   impl_->maybe_start(impl_->python2_, "/usr/bin/python", 2);
@@ -213,7 +213,7 @@ python_imports::parse(const std::vector<unsigned char> &source)
     impl_->active_ = &*impl_->python3_;
     return true;
   }
-  // Pick the Python version whose successful 
+  // Pick the Python version whose parse error comes later.
   if (impl_->python3_->result_.error_line_
       > impl_->python2_->result_.error_line_) {
     impl_->active_ = &*impl_->python3_;
@@ -224,13 +224,13 @@ python_imports::parse(const std::vector<unsigned char> &source)
 }
 
 bool
-python_imports::good() const
+python_analyzer::good() const
 {
   return impl_->active_ && impl_->active_->result_.error_line_ == 0;
 }
 
 unsigned
-python_imports::version() const
+python_analyzer::version() const
 {
   if (impl_->active_ != NULL) {
     return impl_->active_->version_;
@@ -239,7 +239,7 @@ python_imports::version() const
 }
 
 const std::vector<std::string> &
-python_imports::imports() const
+python_analyzer::imports() const
 {
   if (impl_->active_ != NULL) {
     return impl_->active_->result_.imports_;
@@ -249,7 +249,7 @@ python_imports::imports() const
 }
 
 const std::string &
-python_imports::error_message() const
+python_analyzer::error_message() const
 {
   if (impl_->active_ != NULL) {
     return impl_->active_->result_.error_;
@@ -259,7 +259,7 @@ python_imports::error_message() const
 }
 
 unsigned
-python_imports::error_line() const
+python_analyzer::error_line() const
 {
   if (impl_->active_ != NULL) {
     return impl_->active_->result_.error_line_;
