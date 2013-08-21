@@ -26,6 +26,8 @@ def outer():
     x = 1
     def inner():
         x = 2
+    class NestedClass(object):
+        pass
 
 class DefinedClass(object):
     def classmember(self):

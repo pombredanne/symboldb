@@ -27,6 +27,8 @@ def outer():
     def inner():
         nonlocal x # valid in Python 3, invalid in Python 2
         x = 2
+    class NestedClass(object):
+        pass
 
 class DefinedClass(object):
     def classmember(self):

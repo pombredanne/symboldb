@@ -60,6 +60,7 @@ class ImportVisitor(ast.NodeVisitor):
         self.imports = []
         self.attributes = set()
         self.functions = set()
+        self.classes = set()
     def visit_Import(self, node):
         for alias in node.names:
             self.imports.append(alias.name)
@@ -77,6 +78,9 @@ class ImportVisitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         self.functions.add(node.name)
         self.generic_visit(node)
+    def visit_ClassDef(self, node):
+        self.classes.add(node.name)
+        self.generic_visit(node)
 
 while True:
     source = read_string()
@@ -88,6 +92,7 @@ while True:
         write_number(0) # imports
         write_number(0) # attributes
         write_number(0) # functions
+        write_number(0) # classes
         outstream.flush()
         continue
     v = ImportVisitor()
@@ -98,4 +103,5 @@ while True:
     write_array(v.imports)
     write_array(sorted(v.attributes))
     write_array(sorted(v.functions))
+    write_array(sorted(v.classes))
     outstream.flush()

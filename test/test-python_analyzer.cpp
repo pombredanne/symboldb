@@ -66,6 +66,12 @@ static const char *const functions[] = {
   NULL
 };
 
+static const char *const classes[] = {
+  "DefinedClass",
+  "NestedClass",
+  NULL
+};
+
 static void
 test_one(python_analyzer &pya, const char *path)
 {
@@ -93,6 +99,12 @@ test_one(python_analyzer &pya, const char *path)
   }
   count = p - functions;
   COMPARE_NUMBER(pya.functions().size(), count);
+
+  for (p = classes; *p; ++p) {
+    COMPARE_STRING(*p, pya.classes().at(p - classes));
+  }
+  count = p - classes;
+  COMPARE_NUMBER(pya.classes().size(), count);
 }
 
 static void

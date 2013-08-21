@@ -56,6 +56,9 @@ public:
   // Returns a vector with the names of (nested) function definitions.
   const std::vector<std::string> &functions() const;
 
+  // Returns a vector with the names of (nested) class definitions.
+  const std::vector<std::string> &classes() const;
+
   // Returns the Python version which successfully parsed the source
   // code, or zero on error.
   unsigned version() const;
