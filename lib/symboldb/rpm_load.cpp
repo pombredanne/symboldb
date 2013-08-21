@@ -215,6 +215,11 @@ load_python(const symboldb_options &, database &db, python_analyzer &pya,
        p != end; ++p) {
     db.add_python_attribute(cid, p->c_str());
   }
+  for (std::vector<std::string>::const_iterator
+	 p = pya.functions().begin(), end = pya.functions().end();
+       p != end; ++p) {
+    db.add_python_function_def(cid, p->c_str());
+  }
 }
 
 static const size_t FILE_CONTENTS_PREVIEW_SIZE = 64;

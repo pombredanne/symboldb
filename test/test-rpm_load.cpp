@@ -909,6 +909,28 @@ test()
       COMPARE_STRING(r1.getvalue(row++, 0), "shutil");
       COMPARE_STRING(r1.getvalue(row++, 0), "xml.sax");
       CHECK(row == r1.ntuples());
+
+      {
+	static const char *const functions[] = {
+	  "__init__",
+	  "_check_config",
+	  "service_reader",
+	  "service_writer",
+	  "startElement",
+	  NULL
+	};
+
+	r1.exec(dbh, "SELECT python_function_def.name"
+		" FROM symboldb.python_function_def"
+		" JOIN symboldb.file USING (contents_id)"
+		" WHERE file.name = '/usr/lib/python2.7/site-packages"
+		"/firewall/core/io/service.py'"
+		" ORDER BY 1");
+	for (row = 0; functions[row]; ++row) {
+	  COMPARE_STRING(r1.getvalue(row, 0), functions[row]);
+	}
+	COMPARE_NUMBER(row, r1.ntuples());
+      }
     }
 
     db.txn_begin();
