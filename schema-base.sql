@@ -437,6 +437,15 @@ COMMENT ON COLUMN symboldb.python_attribute.name IS
   'extracted attribute reference';
 CREATE INDEX ON symboldb.python_attribute (contents_id);
 
+CREATE TABLE symboldb.python_function_def (
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C"
+);
+COMMENT ON COLUMN symboldb.python_function_def.name IS
+  'extracted (nested) function definition';
+CREATE INDEX ON symboldb.python_function_def (contents_id);
+
 CREATE TABLE symboldb.python_error (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,

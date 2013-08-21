@@ -87,3 +87,5 @@ CREATE INDEX ON symboldb.java_class_contents (class_id);
 CREATE INDEX ON symboldb.python_import (name);
 
 CREATE INDEX ON symboldb.python_attribute (name);
+
+CREATE INDEX ON symboldb.python_function_def (name);
