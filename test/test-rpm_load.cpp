@@ -936,6 +936,25 @@ test()
 	}
 	COMPARE_NUMBER(row, r1.ntuples());
       }
+
+      {
+	static const char *const classes[] = {
+	  "Service",
+	  "service_ContentHandler",
+	  NULL
+	};
+
+	r1.exec(dbh, "SELECT python_class_def.name"
+		" FROM symboldb.python_class_def"
+		" JOIN symboldb.file USING (contents_id)"
+		" WHERE file.name = '/usr/lib/python2.7/site-packages"
+		"/firewall/core/io/service.py'"
+		" ORDER BY 1");
+	for (row = 0; classes[row]; ++row) {
+	  COMPARE_STRING(r1.getvalue(row, 0), classes[row]);
+	}
+	COMPARE_NUMBER(row, r1.ntuples());
+      }
     }
 
     db.txn_begin();
