@@ -64,6 +64,7 @@ namespace {
       std::string error_;
       unsigned error_line_;
       std::vector<std::string> imports_;
+      std::vector<std::string> attributes_;
     } result_;
     unsigned version_;
 
@@ -95,6 +96,7 @@ namespace {
     result_.error_ = read_string(src);
     result_.error_line_ = read_number(src);
     read_array(src, result_.imports_);
+    read_array(src, result_.attributes_);
     return result_.error_line_ == 0;
   }
 
@@ -181,6 +183,7 @@ python_analyzer::impl::bad_string(const std::vector<unsigned char> &source)
     python2_->result_.error_ = "source code contains NUL character";
     python2_->result_.error_line_ = 1 + std::count(source.begin(), nul, '\n');
     python2_->result_.imports_.clear();
+    python2_->result_.attributes_.clear();
     active_ = &*python2_;
     return true;
   }
@@ -243,6 +246,16 @@ python_analyzer::imports() const
 {
   if (impl_->active_ != NULL) {
     return impl_->active_->result_.imports_;
+  }
+  static const std::vector<std::string> empty;
+  return empty;
+}
+
+const std::vector<std::string> &
+python_analyzer::attributes() const
+{
+  if (impl_->active_ != NULL) {
+    return impl_->active_->result_.attributes_;
   }
   static const std::vector<std::string> empty;
   return empty;

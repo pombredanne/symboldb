@@ -53,6 +53,7 @@ class ImportVisitor(ast.NodeVisitor):
     def __init__(self):
         super(ImportVisitor, self).__init__()
         self.imports = []
+        self.attributes = set()
     def visit_Import(self, node):
         for alias in node.names:
             self.imports.append(alias.name)
@@ -64,6 +65,8 @@ class ImportVisitor(ast.NodeVisitor):
             module = dots
         for alias in node.names:
             self.imports.append(module + alias.name)
+    def visit_Attribute(self, node):
+        self.attributes.add(node.attr)
 
 while True:
     source = read_string()
@@ -72,7 +75,8 @@ while True:
     except SyntaxError as e:
         write_string(e.msg)
         write_number(e.lineno)
-        write_number(0)
+        write_number(0) # imports
+        write_number(0) # attributes
         outstream.flush()
         continue
     v = ImportVisitor()
@@ -83,4 +87,7 @@ while True:
     write_number(len(v.imports))
     for imp in v.imports:
         write_string(imp)
+    write_number(len(v.attributes))
+    for attr in sorted(v.attributes):
+        write_string(attr)
     outstream.flush()

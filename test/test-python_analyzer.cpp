@@ -48,6 +48,13 @@ static const char *const imports[] = {
   NULL
 };
 
+static const char *const attributes[] = {
+  "call",
+  "read",
+  "write",
+  NULL
+};
+
 static void
 test_one(python_analyzer &pya, const char *path)
 {
@@ -56,12 +63,19 @@ test_one(python_analyzer &pya, const char *path)
   CHECK(pya.parse(src));
   CHECK(pya.good());
   COMPARE_STRING(pya.error_message(), "");
+
   const char*const *p;
   for (p = imports; *p; ++p) {
     COMPARE_STRING(*p, pya.imports().at(p - imports));
   }
   size_t count = p - imports;
   COMPARE_NUMBER(pya.imports().size(), count);
+
+  for (p = attributes; *p; ++p) {
+    COMPARE_STRING(*p, pya.attributes().at(p - attributes));
+  }
+  count = p - attributes;
+  COMPARE_NUMBER(pya.attributes().size(), count);
 }
 
 static void

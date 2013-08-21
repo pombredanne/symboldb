@@ -16,3 +16,7 @@ from .relative2 import *
 from .relative.nested import id8, id9
 from .. import relative3
 from ..relative4 import id10
+
+direct.call()
+print(direct.read)
+direct.write = 1
