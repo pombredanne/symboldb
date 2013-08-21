@@ -49,6 +49,11 @@ def write_string(s):
     write_number(len(s))
     outstream.write(s)
 
+def write_array(l):
+    write_number(len(l))
+    for e in l:
+        write_string(e)
+
 class ImportVisitor(ast.NodeVisitor):
     def __init__(self):
         super(ImportVisitor, self).__init__()
@@ -84,12 +89,8 @@ while True:
     v = ImportVisitor()
     v.visit(parsed)
 
-    write_string(b"")
-    write_number(0)
-    write_number(len(v.imports))
-    for imp in v.imports:
-        write_string(imp)
-    write_number(len(v.attributes))
-    for attr in sorted(v.attributes):
-        write_string(attr)
+    write_string(b"") # error message
+    write_number(0) # error line number
+    write_array(v.imports)
+    write_array(sorted(v.attributes))
     outstream.flush()
