@@ -422,7 +422,7 @@ CREATE TABLE symboldb.java_class_contents (
 CREATE TABLE symboldb.python_import (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0)
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C"
 );
 COMMENT ON COLUMN symboldb.python_import.name IS
   'qualified of the imported module/symbol, with leading . for relative import';
@@ -431,7 +431,7 @@ CREATE INDEX ON symboldb.python_import (contents_id);
 CREATE TABLE symboldb.python_attribute (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0)
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C"
 );
 COMMENT ON COLUMN symboldb.python_attribute.name IS
   'extracted attribute reference';
@@ -441,7 +441,7 @@ CREATE TABLE symboldb.python_error (
   contents_id INTEGER NOT NULL
     REFERENCES symboldb.file_contents ON DELETE CASCADE,
   line INTEGER CHECK (line > 0),
-  message TEXT NOT NULL CHECK (LENGTH(message) > 0)
+  message TEXT NOT NULL CHECK (LENGTH(message) > 0) COLLATE "C"
 );
 
 -- URL cache (mainly for raw repository metadata).
