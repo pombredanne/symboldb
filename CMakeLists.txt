@@ -224,6 +224,7 @@ add_executable (runtests
   test/test-java_class.cpp
   test/test-os.cpp
   test/test-os_exception.cpp
+  test/test-looks_like_xml.cpp
   test/test-pg_testdb.cpp
   test/test-python_analyzer.cpp
   test/test-read_file.cpp
