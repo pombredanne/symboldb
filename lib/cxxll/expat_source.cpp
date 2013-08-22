@@ -75,6 +75,7 @@ struct expat_source::impl {
   std::string error_;
   state_type state_;
   bool bad_alloc_;
+  bool bad_entity_;
 
   impl(source *);
 
@@ -131,7 +132,7 @@ struct expat_source::impl {
 inline
 expat_source::impl::impl(source *src)
   : source_(src), consumed_bytes_(0),
-    upcoming_pos_(0), state_(INIT), bad_alloc_(false)
+    upcoming_pos_(0), state_(INIT), bad_alloc_(false), bad_entity_(false)
 {
   position_.line = position_.column = 0;
   XML_SetUserData(handle_.raw, this);
@@ -204,34 +205,14 @@ expat_source::impl::check_error(enum XML_Status status,
   if (bad_alloc_) {
     throw std::bad_alloc();
   }
+  if (bad_entity_) {
+    throw entity_declaration(this, buf, len);
+  }
   if (!error_.empty()) {
-    throw std::runtime_error(error_); // FIXME
+    throw source_error(this);
   }
   if (status != XML_STATUS_OK) {
-    const char *xmlerr = XML_ErrorString(XML_GetErrorCode(handle_.raw));
-    unsigned long long line = XML_GetCurrentLineNumber(handle_.raw);
-    unsigned long long column = XML_GetCurrentColumnNumber(handle_.raw);
-    unsigned long long index = XML_GetCurrentByteIndex(handle_.raw)
-      - consumed_bytes_;
-    size_t before = std::min(index, 50ULL);
-    size_t after = std::min(len - index, 50ULL);
-    char *msg;
-    int ret = asprintf(&msg, "error=\"%s\" line=%llu column=%llu"
-		       " before=\"%s\" after=\"%s\"",
-		       quote(xmlerr).c_str(), line, column,
-		       quote(std::string(buf + index - before,
-					 buf + index)).c_str(),
-		       quote(std::string(buf + index,
-					 buf + index + after)).c_str());
-    if (ret < 0) {
-      throw std::bad_alloc();
-    }
-    try {
-      throw std::runtime_error(msg); // FIXME
-    } catch (...) {
-      free(msg);
-      throw;
-    }
+    throw malformed(this, buf, len);
   }
 }
 
@@ -269,11 +250,7 @@ expat_source::impl::EntityDeclHandler(void *userData,
 {
   // Stop the parser when an entity declaration is encountered.
   impl *impl_ = static_cast<impl *>(userData);
-  try {
-    impl_->error_ = "entity declaration not allowed";
-  } catch (std::bad_alloc &) {
-    impl_->bad_alloc_ = true;
-  }
+  impl_->bad_entity_ = true;
   XML_StopParser(impl_->handle_.raw, XML_FALSE);
 }
 
@@ -578,13 +555,93 @@ expat_source::state_string(state_type e)
   throw std::logic_error("expat_source::state_string");
 }
 
+//////////////////////////////////////////////////////////////////////
+// expat_source::exception
+
+expat_source::exception::exception(const impl *p)
+  : line_(p->position_.line), column_(p->position_.column)
+{
+}
+
+expat_source::exception::exception(const impl *p, bool)
+  : line_(XML_GetCurrentLineNumber(p->handle_.raw)),
+    column_(XML_GetCurrentColumnNumber(p->handle_.raw))
+{
+}
+
+expat_source::exception::~exception() throw()
+{
+}
+
+
+const char *
+expat_source::exception::what() const throw()
+{
+  return what_.c_str();
+}
+
+//////////////////////////////////////////////////////////////////////
+// expat_source::malformed
+
+expat_source::malformed::malformed(const impl *p, const char *buf, size_t len)
+  : exception(p, false)
+{
+    message_ = XML_ErrorString(XML_GetErrorCode(p->handle_.raw));
+    unsigned long long index = XML_GetCurrentByteIndex(p->handle_.raw)
+      - p->consumed_bytes_;
+    size_t before_count = std::min(index, 50ULL);
+    size_t after_count = std::min(len - index, 50ULL);
+    before_ = std::string(buf + index - before_count, buf + index);
+    after_ = std::string(buf + index, buf + index + after_count);
+    std::stringstream msg;
+    msg << line() << ':' << column() << ": error=\"" << message_ << '"';
+    if (!before_.empty()) {
+      msg << " before=\"" << quote(before_) << '"';
+    }
+    if (!after_.empty()) {
+      msg << " after=\"" << quote(after_) << '"';
+    }
+    what_ = msg.str();
+}
+
+expat_source::malformed::~malformed() throw()
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+// expat_source::malformed
+
+expat_source::entity_declaration::entity_declaration
+  (const impl *p, const char *buf, size_t len)
+    : malformed(p, buf, len)
+{
+  // FIXME: We should refactor this using C++11 delegating
+  // constructors.
+  message_ = "unexpected XML entity";
+  std::stringstream msg;
+  msg << line() << ':' << column() << ": error=\"" << message_ << '"';
+    if (!before_.empty()) {
+      msg << " before=\"" << quote(before_) << '"';
+    }
+    if (!after_.empty()) {
+      msg << " after=\"" << quote(after_) << '"';
+    }
+    what_ = msg.str();
+}
+
+expat_source::entity_declaration::~entity_declaration() throw()
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+// expat_source::illegal_state
 
 expat_source::illegal_state::illegal_state(const impl *p,
 					   state_type expected)
-  : line_(p->position_.line), column_(p->position_.column)
+  : exception(p)
 {
   std::stringstream str;
-  str << line_ << ':' << column_ << ": actual=" << state_string(p->state_)
+  str << line() << ':' << column() << ": actual=" << state_string(p->state_)
       << " expected=" << state_string(expected);
   what_ = str.str();
 }
@@ -593,8 +650,17 @@ expat_source::illegal_state::~illegal_state() throw ()
 {
 }
 
-const char *
-expat_source::illegal_state::what() const throw ()
+//////////////////////////////////////////////////////////////////////
+// expat_source::source_error
+
+expat_source::source_error::source_error(const impl *p)
+  : exception(p, false)
 {
-  return what_.c_str();
+  std::stringstream str;
+  str << line() << ':' << column() << ": " << p->error_;
+  what_ = str.str();
+}
+
+expat_source::source_error::~source_error() throw()
+{
 }

@@ -106,30 +106,90 @@ public:
   // an invalid state type.
   static const char *state_string(state_type);
 
-  // Thrown when the accessors are used in the wrong state.
-  class illegal_state : public std::exception {
-    std::string what_;
+  // Base class for exceptions.
+  class exception : public std::exception {
     unsigned line_;
     unsigned column_;
+  protected:
+    std::string what_;
+    explicit exception(const impl *); // location from position_
+    explicit exception(const impl *, bool); // location from Expat
   public:
-    illegal_state(const impl *, state_type expected);
-    ~illegal_state() throw();
+    ~exception() throw();
     unsigned line() const;
     unsigned column() const;
     const char *what() const throw ();
   };
+
+  // Thrown if the XML is malformed.
+  class malformed : public exception {
+    friend class impl;
+  protected:
+    const char *message_;
+    std::string before_;
+    std::string after_;
+    malformed(const impl *, const char *buf, size_t len);
+  public:
+    ~malformed() throw();
+    const char *message() const;
+    const std::string &before() const;
+    const std::string &after() const;
+  };
+
+  // Thrown if an entity declaration is encountered.
+  class entity_declaration : public malformed {
+  public:
+    entity_declaration(const impl *, const char *buf, size_t len);
+    ~entity_declaration() throw();
+  };
+
+  // Thrown when the accessors are used in the wrong state.
+  class illegal_state : public exception {
+    friend class impl;
+    illegal_state(const impl *, state_type expected);
+  public:
+    ~illegal_state() throw();
+  };
+
+  // This is used to add location information to an underlying
+  // exception in a callback.  FIXME: This should use C++11 exception
+  // copying functionality.
+  class source_error : public exception {
+    friend class impl;
+    explicit source_error(const impl *);
+  public:
+    ~source_error() throw();
+  };
 };
 
 inline unsigned
-expat_source::illegal_state::line() const
+expat_source::exception::line() const
 {
   return line_;
 }
 
 inline unsigned
-expat_source::illegal_state::column() const
+expat_source::exception::column() const
 {
   return column_;
+}
+
+inline const char *
+expat_source::malformed::message() const
+{
+  return message_;
+}
+
+inline const std::string &
+expat_source::malformed::before() const
+{
+  return before_;
+}
+
+inline const std::string &
+expat_source::malformed::after() const
+{
+  return after_;
 }
 
 } // namespace cxxll
