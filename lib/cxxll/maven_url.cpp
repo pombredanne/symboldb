@@ -18,11 +18,10 @@
 
 #include <cxxll/maven_url.hpp>
 #include <cxxll/expat_source.hpp>
+#include <cxxll/string_support.hpp>
 
 #include <cassert>
 #include <cstring>
-
-#include <stdio.h>
 
 using namespace cxxll;
 
@@ -75,7 +74,7 @@ extract_text_contents(expat_source &source,
 		      maven_url::kind type, std::vector<maven_url> &result)
 {
   source.next();
-  std::string text = source.text_and_next();
+  std::string text(strip(source.text_and_next()));
   result.push_back(maven_url());
   maven_url &mu(result.back());
   mu.url = text;
