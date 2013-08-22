@@ -112,6 +112,9 @@ test()
     open_xml xml("test/data/maven/JPP-commons-net.pom");
     xml.check(commons_net);
   }
+  {
+    open_xml xml("test/data/maven/malformed-pom-bsh.xml");
+  }
 }
 
 static test_register t("maven_url", test);

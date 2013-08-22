@@ -936,22 +936,22 @@ xx.xxxxxx.
 <x xxxxx="xxx"></x>
 
 <xxxxx xxxxxx="x" xxxxxxxxxxx="x">
-<xx><xx><xxxxxx>@xx</xxxxxx></xx><xx>&xxx</xx></xx>
-<xx><xx><xxxxxx>@xx</xxxxxx></xx><xx>&xxx</xx></xx>
-<xx><xx><xxxxxx>@xxxx</xxxxxx></xx><xx>&xxx=</xx></xx>
-<xx><xx><xxxxxx>@xxxx</xxxxxx></xx><xx>&xxx=</xx></xx>
-<xx><xx><xxxxxx>@xx</xxxxxx></xx><xx>||</xx></xx>
-<xx><xx><xxxxxx>@xxx</xxxxxx></xx><xx>&xxxx&xxxx</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxxx</xxxxxx></xx><xx>&xxxx</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxx</xxxxxx></xx><xx>|</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx&xxx</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxx</xxxxxx></xx><xx>&xxxx=</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxx</xxxxxx></xx><xx>|=</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx=</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx=</xx></xx>
-<xx><xx><xxxxxx>@xxxxxxxxxxxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx&xxx=</xx></xx>
+<xx><xx><xxxxxx>xxx</xxxxxx></xx><xx>&xxx</xx></xx>
+<xx><xx><xxxxxx>xxx</xxxxxx></xx><xx>&xxx</xx></xx>
+<xx><xx><xxxxxx>xxxxx</xxxxxx></xx><xx>&xxx=</xx></xx>
+<xx><xx><xxxxxx>xxxxx</xxxxxx></xx><xx>&xxx=</xx></xx>
+<xx><xx><xxxxxx>xxx</xxxxxx></xx><xx>||</xx></xx>
+<xx><xx><xxxxxx>xxxx</xxxxxx></xx><xx>&xxxx&xxxx</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxxx</xxxxxx></xx><xx>&xxxx</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxx</xxxxxx></xx><xx>|</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx&xxx</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxx</xxxxxx></xx><xx>&xxxx=</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxx</xxxxxx></xx><xx>|=</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx=</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx=</xx></xx>
+<xx><xx><xxxxxx>xxxxxxxxxxxxxxxxxxxxxxxxxxxx</xxxxxx></xx><xx>&xxx&xxx&xxx=</xx></xx>
 </xxxxx>
 
 <xx><!--xxxxxxxxxx-->
@@ -1383,7 +1383,7 @@ xxxxxxxxxxxx <xx>'xxxx' xxxx xxxxxxxxx</xx>.
 xxxxxxxxxxxx x 'xxxx' xxxx xxxxxxxxx xxx'xx xxx xxxx xx xxxxxx xx:
 
 <xxx>
-    xxxxxxxxxxx.x - xxxxxx xxxxxxxx xxxx@xxx.xxxx
+    xxxxxxxxxxx.x - xxxxxx xxxxxxxx xxxxxxxx.xxxx
     xxxxxxxxxxxx xxxx xx
     'xxxx' xxxxxxxxx xxxxxxx xxxxxxxxxxxxx: xxxxxx
     xxxxxxxxxxx { xxxxxxxxxxxx xxxxxxxxxxxxx }
