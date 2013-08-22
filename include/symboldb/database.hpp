@@ -33,6 +33,7 @@ namespace cxxll {
   class elf_symbol_definition;
   class elf_symbol_reference;
   class java_class;
+  class maven_url;
 }
 
 // Database wrapper.
@@ -169,6 +170,7 @@ public:
   void add_java_class(contents_id, const cxxll::java_class &);
   void add_java_error(contents_id,
 		      const char *message, const std::string &path);
+  void add_maven_url(contents_id, const cxxll::maven_url &);
 
   // Python-related data.
   void add_python_import(contents_id, const char *name);

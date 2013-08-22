@@ -31,6 +31,7 @@
 #include <cxxll/pg_response.hpp>
 #include <cxxll/hash.hpp>
 #include <cxxll/java_class.hpp>
+#include <cxxll/maven_url.hpp>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -747,6 +748,15 @@ database::add_java_error(contents_id cid,
      " VALUES ($1, $2, $3)", cid.value(), message, path);
 }
 
+void
+database::add_maven_url(contents_id cid, const maven_url &url)
+{
+  pgresult_handle res;
+  pg_query(impl_->conn, res,
+	   "INSERT INTO symboldb.java_maven_url (contents_id, url, type)"
+	   " VALUES ($1, $2, $3::symboldb.java_maven_url_type)",
+	   cid.value(), url.url, maven_url::to_string(url.type));
+}
 
 //////////////////////////////////////////////////////////////////////
 // Package sets.
