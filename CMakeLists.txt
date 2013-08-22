@@ -136,6 +136,7 @@ add_library (CXXLL
   lib/cxxll/utf8.cpp
   lib/cxxll/vector_extract.cpp
   lib/cxxll/vector_sink.cpp
+  lib/cxxll/vector_source.cpp
   lib/cxxll/zip_file.cpp
   lib/cxxll/zlib.cpp
   lib/cxxll/zlib_inflate_exception.cpp
@@ -240,6 +241,7 @@ add_executable (runtests
   test/test-temporary_directory.cpp
   test/test-utf8.cpp
   test/test-vector_extract.cpp
+  test/test-vector_source.cpp
   test/test-zip_file.cpp
   test/test.cpp
 )
