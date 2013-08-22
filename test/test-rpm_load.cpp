@@ -160,6 +160,62 @@ test_java_class(database &db, pgconn_handle &conn)
 }
 
 static void
+test_xml(database &, pgconn_handle &conn)
+{
+  pgresult_handle r;
+  pg_query
+    (conn, r,
+     "SELECT xe.message, xe.line, encode(xe.before, 'escape'),"
+     " encode(xe.after, 'escape') FROM symboldb.xml_error xe"
+     " JOIN symboldb.file USING (contents_id)"
+     " WHERE file.name = $1",
+     "/usr/share/doc/shared-mime-info-1.1/shared-mime-info-spec.xml" + 0);
+  COMPARE_NUMBER(r.ntuples(), 1);
+  COMPARE_STRING(r.getvalue(0, 0), "unexpected XML entity");
+  COMPARE_STRING(r.getvalue(0, 1), "4");
+  COMPARE_STRING(r.getvalue(0, 2),
+		 "book/xml/4.1.2/docbookx.dtd\" [\n  <!ENTITY updated ");
+  COMPARE_STRING(r.getvalue(0, 3),
+		 "\"8 October 2010\">\n  <!ENTITY version \"0.20\">\n]>\n<a");
+
+  r.exec
+    (conn,
+     "SELECT * FROM symboldb.xml_error JOIN symboldb.file USING (contents_id)"
+     " WHERE file.name LIKE '/usr/share/maven-poms/%'");
+  COMPARE_NUMBER(r.ntuples(), 0);
+
+  r.exec
+    (conn,
+     "SELECT file.name, mu.url, mu.type FROM symboldb.java_maven_url mu"
+     " JOIN symboldb.file USING (contents_id)"
+     " WHERE file.name LIKE '/usr/share/maven-poms/%' ORDER BY 1, 2, 3");
+  static const char *file = "/usr/share/maven-poms/JPP.objectweb-asm4-asm-parent.pom";
+  struct mu_entry {
+    const char *file;
+    const char *url;
+    const char *type;
+  };
+  static const mu_entry rows[] = {
+    {file, "http://asm.objectweb.org/", "other"},
+    {file, "http://asm.objectweb.org/license.html", "other"},
+    {file, "http://forge.objectweb.org/tracker/?group_id=23",  "other"},
+    {file, "http://svn.forge.objectweb.org/cgi-bin/viewcvs.cgi/asm/trunk/", "scm"},
+    {file, "http://www.objectweb.org/", "other"},
+    {file, "scm:svn:svn+ssh://${maven.username}@svn.forge.objectweb.org/svnroot/asm/trunk", "developerConnection"},
+    {file, "scm:svn:svn://svn.forge.objectweb.org/svnroot/asm/trunk", "connection"},
+    {0, 0, 0}
+  };
+  int row;
+  for (row = 0; rows[row].file; ++row) {
+    COMPARE_STRING(r.getvalue(row, 0), rows[row].file);
+    COMPARE_STRING(r.getvalue(row, 1), rows[row].url);
+    COMPARE_STRING(r.getvalue(row, 2), rows[row].type);
+  }
+  COMPARE_NUMBER(r.ntuples(), row);
+}
+
+
+static void
 increment_non_python_cid(pgconn_handle &dbh, database::contents_id &cid)
 {
   pgresult_handle res;
@@ -965,6 +1021,7 @@ test()
     db.txn_rollback();
 
     test_java_class(db, dbh);
+    test_xml(db, dbh);
   }
 
   // FIXME: Add more sanity check on database contents.

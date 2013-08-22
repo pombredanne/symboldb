@@ -41,6 +41,10 @@
 #include <cxxll/os_exception.hpp>
 #include <cxxll/python_analyzer.hpp>
 #include <cxxll/string_support.hpp>
+#include <cxxll/vector_source.hpp>
+#include <cxxll/expat_source.hpp>
+#include <cxxll/maven_url.hpp>
+#include <cxxll/looks_like_xml.hpp>
 
 #include <map>
 #include <sstream>
@@ -227,6 +231,30 @@ load_python(const symboldb_options &, database &db, python_analyzer &pya,
   }
 }
 
+// Loads XML-like content.
+static void
+load_xml(const symboldb_options &, database &db,
+	 database::contents_id cid, const rpm_file_entry &file)
+{
+  vector_source src(&file.contents);
+  expat_source source(&src);
+
+  // Extract URLs from POM files.
+  std::vector<maven_url> result;
+  try {
+    maven_url::extract(source, result);
+  } catch (expat_source::malformed &e) {
+    std::vector<unsigned char> before(e.before().begin(), e.before().end());
+    std::vector<unsigned char> after(e.after().begin(), e.after().end());
+    db.add_xml_error(cid, e.message(), e.line(), before, after);
+  }
+  for (std::vector<maven_url>::const_iterator
+	 p = result.begin(), end = result.end();
+       p != end; ++p) {
+      db.add_maven_url(cid, *p);
+  }
+}
+
 static const size_t FILE_CONTENTS_PREVIEW_SIZE = 64;
 
 // Return true if the full contents of the file should be preserved in
@@ -365,6 +393,8 @@ do_load_formats(const symboldb_options &opt, database &db, python_analyzer &pya,
 {
   if (is_elf(file.contents)) {
     load_elf(opt, db, cid, file);
+  } else if (looks_like_xml(file.contents.begin(), file.contents.end())) {
+    load_xml(opt, db, cid, file);
   } else if (is_python(file.contents)
 	     || check_any(file.infos, is_python_path)) {
     load_python(opt, db, pya, cid, file);
