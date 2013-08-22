@@ -93,6 +93,7 @@ add_library (CXXLL
   lib/cxxll/gunzip_source.cpp
   lib/cxxll/hash.cpp
   lib/cxxll/java_class.cpp
+  lib/cxxll/maven_url.cpp
   lib/cxxll/memory_range_source.cpp
   lib/cxxll/mutex.cpp
   lib/cxxll/os.cpp
@@ -222,6 +223,7 @@ add_executable (runtests
   test/test-expat_source.cpp
   test/test-gunzip_source.cpp
   test/test-java_class.cpp
+  test/test-maven_url.cpp
   test/test-os.cpp
   test/test-os_exception.cpp
   test/test-looks_like_xml.cpp
