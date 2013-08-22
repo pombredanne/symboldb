@@ -144,20 +144,28 @@ cxxll::maven_url::extract(expat_source &source, std::vector<maven_url> &result)
 
   std::vector<std::string> tags;
   tags.resize(1);		// top-level tag
-  while (source.next()) {
+  source.next();
+  while (true) {
     switch (source.state()) {
     case expat_source::START:
       {
-	if (!extract_text_contents(source, tags, result)) {
+	if (extract_text_contents(source, tags, result)) {
+	  // Already skipped to next element.
+	  continue;
+	} else {
 	  tags.push_back(source.name());
 	}
       }
       break;
     case expat_source::END:
+      assert(!tags.empty());
       tags.pop_back();
       break;
     default:
-      continue;
+      break;
+    }
+    if (!source.next()) {
+      break;
     }
   }
   assert(tags.empty());

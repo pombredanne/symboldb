@@ -115,6 +115,9 @@ test()
   {
     open_xml xml("test/data/maven/malformed-pom-bsh.xml");
   }
+  {
+    open_xml xml("test/data/maven/JPP-woodstox-core-lgpl.pom");
+  }
 }
 
 static test_register t("maven_url", test);
