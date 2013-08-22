@@ -417,6 +417,28 @@ CREATE TABLE symboldb.java_class_contents (
   class_id INTEGER NOT NULL REFERENCES symboldb.java_class ON DELETE CASCADE
 );
 
+CREATE TYPE symboldb.java_maven_url_type AS ENUM (
+  'other',
+  'repository',
+  'pluginRepository',
+  'snapshotRepository',
+  'distributionManagement',
+  'downloadUrl',
+  'site',
+  'scm',
+  'connection',
+  'developerConnection'
+);
+
+CREATE TABLE symboldb.java_maven_url (
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE cascade,
+  url TEXT NOT NULL COLLATE "C",
+  type symboldb.java_maven_url_type NOT NULL
+);
+COMMENT ON TABLE symboldb.java_maven_url IS
+  'extracted URLs from Maven POM files';
+
 -- XML documents.
 
 CREATE TABLE symboldb.xml_error (
