@@ -586,15 +586,17 @@ expat_source::exception::what() const throw()
 expat_source::malformed::malformed(const impl *p, const char *buf, size_t len)
   : exception(p, false)
 {
-    message_ = XML_ErrorString(XML_GetErrorCode(p->handle_.raw));
-    unsigned long long index = XML_GetCurrentByteIndex(p->handle_.raw)
-      - p->consumed_bytes_;
+  message_ = XML_ErrorString(XML_GetErrorCode(p->handle_.raw));
+  std::stringstream msg;
+  msg << line() << ':' << column() << ": error=\"" << message_ << '"';
+  unsigned long long index = XML_GetCurrentByteIndex(p->handle_.raw);
+  if (index >= p->consumed_bytes_) {
+    index -= p->consumed_bytes_;
     size_t before_count = std::min(index, 50ULL);
     size_t after_count = std::min(len - index, 50ULL);
     before_ = std::string(buf + index - before_count, buf + index);
     after_ = std::string(buf + index, buf + index + after_count);
-    std::stringstream msg;
-    msg << line() << ':' << column() << ": error=\"" << message_ << '"';
+
     if (!before_.empty()) {
       msg << " before=\"" << quote(before_) << '"';
     }
@@ -602,6 +604,7 @@ expat_source::malformed::malformed(const impl *p, const char *buf, size_t len)
       msg << " after=\"" << quote(after_) << '"';
     }
     what_ = msg.str();
+  }
 }
 
 expat_source::malformed::~malformed() throw()
