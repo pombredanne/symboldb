@@ -29,7 +29,7 @@ struct string_source : source {
   std::string source;
   size_t position;
 
-  string_source(const std::string &);
+  explicit string_source(const std::string &);
   ~string_source();
 
   virtual size_t read(unsigned char *, size_t);
