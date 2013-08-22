@@ -123,7 +123,25 @@ extract_text_contents(expat_source &source,
 void
 cxxll::maven_url::extract(expat_source &source, std::vector<maven_url> &result)
 {
+  try {
+    if (!source.next()) {
+      return;
+    }
+    if (source.name() != "project") {
+      // Not a POM file.
+      return;
+    }
+  } catch (expat_source::entity_declaration &) {
+    // If there are entity declarations, we cannot process the
+    // document.
+    throw;
+  } catch (expat_source::malformed &) {
+    // This is not really XML after all.
+    return;
+  }
+
   std::vector<std::string> tags;
+  tags.resize(1);		// top-level tag
   while (source.next()) {
     switch (source.state()) {
     case expat_source::START:
