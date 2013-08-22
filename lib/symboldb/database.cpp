@@ -675,6 +675,22 @@ database::add_elf_error(contents_id cid, const char *message)
 }
 
 //////////////////////////////////////////////////////////////////////
+// XML documents.
+
+void
+database::add_xml_error(contents_id cid, const char *message, unsigned line,
+			const std::vector<unsigned char> &before,
+			const std::vector<unsigned char> &after)
+{
+  pgresult_handle res;
+  pg_query(impl_->conn, res,
+	   "INSERT INTO symboldb.xml_error"
+	   " (contents_id, message, line, before, after)"
+	   " VALUES ($1, $2, $3, $4, $5)",
+	   cid.value(), message, static_cast<long long>(line), before, after);
+}
+
+//////////////////////////////////////////////////////////////////////
 // Java classes.
 
 void

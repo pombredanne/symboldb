@@ -160,6 +160,11 @@ public:
 		       unsigned long long tag, unsigned long long value);
   void add_elf_error(contents_id, const char *);
 
+  // XML extraction.
+  void add_xml_error(contents_id, const char *message, unsigned line,
+		     const std::vector<unsigned char> &before,
+		     const std::vector<unsigned char> &after);
+
   // Java support.
   void add_java_class(contents_id, const cxxll::java_class &);
   void add_java_error(contents_id,
