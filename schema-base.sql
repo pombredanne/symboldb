@@ -417,6 +417,19 @@ CREATE TABLE symboldb.java_class_contents (
   class_id INTEGER NOT NULL REFERENCES symboldb.java_class ON DELETE CASCADE
 );
 
+-- XML documents.
+
+CREATE TABLE symboldb.xml_error (
+  contents_id INTEGER NOT NULL
+    REFERENCES symboldb.file_contents ON DELETE cascade,
+  message TEXT NOT NULL COLLATE "C",
+  line INTEGER NOT NULL CHECK (line >= 0),
+  before BYTEA NOT NULL,
+  after BYTEA NOT NULL
+);
+COMMENT ON TABLE symboldb.xml_error IS
+  'errors during XML extraction';
+
 -- Python modules.
 
 CREATE TABLE symboldb.python_import (
