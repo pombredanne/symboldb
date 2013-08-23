@@ -220,6 +220,40 @@ test()
     src.unnest();
     CHECK(src.state() == expat_source::EOD);
   }
+  {
+    string_source xml
+      ("<!DOCTYPE root SYSTEM \"-\" [\n"
+       "<!ENTITY foo \"bar\">]>\n"
+       "<root value='&foo;'/>");
+    expat_source src(&xml);
+    CHECK(src.next());
+    COMPARE_STRING(src.name(), "root");
+    COMPARE_STRING(src.attribute("value"), "bar");
+    CHECK(src.next());
+    CHECK(src.state() == expat_source::END);
+    CHECK(!src.next());
+  }
+  try {
+    string_source xml
+      ("<!DOCTYPE root SYSTEM \"-\" [\n"
+       "<!ENTITY foo \"bar&lt;\">]>\n"
+       "<root value='&foo;'/>");
+    expat_source src(&xml);
+    src.next();
+    CHECK(false);
+  } catch (expat_source::entity_declaration &) {
+  }
+  try {
+    string_source xml
+      ("<!DOCTYPE root SYSTEM \"-\" [\n"
+       "<!ENTITY e1 \"v1\">\n"
+       "<!ENTITY e2 \"&e1;\">]>\n"
+       "<root value='&foo;'/>");
+    expat_source src(&xml);
+    src.next();
+    CHECK(false);
+  } catch (expat_source::entity_declaration &) {
+  }
 }
 
 static test_register t("expat_source", test);

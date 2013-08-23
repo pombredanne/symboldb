@@ -244,14 +244,17 @@ expat_source::impl::pop_position()
 void
 expat_source::impl::EntityDeclHandler(void *userData,
 				      const XML_Char *, int,
-				      const XML_Char *, int,
+				      const XML_Char *value, int value_length,
 				      const XML_Char *, const XML_Char *,
 				      const XML_Char *, const XML_Char *)
 {
-  // Stop the parser when an entity declaration is encountered.
-  impl *impl_ = static_cast<impl *>(userData);
-  impl_->bad_entity_ = true;
-  XML_StopParser(impl_->handle_.raw, XML_FALSE);
+  // Stop the parser when an entity declaration referencing other
+  // entities is encountered.
+  if (memchr(value, '&', value_length) != 0) {
+    impl *impl_ = static_cast<impl *>(userData);
+    impl_->bad_entity_ = true;
+    XML_StopParser(impl_->handle_.raw, XML_FALSE);
+  }
 }
 
 void
