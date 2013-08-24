@@ -107,6 +107,7 @@ add_library (CXXLL
   lib/cxxll/os_ticks.cpp
   lib/cxxll/pg_exception.cpp
   lib/cxxll/pg_private.cpp
+  lib/cxxll/pg_split_statement.cpp
   lib/cxxll/pg_testdb.cpp
   lib/cxxll/pgconn_handle.cpp
   lib/cxxll/pgresult_handle.cpp
@@ -228,6 +229,7 @@ add_executable (runtests
   test/test-os.cpp
   test/test-os_exception.cpp
   test/test-looks_like_xml.cpp
+  test/test-pg_split_statement.cpp
   test/test-pg_testdb.cpp
   test/test-python_analyzer.cpp
   test/test-read_file.cpp
