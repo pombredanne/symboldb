@@ -29,6 +29,7 @@
 #include <cxxll/pg_exception.hpp>
 #include <cxxll/pg_query.hpp>
 #include <cxxll/pg_response.hpp>
+#include <cxxll/pg_split_statement.hpp>
 #include <cxxll/hash.hpp>
 #include <cxxll/java_class.hpp>
 #include <cxxll/maven_url.hpp>
@@ -1143,8 +1144,21 @@ database::print_elf_soname_conflicts(package_set_id set)
 void
 database::exec_sql(const char *command)
 {
+  // Split up long-running SQL statements so that it is easier to
+  // determine progress.
+  std::vector<std::string> stmts;
+  pg_split_statement(command, stmts);
   pgresult_handle res;
-  res.exec(impl_->conn, command);
+  if (stmts.size() < 2) {
+    res.exec(impl_->conn, command);
+  } else {
+    txn_begin();
+    for (std::vector<std::string>::const_iterator
+	   p = stmts.begin(), end = stmts.end(); p != end; ++p) {
+      res.exec(impl_->conn, p->c_str());
+    }
+    txn_commit();
+  }
 }
 
 void
