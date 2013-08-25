@@ -1149,15 +1149,9 @@ database::exec_sql(const char *command)
   std::vector<std::string> stmts;
   pg_split_statement(command, stmts);
   pgresult_handle res;
-  if (stmts.size() < 2) {
-    res.exec(impl_->conn, command);
-  } else {
-    txn_begin();
-    for (std::vector<std::string>::const_iterator
-	   p = stmts.begin(), end = stmts.end(); p != end; ++p) {
-      res.exec(impl_->conn, p->c_str());
-    }
-    txn_commit();
+  for (std::vector<std::string>::const_iterator
+	 p = stmts.begin(), end = stmts.end(); p != end; ++p) {
+    res.exec(impl_->conn, p->c_str());
   }
 }
 
