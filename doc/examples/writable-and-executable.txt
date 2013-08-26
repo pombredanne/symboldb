@@ -14,7 +14,8 @@ writable and executable:
     ORDER BY 1, 2, 3;
 
 If an object file lacks a GNU_STACK section, the stack is implicitly
-marked as writable and executable:
+marked as writable and executable.  A GNU_STACK section might also
+explicitly request a writable and executable stack.
 
     SELECT symboldb.nevra(package), f.name
       FROM symboldb.file f
@@ -23,6 +24,6 @@ marked as writable and executable:
       JOIN symboldb.package_set_member USING (package_id)
     WHERE NOT EXISTS (SELECT 1 FROM symboldb.elf_program_header eph
                       WHERE eph.contents_id = f.contents_id
-                      AND type = 1685382481)
+                      AND type = 1685382481 AND NOT (writable AND executable))
       AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
     ORDER BY 1, 2;
