@@ -17,7 +17,7 @@ collisions between libraries in /usr/lib and /usr/lib64:
         ON f2.contents_id = ed2.contents_id AND ed2.name = ed1.name
       JOIN symboldb.package p1 ON psm1.package_id = p1.package_id
       JOIN symboldb.package p2 ON psm2.package_id = p2.package_id
-      WHERE psm1.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm1.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       AND ef1.soname <> ef2.soname
       AND f1.contents_id < f2.contents_id
       AND f1.name ~ '^/usr/lib(|64)/[^/]*.so[^/]*$'

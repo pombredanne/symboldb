@@ -10,7 +10,7 @@ writable and executable:
       JOIN symboldb.package USING (package_id)
       JOIN symboldb.package_set_member USING (package_id)
     WHERE writable AND executable
-      AND set_id = symboldb.package_set('Fedora/18/x86_64')
+      AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
     ORDER BY 1, 2, 3;
 
 If an object file lacks a GNU_STACK section, the stack is implicitly
@@ -24,5 +24,5 @@ marked as writable and executable:
     WHERE NOT EXISTS (SELECT 1 FROM symboldb.elf_program_header eph
                       WHERE eph.contents_id = f.contents_id
                       AND type = 1685382481)
-      AND set_id = symboldb.package_set('Fedora/18/x86_64')
+      AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
     ORDER BY 1, 2;

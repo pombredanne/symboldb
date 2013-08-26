@@ -9,7 +9,7 @@ that suffix.
       JOIN symboldb.package p USING (package_id)
       JOIN symboldb.file f USING (package_id)
       JOIN symboldb.elf_reference er1 USING (contents_id)
-      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       AND er1.name ~ 'd2i_.*_bio$'
       ORDER BY package, file, func;
 
@@ -23,7 +23,7 @@ the binary uses OpenSSL in a somewhat insecure way.
       JOIN symboldb.package p USING (package_id)
       JOIN symboldb.file f USING (package_id)
       JOIN symboldb.elf_reference er1 USING (contents_id)
-      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       AND er1.name = 'SSL_new'
       AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
       	      	      JOIN symboldb.file f2 USING (contents_id)
@@ -42,7 +42,7 @@ to obtain the results.
       JOIN symboldb.package p USING (package_id)
       JOIN symboldb.file f USING (package_id)
       JOIN symboldb.elf_reference er1 USING (contents_id)
-      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       AND er1.name = 'SSL_new'
       AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
       	      	      JOIN symboldb.file f2 USING (contents_id)
@@ -64,7 +64,7 @@ examine the peer certificate to extract the host name and verify it.
       JOIN symboldb.package p USING (package_id)
       JOIN symboldb.file f USING (package_id)
       JOIN symboldb.elf_reference er1 USING (contents_id)
-      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       AND er1.name = 'SSL_new'
       AND NOT EXISTS (SELECT 1 FROM symboldb.elf_reference er2
       	      	      JOIN symboldb.file f2 USING (contents_id)

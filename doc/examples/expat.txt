@@ -10,7 +10,7 @@ attack" via attributes).
       JOIN symboldb.package p USING (package_id)
       JOIN symboldb.file f USING (package_id)
       JOIN symboldb.elf_reference er1 USING (contents_id)
-      WHERE psm.set_id = symboldb.package_set('Fedora/18/x86_64')
+      WHERE psm.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       AND er1.name IN ('XML_ParserCreate',
                        'XML_ParserCreateNS',
                        'XML_ParserCreate_MM')
