@@ -32,7 +32,7 @@ public:
   // Takes ownership.  Throws os_exception if FILE * is NULL.
   explicit file_handle(FILE *);
   // Opens a new file.  Throws os_exception on error.
-  file_handle(const char *format, const char *flags);
+  file_handle(const char *path, const char *flags);
   ~file_handle();
 
   // Closes the raw pointer (if it is not already NULL).
