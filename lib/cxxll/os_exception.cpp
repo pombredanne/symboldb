@@ -115,6 +115,18 @@ os_exception::path2(const std::string &str)
   return set(path2_, str);
 }
 
+os_exception &
+os_exception::function_name(const char *str)
+{
+  return set(function_name_, str);
+}
+
+os_exception &
+os_exception::function_name(const std::string &str)
+{
+  return set(function_name_, str);
+}
+
 namespace {
   void
   maybe_quote(std::ostream &s, const std::string str)

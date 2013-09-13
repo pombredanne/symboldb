@@ -92,6 +92,8 @@ public:
 
   // Pointer to failing function.
   const std::string &function_name() const;
+  os_exception &function_name(const char *);
+  os_exception &function_name(const std::string &);
   void *function() const;
   os_exception &function(void *);
   template <class T> os_exception &function(T *);
