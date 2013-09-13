@@ -44,6 +44,9 @@ public:
   // Returns the value of the raw pointer.
   T *get();
 
+  // Returns the value of the raw pointer.
+  const T *get() const;
+
   // Releases ownership of the raw pointer and returns it.
   T *release();
 
@@ -66,6 +69,12 @@ malloc_handle<T>::~malloc_handle()
 
 template <class T> inline T *
 malloc_handle<T>::get()
+{
+  return raw;
+}
+
+template <class T> inline const T *
+malloc_handle<T>::get() const
 {
   return raw;
 }
