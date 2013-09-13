@@ -96,10 +96,9 @@ namespace {
   {
     cxxll::file_handle conf(confpath, "r");
     bool found = false;
-    malloc_handle<char> line;
-    size_t linesize = 0;
-    while (conf.getline(line, linesize)) {
-      found = strstr(line.get(), "unix_socket_directories") != NULL;
+    cxxll::file_handle::line line;
+    while (conf.getline(line)) {
+      found = strstr(line.ptr.get(), "unix_socket_directories") != NULL;
       if (found) {
 	break;
       }

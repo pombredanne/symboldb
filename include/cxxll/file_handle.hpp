@@ -20,6 +20,8 @@
 
 #include "malloc_handle.hpp"
 
+#include <string>
+
 #include <cstdio>
 
 namespace cxxll {
@@ -48,10 +50,27 @@ public:
   // Throws os_exception on error (closing the new pointer).
   void reset(FILE *);
 
-  // Reads a line from the file and possibly reallocates LINE,
-  // updating LENGTH.  Returns false on EOF and throws os_exception on
-  // error.
-  bool getline(malloc_handle<char> &line, size_t &length);
+  // For use with getline() below.  Holds a pointer to a line,
+  // combined with the allocated buffer size and the actual line
+  // length.
+  struct line {
+    malloc_handle<char> ptr;
+    size_t length;
+    size_t allocated;
+
+    line();
+    ~line();
+
+    // Removes the trailing line feed character if present.  Returns
+    // true if there was a line feed character to remove.
+    bool strip_nl();
+
+    // Returns a string with the characters contain in the line.
+    std::string str() const;
+  };
+
+  // Reads a line from the file.
+  bool getline(line &);
 };
 
 inline

@@ -247,15 +247,14 @@ do_run_example(const symboldb_options &opt, database &db, char **argv)
   int errors = 0;
   while (*argv) {
     file_handle file(*argv, "r");
-    malloc_handle<char> lineptr;
-    size_t line_length = 0;
+    file_handle::line line_handle;
     std::string current;
     unsigned lineno = 0;
     unsigned start_lineno;
     try {
-      while (file.getline(lineptr, line_length)) {
+      while (file.getline(line_handle)) {
 	++lineno;
-	std::string line(lineptr.get());
+	std::string line(line_handle.str());
 	bool start = current.empty();
 	if (starts_with(line, "    ")) {
 	  current += "      ";

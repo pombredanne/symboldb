@@ -74,19 +74,52 @@ file_handle::reset(FILE *newptr)
 }
 
 bool
-file_handle::getline(malloc_handle<char> &line, size_t &length)
+file_handle::getline(line &l)
 {
-  char *lineptr = line.release();
+  char *lineptr = l.ptr.release();
   errno = 0;
-  ssize_t ret = ::getline(&lineptr, &length, raw);
+  ssize_t ret = ::getline(&lineptr, &l.allocated, raw);
   int err = errno;
-  line.reset(lineptr);
-  if (ret == -1) {
+  l.ptr.reset(lineptr);
+  if (ret < 0) {
+    l.length = 0;
     if (err == 0) {
       return false;
     } else {
       throw os_exception(err).function(::getline).fd(fileno(raw)).defaults();
     }
   }
+  l.length = ret;
   return true;
+}
+
+//////////////////////////////////////////////////////////////////////
+// cxxll::file_hande::line
+
+cxxll::file_handle::line::line()
+  : length(0), allocated(0)
+{
+}
+
+cxxll::file_handle::line::~line()
+{
+}
+
+bool
+cxxll::file_handle::line::strip_nl()
+{
+  if (length == 0) {
+    return false;
+  }
+  if (ptr.get()[length - 1] == '\n') {
+    --length;
+    return true;
+  }
+  return false;
+}
+
+std::string
+cxxll::file_handle::line::str() const
+{
+  return std::string(ptr.get(), length);
 }

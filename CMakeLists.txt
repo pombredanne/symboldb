@@ -223,6 +223,7 @@ add_executable (runtests
   test/test-endian.cpp
   test/test-expat_minidom.cpp
   test/test-expat_source.cpp
+  test/test-file_handle.cpp
   test/test-gunzip_source.cpp
   test/test-java_class.cpp
   test/test-maven_url.cpp
