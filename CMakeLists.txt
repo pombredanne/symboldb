@@ -113,6 +113,7 @@ add_library (CXXLL
   lib/cxxll/pgresult_handle.cpp
   lib/cxxll/python_analyzer.cpp
   lib/cxxll/read_file.cpp
+  lib/cxxll/read_lines.cpp
   lib/cxxll/regex_handle.cpp
   lib/cxxll/rpm_evr.cpp
   lib/cxxll/rpm_dependency.cpp
@@ -234,6 +235,7 @@ add_executable (runtests
   test/test-pg_testdb.cpp
   test/test-python_analyzer.cpp
   test/test-read_file.cpp
+  test/test-read_lines.cpp
   test/test-regex_handle.cpp
   test/test-repomd.cpp
   test/test-rpm_load.cpp
