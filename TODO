@@ -13,6 +13,8 @@
   symboldb.file_contents to separate table, referenced from FROM
   symboldb.file.
 
+* Include capabilities in file metadata.
+
 * Extract X.509 certificates and recognizable key material (or
   alternatively, flag files which contain this data for full text
   copies).
