@@ -71,6 +71,7 @@ add_library (CXXLL
   lib/cxxll/bad_string_index.cpp
   lib/cxxll/base16.cpp
   lib/cxxll/cond.cpp
+  lib/cxxll/const_stringref.cpp
   lib/cxxll/cpio_reader.cpp
   lib/cxxll/curl_exception.cpp
   lib/cxxll/curl_exception_dump.cpp
@@ -216,6 +217,7 @@ add_executable (runtests
   test/runtests.cpp
   test/test-base16.cpp
   test/test-bounded_ordered_queue.cpp
+  test/test-const_stringref.cpp
   test/test-dir_handle.cpp
   test/test-download.cpp
   test/test-fd_handle.cpp
