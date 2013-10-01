@@ -68,6 +68,7 @@ add_custom_command (
 
 add_library (CXXLL
   lib/cxxll/checksum.cpp
+  lib/cxxll/bad_string_index.cpp
   lib/cxxll/base16.cpp
   lib/cxxll/cond.cpp
   lib/cxxll/cpio_reader.cpp
