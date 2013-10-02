@@ -28,6 +28,24 @@
 
 namespace cxxll {
 
+// A reference to the contents of a string-like object.  String-like
+// objects can be std::string objects, std::vector objects made of
+// characters, C-style NUL-terminated strings, or a sequence of bytes
+// in memory.
+//
+// Constructing a const_stringref does not itself keep the underlying
+// object containing the characters alive, nor does it make a copy.
+// It is the responsibility of the caller to ensure that the data is
+// not destroyed prematurely, either because the data-providing object
+// goes out of scope, or because it is mutated in some way.
+//
+// In general, as with const references such as const std::string &,
+// using const_stringref in function arguments is safe even if the
+// data-providing object is a temporary because the life-time of
+// temporaries is extended to the enclosing full expression.  However,
+// if there is any aliasing and mutation of the data-providing object,
+// it is still possible to end up with the const_stringref turning
+// invalid.
 class const_stringref {
   const char *start_;
   size_t size_;
@@ -65,7 +83,13 @@ public:
   // Creates a reference to the contents of a C++ string.
   const_stringref(const std::string &);
 
-  // Returns the pointer to the first character.
+  // Returns a copy of the string.
+  std::string str() const;
+
+  // Members modelled after std::string
+
+  // Returns the pointer to the first character.  Note that this is
+  // not guaranteed to be a C-style NUL-terminated string.
   const char *data() const;
   
   // Returns true if there are no characters.
@@ -74,22 +98,10 @@ public:
   // Returns the number of characters in the string.
   size_t size() const;
 
-  // Returns the length of the string, stopping at the first NUL
-  // character.
-  size_t nlen() const;
-
-  // Returns a copy of the string.
-  std::string str() const;
-
   // Returns the character at the specific index.  Throws
   // bad_string_index if the index is invalid.
   char at(size_t) const;
   char operator[](size_t) const;
-
-  // Chops off characters at the start of the slice.
-  const_stringref &operator++();
-  const_stringref operator++(int);
-  const_stringref &operator+=(size_t);
 
   // Returns the substring starting at POS, including up to COUNT
   // characters.  Throws bad_string_index if POS > size().  If there
@@ -102,11 +114,25 @@ public:
   // string.
   const_stringref operator+(size_t);
 
+  // Lexicographic comparison as unsigned characters.
   bool operator==(const_stringref) const;
   bool operator<(const_stringref) const;
   bool operator<=(const_stringref) const;
   bool operator>(const_stringref) const;
   bool operator>=(const_stringref) const;
+
+  // Members modelled after C run-time library functions.
+
+  // Returns the length of the string, stopping at the first NUL
+  // character.
+  size_t nlen() const;
+
+  // Members for iterator support.
+
+  // Chops off characters at the start of the slice.
+  const_stringref &operator++();
+  const_stringref operator++(int);
+  const_stringref &operator+=(size_t);
 };
 
 inline void
@@ -195,6 +221,12 @@ const_stringref::const_stringref(const std::string &s)
   }
 }
 
+inline std::string
+const_stringref::str() const
+{
+  return std::string(start_, size_);
+}
+
 inline const char *
 const_stringref::data() const
 {
@@ -213,18 +245,6 @@ const_stringref::size() const
   return size_;
 }
 
-inline size_t
-const_stringref::nlen() const
-{
-  return strnlen(start_, size_);
-}
-
-inline std::string
-const_stringref::str() const
-{
-  return std::string(start_, size_);
-}
-
 inline char
 const_stringref::at(size_t index) const
 {
@@ -236,34 +256,6 @@ inline char
 const_stringref::operator[](size_t index) const
 {
   return at(index);
-}
-
-inline const_stringref &
-const_stringref::operator++()
-{
-  if (size_ == 0) {
-    throw_bad_empty();
-  }
-  ++start_;
-  --size_;
-  return *this;
-}
-
-inline const_stringref
-const_stringref::operator++(int)
-{
-  const_stringref old(*this);
-  this->operator++();
-  return old;
-}
-
-inline const_stringref &
-const_stringref::operator+=(size_t index)
-{
-  check_index_equal_ok(index);
-  start_ += index;
-  size_ -= index;
-  return *this;
 }
 
 inline const_stringref
@@ -308,6 +300,43 @@ const_stringref::operator>=(const_stringref o) const
 {
   return less_than_equal(o, *this);
 }
+
+inline size_t
+const_stringref::nlen() const
+{
+  return strnlen(start_, size_);
+}
+
+inline const_stringref &
+const_stringref::operator++()
+{
+  if (size_ == 0) {
+    throw_bad_empty();
+  }
+  ++start_;
+  --size_;
+  return *this;
+}
+
+inline const_stringref
+const_stringref::operator++(int)
+{
+  const_stringref old(*this);
+  this->operator++();
+  return old;
+}
+
+inline const_stringref &
+const_stringref::operator+=(size_t index)
+{
+  check_index_equal_ok(index);
+  start_ += index;
+  size_ -= index;
+  return *this;
+}
+
+
+// Non-member operator definitions.
 
 inline std::ostream &
 operator<<(std::ostream &os, cxxll::const_stringref s)
