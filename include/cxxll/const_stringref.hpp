@@ -315,5 +315,12 @@ operator<<(std::ostream &os, cxxll::const_stringref s)
   return os.write(s.data(), s.size());
 }
 
+inline std::string &
+operator+=(std::string &str, cxxll::const_stringref s)
+{
+  str.append(s.data(), s.size());
+  return str;
+}
+
 
 } // namespace cxxll

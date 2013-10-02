@@ -209,6 +209,14 @@ test()
     os << const_stringref("abc") << const_stringref("\000XYZ", 5);
     COMPARE_STRING(os.str(), std::string("abc\000XYZ", 8));
   }
+
+  {
+    std::string str;
+    str += "";
+    str += const_stringref("abc");
+    str += const_stringref("\000XYZ", 5);
+    COMPARE_STRING(str, std::string("abc\000XYZ", 8));
+  }
 }
 
 static test_register t("const_stringref", test);
