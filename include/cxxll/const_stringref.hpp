@@ -116,6 +116,7 @@ public:
 
   // Lexicographic comparison as unsigned characters.
   bool operator==(const_stringref) const;
+  bool operator!=(const_stringref) const;
   bool operator<(const_stringref) const;
   bool operator<=(const_stringref) const;
   bool operator>(const_stringref) const;
@@ -275,6 +276,12 @@ inline bool
 const_stringref::operator==(const_stringref o) const
 {
   return size_ == o.size_ && memcmp(start_, o.start_, size_) == 0;
+}
+
+inline bool
+const_stringref::operator!=(const_stringref o) const
+{
+  return size_ != o.size_ || memcmp(start_, o.start_, size_) != 0;
 }
 
 inline bool

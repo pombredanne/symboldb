@@ -26,6 +26,7 @@
 using namespace cxxll;
 
 static const char *string7 = "string7";
+static const char *string8 = "string8";
 
 static void
 test()
@@ -82,6 +83,14 @@ test()
   CHECK(const_stringref(string7) >= const_stringref(string7));
   CHECK(!(const_stringref(string7) < const_stringref(string7)));
   CHECK(!(const_stringref(string7) > const_stringref(string7)));
+  CHECK(const_stringref(string7) != const_stringref(string7, 8));
+  CHECK(!(const_stringref(string7) != const_stringref(string7)));
+  CHECK(const_stringref(string7) < string8);
+  CHECK(const_stringref(string7) <= string8);
+  CHECK(!(const_stringref(string7) > string8));
+  CHECK(!(const_stringref(string7) >= string8));
+  CHECK(!(const_stringref(string7) == const_stringref(string8)));
+  CHECK(const_stringref(string7) != const_stringref(string8));
   
   try {
     const_stringref s;
