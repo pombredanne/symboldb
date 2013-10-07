@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <libpq-fe.h>
 
 namespace cxxll {
@@ -67,6 +69,11 @@ public:
   // Calls PQputCopyEnd().  Throws pg_exception on error.  Use
   // pgresult_handle::getresult() to obtain the server status.
   void putCopyEndError(const char *errormsg);
+
+  // Calls PQgetCopyData() and replaces the string contents with the
+  // data provided.  If no more data is available returns false.
+  // Throws pg_exception on error.
+  bool getCopyData(std::string &row);
 
   // Throws pg_exception if the raw pointer is NULL or in an error
   // state.

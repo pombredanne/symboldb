@@ -18,6 +18,7 @@
 
 #include <cxxll/pgconn_handle.hpp>
 #include <cxxll/pg_exception.hpp>
+#include <cxxll/pgresult_handle.hpp>
 
 #include <algorithm>
 #include <climits>
@@ -72,5 +73,28 @@ pgconn_handle::putCopyEndError(const char *errormsg)
   int result = PQputCopyEnd(raw, errormsg);
   if (result < 0) {
     throw pg_exception(raw);
+  }
+}
+
+bool
+pgconn_handle::getCopyData(std::string &row)
+{
+  char *buffer;
+  int ret = PQgetCopyData(raw, &buffer, 0);
+  switch (ret) {
+  case 0:
+    throw pg_exception("unexpected async result from PQgetCopyData");
+  case -1:
+    {
+      pgresult_handle r;
+      r.getresult(*this);
+    }
+    row.clear();
+    return false;
+  case -2:
+    throw pg_exception(raw);
+  default:
+    row.assign(buffer, ret);
+    return true;
   }
 }

@@ -682,6 +682,23 @@ test()
       COMPARE_NUMBER(t10, 10);
     }
   }
+
+  // COPY TO test.
+  {
+    pgresult_handle r;
+    r.exec(h, "COPY (SELECT 'row', generate_series(1, 20)) TO STDOUT");
+    std::string row;
+    char buf[20];
+    for (int i = 1; i <= 20; ++i) {
+      CHECK(h.getCopyData(row));
+      snprintf(buf, sizeof(buf), "row\t%d\n", i);
+      COMPARE_STRING(row, buf);
+    }
+    CHECK(!h.getCopyData(row));
+    r.exec(h, "SELECT 'final row'");
+    COMPARE_NUMBER(r.ntuples(), 1);
+    COMPARE_STRING(r.getvalue(0, 0), "final row");
+  }
 }
 
 static test_register t("pg_testdb", test);
