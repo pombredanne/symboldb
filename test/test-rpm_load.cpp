@@ -46,25 +46,27 @@
 using namespace cxxll;
 
 static void
-check_rpm_file_list(pgconn_handle &dbh, const char *nevra)
+check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_path)
 {
-  std::string file_list_path = "test/data/";
-  file_list_path += nevra;
-  file_list_path += ".filelist";
   std::vector<std::string> file_list;
-  read_lines(file_list_path.c_str(), file_list);
+  read_lines(filelist_path, file_list);
+
+  std::string prefix(nvra);
+  prefix += ':';
 
   pgresult_handle r;
+  pg_query(dbh, r, "SELECT COUNT(*) FROM symboldb.package"
+	   " WHERE symboldb.nvra(package) = $1", nvra);
+  COMPARE_STRING(prefix + r.getvalue(0, 0), prefix + '1');
+
   pg_query(dbh, r,
 	   "CREATE TEMP TABLE file_list AS"
 	   " SELECT symboldb.file_mode(fc.mode), symboldb.file_flags(fc.flags)::text AS flags, file.inode, fc.user_name, fc.group_name, fc.length, file.name"
 	   " FROM symboldb.file JOIN symboldb.package USING (package_id)"
 	   " JOIN symboldb.file_contents fc USING (contents_id)"
-	   " WHERE symboldb.nevra(package) = $1"
-	   " ORDER BY file.name", nevra);
+	   " WHERE symboldb.nvra(package) = $1"
+	   " ORDER BY file.name", nvra);
   r.exec(dbh, "COPY file_list TO STDOUT WITH (FORMAT CSV)");
-  std::string prefix(nevra);
-  prefix += ':';
   std::string row;
   for (std::vector<std::string>::const_iterator
 	 p = file_list.begin(), end = file_list.end();
@@ -76,11 +78,30 @@ check_rpm_file_list(pgconn_handle &dbh, const char *nevra)
       COMPARE_STRING(prefix + row, prefix + *p);
     } else {
       COMPARE_STRING("", prefix + *p);
-      return;
+      goto cleanup;
     }
   }
   if (dbh.getCopyData(row)) {
     COMPARE_STRING(prefix + row, "");
+  }
+ cleanup:
+  r.exec(dbh, "DROP TABLE file_list");
+}
+
+// Reads the test/data/*.filelist files and compares them with the
+// matching RPMs.
+static void
+check_rpm_file_list(pgconn_handle &dbh)
+{
+  dir_handle dir("test/data");
+  while (dirent *ent = dir.readdir()) {
+    std::string name(ent->d_name);
+    if (ends_with(name, ".filelist")) {
+      std::string nvra(name);
+      nvra.resize(nvra.size() - strlen(".filelist"));
+      name = "test/data/" + name;
+      check_rpm_file_list(dbh, nvra.c_str(), name.c_str());
+    }
   }
 }
 
@@ -329,41 +350,6 @@ test()
   }
 
   {
-    static const char *const sysvinit_files_6[] = {
-      "/sbin/killall5",
-      "/sbin/sulogin",
-      "/usr/bin/last",
-      "/usr/bin/mesg",
-      "/usr/bin/utmpdump",
-      "/usr/bin/wall",
-      "/usr/share/doc/sysvinit-tools-2.88/COPYRIGHT",
-      "/usr/share/doc/sysvinit-tools-2.88/Changelog",
-      "/usr/share/man/man1/last.1.gz",
-      "/usr/share/man/man1/lastb.1.gz",
-      "/usr/share/man/man1/mesg.1.gz",
-      "/usr/share/man/man1/utmpdump.1.gz",
-      "/usr/share/man/man1/wall.1.gz",
-      "/usr/share/man/man8/killall5.8.gz",
-      "/usr/share/man/man8/pidof.8.gz",
-      "/usr/share/man/man8/sulogin.8.gz",
-      NULL
-    };
-    static const char *const sysvinit_files_9[] = {
-      "/sbin/killall5",
-      "/usr/bin/last",
-      "/usr/bin/mesg",
-      "/usr/bin/wall",
-      "/usr/share/doc/sysvinit-tools-2.88/COPYRIGHT",
-      "/usr/share/doc/sysvinit-tools-2.88/Changelog",
-      "/usr/share/man/man1/last.1.gz",
-      "/usr/share/man/man1/lastb.1.gz",
-      "/usr/share/man/man1/mesg.1.gz",
-      "/usr/share/man/man1/wall.1.gz",
-      "/usr/share/man/man8/killall5.8.gz",
-      "/usr/share/man/man8/pidof.8.gz",
-      NULL
-    };
-
     pgconn_handle dbh(testdb.connect(DBNAME));
     {
       pgresult_handle res;
@@ -425,32 +411,9 @@ test()
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
       COMPARE_STRING(r1.getvalue(i, 2), "2.88");
-      std::string release(r1.getvalue(i, 3));
-      const char *const *files;
-      if (starts_with(release, "6")) {
-	files = sysvinit_files_6;
-      } else if (starts_with(release, "9")) {
-	files = sysvinit_files_9;
-      } else {
-	CHECK(false);
-	break;
-      }
+
       const char *params[] = {r1.getvalue(i, 0)};
       pgresult_handle r2;
-      r2.execParams(dbh,
-		    "SELECT name FROM symboldb.file"
-		    " WHERE package_id = $1 ORDER BY 1", params);
-      int endj = r2.ntuples();
-      CHECK(endj > 0);
-      for (int j = 0; j < endj; ++j) {
-	CHECK(files[j] != NULL);
-	if (files[j] == NULL) {
-	  break;
-	}
-	COMPARE_STRING(r2.getvalue(j, 0), files[j]);
-      }
-      CHECK(files[endj] == NULL);
-
       r2.execParams(dbh, "SELECT name FROM symboldb.directory"
 		    " WHERE package_id = $1 ORDER BY name", params);
       CHECK(r2.ntuples() == 1);
@@ -465,7 +428,7 @@ test()
       COMPARE_STRING(r2.getvalue(1, 1), "last");
     }
 
-    check_rpm_file_list(dbh, "sysvinit-tools-2.88-6.dsf.fc17.i686");
+    check_rpm_file_list(dbh);
 
     r1.exec(dbh, "SELECT build_host, build_time FROM symboldb.package"
 	    " WHERE symboldb.nevra(package)"
