@@ -35,6 +35,7 @@
 #include <cxxll/checksum.hpp>
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/fd_source.hpp>
+#include <cxxll/read_lines.hpp>
 #include <cxxll/source_sink.hpp>
 #include <cxxll/temporary_directory.hpp>
 #include <symboldb/options.hpp>
@@ -43,6 +44,45 @@
 #include "test.hpp"
 
 using namespace cxxll;
+
+static void
+check_rpm_file_list(pgconn_handle &dbh, const char *nevra)
+{
+  std::string file_list_path = "test/data/";
+  file_list_path += nevra;
+  file_list_path += ".filelist";
+  std::vector<std::string> file_list;
+  read_lines(file_list_path.c_str(), file_list);
+
+  pgresult_handle r;
+  pg_query(dbh, r,
+	   "CREATE TEMP TABLE file_list AS"
+	   " SELECT symboldb.file_mode(fc.mode), symboldb.file_flags(fc.flags)::text AS flags, file.inode, fc.user_name, fc.group_name, fc.length, file.name"
+	   " FROM symboldb.file JOIN symboldb.package USING (package_id)"
+	   " JOIN symboldb.file_contents fc USING (contents_id)"
+	   " WHERE symboldb.nevra(package) = $1"
+	   " ORDER BY file.name", nevra);
+  r.exec(dbh, "COPY file_list TO STDOUT WITH (FORMAT CSV)");
+  std::string prefix(nevra);
+  prefix += ':';
+  std::string row;
+  for (std::vector<std::string>::const_iterator
+	 p = file_list.begin(), end = file_list.end();
+       p != end; ++p) {
+    if (dbh.getCopyData(row)) {
+      CHECK(!row.empty());
+      CHECK(row.at(row.size() - 1) == '\n');
+      row.resize(row.size() - 1); // strip '\n' at end
+      COMPARE_STRING(prefix + row, prefix + *p);
+    } else {
+      COMPARE_STRING("", prefix + *p);
+      return;
+    }
+  }
+  if (dbh.getCopyData(row)) {
+    COMPARE_STRING(prefix + row, "");
+  }
+}
 
 static void
 test_java_class(database &db, pgconn_handle &conn)
@@ -424,6 +464,8 @@ test()
       COMPARE_STRING(r2.getvalue(1, 0), "/usr/bin/lastb");
       COMPARE_STRING(r2.getvalue(1, 1), "last");
     }
+
+    check_rpm_file_list(dbh, "sysvinit-tools-2.88-6.dsf.fc17.i686");
 
     r1.exec(dbh, "SELECT build_host, build_time FROM symboldb.package"
 	    " WHERE symboldb.nevra(package)"
