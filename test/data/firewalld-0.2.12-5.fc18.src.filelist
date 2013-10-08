@@ -1,0 +1,13 @@
+rw-r--r--,"",1,mockbuild,mockbuild,2292,firewalld-0.2.12-bz903475.patch
+rw-r--r--,"",2,mockbuild,mockbuild,3787,firewalld-0.2.12-bz909466_1.patch
+rw-r--r--,"",3,mockbuild,mockbuild,3659,firewalld-0.2.12-bz909466_2.patch
+rw-r--r--,"",4,mockbuild,mockbuild,1933,firewalld-0.2.12-bz909466_3.patch
+rw-r--r--,"",5,mockbuild,mockbuild,1210,firewalld-0.2.12-bz912782.patch
+rw-r--r--,"",6,mockbuild,mockbuild,2696,firewalld-0.2.12-bz912782_2.patch
+rw-r--r--,"",7,mockbuild,mockbuild,4743,firewalld-0.2.12-bz915985.patch
+rw-r--r--,"",8,mockbuild,mockbuild,2678,firewalld-0.2.12-bz947230.patch
+rw-r--r--,"",9,mockbuild,mockbuild,817,firewalld-0.2.12-conf.patch
+rw-r--r--,"",10,mockbuild,mockbuild,881,firewalld-0.2.12-gtk.patch
+rw-rw-r--,"",11,mockbuild,mockbuild,370144,firewalld-0.2.12.tar.bz2
+rw-r--r--,"",12,mockbuild,mockbuild,1603,firewalld-0.2.6-MDNS-default.patch
+rw-r--r--,s,13,mockbuild,mockbuild,20300,firewalld.spec

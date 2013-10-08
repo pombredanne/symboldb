@@ -1,0 +1,12 @@
+rw-r--r--,"",33818991,mockbuild,mockbuild,1574,sysvinit-2.78-man.patch
+rw-r--r--,"",33818992,mockbuild,mockbuild,319,sysvinit-2.86-autofsck.patch
+rw-r--r--,"",33818993,mockbuild,mockbuild,1513,sysvinit-2.86-inittab.patch
+rw-r--r--,"",33818994,mockbuild,mockbuild,416,sysvinit-2.86-loginshell.patch
+rw-r--r--,"",33818995,mockbuild,mockbuild,451,sysvinit-2.86-single.patch
+rw-r--r--,"",33818996,mockbuild,mockbuild,1259,sysvinit-2.88-ipv6.patch
+rw-r--r--,"",33818997,mockbuild,mockbuild,4088,sysvinit-2.88-omit.patch
+rw-r--r--,"",33818998,mockbuild,mockbuild,1236,sysvinit-2.88-quiet.patch
+rw-r--r--,"",33818999,mockbuild,mockbuild,993,sysvinit-2.88-wall-broadcast-message.patch
+rw-r--r--,"",33819000,mockbuild,mockbuild,295,sysvinit-2.88-wall-maxlines.patch
+rw-rw-r--,"",33819001,mockbuild,mockbuild,105551,sysvinit-2.88dsf.tar.bz2
+rw-r--r--,s,33819002,mockbuild,mockbuild,21352,sysvinit.spec

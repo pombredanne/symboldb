@@ -1,0 +1,12 @@
+rwxr-xr-x,"",1,root,root,23752,/sbin/killall5
+rwxr-xr-x,"",3,root,root,19592,/usr/bin/last
+rwxr-xr-x,"",5,root,root,11240,/usr/bin/mesg
+r-xr-sr-x,"",6,root,tty,15352,/usr/bin/wall
+rw-r--r--,d,8,root,root,1217,/usr/share/doc/sysvinit-tools-2.88/COPYRIGHT
+rw-r--r--,d,9,root,root,31254,/usr/share/doc/sysvinit-tools-2.88/Changelog
+rw-r--r--,d,10,root,root,1965,/usr/share/man/man1/last.1.gz
+rw-r--r--,d,11,root,root,36,/usr/share/man/man1/lastb.1.gz
+rw-r--r--,d,12,root,root,982,/usr/share/man/man1/mesg.1.gz
+rw-r--r--,d,13,root,root,1083,/usr/share/man/man1/wall.1.gz
+rw-r--r--,d,14,root,root,1021,/usr/share/man/man8/killall5.8.gz
+rw-r--r--,d,15,root,root,1680,/usr/share/man/man8/pidof.8.gz

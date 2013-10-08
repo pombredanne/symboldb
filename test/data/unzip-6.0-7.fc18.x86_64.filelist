@@ -1,0 +1,13 @@
+rwxr-xr-x,"",1,root,root,23984,/usr/bin/funzip
+rwxr-xr-x,"",2,root,root,168992,/usr/bin/unzip
+rwxr-xr-x,"",3,root,root,78376,/usr/bin/unzipsfx
+rwxr-xr-x,"",4,root,root,2953,/usr/bin/zipgrep
+rwxr-xr-x,"",2,root,root,168992,/usr/bin/zipinfo
+rw-r--r--,d,7,root,root,4633,/usr/share/doc/unzip-6.0/BUGS
+rw-r--r--,d,8,root,root,3606,/usr/share/doc/unzip-6.0/LICENSE
+rw-r--r--,d,9,root,root,18337,/usr/share/doc/unzip-6.0/README
+rw-r--r--,d,10,root,root,1984,/usr/share/man/man1/funzip.1.gz
+rw-r--r--,d,11,root,root,18132,/usr/share/man/man1/unzip.1.gz
+rw-r--r--,d,12,root,root,5512,/usr/share/man/man1/unzipsfx.1.gz
+rw-r--r--,d,13,root,root,1543,/usr/share/man/man1/zipgrep.1.gz
+rw-r--r--,d,14,root,root,8889,/usr/share/man/man1/zipinfo.1.gz

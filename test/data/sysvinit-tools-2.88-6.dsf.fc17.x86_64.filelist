@@ -1,0 +1,16 @@
+rwxr-xr-x,"",33819234,root,root,19528,/sbin/killall5
+rwxr-xr-x,"",33819239,root,root,12992,/sbin/sulogin
+rwxr-xr-x,"",33819219,root,root,16768,/usr/bin/last
+rwxr-xr-x,"",33819229,root,root,6824,/usr/bin/mesg
+rwxr-xr-x,"",33819225,root,root,11016,/usr/bin/utmpdump
+r-xr-sr-x,"",33819197,root,tty,11672,/usr/bin/wall
+rw-r--r--,d,33819260,root,root,1217,/usr/share/doc/sysvinit-tools-2.88/COPYRIGHT
+rw-r--r--,d,33819259,root,root,31254,/usr/share/doc/sysvinit-tools-2.88/Changelog
+rw-r--r--,d,33819257,root,root,1965,/usr/share/man/man1/last.1.gz
+rw-r--r--,d,33819215,root,root,36,/usr/share/man/man1/lastb.1.gz
+rw-r--r--,d,33819212,root,root,982,/usr/share/man/man1/mesg.1.gz
+rw-r--r--,d,33819217,root,root,1052,/usr/share/man/man1/utmpdump.1.gz
+rw-r--r--,d,33819214,root,root,1083,/usr/share/man/man1/wall.1.gz
+rw-r--r--,d,33819223,root,root,1021,/usr/share/man/man8/killall5.8.gz
+rw-r--r--,d,33819213,root,root,1680,/usr/share/man/man8/pidof.8.gz
+rw-r--r--,d,33819222,root,root,1682,/usr/share/man/man8/sulogin.8.gz
