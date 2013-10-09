@@ -23,6 +23,8 @@
 
 * Extract pre/post scripts from RPMs.
 
+* Extract dependency flags and conflict dependencies from RPMs.
+
 * Add length column to the package_url table.
 
 * Parallelize RPM parsing and database loading.  It is not entirely
