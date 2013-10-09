@@ -435,6 +435,12 @@ test()
 
     check_rpm_file_list(dbh);
 
+    // Consistency of file attributes.
+    r1.exec(dbh, "SELECT COUNT(*),"
+	    " COUNT(DISTINCT (mode, flags, user_name, group_name, caps))"
+	    " FROM symboldb.file_attribute");
+    COMPARE_STRING(r1.getvalue(0, 0), r1.getvalue(0, 1));
+
     r1.exec(dbh, "SELECT build_host, build_time FROM symboldb.package"
 	    " WHERE symboldb.nevra(package)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");

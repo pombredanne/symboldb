@@ -280,7 +280,6 @@ intern_hash(const rpm_file_info &info, std::vector<unsigned char> &result)
   struct data {
     unsigned mode;
     unsigned flags;
-    unsigned caps;
   };
   union {
     data dat;
