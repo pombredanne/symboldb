@@ -59,9 +59,12 @@ check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_p
 
   pg_query(dbh, r,
 	   "CREATE TEMP TABLE file_list AS"
-	   " SELECT symboldb.file_mode(fc.mode), symboldb.file_flags(fc.flags)::text AS flags, file.inode, fc.user_name, fc.group_name, fc.length, file.name"
+	   " SELECT symboldb.file_mode(fa.mode),"
+	   " symboldb.file_flags(fa.flags)::text AS flags,"
+	   " file.inode, fa.user_name, fa.group_name, fc.length, file.name"
 	   " FROM symboldb.file JOIN symboldb.package USING (package_id)"
 	   " JOIN symboldb.file_contents fc USING (contents_id)"
+	   " JOIN symboldb.file_attribute fa USING (attribute_id)"
 	   " WHERE symboldb.nvra(package) = $1"
 	   " ORDER BY file.name", nvra);
   r.exec(dbh, "COPY file_list TO STDOUT WITH (FORMAT CSV)");
@@ -466,6 +469,7 @@ test()
 	    " JOIN symboldb.package p USING (package_id)"
 	    " JOIN symboldb.elf_file ef USING (contents_id)"
 	    " JOIN symboldb.file_contents fc USING (contents_id)"
+	    " JOIN symboldb.file_attribute fa USING (attribute_id)"
 	    " WHERE f.name = '/sbin/killall5'"
 	    " AND symboldb.nevra(p)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
@@ -497,6 +501,7 @@ test()
 	    " JOIN symboldb.package p USING (package_id)"
 	    " JOIN symboldb.elf_file ef USING (contents_id)"
 	    " JOIN symboldb.file_contents fc USING (contents_id)"
+	    " JOIN symboldb.file_attribute fa USING (attribute_id)"
 	    " WHERE f.name = '/usr/bin/wall'"
 	    " AND symboldb.nevra(p)"
 	    " = 'sysvinit-tools-2.88-9.dsf.fc18.x86_64'");
@@ -749,6 +754,7 @@ test()
 	    "SELECT symboldb.nevra(package), length, flags FROM symboldb.file"
 	    " JOIN symboldb.file_contents USING (contents_id)"
 	    " JOIN symboldb.package USING (package_id)"
+	    " JOIN symboldb.file_attribute fa USING (attribute_id)"
 	    " WHERE file.name = '/usr/share/mime/types'");
     CHECK(r1.ntuples() == 1);
     COMPARE_STRING(r1.getvalue(0, 0), "shared-mime-info-1.1-1.fc18.x86_64");

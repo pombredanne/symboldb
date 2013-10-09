@@ -430,6 +430,7 @@ add_files(const symboldb_options &opt, database &db, python_analyzer &pya,
 
   database::file_id fid;
   database::contents_id cid;
+  database::attribute_id aid;
   bool added;
   int contents_length;
   db.add_file(pkg, file.infos.front(), digest, preview, fid, cid,
@@ -445,7 +446,8 @@ add_files(const symboldb_options &opt, database &db, python_analyzer &pya,
 	 p != end; ++p) {
       assert(!p->ghost());
       p->normalize_name();
-      db.add_file(pkg, p->name, p->normalized, p->mtime, p->ino, cid);
+      aid = db.intern_file_attribute(*p);
+      db.add_file(pkg, p->name, p->normalized, p->mtime, p->ino, cid, aid);
       looks_like_python = looks_like_python
 	|| (unpack_files(pkginfo) && is_python_path(file.infos.front()));
     }

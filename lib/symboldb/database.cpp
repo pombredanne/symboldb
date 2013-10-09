@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <tr1/tuple>
 
 using namespace cxxll;
 
@@ -72,6 +73,20 @@ using namespace cxxll;
 #define PACKAGE_SET_MEMBER_TABLE "symboldb.package_set_member"
 #define URL_CACHE_TABLE "symboldb.url_cache"
 
+//////////////////////////////////////////////////////////////////////
+// database::impl
+
+struct database::impl {
+  pgconn_handle conn;
+
+  typedef std::tr1::tuple<int, int, std::string, std::string> attribute_row;
+  typedef std::map<attribute_row, attribute_id> file_attribute_map;
+  file_attribute_map file_attribute_cache;
+};
+
+//////////////////////////////////////////////////////////////////////
+// database
+
 // Include the schema.sql file.
 const char database::SCHEMA_BASE[] = {
 #include "schema-base.sql.inc"
@@ -81,10 +96,6 @@ const char database::SCHEMA_BASE[] = {
 const char database::SCHEMA_INDEX[] = {
 #include "schema-index.sql.inc"
   , 0
-};
-
-struct database::impl {
-  pgconn_handle conn;
 };
 
 database::database()
@@ -261,23 +272,20 @@ database::intern_package(const rpm_package_info &pkg,
 }
 
 static void
-intern_hash(const rpm_file_info &info,
-	    const std::vector<unsigned char> &digest,
-	    std::vector<unsigned char> &result)
+intern_hash(const rpm_file_info &info, std::vector<unsigned char> &result)
 {
-  std::vector<unsigned char> to_hash(digest);
+  std::vector<unsigned char> to_hash(128);
 
   struct data {
-    unsigned flags;
     unsigned mode;
+    unsigned flags;
   };
   union {
     data dat;
     char data_bytes[sizeof(data)];
   } u;
-  u.dat.flags = cpu_to_le_32(info.flags);
   u.dat.mode = cpu_to_le_32(info.mode);
-
+  u.dat.flags = cpu_to_le_32(info.flags);
   to_hash.insert(to_hash.end(),
 		 u.data_bytes + 0, u.data_bytes + sizeof(u.data_bytes));
   to_hash.insert(to_hash.end(),
@@ -300,13 +308,6 @@ database::intern_file_contents(const rpm_file_info &info,
   if (length < 0) {
     std::runtime_error("file length out of range");
   }
-  int mode = info.mode;
-  if (mode < 0) {
-    std::runtime_error("file mode out of range");
-  }
-
-  std::vector<unsigned char> row_hash;
-  intern_hash(info, digest, row_hash);
 
   // Ideally, we would like to obtain a lock here, but for large RPM
   // packages, the required number of locks would be huge.
@@ -314,14 +315,46 @@ database::intern_file_contents(const rpm_file_info &info,
   pg_query_binary
     (impl_->conn, res,
      "SELECT * FROM symboldb.intern_file_contents"
-     "($1, $2, $3, $4, $5, $6, $7, $8)",
-     row_hash, length, mode, static_cast<int>(info.flags),
-     info.user, info.group, digest, contents);
+     "($1, $2, $3)",
+     length, digest, contents);
   int id;
   bool added;
   pg_response(res, 0, id, added);
   cid = contents_id(id);
   return added;
+}
+
+database::attribute_id
+database::intern_file_attribute(const rpm_file_info &info)
+{
+  int mode = info.mode;
+  if (mode < 0) {
+    std::runtime_error("file mode out of range");
+  }
+  int flags = info.flags;
+  if (flags < 0) {
+    std::runtime_error("file flags out of range");
+  }
+
+  impl::attribute_row row(mode, flags, info.user, info.group);
+  attribute_id &aid(impl_->file_attribute_cache[row]);
+  if (aid.value() != 0) {
+    return aid;
+  }
+
+  std::vector<unsigned char> row_hash;
+  intern_hash(info, row_hash);
+
+  pgresult_handle r;
+  using namespace std::tr1;
+  pg_query_binary
+    (impl_->conn, r,
+     "SELECT symboldb.intern_file_attribute($1, $2, $3, $4, $5)",
+     row_hash, get<0>(row), get<1>(row), get<2>(row), get<3>(row));
+  int aidint;
+  pg_response(r, 0, aidint);
+  aid = attribute_id(aidint);
+  return aid;
 }
 
 void
@@ -414,7 +447,8 @@ database::add_package_dependency(package_id pkg, const rpm_dependency &dep)
 
 database::file_id
 database::add_file(package_id pkg, const std::string &name, bool normalized,
-		   long long mtime, int inode, contents_id cid)
+		   long long mtime, int inode,
+		   contents_id cid, attribute_id aid)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
@@ -422,9 +456,9 @@ database::add_file(package_id pkg, const std::string &name, bool normalized,
   pg_query_binary
     (impl_->conn, res,
      "INSERT INTO " FILE_TABLE " (package_id, name, mtime, inode,"
-     " contents_id, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6) RETURNING file_id",
-     pkg.value(), name, mtime, inode, cid.value(), normalized);
+     " contents_id, attribute_id, normalized)"
+     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING file_id",
+     pkg.value(), name, mtime, inode, cid.value(), aid.value(), normalized);
   return file_id(get_id_force(res));
 }
 
@@ -454,17 +488,15 @@ database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
     std::runtime_error("file mtime out of range");
   }
 
-  std::vector<unsigned char> row_hash;
-  intern_hash(info, digest, row_hash);
+  attribute_id aid = intern_file_attribute(info);
 
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
      "SELECT * FROM symboldb.add_file"
-     "($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
-     row_hash, length, mode, static_cast<int>(info.flags),
-     info.user, info.group, digest, contents,
-     pkg.value(), ino, mtime, info.name, info.normalized);
+     "($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+     length, digest, contents, aid.value(), pkg.value(),
+     ino, mtime, info.name, info.normalized);
   int fidint;
   int cidint;
   pg_response(res, 0, fidint, cidint, added, contents_length);

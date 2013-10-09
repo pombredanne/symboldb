@@ -87,6 +87,8 @@ public:
   typedef cxxll::tagged<int, package_id_tag> package_id;
   struct contents_id_tag {};
   typedef cxxll::tagged<int, contents_id_tag> contents_id;
+  struct attribute_id_tag {};
+  typedef cxxll::tagged<int, attribute_id_tag> attribute_id;
   struct file_id_tag {};
   typedef cxxll::tagged<int, file_id_tag> file_id;
 
@@ -105,6 +107,10 @@ public:
 			    const std::vector<unsigned char> &digest,
 			    const std::vector<unsigned char> &contents,
 			    contents_id &);
+
+  // Obtains an attribute ID for the attributes of this file.  This is
+  // backed by the symbildb.file_attribute table.
+  attribute_id intern_file_attribute(const cxxll::rpm_file_info &);
 
   // Adds a digest of the file representation.  A single RPM with
   // identical contents can have multiple representations due to
@@ -125,7 +131,7 @@ public:
   void add_package_dependency(package_id, const cxxll::rpm_dependency &);
 
   file_id add_file(package_id, const std::string &name, bool normalized,
-		   long long mtime, int inode, contents_id);
+		   long long mtime, int inode, contents_id, attribute_id);
   void add_file(package_id, const cxxll::rpm_file_info &,
 		const std::vector<unsigned char> &digest,
 		const std::vector<unsigned char> &contents,

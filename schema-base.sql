@@ -169,42 +169,61 @@ CREATE TABLE symboldb.package_set_member (
 
 CREATE TABLE symboldb.file_contents (
   contents_id SERIAL NOT NULL PRIMARY KEY,
-  mode INTEGER NOT NULL CHECK (mode >= 0),
   length BIGINT NOT NULL CHECK(length >= 0),
-  flags INTEGER NOT NULL,
-  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
-  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
-  digest BYTEA NOT NULL CHECK (LENGTH(digest) = 32),
-  contents BYTEA NOT NULL,
-  row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
+  digest BYTEA NOT NULL UNIQUE CHECK (LENGTH(digest) = 32),
+  contents BYTEA NOT NULL
 );
-COMMENT ON COLUMN symboldb.file_contents.flags IS
-  'from the FILEFLAGS header of the RPM file; indicates ghost status etc.';
 COMMENT ON COLUMN symboldb.file_contents.digest IS
   'SHA-256 digest of the entire file contents';
 COMMENT ON COLUMN symboldb.file_contents.contents IS
   'preview of the file contents';
-COMMENT ON COLUMN symboldb.file_contents.row_hash IS
-  'internal hash used for deduplication';
-CREATE INDEX ON symboldb.file_contents (digest);
 
 CREATE FUNCTION symboldb.intern_file_contents (
-  row_hash BYTEA, length BIGINT, mode INTEGER,  flags INTEGER,
-  user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
+  length BIGINT, digest BYTEA, contents BYTEA,
   OUT cid INTEGER, OUT added BOOLEAN, OUT contents_length INTEGER
 ) LANGUAGE 'plpgsql' AS $$
 BEGIN
   SELECT contents_id, LENGTH(fc.contents) INTO cid, contents_length
-    FROM symboldb.file_contents fc WHERE fc.row_hash = $1;
+    FROM symboldb.file_contents fc WHERE fc.digest = $2;
   IF FOUND THEN
     added := FALSE;
     RETURN;
   END IF;
   INSERT INTO symboldb.file_contents
-     (row_hash, length, mode, flags, user_name, group_name, digest, contents)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING contents_id INTO cid;
+     (length, digest, contents)
+     VALUES ($1, $2, $3) RETURNING contents_id INTO cid;
   added := TRUE;
   contents_length := LENGTH(contents);
+  RETURN;
+END;
+$$;
+
+CREATE TABLE symboldb.file_attribute (
+  attribute_id SERIAL NOT NULL PRIMARY KEY,
+  mode INTEGER NOT NULL CHECK (mode >= 0),
+  flags INTEGER NOT NULL,
+  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
+  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
+  row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
+);
+COMMENT ON COLUMN symboldb.file_attribute.flags IS
+  'from the FILEFLAGS header of the RPM file; indicates ghost status etc.';
+COMMENT ON COLUMN symboldb.file_attribute.row_hash IS
+  'internal hash used for deduplication';
+
+CREATE FUNCTION symboldb.intern_file_attribute (
+  row_hash BYTEA, mode INTEGER, flags INTEGER,
+  user_name TEXT, group_name TEXT, OUT aid INTEGER
+) LANGUAGE 'plpgsql' AS $$
+BEGIN
+  SELECT attribute_id INTO aid
+    FROM symboldb.file_attribute fa WHERE fa.row_hash = $1;
+  IF FOUND THEN
+    RETURN;
+  END IF;
+  INSERT INTO symboldb.file_attribute
+     (row_hash, mode, flags, user_name, group_name)
+     VALUES ($1, $2, $3, $4, $5) RETURNING attribute_id INTO aid;
   RETURN;
 END;
 $$;
@@ -214,6 +233,7 @@ CREATE TABLE symboldb.file (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
   contents_id INTEGER NOT NULL REFERENCES symboldb.file_contents,
+  attribute_id INTEGER NOT NULL REFERENCES symboldb.file_attribute,
   inode INTEGER NOT NULL,
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
@@ -225,8 +245,7 @@ COMMENT ON COLUMN symboldb.file.inode IS
   'intra-package inode number (used to indicate hardlinks)';
 
 CREATE FUNCTION symboldb.add_file (
-  row_hash BYTEA, length BIGINT, mode INTEGER, flags INTEGER,
-  user_name TEXT, group_name TEXT, digest BYTEA, contents BYTEA,
+  length BIGINT, digest BYTEA, contents BYTEA, attribute_id INTEGER,
   package_id INTEGER, inode INTEGER, mtime INTEGER,
   name TEXT, normalized BOOLEAN,
   OUT fid INTEGER, OUT cid INTEGER, OUT added BOOLEAN,
@@ -236,9 +255,9 @@ BEGIN
   SELECT ifc.cid, ifc.added, ifc.contents_length
     INTO cid, added, contents_length
     FROM symboldb.intern_file_contents
-      ($1, $2, $3, $4, $5, $6, $7, $8) ifc;
+      ($1, $2, $3) ifc;
   INSERT INTO symboldb.file VALUES
-    (DEFAULT, $9, cid, $10, $11, $12, $13) RETURNING file_id INTO fid;
+    (DEFAULT, $5, cid, $4, $6, $7, $8, $9) RETURNING file_id INTO fid;
 END;
 $$;
 

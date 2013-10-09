@@ -9,10 +9,6 @@
   information in expat_source, and a stack of open tags.  (Hopefully,
   this will not cause too much of a slowdown.)
 
-* Move metadata (user name, permissions etc.) from
-  symboldb.file_contents to separate table, referenced from FROM
-  symboldb.file.
-
 * Include capabilities in file metadata.
 
 * Extract X.509 certificates and recognizable key material (or
