@@ -48,3 +48,5 @@
   means re-opening the RPM file and re-start processing, expecting
   that the race condition will not reappear (because the row is now
   present).
+
+* Add integration tests running the "symboldb" main program.
