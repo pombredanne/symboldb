@@ -235,6 +235,7 @@ get_file_info(rpmfi_handle &fi, rpm_file_info &info)
   info.name = rpmfiFN(fi.get());
   info.user = rpmfiFUser(fi.get());
   info.group = rpmfiFGroup(fi.get());
+  info.capabilities = rpmfiFCaps(fi.get());
   info.mode = rpmfiFMode(fi.get());
   info.mtime = rpmfiFMtime(fi.get());
   info.ino = rpmfiFInode(fi.get());
