@@ -545,6 +545,26 @@ $$ IMMUTABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
   'format the integer as a file permission string';
 
+CREATE FUNCTION symboldb.file_flags_internal (INTEGER, INTEGER, TEXT)
+  RETURNS TEXT AS $$
+  SELECT CASE WHEN ($1 & $2) <> 0 THEN $3 ELSE '' END;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_flags_internal
+  (INTEGER, INTEGER, TEXT) IS 'internal helper function';
+
+CREATE FUNCTION symboldb.file_flags (INTEGER) RETURNS TEXT AS $$
+  SELECT symboldb.file_flags_internal($1, 2, 'd') ||
+    symboldb.file_flags_internal($1, 1, 'c') ||
+    symboldb.file_flags_internal($1, 32, 's') ||
+    symboldb.file_flags_internal($1, 8, 'm') ||
+    symboldb.file_flags_internal($1, 16, 'n') ||
+    symboldb.file_flags_internal($1, 64, 'g') ||
+    symboldb.file_flags_internal($1, 128, 'l') ||
+    symboldb.file_flags_internal($1, 256, 'r');
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_flags (INTEGER) IS
+  'format the integer as a RPM file flags string';
+
 -- Convenience functions.
 
 CREATE FUNCTION symboldb.package_set (TEXT) RETURNS INTEGER AS $$
