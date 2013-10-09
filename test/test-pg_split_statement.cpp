@@ -32,6 +32,8 @@ test()
     "SELECT 3;\n"
     "-- Comment ';'\n" "SELECT '';"
     "SELECT ';';"
+    "SELECT $$xyz$$;"
+    "SELECT $$\n'\n$$;"
     "SELECT 'abc';"
     "SELECT ''';';", result);
   static const char *const statements[] = {
@@ -40,6 +42,8 @@ test()
     "SELECT 3;",
     "SELECT '';",
     "SELECT ';';",
+    "SELECT $$xyz$$;",
+    "SELECT $$\n'\n$$;",
     "SELECT 'abc';",
     "SELECT ''';';",
     NULL

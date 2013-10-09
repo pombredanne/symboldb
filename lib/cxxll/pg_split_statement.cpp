@@ -60,6 +60,29 @@ cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
 	throw std::runtime_error("unterminated SQL statement");
       }
       break;
+    case '$':
+      if (!in_statement) {
+	throw std::runtime_error("$ at start of SQL statement");
+      }
+      if (*sql == '$') {
+	// $$-terminated string.
+	++sql;
+	while (*sql) {
+	  if (*sql == '$') {
+	    ++sql;
+	    if (*sql == '$') {
+	      ++sql;
+	      break;
+	    }
+	  } else {
+	    ++sql;
+	  }
+	}
+	if (*sql == '\0') {
+	  throw std::runtime_error("unterminated SQL statement");
+	}
+      }
+      break;
     case ';':
       if (!in_statement) {
 	throw std::runtime_error("empty SQL statement");
