@@ -48,16 +48,14 @@ using namespace cxxll;
 static void
 check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_path)
 {
+  test_section ts(std::string("RPM file list ") + nvra);
   std::vector<std::string> file_list;
   read_lines(filelist_path, file_list);
-
-  std::string prefix(nvra);
-  prefix += ':';
 
   pgresult_handle r;
   pg_query(dbh, r, "SELECT COUNT(*) FROM symboldb.package"
 	   " WHERE symboldb.nvra(package) = $1", nvra);
-  COMPARE_STRING(prefix + r.getvalue(0, 0), prefix + '1');
+  COMPARE_STRING(r.getvalue(0, 0), "1");
 
   pg_query(dbh, r,
 	   "CREATE TEMP TABLE file_list AS"
@@ -75,14 +73,14 @@ check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_p
       CHECK(!row.empty());
       CHECK(row.at(row.size() - 1) == '\n');
       row.resize(row.size() - 1); // strip '\n' at end
-      COMPARE_STRING(prefix + row, prefix + *p);
+      COMPARE_STRING(row, *p);
     } else {
-      COMPARE_STRING("", prefix + *p);
+      COMPARE_STRING("", *p);
       goto cleanup;
     }
   }
   if (dbh.getCopyData(row)) {
-    COMPARE_STRING(prefix + row, "");
+    COMPARE_STRING(row, "");
   }
  cleanup:
   r.exec(dbh, "DROP TABLE file_list");
