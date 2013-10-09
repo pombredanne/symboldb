@@ -204,6 +204,7 @@ CREATE TABLE symboldb.file_attribute (
   flags INTEGER NOT NULL,
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
+  caps TEXT NOT NULL COLLATE "C",
   row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
 );
 COMMENT ON COLUMN symboldb.file_attribute.flags IS
@@ -213,7 +214,7 @@ COMMENT ON COLUMN symboldb.file_attribute.row_hash IS
 
 CREATE FUNCTION symboldb.intern_file_attribute (
   row_hash BYTEA, mode INTEGER, flags INTEGER,
-  user_name TEXT, group_name TEXT, OUT aid INTEGER
+  user_name TEXT, group_name TEXT, caps TEXT, OUT aid INTEGER
 ) LANGUAGE 'plpgsql' AS $$
 BEGIN
   SELECT attribute_id INTO aid
@@ -222,8 +223,8 @@ BEGIN
     RETURN;
   END IF;
   INSERT INTO symboldb.file_attribute
-     (row_hash, mode, flags, user_name, group_name)
-     VALUES ($1, $2, $3, $4, $5) RETURNING attribute_id INTO aid;
+     (row_hash, mode, flags, user_name, group_name, caps)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING attribute_id INTO aid;
   RETURN;
 END;
 $$;

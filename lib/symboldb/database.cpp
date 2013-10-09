@@ -79,7 +79,8 @@ using namespace cxxll;
 struct database::impl {
   pgconn_handle conn;
 
-  typedef std::tr1::tuple<int, int, std::string, std::string> attribute_row;
+  typedef std::tr1::tuple<
+    int, int, std::string, std::string, std::string> attribute_row;
   typedef std::map<attribute_row, attribute_id> file_attribute_map;
   file_attribute_map file_attribute_cache;
 };
@@ -279,6 +280,7 @@ intern_hash(const rpm_file_info &info, std::vector<unsigned char> &result)
   struct data {
     unsigned mode;
     unsigned flags;
+    unsigned caps;
   };
   union {
     data dat;
@@ -293,6 +295,9 @@ intern_hash(const rpm_file_info &info, std::vector<unsigned char> &result)
   to_hash.push_back('\0');
   to_hash.insert(to_hash.end(),
 		 info.group.begin(), info.group.end());
+  to_hash.push_back('\0');
+  to_hash.insert(to_hash.end(),
+		 info.capabilities.begin(), info.capabilities.end());
   result = hash(hash_sink::md5, to_hash);
 }
 
@@ -336,7 +341,8 @@ database::intern_file_attribute(const rpm_file_info &info)
     std::runtime_error("file flags out of range");
   }
 
-  impl::attribute_row row(mode, flags, info.user, info.group);
+  impl::attribute_row row
+    (mode, flags, info.user, info.group, info.capabilities);
   attribute_id &aid(impl_->file_attribute_cache[row]);
   if (aid.value() != 0) {
     return aid;
@@ -349,8 +355,9 @@ database::intern_file_attribute(const rpm_file_info &info)
   using namespace std::tr1;
   pg_query_binary
     (impl_->conn, r,
-     "SELECT symboldb.intern_file_attribute($1, $2, $3, $4, $5)",
-     row_hash, get<0>(row), get<1>(row), get<2>(row), get<3>(row));
+     "SELECT symboldb.intern_file_attribute($1, $2, $3, $4, $5, $6)",
+     row_hash,
+     get<0>(row), get<1>(row), get<2>(row), get<3>(row), get<4>(row));
   int aidint;
   pg_response(r, 0, aidint);
   aid = attribute_id(aidint);
