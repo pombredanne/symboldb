@@ -1,6 +1,6 @@
-rw-r--r--,d,2,root,root,18008,/usr/share/doc/openbios-1.0.svn1063/COPYING
-rw-r--r--,d,3,root,root,4796,/usr/share/doc/openbios-1.0.svn1063/README
-rw-r--r--,d,4,root,root,4,/usr/share/doc/openbios-1.0.svn1063/VERSION
-rwxr-xr-x,"",6,root,root,729908,/usr/share/qemu/openbios-ppc
-rwxr-xr-x,"",7,root,root,381796,/usr/share/qemu/openbios-sparc32
-rwxr-xr-x,"",8,root,root,1598664,/usr/share/qemu/openbios-sparc64
+rw-r--r--,"",d,2,root,root,18008,/usr/share/doc/openbios-1.0.svn1063/COPYING
+rw-r--r--,"",d,3,root,root,4796,/usr/share/doc/openbios-1.0.svn1063/README
+rw-r--r--,"",d,4,root,root,4,/usr/share/doc/openbios-1.0.svn1063/VERSION
+rwxr-xr-x,"","",6,root,root,729908,/usr/share/qemu/openbios-ppc
+rwxr-xr-x,"","",7,root,root,381796,/usr/share/qemu/openbios-sparc32
+rwxr-xr-x,"","",8,root,root,1598664,/usr/share/qemu/openbios-sparc64

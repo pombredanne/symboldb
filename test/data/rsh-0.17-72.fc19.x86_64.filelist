@@ -1,0 +1,10 @@
+rwxr-xr-x,= cap_net_bind_service+ep,"",1,root,root,24480,/usr/bin/rcp
+rwxr-xr-x,"","",2,root,root,20288,/usr/bin/rexec
+rwxr-xr-x,= cap_net_bind_service+ep,"",3,root,root,20344,/usr/bin/rlogin
+rwxr-xr-x,= cap_net_bind_service+ep,"",4,root,root,15984,/usr/bin/rsh
+rw-r--r--,"",d,6,root,root,441,/usr/share/doc/rsh-0.17/BUGS
+rw-r--r--,"",d,7,root,root,4721,/usr/share/doc/rsh-0.17/README
+rw-r--r--,"",d,8,root,root,1984,/usr/share/man/man1/rcp.1.gz
+rw-r--r--,"",d,9,root,root,2870,/usr/share/man/man1/rexec.1.gz
+rw-r--r--,"",d,10,root,root,2029,/usr/share/man/man1/rlogin.1.gz
+rw-r--r--,"",d,11,root,root,2121,/usr/share/man/man1/rsh.1.gz

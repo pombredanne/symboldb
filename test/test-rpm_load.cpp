@@ -59,9 +59,10 @@ check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_p
 
   pg_query(dbh, r,
 	   "CREATE TEMP TABLE file_list AS"
-	   " SELECT symboldb.file_mode(fa.mode),"
+	   " SELECT symboldb.file_mode(fa.mode), fa.caps,"
 	   " symboldb.file_flags(fa.flags)::text AS flags,"
-	   " file.inode, fa.user_name, fa.group_name, fc.length, file.name"
+	   " file.inode, fa.user_name, fa.group_name,"
+	   " fc.length, file.name"
 	   " FROM symboldb.file JOIN symboldb.package USING (package_id)"
 	   " JOIN symboldb.file_contents fc USING (contents_id)"
 	   " JOIN symboldb.file_attribute fa USING (attribute_id)"
@@ -408,6 +409,9 @@ test()
       } else if (r1.getvalue(i, 1) == std::string("kphotobymail")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "0.4.1");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("rsh")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "0.17");
+	continue;
       }
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
@@ -440,13 +444,14 @@ test()
 
     r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
 	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
-    COMPARE_NUMBER(r1.ntuples(), 9);
+    COMPARE_NUMBER(r1.ntuples(), 10);
     {
       int row = 0;
       COMPARE_STRING(r1.getvalue(row++, 0), "firewalld-0.2.12-5.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "kphotobymail-0.4.1-11.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "openbios-1.0.svn1063-1.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "rsh-0.17-72.fc19.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "shared-mime-info-1.1-1.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-6.dsf.fc17.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-2.88-9.dsf.fc18.src");
@@ -812,7 +817,7 @@ test()
 
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
-    COMPARE_NUMBER(digests.size(), 20U); // 10 packages with 2 digests each
+    COMPARE_NUMBER(digests.size(), 24U); // 12 packages with 2 digests each
 
     {
       std::vector<unsigned char> digest;

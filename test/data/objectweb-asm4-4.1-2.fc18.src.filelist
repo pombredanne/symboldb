@@ -1,3 +1,3 @@
-rw-rw-r--,"",1,mockbuild,mockbuild,753476,asm-4.1.tar.gz
-rw-r--r--,"",2,mockbuild,mockbuild,750,asm4-4.1-fix-xml-manifest.patch
-rw-r--r--,s,3,mockbuild,mockbuild,7795,objectweb-asm4.spec
+rw-rw-r--,"","",1,mockbuild,mockbuild,753476,asm-4.1.tar.gz
+rw-r--r--,"","",2,mockbuild,mockbuild,750,asm4-4.1-fix-xml-manifest.patch
+rw-r--r--,"",s,3,mockbuild,mockbuild,7795,objectweb-asm4.spec

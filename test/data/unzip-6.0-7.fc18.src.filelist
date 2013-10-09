@@ -1,8 +1,8 @@
-rw-r--r--,"",1,mockbuild,mockbuild,636,unzip-6.0-attribs-overflow.patch
-rw-r--r--,"",2,mockbuild,mockbuild,868,unzip-6.0-bzip2-configure.patch
-rw-r--r--,"",3,mockbuild,mockbuild,6218,unzip-6.0-close.patch
-rw-r--r--,"",4,mockbuild,mockbuild,396,unzip-6.0-exec-shield.patch
-rw-r--r--,"",5,mockbuild,mockbuild,614,unzip-6.0-manpage-fix.patch
-rw-r--r--,"",6,mockbuild,mockbuild,346,unzip-6.0-nostrip.patch
-rw-r--r--,s,7,mockbuild,mockbuild,11368,unzip.spec
-rw-rw-r--,"",8,mockbuild,mockbuild,1376845,unzip60.tar.gz
+rw-r--r--,"","",1,mockbuild,mockbuild,636,unzip-6.0-attribs-overflow.patch
+rw-r--r--,"","",2,mockbuild,mockbuild,868,unzip-6.0-bzip2-configure.patch
+rw-r--r--,"","",3,mockbuild,mockbuild,6218,unzip-6.0-close.patch
+rw-r--r--,"","",4,mockbuild,mockbuild,396,unzip-6.0-exec-shield.patch
+rw-r--r--,"","",5,mockbuild,mockbuild,614,unzip-6.0-manpage-fix.patch
+rw-r--r--,"","",6,mockbuild,mockbuild,346,unzip-6.0-nostrip.patch
+rw-r--r--,"",s,7,mockbuild,mockbuild,11368,unzip.spec
+rw-rw-r--,"","",8,mockbuild,mockbuild,1376845,unzip60.tar.gz
