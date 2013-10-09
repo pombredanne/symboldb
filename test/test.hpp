@@ -68,6 +68,16 @@ test_compare_number(Left left, Right right,
   }
 }
 
+// Marks a sub-section of the test.  The subsection name is included
+// in failure messages if present.
+class test_section {
+  std::string old_name;
+public:
+  explicit test_section(const char *name);
+  explicit test_section(const std::string &);
+  ~test_section();
+};
+
 // Registers a test case in the test suite.  This is supposed to be
 // used to define a file-level static object per test case.
 struct test_register {

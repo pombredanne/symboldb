@@ -64,11 +64,35 @@ namespace {
   } tests_cleanup_;
 
   const char *current_test;
-  bool first_failure;
   unsigned exception_count;
   unsigned success_count;
   unsigned failure_count;
 }
+
+//////////////////////////////////////////////////////////////////////
+// test_section
+
+static std::string test_section_name;
+
+test_section::test_section(const char *name)
+{
+  old_name = name;
+  std::swap(test_section_name, old_name);
+}
+
+test_section::test_section(const std::string &name)
+{
+  old_name = name;
+  std::swap(test_section_name, old_name);
+}
+
+test_section::~test_section()
+{
+  std::swap(test_section_name, old_name);
+}
+
+//////////////////////////////////////////////////////////////////////
+// test_register
 
 test_register::test_register(const char *name, void(*func)())
 {
@@ -85,12 +109,22 @@ test_register::~test_register()
 {
 }
 
+//////////////////////////////////////////////////////////////////////
+
 static void
 test_header()
 {
-  if (first_failure) {
-    fprintf(stderr, "error: in test case %s:\n", current_test);
-    first_failure = false;
+  static const char *last_test;
+  static std::string last_section;
+  if (current_test != last_test || last_section != test_section_name) {
+    if (test_section_name.empty()) {
+      fprintf(stderr, "error: in test case %s:\n", current_test);
+    } else {
+      fprintf(stderr, "error: in test case %s, \"%s\":\n", current_test,
+	      quote(test_section_name).c_str());
+    }
+    last_test = current_test;
+    last_section = test_section_name;
   }
 }
 
@@ -277,7 +311,6 @@ run_tests()
   for (test_suite::iterator p = tests->begin(), end = tests->end();
        p != end; ++p) {
     current_test = p->name;
-    first_failure = true;
     try {
       p->func();
     } catch (pg_exception &e) {
