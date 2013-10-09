@@ -33,6 +33,7 @@ struct rpm_file_info {
   std::string name;
   std::string user;
   std::string group;
+  std::string capabilities;	// textual form used by RPM
   std::string linkto;		// target of a symbolic link
   checksum digest;
   uint32_t mode;
