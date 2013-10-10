@@ -26,6 +26,7 @@ CREATE TYPE symboldb.elf_arch AS ENUM (
 );
 
 CREATE TYPE symboldb.rpm_kind AS ENUM ('binary', 'source');
+
 CREATE TYPE symboldb.rpm_script_kind AS ENUM (
   'pretrans',
   'prein',
@@ -34,6 +35,10 @@ CREATE TYPE symboldb.rpm_script_kind AS ENUM (
   'postun',
   'posttrans',
   'verify'
+);
+
+CREATE TYPE symboldb.rpm_dependency_kind AS ENUM (
+ 'require', 'provide', 'conflict', 'obsolete'
 );
 
 CREATE TYPE symboldb.elf_visibility AS ENUM
@@ -135,34 +140,14 @@ END;
 $$;
 
 
-CREATE TABLE symboldb.package_require (
+CREATE TABLE symboldb.package_dependency (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
+  kind symboldb.rpm_dependency_kind NOT NULL,
+  flags INTEGER NOT NULL CHECK (flags >= 0),
   capability TEXT NOT NULL COLLATE "C",
   op TEXT COLLATE "C",
-  version TEXT COLLATE "C",
-  pre BOOLEAN NOT NULL,
-  build BOOLEAN NOT NULL
-);
-
-CREATE TABLE symboldb.package_provide (
-  package_id INTEGER NOT NULL
-    REFERENCES symboldb.package ON DELETE CASCADE,
-  capability TEXT NOT NULL COLLATE "C",
-  op TEXT COLLATE "C",
-  version TEXT COLLATE "C",
-  pre BOOLEAN NOT NULL,
-  build BOOLEAN NOT NULL
-);
-
-CREATE TABLE symboldb.package_obsolete (
-  package_id INTEGER NOT NULL
-    REFERENCES symboldb.package ON DELETE CASCADE,
-  capability TEXT NOT NULL COLLATE "C",
-  op TEXT COLLATE "C",
-  version TEXT COLLATE "C",
-  pre BOOLEAN NOT NULL,
-  build BOOLEAN NOT NULL
+  version TEXT COLLATE "C"
 );
 
 CREATE TABLE symboldb.package_script (
@@ -635,13 +620,13 @@ $$ IMMUTABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.trigger_type (INTEGER) IS
   'extract the trigger type from the flags of a trigger condition';
 
-CREATE FUNCTION symboldb.trigger_comparison (INTEGER) RETURNS TEXT AS $$
+CREATE FUNCTION symboldb.version_comparison (INTEGER) RETURNS TEXT AS $$
   SELECT symboldb.file_flags_internal($1, 2, '<')
     || symboldb.file_flags_internal($1, 4, '>')
     || symboldb.file_flags_internal($1, 8, '=');
 $$ IMMUTABLE STRICT LANGUAGE SQL;
-COMMENT ON FUNCTION symboldb.trigger_comparison (INTEGER) IS
-  'extract version comparison operator from the flags of a trigger condition';
+COMMENT ON FUNCTION symboldb.version_comparison (INTEGER) IS
+  'the comparison operator inside the trigger or dependency flags';
 
 -- Convenience functions.
 

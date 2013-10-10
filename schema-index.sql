@@ -27,14 +27,8 @@ CREATE INDEX ON symboldb.package USING GIN (rpm_group gin_trgm_ops);
 
 CREATE INDEX ON symboldb.package_digest (package_id);
 
-CREATE INDEX ON symboldb.package_require (package_id);
-CREATE INDEX ON symboldb.package_require (capability);
-
-CREATE INDEX ON symboldb.package_provide (package_id);
-CREATE INDEX ON symboldb.package_provide (capability);
-
-CREATE INDEX ON symboldb.package_obsolete (package_id);
-CREATE INDEX ON symboldb.package_obsolete (capability);
+CREATE INDEX ON symboldb.package_dependency (package_id);
+CREATE INDEX ON symboldb.package_dependency (kind, capability);
 
 CREATE INDEX package_trigger_condition_package
   ON symboldb.package_trigger_condition (package_id, script_idx);

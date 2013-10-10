@@ -56,9 +56,7 @@ using namespace cxxll;
 
 #define PACKAGE_TABLE "symboldb.package"
 #define PACKAGE_DIGEST_TABLE "symboldb.package_digest"
-#define PACKAGE_REQUIRE_TABLE "symboldb.package_require"
-#define PACKAGE_PROVIDE_TABLE "symboldb.package_provide"
-#define PACKAGE_OBSOLETE_TABLE "symboldb.package_obsolete"
+#define PACKAGE_DEPENDENCY_TABLE "symboldb.package_dependency"
 #define PACKAGE_SCRIPT_TABLE "symboldb.package_script"
 #define PACKAGE_TRIGGER_SCRIPT_TABLE "symboldb.package_trigger_script"
 #define PACKAGE_TRIGGER_CONDITION_TABLE "symboldb.package_trigger_condition"
@@ -428,33 +426,12 @@ void
 database::add_package_dependency(package_id pkg, const rpm_dependency &dep)
 {
   pgresult_handle res;
-  const char *op = dep.op.empty() ? NULL : dep.op.c_str();
-  const char *version = dep.version.empty() ? NULL : dep.version.c_str();
-  switch (dep.kind) {
-  case rpm_dependency::requires:
-    pg_query(impl_->conn, res,
-	     "INSERT INTO " PACKAGE_REQUIRE_TABLE
-	     " (package_id, capability, op, version, pre, build)"
-	     " VALUES ($1, $2, $3, $4, $5, $6)",
-	     pkg.value(), dep.capability, op, version, dep.pre, dep.build);
-    break;
-  case rpm_dependency::provides:
-    pg_query(impl_->conn, res,
-	     "INSERT INTO " PACKAGE_PROVIDE_TABLE
-	     " (package_id, capability, op, version, pre, build)"
-	     " VALUES ($1, $2, $3, $4, $5, $6)",
-	     pkg.value(), dep.capability, op, version, dep.pre, dep.build);
-    break;
-  case rpm_dependency::obsoletes:
-    pg_query(impl_->conn, res,
-	     "INSERT INTO " PACKAGE_OBSOLETE_TABLE
-	     " (package_id, capability, op, version, pre, build)"
-	     " VALUES ($1, $2, $3, $4, $5, $6)",
-	     pkg.value(), dep.capability, op, version, dep.pre, dep.build);
-    break;
-  default:
-    abort();
-  }
+  pg_query(impl_->conn, res,
+	   "INSERT INTO " PACKAGE_DEPENDENCY_TABLE
+	   " (package_id, kind, flags, capability, version)"
+	     " VALUES ($1, $2::symboldb.rpm_dependency_kind, $3, $4, $5)",
+	   pkg.value(), rpm_dependency::to_string(dep.kind),
+	   dep.flags, dep.capability, dep.version);
 }
 
 void

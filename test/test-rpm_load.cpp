@@ -176,7 +176,7 @@ check_rpm_trigger_conditions(pgconn_handle &dbh)
     (dbh, "RPM trigger scripts", "test/data/rpm-trigger-conditions.csv",
      "SELECT symboldb.nvra(package), c.script_idx,"
      " symboldb.trigger_type(c.flags),"
-     " c.name, symboldb.trigger_comparison(c.flags), c.version"
+     " c.name, symboldb.version_comparison(c.flags), c.version"
      " FROM symboldb.package"
      " JOIN symboldb.package_trigger_condition c USING (package_id)"
      " ORDER BY 1, 2, name");
@@ -188,19 +188,11 @@ check_rpm_dependencies(pgconn_handle &dbh)
 {
   check_simple_query
     (dbh, "RPM dependencies", "test/data/rpm-dependencies.csv",
-     "SELECT * FROM (SELECT symboldb.nevra(package),"
-     " 'require', capability, COALESCE(op, ''), COALESCE(d.version, '')"
+     "SELECT symboldb.nevra(package), d.kind::text,"
+     " capability, symboldb.version_comparison(d.flags), d.version"
      " FROM symboldb.package"
-     " JOIN symboldb.package_require d USING (package_id)"
-     " UNION ALL SELECT symboldb.nevra(package),"
-     " 'provide', capability, COALESCE(op, ''), COALESCE(d.version, '')"
-     " FROM symboldb.package"
-     " JOIN symboldb.package_provide d USING (package_id)"
-     " UNION ALL SELECT symboldb.nevra(package),"
-     " 'obsolete', capability, COALESCE(op, ''), COALESCE(d.version, '')"
-     " FROM symboldb.package"
-     " JOIN symboldb.package_obsolete d USING (package_id)"
-     " ) x ORDER BY 1, 2, 3");
+     " JOIN symboldb.package_dependency d USING (package_id)"
+     " ORDER BY 1, 2, 3");
 }
 
 

@@ -18,10 +18,28 @@
 
 #include <cxxll/rpm_dependency.hpp>
 
+#include <stdexcept>
+
 using namespace cxxll;
 
-rpm_dependency::rpm_dependency()
-  : kind(undefined), pre(false), build(false)
+const char *
+rpm_dependency::to_string(kind_type typ)
+{
+  switch (typ) {
+  case require:
+    return "require";
+  case provide:
+    return "provide";
+  case conflict:
+    return "conflict";
+  case obsolete:
+    return "obsolete";
+  }
+  throw std::logic_error("invalid value for cxxll::rpm_dependency::kind_type");
+}
+
+rpm_dependency::rpm_dependency(kind_type typ)
+  : kind(typ), flags(0)
 {
 }
 

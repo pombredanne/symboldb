@@ -329,39 +329,33 @@ static void get_deps(Header header,
       throw rpm_parser_exception
 	("missing entries in " + std::string(versionname) + " header");
     }
-    dependencies.push_back(rpm_dependency());
+    dependencies.push_back(rpm_dependency(kind));
     rpm_dependency &dep = dependencies.back();
-    dep.kind = kind;
     dep.capability = namestr;
-    if (*flagsuint & RPMSENSE_LESS) {
-      dep.op += '<';
-    }
-    if (*flagsuint & RPMSENSE_GREATER) {
-      dep.op += '>';
-    }
-    if (*flagsuint & RPMSENSE_EQUAL) {
-      dep.op += '=';
-    }
-    dep.pre = (*flagsuint & RPMSENSE_PREREQ) != 0;
     dep.version = versionstr;
+    dep.flags = *flagsuint;
   }
 }
 
 void
 rpm_parser_state::impl::get_dependencies()
 {
-  get_deps(header, dependencies, rpm_dependency::requires, false,
+  get_deps(header, dependencies, rpm_dependency::require, false,
 	   RPMTAG_REQUIRENAME, "REQUIRENAME",
 	   RPMTAG_REQUIREFLAGS, "REQUIREFLAGS",
 	   RPMTAG_REQUIREVERSION, "REQUIREVERSION");
-  get_deps(header, dependencies, rpm_dependency::provides, true,
+  get_deps(header, dependencies, rpm_dependency::provide, true,
 	   RPMTAG_PROVIDENAME, "PROVIDENAME",
 	   RPMTAG_PROVIDEFLAGS, "PROVIDEFLAGS",
 	   RPMTAG_PROVIDEVERSION, "PROVIDEVERSION");
-  get_deps(header, dependencies, rpm_dependency::obsoletes, true,
+  get_deps(header, dependencies, rpm_dependency::obsolete, true,
 	   RPMTAG_OBSOLETENAME, "OBSOLETENAME",
 	   RPMTAG_OBSOLETEFLAGS, "OBSOLETEFLAGS",
 	   RPMTAG_OBSOLETEVERSION, "OBSOLETEVERSION");
+  get_deps(header, dependencies, rpm_dependency::conflict, true,
+	   RPMTAG_CONFLICTNAME, "CONFLICTNAME",
+	   RPMTAG_CONFLICTFLAGS, "CONFLICTFLAGS",
+	   RPMTAG_CONFLICTVERSION, "CONFLICTVERSION");
 }
 
 void

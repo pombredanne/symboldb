@@ -24,22 +24,20 @@ namespace cxxll {
 
 struct rpm_dependency {
   typedef enum {
-    undefined,
-    requires,
-    provides,
-    conflicts,
-    obsoletes
+    require,
+    provide,
+    conflict,
+    obsolete
   } kind_type;
 
+  static const char *to_string(kind_type);
+
   std::string capability;
-  std::string op;
   std::string version;
-
   kind_type kind;
-  bool pre;
-  bool build;
+  int flags;
 
-  rpm_dependency();
+  rpm_dependency(kind_type);
   ~rpm_dependency();
 };
 
