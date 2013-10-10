@@ -548,17 +548,15 @@ database::add_directory(package_id pkg, const rpm_file_info &info)
 {
   // FIXME: This needs a transaction.
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
+  attribute_id aid(intern_file_attribute(info));
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
      "INSERT INTO " DIRECTORY_TABLE
-     " (package_id, flags, name, user_name, group_name, mtime, mode,"
-     " normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-     pkg.value(), static_cast<int>(info.flags),
-     info.name, info.user, info.group,
+     " (package_id, attribute_id, name, mtime, normalized)"
+     " VALUES ($1, $2, $3, $4, $5)",
+     pkg.value(), aid.value(), info.name,
      static_cast<long long>(info.mtime),
-     static_cast<long long>(info.mode),
      info.normalized);
 }
 
@@ -571,16 +569,15 @@ database::add_symlink(package_id pkg, const rpm_file_info &info)
   if (info.linkto.empty()) {
     throw std::runtime_error("symlink with invalid target");
   }
+  attribute_id aid(intern_file_attribute(info));
   pgresult_handle res;
   pg_query
     (impl_->conn, res,
      "INSERT INTO " SYMLINK_TABLE
-     " (package_id, flags, name, target, user_name, group_name, mtime,"
-     " normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-     pkg.value(), static_cast<int>(info.flags),
-     info.name, info.linkto, info.user, info.group,
-     static_cast<long long>(info.mtime),
+     " (package_id, attribute_id, name, target, mtime, normalized)"
+     " VALUES ($1, $2, $3, $4, $5, $6)",
+     pkg.value(), aid.value(),
+     info.name, info.linkto, static_cast<long long>(info.mtime),
      info.normalized);
 }
 

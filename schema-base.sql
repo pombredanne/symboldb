@@ -287,34 +287,25 @@ $$;
 CREATE TABLE symboldb.symlink (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
-  flags INTEGER NOT NULL,
+  attribute_id INTEGER NOT NULL REFERENCES symboldb.file_attribute,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   target TEXT NOT NULL CHECK (LENGTH(target) > 0) COLLATE "C",
-  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
-  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
   normalized BOOLEAN NOT NULL
 );
 COMMENT ON COLUMN symboldb.symlink.normalized IS
   'indicates that the symlink name has been forced to UTF-8 encoding';
-COMMENT ON COLUMN symboldb.symlink.flags IS
-  'from the FILEFLAGS header of the RPM; indicates ghost status etc.';
 
 CREATE TABLE symboldb.directory (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
-  flags INTEGER NOT NULL,
+  attribute_id INTEGER NOT NULL REFERENCES symboldb.file_attribute,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
-  user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
-  group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
-  mode INTEGER NOT NULL CHECK (mode >= 0),
   normalized BOOLEAN NOT NULL
 );
 COMMENT ON COLUMN symboldb.directory.normalized IS
   'indicates that the directory name has been forced to UTF-8 encoding';
-COMMENT ON COLUMN symboldb.directory.flags IS
-  'from the FILEFLAGS header of the RPM; indicates ghost status etc.';
 
 CREATE TABLE symboldb.elf_file (
   contents_id INTEGER NOT NULL PRIMARY KEY
