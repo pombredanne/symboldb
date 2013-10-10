@@ -151,6 +151,37 @@ check_rpm_scripts(pgconn_handle &dbh)
      " ORDER BY 1, 2");
 }
 
+// Reads the trigger scripts stored in
+// test/data/rpm-trigger-scripts.csv and compares them with the
+// contents of the symboldb.package_trigger_script table.
+static void
+check_rpm_trigger_scripts(pgconn_handle &dbh)
+{
+  check_simple_query
+    (dbh, "RPM trigger scripts", "test/data/rpm-trigger-scripts.csv",
+     "SELECT symboldb.nvra(package), script_idx, prog,"
+     " replace(script, '\n', '^J')"
+     " FROM symboldb.package"
+     " JOIN symboldb.package_trigger_script USING (package_id)"
+     " ORDER BY 1, 2");
+}
+
+// Reads the trigger conditions stored in
+// test/data/rpm-trigger-conditions.csv and compares them with the
+// contents of the symboldb.package_trigger_condition table.
+static void
+check_rpm_trigger_conditions(pgconn_handle &dbh)
+{
+  check_simple_query
+    (dbh, "RPM trigger scripts", "test/data/rpm-trigger-conditions.csv",
+     "SELECT symboldb.nvra(package), c.script_idx,"
+     " symboldb.trigger_type(c.flags),"
+     " c.name, symboldb.trigger_comparison(c.flags), c.version"
+     " FROM symboldb.package"
+     " JOIN symboldb.package_trigger_condition c USING (package_id)"
+     " ORDER BY 1, 2, name");
+}
+
 static void
 test_java_class(database &db, pgconn_handle &conn)
 {
@@ -482,6 +513,8 @@ test()
 
     check_rpm_file_list(dbh);
     check_rpm_scripts(dbh);
+    check_rpm_trigger_scripts(dbh);
+    check_rpm_trigger_conditions(dbh);
 
     // Consistency of file attributes.
     r1.exec(dbh, "SELECT COUNT(*),"
