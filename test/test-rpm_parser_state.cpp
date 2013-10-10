@@ -26,17 +26,20 @@ using namespace cxxll;
 static void
 test()
 {
-  rpm_parser_state parser("test/data/shared-mime-info-1.1-1.fc18.x86_64.rpm");
-  std::vector<rpm_script> scripts;
-  parser.scripts(scripts);
-  COMPARE_NUMBER(scripts.size(), 1);
-  COMPARE_STRING(rpm_script::to_string(scripts.at(0).type), "postin");
-  CHECK(scripts.at(0).script_present);
-  COMPARE_NUMBER(scripts.at(0).prog.size(), 1);
-  COMPARE_STRING(scripts.at(0).prog.at(0), "/bin/sh");
-  COMPARE_STRING(scripts.at(0).script,
-    "# Should fail, as it would mean a problem in the mime database\n"
-    "/usr/bin/update-mime-database /usr/share/mime &> /dev/null");
+  // scripts()
+  {
+    rpm_parser_state parser("test/data/shared-mime-info-1.1-1.fc18.x86_64.rpm");
+    std::vector<rpm_script> scripts;
+    parser.scripts(scripts);
+    COMPARE_NUMBER(scripts.size(), 1);
+    COMPARE_STRING(rpm_script::to_string(scripts.at(0).type), "postin");
+    CHECK(scripts.at(0).script_present);
+    COMPARE_NUMBER(scripts.at(0).prog.size(), 1);
+    COMPARE_STRING(scripts.at(0).prog.at(0), "/bin/sh");
+    COMPARE_STRING(scripts.at(0).script,
+      "# Should fail, as it would mean a problem in the mime database\n"
+      "/usr/bin/update-mime-database /usr/share/mime &> /dev/null");
+  }
 }
 
 static test_register t("rpm_parser_state", test);
