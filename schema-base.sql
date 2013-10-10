@@ -623,6 +623,26 @@ $$ IMMUTABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.file_flags (INTEGER) IS
   'format the integer as a RPM file flags string';
 
+CREATE FUNCTION symboldb.trigger_type (INTEGER) RETURNS TEXT AS $$
+  SELECT CASE
+    WHEN ($1 & 33554432) <> 0 THEN 'prein'
+    WHEN ($1 & 65536) <> 0 THEN 'in'
+    WHEN ($1 & 131072) <> 0 THEN 'un'
+    WHEN ($1 & 262144) <> 0 THEN 'postun'
+    ELSE NULL
+  END;
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.trigger_type (INTEGER) IS
+  'extract the trigger type from the flags of a trigger condition';
+
+CREATE FUNCTION symboldb.trigger_comparison (INTEGER) RETURNS TEXT AS $$
+  SELECT symboldb.file_flags_internal($1, 2, '<')
+    || symboldb.file_flags_internal($1, 4, '>')
+    || symboldb.file_flags_internal($1, 8, '=');
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.trigger_comparison (INTEGER) IS
+  'extract version comparison operator from the flags of a trigger condition';
+
 -- Convenience functions.
 
 CREATE FUNCTION symboldb.package_set (TEXT) RETURNS INTEGER AS $$
