@@ -35,8 +35,6 @@
   sets.  This also relies on better logging/diagnostics and improved
   error recovery.
 
-* More test cases, including loading of sample RPMs.
-
 * Accelerate downloads of re-signed RPMs by combining the new header
   with the existing compressed cpio data.
 
