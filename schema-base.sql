@@ -165,6 +165,15 @@ CREATE TABLE symboldb.package_obsolete (
   build BOOLEAN NOT NULL
 );
 
+CREATE TABLE symboldb.package_script (
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  kind symboldb.rpm_script_kind NOT NULL,
+  script TEXT COLLATE "C",
+  prog TEXT[] COLLATE "C",
+  UNIQUE (package_id, kind)
+);
+
 CREATE TABLE symboldb.package_set (
   set_id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE COLLATE "C"
