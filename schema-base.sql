@@ -26,6 +26,15 @@ CREATE TYPE symboldb.elf_arch AS ENUM (
 );
 
 CREATE TYPE symboldb.rpm_kind AS ENUM ('binary', 'source');
+CREATE TYPE symboldb.rpm_script_kind AS ENUM (
+  'pretrans',
+  'prein',
+  'postin',
+  'preun',
+  'postun',
+  'posttrans',
+  'verify'
+);
 
 CREATE TYPE symboldb.elf_visibility AS ENUM
   ('default', 'internal', 'hidden', 'protected');
