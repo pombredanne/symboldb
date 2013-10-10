@@ -24,6 +24,7 @@
 #include <cxxll/rpmtd_wrapper.hpp>
 #include <cxxll/rpmfi_handle.hpp>
 #include <cxxll/rpm_script.hpp>
+#include <cxxll/rpm_trigger.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -507,6 +508,71 @@ rpm_parser_state::scripts(std::vector<rpm_script> &result) const
 	     rpm_script::posttrans, RPMTAG_POSTTRANS, RPMTAG_POSTTRANSPROG);
   get_script(impl_->header, result,
 	     rpm_script::verify, RPMTAG_VERIFYSCRIPT, RPMTAG_VERIFYSCRIPTPROG);
+}
+
+void
+rpm_parser_state::triggers(std::vector<rpm_trigger> &result) const
+{
+  result.clear();
+
+  const headerGetFlags hflags = HEADERGET_ALLOC;
+
+  // Get the scripts.
+  {
+    rpmtd_wrapper scripts;
+    rpmtd_wrapper progs;
+    if (!headerGet(impl_->header, RPMTAG_TRIGGERSCRIPTS, scripts.raw, hflags)) {
+      // No triggers, nothing to do.
+      return;
+    }
+    if (!headerGet(impl_->header, RPMTAG_TRIGGERSCRIPTPROG, progs.raw, hflags)) {
+      throw rpm_parser_exception("missing TRIGGERSCRIPTPROG header");
+    }
+    while (const char *script = rpmtdNextString(scripts.raw)) {
+      const char *prog = rpmtdNextString(progs.raw);
+      if (prog == NULL) {
+	throw rpm_parser_exception("TRIGGERSCRIPTPROG array too short");
+      }
+      result.push_back(rpm_trigger(script, prog));
+    }
+  }
+
+  // Add the conditions.
+  {
+    rpmtd_wrapper indexes;
+    rpmtd_wrapper names;
+    rpmtd_wrapper versions;
+    rpmtd_wrapper flags;
+    if (!headerGet(impl_->header, RPMTAG_TRIGGERINDEX, indexes.raw, hflags)) {
+      // No conditions, nothing to do.
+      return;
+    }
+    if (!headerGet(impl_->header, RPMTAG_TRIGGERNAME, names.raw, hflags)) {
+      throw rpm_parser_exception("missing TRIGGERNAME header");
+    }
+    if (!headerGet(impl_->header, RPMTAG_TRIGGERVERSION, versions.raw, hflags)) {
+      throw rpm_parser_exception("missing TRIGGERVERSION header");
+    }
+    if (!headerGet(impl_->header, RPMTAG_TRIGGERFLAGS, flags.raw, hflags)) {
+      throw rpm_parser_exception("missing TRIGGERFLAGS header");
+    }
+    while (const uint32_t *idx = rpmtdNextUint32(indexes.raw)) {
+      const char *name = rpmtdNextString(names.raw);
+      if (name == NULL) {
+	throw rpm_parser_exception("TRIGGERNAME array too short");
+      }
+      const char *version = rpmtdNextString(versions.raw);
+      if (version == NULL) {
+	throw rpm_parser_exception("TRIGGERVERSION array too short");
+      }
+      uint32_t *flag = rpmtdNextUint32(flags.raw);
+      if (flag == NULL) {
+	throw rpm_parser_exception("TRIGGERFLAGS array too short");
+      }
+      rpm_trigger &trigger(result.at(*idx));
+      trigger.conditions.push_back(rpm_trigger::condition(name, version, *flag));
+    }
+  }
 }
 
 bool
