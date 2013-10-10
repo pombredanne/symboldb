@@ -146,8 +146,7 @@ CREATE TABLE symboldb.package_dependency (
   kind symboldb.rpm_dependency_kind NOT NULL,
   flags INTEGER NOT NULL CHECK (flags >= 0),
   capability TEXT NOT NULL COLLATE "C",
-  op TEXT COLLATE "C",
-  version TEXT COLLATE "C"
+  version TEXT NOT NULL COLLATE "C"
 );
 
 CREATE TABLE symboldb.package_script (
