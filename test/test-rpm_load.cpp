@@ -504,6 +504,9 @@ test()
       } else if (r1.getvalue(i, 1) == std::string("cronie")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "1.4.10");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("kdenetwork-common")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "4.11.2");
+	continue;
       }
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
@@ -546,11 +549,12 @@ test()
 
     r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
 	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
-    COMPARE_NUMBER(r1.ntuples(), 11);
+    COMPARE_NUMBER(r1.ntuples(), 12);
     {
       int row = 0;
       COMPARE_STRING(r1.getvalue(row++, 0), "cronie-1.4.10-7.fc19.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "firewalld-0.2.12-5.fc18.src");
+      COMPARE_STRING(r1.getvalue(row++, 0), "kdenetwork-7:4.11.2-1.fc19.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "kphotobymail-0.4.1-11.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "openbios-1.0.svn1063-1.fc18.src");
@@ -862,7 +866,7 @@ test()
 
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
-    COMPARE_NUMBER(digests.size(), 28U); // 14 packages with 2 digests each
+    COMPARE_NUMBER(digests.size(), 28U); // 16 packages with 2 digests each
 
     {
       std::vector<unsigned char> digest;

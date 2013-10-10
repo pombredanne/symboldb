@@ -72,6 +72,15 @@ firewalld-0.2.12-5.fc18.src,require,intltool,"",""
 firewalld-0.2.12-5.fc18.src,require,rpmlib(CompressedFileNames),<=,3.0.4-1
 firewalld-0.2.12-5.fc18.src,require,rpmlib(FileDigests),<=,4.6.0-1
 firewalld-0.2.12-5.fc18.src,require,systemd-units,"",""
+kdenetwork-7:4.11.2-1.fc19.src,require,rpmlib(CompressedFileNames),<=,3.0.4-1
+kdenetwork-7:4.11.2-1.fc19.src,require,rpmlib(FileDigests),<=,4.6.0-1
+kdenetwork-common-7:4.11.2-1.fc19.noarch,conflict,kdenetwork,<,7:4.6.95-10
+kdenetwork-common-7:4.11.2-1.fc19.noarch,obsolete,kdenetwork-libs,<,7:4.6.95-10
+kdenetwork-common-7:4.11.2-1.fc19.noarch,provide,kdenetwork-common,=,7:4.11.2-1.fc19
+kdenetwork-common-7:4.11.2-1.fc19.noarch,require,rpmlib(CompressedFileNames),<=,3.0.4-1
+kdenetwork-common-7:4.11.2-1.fc19.noarch,require,rpmlib(FileDigests),<=,4.6.0-1
+kdenetwork-common-7:4.11.2-1.fc19.noarch,require,rpmlib(PayloadFilesHavePrefix),<=,4.0-1
+kdenetwork-common-7:4.11.2-1.fc19.noarch,require,rpmlib(PayloadIsXz),<=,5.2-1
 kphotobymail-0.4.1-11.fc18.noarch,provide,config(kphotobymail),=,0.4.1-11.fc18
 kphotobymail-0.4.1-11.fc18.noarch,provide,kphotobymail,=,0.4.1-11.fc18
 kphotobymail-0.4.1-11.fc18.noarch,require,/usr/bin/env,"",""

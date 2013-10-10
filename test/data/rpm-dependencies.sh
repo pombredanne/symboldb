@@ -25,7 +25,7 @@
 	else
 	    nevra="$(rpm -qp --qf '%{nevra}' "$rpm")"
 	fi
-	for kind in require provide obsolete ; do
+	for kind in require provide obsolete conflict ; do
 	    rpm -qp --${kind}s "$rpm" | while read nam op cap ; do
 		echo "$nevra,$kind,$nam,${op:-\"\"},${cap:-\"\"}"
 	    done
