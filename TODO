@@ -21,7 +21,7 @@
 * Support for extracting Python symbols.  This probably needs flow
   analysis to give good results.
 
-* Extract pre/post scripts from RPMs.
+* Extract trigger scripts from RPMs.
 
 * Extract dependency flags and conflict dependencies from RPMs.
 

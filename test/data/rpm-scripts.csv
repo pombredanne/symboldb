@@ -1,0 +1,4 @@
+firewalld-0.2.12-5.fc18.noarch,postin,{/bin/sh},^Jif [ $1 -eq 1 ] ; then ^J        # Initial installation ^J        /usr/bin/systemctl preset firewalld.service >/dev/null 2>&1 || : ^Jfi
+firewalld-0.2.12-5.fc18.noarch,preun,{/bin/sh},"^Jif [ $1 -eq 0 ] ; then ^J        # Package removal, not upgrade ^J        /usr/bin/systemctl --no-reload disable firewalld.service > /dev/null 2>&1 || : ^J        /usr/bin/systemctl stop firewalld.service > /dev/null 2>&1 || : ^Jfi"
+firewalld-0.2.12-5.fc18.noarch,postun,{/bin/sh},"^J/usr/bin/systemctl daemon-reload >/dev/null 2>&1 || : ^Jif [ $1 -ge 1 ] ; then ^J        # Package upgrade, not uninstall ^J        /usr/bin/systemctl try-restart firewalld.service >/dev/null 2>&1 || : ^Jfi"
+shared-mime-info-1.1-1.fc18.x86_64,postin,{/bin/sh},"# Should fail, as it would mean a problem in the mime database^J/usr/bin/update-mime-database /usr/share/mime &> /dev/null"

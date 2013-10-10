@@ -107,6 +107,41 @@ check_rpm_file_list(pgconn_handle &dbh)
   }
 }
 
+// Reads the scripts stored in test/data/rpm-scripts.csv and compares
+// them with the contents of the symboldb.package_script table.
+static void
+check_rpm_scripts(pgconn_handle &dbh)
+{
+  test_section ts("RPM scripts");
+  std::vector<std::string> script_list;
+  read_lines("test/data/rpm-scripts.csv", script_list);
+
+  pgresult_handle r;
+  r.exec(dbh, "COPY ("
+	 "SELECT symboldb.nvra(package), s.kind, s.prog,"
+	 " replace(s.script, '\n', '^J')"
+	 " FROM symboldb.package"
+	 " JOIN symboldb.package_script s USING (package_id)"
+	 ") TO STDOUT WITH (FORMAT CSV)");
+  std::string row;
+  for (std::vector<std::string>::const_iterator
+	 p = script_list.begin(), end = script_list.end();
+       p != end; ++p) {
+    if (dbh.getCopyData(row)) {
+      CHECK(!row.empty());
+      CHECK(row.at(row.size() - 1) == '\n');
+      row.resize(row.size() - 1); // strip '\n' at end
+      COMPARE_STRING(row, *p);
+    } else {
+      COMPARE_STRING("", *p);
+      return;
+    }
+  }
+  if (dbh.getCopyData(row)) {
+    COMPARE_STRING(row, "");
+  }
+}
+
 static void
 test_java_class(database &db, pgconn_handle &conn)
 {
@@ -434,6 +469,7 @@ test()
     }
 
     check_rpm_file_list(dbh);
+    check_rpm_scripts(dbh);
 
     // Consistency of file attributes.
     r1.exec(dbh, "SELECT COUNT(*),"

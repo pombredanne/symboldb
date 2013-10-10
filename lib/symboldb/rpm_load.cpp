@@ -33,6 +33,7 @@
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpm_parser.hpp>
 #include <cxxll/rpm_parser_exception.hpp>
+#include <cxxll/rpm_script.hpp>
 #include <cxxll/source_sink.hpp>
 #include <cxxll/tee_sink.hpp>
 #include <cxxll/base16.hpp>
@@ -482,6 +483,18 @@ dependencies(const symboldb_options &, database &db,
   }
 }
 
+static void
+scripts(const symboldb_options &, database &db,
+	database::package_id pkg, rpm_parser_state &st)
+{
+  std::vector<rpm_script> scripts;
+  st.scripts(scripts);
+  for (std::vector<rpm_script>::const_iterator
+	 p = scripts.begin(), end = scripts.end(); p != end; ++p) {
+    db.add_package_script(pkg, *p);
+  }
+}
+
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &pkginfo)
@@ -508,6 +521,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
   }
 
   dependencies(opt, db, pkg, rpmst);
+  scripts(opt, db, pkg, rpmst);
 
   // FIXME: We should not read arbitrary files into memory, only ELF
   // files.
