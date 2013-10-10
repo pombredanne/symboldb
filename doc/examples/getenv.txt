@@ -10,9 +10,9 @@ using:
         FROM symboldb.package_set_member psm
         JOIN symboldb.file f USING (package_id)
         JOIN symboldb.elf_file ef USING (contents_id)
-	JOIN symboldb.file_contents fc USING (contents_id)
+	JOIN symboldb.file_attribute fa USING (attribute_id)
         WHERE psm.set_id = symboldb.package_set('Fedora/rawhide/x86_64')
-	AND (fc.mode & 3072) <> 0) base
+	AND (fa.mode & 3072) <> 0) base
       JOIN symboldb.elf_closure ec USING (file_id)
       JOIN symboldb.file f ON ec.needed = f.file_id
       JOIN symboldb.elf_reference er USING (contents_id)
