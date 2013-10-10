@@ -243,6 +243,7 @@ add_executable (runtests
   test/test-regex_handle.cpp
   test/test-repomd.cpp
   test/test-rpm_load.cpp
+  test/test-rpm_parser_state.cpp
   test/test-string_source.cpp
   test/test-string_support.cpp
   test/test-subprocess.cpp

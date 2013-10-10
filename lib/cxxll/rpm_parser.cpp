@@ -23,6 +23,7 @@
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpmtd_wrapper.hpp>
 #include <cxxll/rpmfi_handle.hpp>
+#include <cxxll/rpm_script.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -459,6 +460,53 @@ const std::vector<rpm_dependency> &
 rpm_parser_state::dependencies() const
 {
   return impl_->dependencies;
+}
+
+static void
+get_script(Header header, std::vector<rpm_script> &result,
+	   rpm_script::kind type, int scriptlettag, int progtag)
+{
+  const headerGetFlags hflags = HEADERGET_ALLOC | HEADERGET_EXT;
+  rpmtd_wrapper scriptlet;
+  rpmtd_wrapper prog;
+
+  rpm_script script(type);
+
+  if (headerGet(header, scriptlettag, scriptlet.raw, hflags)) {
+    const char *scriptletstr = rpmtdGetString(scriptlet.raw);
+    if (scriptletstr != NULL) {
+      script.script = scriptletstr;
+      script.script_present = true;
+    }
+  }
+  if (headerGet(header, progtag, prog.raw, hflags)) {
+    while (const char *arg = rpmtdNextString(prog.raw)) {
+      script.prog.push_back(arg);
+    }
+  }
+
+  if (script.script_present || !script.prog.empty()) {
+    result.push_back(script);
+  }
+}
+
+void
+rpm_parser_state::scripts(std::vector<rpm_script> &result) const
+{
+  get_script(impl_->header, result,
+	     rpm_script::pretrans, RPMTAG_PRETRANS, RPMTAG_PRETRANSPROG);
+  get_script(impl_->header, result,
+	     rpm_script::prein, RPMTAG_PREIN, RPMTAG_PREINPROG);
+  get_script(impl_->header, result,
+	     rpm_script::postin, RPMTAG_POSTIN, RPMTAG_POSTINPROG);
+  get_script(impl_->header, result,
+	     rpm_script::preun, RPMTAG_PREUN, RPMTAG_PREUNPROG);
+  get_script(impl_->header, result,
+	     rpm_script::postun, RPMTAG_POSTUN, RPMTAG_POSTUNPROG);
+  get_script(impl_->header, result,
+	     rpm_script::posttrans, RPMTAG_POSTTRANS, RPMTAG_POSTTRANSPROG);
+  get_script(impl_->header, result,
+	     rpm_script::verify, RPMTAG_VERIFYSCRIPT, RPMTAG_VERIFYSCRIPTPROG);
 }
 
 bool

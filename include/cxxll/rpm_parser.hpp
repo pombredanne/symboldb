@@ -28,6 +28,7 @@
 namespace cxxll {
 
 class rpm_package_info;
+class rpm_script;
 
 // This needs to be called once before creating any rpm_parser_state
 // objects.
@@ -56,6 +57,9 @@ public:
   const rpm_package_info &package() const;
 
   const std::vector<rpm_dependency> &dependencies() const;
+
+  // Adds the non-trigger scripts from the RPM header to the vector.
+  void scripts(std::vector<rpm_script> &) const;
 
   // Reads the next payload entry.  Returns true if an entry has been
   // read, false on EOF.  Throws rpm_parser_exception on read errors.
