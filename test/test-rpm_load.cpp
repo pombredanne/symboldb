@@ -182,6 +182,28 @@ check_rpm_trigger_conditions(pgconn_handle &dbh)
      " ORDER BY 1, 2, name");
 }
 
+// Compares RPM dependencies with test/data/rpm-dependencies.csv.
+static void
+check_rpm_dependencies(pgconn_handle &dbh)
+{
+  check_simple_query
+    (dbh, "RPM dependencies", "test/data/rpm-dependencies.csv",
+     "SELECT * FROM (SELECT symboldb.nevra(package),"
+     " 'require', capability, COALESCE(op, ''), COALESCE(d.version, '')"
+     " FROM symboldb.package"
+     " JOIN symboldb.package_require d USING (package_id)"
+     " UNION ALL SELECT symboldb.nevra(package),"
+     " 'provide', capability, COALESCE(op, ''), COALESCE(d.version, '')"
+     " FROM symboldb.package"
+     " JOIN symboldb.package_provide d USING (package_id)"
+     " UNION ALL SELECT symboldb.nevra(package),"
+     " 'obsolete', capability, COALESCE(op, ''), COALESCE(d.version, '')"
+     " FROM symboldb.package"
+     " JOIN symboldb.package_obsolete d USING (package_id)"
+     " ) x ORDER BY 1, 2, 3");
+}
+
+
 static void
 test_java_class(database &db, pgconn_handle &conn)
 {
@@ -515,6 +537,7 @@ test()
     check_rpm_scripts(dbh);
     check_rpm_trigger_scripts(dbh);
     check_rpm_trigger_conditions(dbh);
+    check_rpm_dependencies(dbh);
 
     // Consistency of file attributes.
     r1.exec(dbh, "SELECT COUNT(*),"
@@ -785,64 +808,6 @@ test()
       COMPARE_NUMBER(r1.ntuples(), expected - entries);
     }
  
-    r1.exec(dbh,
-	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
-	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"
-	    " FROM symboldb.package JOIN symboldb.package_require r"
-	    " USING (package_id)"
-	    " WHERE symboldb.nevra(package)"
-	    " = 'sysvinit-tools-2.88-9.dsf.fc18.i686' ORDER BY 1");
-    CHECK(r1.ntuples() == 16);
-    {
-      int row = 0;
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.0),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.1),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.1.3),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.11),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.2),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.3),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.3.4),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.4),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6(GLIBC_2.7),-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libc.so.6,-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "libcrypt.so.1,-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(CompressedFileNames),<=,3.0.4-1,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(FileDigests),<=,4.6.0-1,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(PayloadFilesHavePrefix),<=,4.0-1,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "rpmlib(PayloadIsXz),<=,5.2-1,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "rtld(GNU_HASH),-,-,false,false");
-    }
-
-    r1.exec(dbh,
-	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
-	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"
-	    " FROM symboldb.package JOIN symboldb.package_provide r"
-	    " USING (package_id)"
-	    " WHERE symboldb.nevra(package)"
-	    " = 'sysvinit-tools-2.88-9.dsf.fc18.i686' ORDER BY 1");
-    CHECK(r1.ntuples() == 2);
-    {
-      int row = 0;
-      COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-tools(x86-32),=,2.88-9.dsf.fc18,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "sysvinit-tools,=,2.88-9.dsf.fc18,false,false");
-    }
-
-    r1.exec(dbh,
-	    "SELECT r.capability || ',' || COALESCE(r.op, '-') || ','"
-	    " || COALESCE(r.version, '-') || ',' || r.pre || ',' || r.build"
-	    " FROM symboldb.package JOIN symboldb.package_obsolete r"
-	    " USING (package_id)"
-	    " WHERE symboldb.nevra(package)"
-	    " = 'openbios-1.0.svn1063-1.fc18.noarch' ORDER BY 1");
-    CHECK(r1.ntuples() == 4);
-    {
-      int row = 0;
-      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-common,-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-ppc,-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-sparc32,-,-,false,false");
-      COMPARE_STRING(r1.getvalue(row++, 0), "openbios-sparc64,-,-,false,false");
-    }
-
     r1.exec(dbh,
 	    "SELECT symboldb.nevra(package), length, flags FROM symboldb.file"
 	    " JOIN symboldb.file_contents USING (contents_id)"
