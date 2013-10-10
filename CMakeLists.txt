@@ -126,6 +126,7 @@ add_library (CXXLL
   lib/cxxll/rpm_parser.cpp
   lib/cxxll/rpm_parser_exception.cpp
   lib/cxxll/rpm_script.cpp
+  lib/cxxll/rpm_trigger.cpp
   lib/cxxll/rpmfi_handle.cpp
   lib/cxxll/rpmtd_wrapper.cpp
   lib/cxxll/sink.cpp
