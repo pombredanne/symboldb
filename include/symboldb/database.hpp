@@ -29,6 +29,7 @@ namespace cxxll {
   class rpm_dependency;
   class rpm_file_info;
   class rpm_package_info;
+  class rpm_script;
   class elf_image;
   class elf_symbol_definition;
   class elf_symbol_reference;
@@ -129,6 +130,9 @@ public:
 
   // Adds a dependency for the package.
   void add_package_dependency(package_id, const cxxll::rpm_dependency &);
+
+  // Adds a non-trigger script.
+  void add_package_script(package_id, const cxxll::rpm_script &);
 
   file_id add_file(package_id, const std::string &name, bool normalized,
 		   long long mtime, int inode, contents_id, attribute_id);

@@ -21,11 +21,13 @@
 #include <cxxll/rpm_dependency.hpp>
 #include <cxxll/rpm_file_info.hpp>
 #include <cxxll/rpm_package_info.hpp>
+#include <cxxll/rpm_script.hpp>
 #include <cxxll/elf_image.hpp>
 #include <cxxll/elf_symbol_definition.hpp>
 #include <cxxll/elf_symbol_reference.hpp>
 #include <cxxll/pgconn_handle.hpp>
 #include <cxxll/pgresult_handle.hpp>
+#include <cxxll/pg_encode_array.hpp>
 #include <cxxll/pg_exception.hpp>
 #include <cxxll/pg_query.hpp>
 #include <cxxll/pg_response.hpp>
@@ -56,6 +58,7 @@ using namespace cxxll;
 #define PACKAGE_REQUIRE_TABLE "symboldb.package_require"
 #define PACKAGE_PROVIDE_TABLE "symboldb.package_provide"
 #define PACKAGE_OBSOLETE_TABLE "symboldb.package_obsolete"
+#define PACKAGE_SCRIPT_TABLE "symboldb.package_script"
 #define FILE_TABLE "symboldb.file"
 #define FILE_CONTENTS_TABLE "symboldb.file_contents"
 #define DIRECTORY_TABLE "symboldb.directory"
@@ -449,6 +452,23 @@ database::add_package_dependency(package_id pkg, const rpm_dependency &dep)
   default:
     abort();
   }
+}
+
+void
+database::add_package_script(package_id pkg, const rpm_script &script)
+{
+  pgresult_handle res;
+  const char *scriptlet = NULL;;
+  if (script.script_present) {
+    scriptlet = script.script.c_str();
+  }
+
+  pg_query(impl_->conn, res,
+	   "INSERT INTO " PACKAGE_SCRIPT_TABLE
+	   " (package_id, kind, script, prog)"
+	   " VALUES ($1, $2::symboldb.rpm_script_kind, $3, $4::text[])",
+	   pkg.value(), rpm_script::to_string(script.type), scriptlet,
+	   pg_encode_array(script.prog));
 }
 
 database::file_id
