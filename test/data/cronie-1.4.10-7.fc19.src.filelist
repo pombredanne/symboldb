@@ -1,0 +1,7 @@
+rw-r--r--,"","",1,mockbuild,mockbuild,1725,correct-env.patch
+rw-r--r--,"","",2,mockbuild,mockbuild,4367,cronie-1.4.10-copy-env.patch
+rw-r--r--,"","",3,mockbuild,mockbuild,5148,cronie-1.4.10-random-delay.patch
+rw-r--r--,"","",4,mockbuild,mockbuild,729,cronie-1.4.10-use-setenv.patch
+rw-rw-r--,"","",5,mockbuild,mockbuild,219541,cronie-1.4.10.tar.gz
+rw-r--r--,"",s,6,mockbuild,mockbuild,15609,cronie.spec
+rw-r--r--,"","",7,mockbuild,mockbuild,453,unitfile-killprocess.patch

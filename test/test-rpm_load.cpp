@@ -122,6 +122,7 @@ check_rpm_scripts(pgconn_handle &dbh)
 	 " replace(s.script, '\n', '^J')"
 	 " FROM symboldb.package"
 	 " JOIN symboldb.package_script s USING (package_id)"
+	 " ORDER BY 1, 2"
 	 ") TO STDOUT WITH (FORMAT CSV)");
   std::string row;
   for (std::vector<std::string>::const_iterator
@@ -447,6 +448,9 @@ test()
       } else if (r1.getvalue(i, 1) == std::string("rsh")) {
 	COMPARE_STRING(r1.getvalue(i, 2), "0.17");
 	continue;
+      } else if (r1.getvalue(i, 1) == std::string("cronie")) {
+	COMPARE_STRING(r1.getvalue(i, 2), "1.4.10");
+	continue;
       }
 
       COMPARE_STRING(r1.getvalue(i, 1), "sysvinit-tools");
@@ -486,9 +490,10 @@ test()
 
     r1.exec(dbh, "SELECT symboldb.nevra(package) FROM symboldb.package"
 	    " WHERE kind = 'source' AND source IS NULL ORDER BY 1");
-    COMPARE_NUMBER(r1.ntuples(), 10);
+    COMPARE_NUMBER(r1.ntuples(), 11);
     {
       int row = 0;
+      COMPARE_STRING(r1.getvalue(row++, 0), "cronie-1.4.10-7.fc19.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "firewalld-0.2.12-5.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "kphotobymail-0.4.1-11.fc18.src");
       COMPARE_STRING(r1.getvalue(row++, 0), "objectweb-asm4-0:4.1-2.fc18.src");
@@ -859,7 +864,7 @@ test()
 
     std::vector<std::vector<unsigned char> > digests;
     db.referenced_package_digests(digests);
-    COMPARE_NUMBER(digests.size(), 24U); // 12 packages with 2 digests each
+    COMPARE_NUMBER(digests.size(), 28U); // 14 packages with 2 digests each
 
     {
       std::vector<unsigned char> digest;
