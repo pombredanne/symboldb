@@ -107,26 +107,20 @@ check_rpm_file_list(pgconn_handle &dbh)
   }
 }
 
-// Reads the scripts stored in test/data/rpm-scripts.csv and compares
-// them with the contents of the symboldb.package_script table.
 static void
-check_rpm_scripts(pgconn_handle &dbh)
+check_simple_query(pgconn_handle &dbh, const char *name,
+		   const char *path, const char *sql)
 {
-  test_section ts("RPM scripts");
-  std::vector<std::string> script_list;
-  read_lines("test/data/rpm-scripts.csv", script_list);
+  test_section ts(name);
+  std::vector<std::string> row_vector;
+  read_lines(path, row_vector);
 
   pgresult_handle r;
-  r.exec(dbh, "COPY ("
-	 "SELECT symboldb.nvra(package), s.kind, s.prog,"
-	 " replace(s.script, '\n', '^J')"
-	 " FROM symboldb.package"
-	 " JOIN symboldb.package_script s USING (package_id)"
-	 " ORDER BY 1, 2"
-	 ") TO STDOUT WITH (FORMAT CSV)");
+  r.exec(dbh, (std::string("COPY (") + sql + 
+	       ") TO STDOUT WITH (FORMAT CSV)").c_str());
   std::string row;
   for (std::vector<std::string>::const_iterator
-	 p = script_list.begin(), end = script_list.end();
+	 p = row_vector.begin(), end = row_vector.end();
        p != end; ++p) {
     if (dbh.getCopyData(row)) {
       CHECK(!row.empty());
@@ -141,6 +135,20 @@ check_rpm_scripts(pgconn_handle &dbh)
   if (dbh.getCopyData(row)) {
     COMPARE_STRING(row, "");
   }
+}
+
+// Reads the scripts stored in test/data/rpm-scripts.csv and compares
+// them with the contents of the symboldb.package_script table.
+static void
+check_rpm_scripts(pgconn_handle &dbh)
+{
+  check_simple_query
+    (dbh, "RPM script", "test/data/rpm-scripts.csv",
+     "SELECT symboldb.nvra(package), s.kind, s.prog,"
+     " replace(s.script, '\n', '^J')"
+     " FROM symboldb.package"
+     " JOIN symboldb.package_script s USING (package_id)"
+     " ORDER BY 1, 2");
 }
 
 static void
