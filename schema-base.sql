@@ -174,6 +174,26 @@ CREATE TABLE symboldb.package_script (
   UNIQUE (package_id, kind)
 );
 
+CREATE TABLE symboldb.package_trigger_script (
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  script_idx INTEGER NOT NULL CHECK (script_idx >= 0),
+  script TEXT COLLATE "C",
+  prog TEXT COLLATE "C",
+  PRIMARY KEY (package_id, script_idx)
+);
+
+CREATE TABLE symboldb.package_trigger_condition (
+  package_id INTEGER NOT NULL
+    REFERENCES symboldb.package ON DELETE CASCADE,
+  script_idx INTEGER NOT NULL,
+  flags INTEGER NOT NULL,
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0),
+  version TEXT NOT NULL COLLATE "C",
+  FOREIGN KEY (package_id, script_idx)
+    REFERENCES symboldb.package_trigger_script ON DELETE CASCADE
+);
+
 CREATE TABLE symboldb.package_set (
   set_id SERIAL NOT NULL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE COLLATE "C"

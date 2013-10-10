@@ -36,6 +36,9 @@ CREATE INDEX ON symboldb.package_provide (capability);
 CREATE INDEX ON symboldb.package_obsolete (package_id);
 CREATE INDEX ON symboldb.package_obsolete (capability);
 
+CREATE INDEX package_trigger_condition_package
+  ON symboldb.package_trigger_condition (package_id, script_idx);
+
 CREATE INDEX ON symboldb.package_set_member (set_id);
 CREATE INDEX ON symboldb.package_set_member (package_id);
 
