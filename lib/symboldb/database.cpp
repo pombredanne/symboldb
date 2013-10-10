@@ -22,6 +22,7 @@
 #include <cxxll/rpm_file_info.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpm_script.hpp>
+#include <cxxll/rpm_trigger.hpp>
 #include <cxxll/elf_image.hpp>
 #include <cxxll/elf_symbol_definition.hpp>
 #include <cxxll/elf_symbol_reference.hpp>
@@ -59,6 +60,8 @@ using namespace cxxll;
 #define PACKAGE_PROVIDE_TABLE "symboldb.package_provide"
 #define PACKAGE_OBSOLETE_TABLE "symboldb.package_obsolete"
 #define PACKAGE_SCRIPT_TABLE "symboldb.package_script"
+#define PACKAGE_TRIGGER_SCRIPT_TABLE "symboldb.package_trigger_script"
+#define PACKAGE_TRIGGER_CONDITION_TABLE "symboldb.package_trigger_condition"
 #define FILE_TABLE "symboldb.file"
 #define FILE_CONTENTS_TABLE "symboldb.file_contents"
 #define DIRECTORY_TABLE "symboldb.directory"
@@ -469,6 +472,27 @@ database::add_package_script(package_id pkg, const rpm_script &script)
 	   " VALUES ($1, $2::symboldb.rpm_script_kind, $3, $4::text[])",
 	   pkg.value(), rpm_script::to_string(script.type), scriptlet,
 	   pg_encode_array(script.prog));
+}
+
+void
+database::add_package_trigger(package_id pkg,
+			      const rpm_trigger &trigger, int idx)
+{
+  pgresult_handle res;
+  pg_query(impl_->conn, res,
+	   "INSERT INTO " PACKAGE_TRIGGER_SCRIPT_TABLE
+	   " (package_id, script_idx, script, prog)"
+	   " VALUES ($1, $2, $3, $4)",
+	   pkg.value(), idx, trigger.script, trigger.prog);
+  for (std::vector<rpm_trigger::condition>::const_iterator
+	 p = trigger.conditions.begin(), end = trigger.conditions.end();
+       p != end; ++p) {
+    pg_query(impl_->conn, res,
+	     "INSERT INTO " PACKAGE_TRIGGER_CONDITION_TABLE
+	     " (package_id, script_idx, flags, name, version)"
+	     " VALUES ($1, $2, $3, $4, $5)",
+	     pkg.value(), idx, p->flags, p->name, p->version);
+  }
 }
 
 database::file_id

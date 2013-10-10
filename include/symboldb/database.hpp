@@ -30,6 +30,7 @@ namespace cxxll {
   class rpm_file_info;
   class rpm_package_info;
   class rpm_script;
+  class rpm_trigger;
   class elf_image;
   class elf_symbol_definition;
   class elf_symbol_reference;
@@ -133,6 +134,10 @@ public:
 
   // Adds a non-trigger script.
   void add_package_script(package_id, const cxxll::rpm_script &);
+
+  // Adds a trigger script.  IDX is the ordinal of this trigger within
+  // the RPM package.
+  void add_package_trigger(package_id, const cxxll::rpm_trigger &, int idx);
 
   file_id add_file(package_id, const std::string &name, bool normalized,
 		   long long mtime, int inode, contents_id, attribute_id);
