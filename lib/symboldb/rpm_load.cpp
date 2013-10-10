@@ -34,6 +34,7 @@
 #include <cxxll/rpm_parser.hpp>
 #include <cxxll/rpm_parser_exception.hpp>
 #include <cxxll/rpm_script.hpp>
+#include <cxxll/rpm_trigger.hpp>
 #include <cxxll/source_sink.hpp>
 #include <cxxll/tee_sink.hpp>
 #include <cxxll/base16.hpp>
@@ -495,6 +496,20 @@ scripts(const symboldb_options &, database &db,
   }
 }
 
+static void
+triggers(const symboldb_options &, database &db,
+	 database::package_id pkg, rpm_parser_state &st)
+{
+  std::vector<rpm_trigger> triggers;
+  st.triggers(triggers);
+  int i = 0;
+  for (std::vector<rpm_trigger>::const_iterator
+	 p = triggers.begin(), end = triggers.end(); p != end; ++p) {
+    db.add_package_trigger(pkg, *p, i);
+    ++i;
+  }
+}
+
 static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &pkginfo)
@@ -522,6 +537,7 @@ load_rpm_internal(const symboldb_options &opt, database &db,
 
   dependencies(opt, db, pkg, rpmst);
   scripts(opt, db, pkg, rpmst);
+  triggers(opt, db, pkg, rpmst);
 
   // FIXME: We should not read arbitrary files into memory, only ELF
   // files.
