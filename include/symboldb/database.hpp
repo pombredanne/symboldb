@@ -139,7 +139,7 @@ public:
   // the RPM package.
   void add_package_trigger(package_id, const cxxll::rpm_trigger &, int idx);
 
-  file_id add_file(package_id, const std::string &name, bool normalized,
+  file_id add_file(package_id, const std::string &name,
 		   long long mtime, int inode, contents_id, attribute_id);
   void add_file(package_id, const cxxll::rpm_file_info &,
 		const std::vector<unsigned char> &digest,

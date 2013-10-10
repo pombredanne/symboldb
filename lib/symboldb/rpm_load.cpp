@@ -449,7 +449,7 @@ add_files(const symboldb_options &opt, database &db, python_analyzer &pya,
       assert(!p->ghost());
       p->normalize_name();
       aid = db.intern_file_attribute(*p);
-      db.add_file(pkg, p->name, p->normalized, p->mtime, p->ino, cid, aid);
+      db.add_file(pkg, p->name, p->mtime, p->ino, cid, aid);
       looks_like_python = looks_like_python
 	|| (unpack_files(pkginfo) && is_python_path(file.infos.front()));
     }

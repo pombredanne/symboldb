@@ -227,16 +227,20 @@ CREATE TABLE symboldb.file_attribute (
   user_name TEXT NOT NULL CHECK (LENGTH(user_name) > 0) COLLATE "C",
   group_name TEXT NOT NULL CHECK (LENGTH(group_name) > 0) COLLATE "C",
   caps TEXT NOT NULL COLLATE "C",
+  normalized BOOLEAN NOT NULL,
   row_hash BYTEA NOT NULL UNIQUE CHECK (LENGTH(row_hash) = 16)
 );
 COMMENT ON COLUMN symboldb.file_attribute.flags IS
   'from the FILEFLAGS header of the RPM file; indicates ghost status etc.';
 COMMENT ON COLUMN symboldb.file_attribute.row_hash IS
   'internal hash used for deduplication';
+COMMENT ON COLUMN symboldb.file_attribute.normalized IS
+  'indicates that the name has been forced to UTF-8 encoding';
 
 CREATE FUNCTION symboldb.intern_file_attribute (
   row_hash BYTEA, mode INTEGER, flags INTEGER,
-  user_name TEXT, group_name TEXT, caps TEXT, OUT aid INTEGER
+  user_name TEXT, group_name TEXT, caps TEXT, normalized BOOLEAN,
+  OUT aid INTEGER
 ) LANGUAGE 'plpgsql' AS $$
 BEGIN
   SELECT attribute_id INTO aid
@@ -245,8 +249,8 @@ BEGIN
     RETURN;
   END IF;
   INSERT INTO symboldb.file_attribute
-     (row_hash, mode, flags, user_name, group_name, caps)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING attribute_id INTO aid;
+     (row_hash, mode, flags, user_name, group_name, caps, normalized)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING attribute_id INTO aid;
   RETURN;
 END;
 $$;
@@ -259,18 +263,14 @@ CREATE TABLE symboldb.file (
   attribute_id INTEGER NOT NULL REFERENCES symboldb.file_attribute,
   inode INTEGER NOT NULL,
   mtime NUMERIC NOT NULL CHECK (mtime >= 0),
-  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
-  normalized BOOLEAN NOT NULL
+  name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C"
 );
-COMMENT ON COLUMN symboldb.file.normalized IS
-  'indicates that the file name has been forced to UTF-8 encoding';
 COMMENT ON COLUMN symboldb.file.inode IS
   'intra-package inode number (used to indicate hardlinks)';
 
 CREATE FUNCTION symboldb.add_file (
   length BIGINT, digest BYTEA, contents BYTEA, attribute_id INTEGER,
-  package_id INTEGER, inode INTEGER, mtime INTEGER,
-  name TEXT, normalized BOOLEAN,
+  package_id INTEGER, inode INTEGER, mtime INTEGER, name TEXT,
   OUT fid INTEGER, OUT cid INTEGER, OUT added BOOLEAN,
   OUT contents_length INTEGER
 ) LANGUAGE 'plpgsql' AS $$
@@ -280,7 +280,7 @@ BEGIN
     FROM symboldb.intern_file_contents
       ($1, $2, $3) ifc;
   INSERT INTO symboldb.file VALUES
-    (DEFAULT, $5, cid, $4, $6, $7, $8, $9) RETURNING file_id INTO fid;
+    (DEFAULT, $5, cid, $4, $6, $7, $8) RETURNING file_id INTO fid;
 END;
 $$;
 
@@ -290,22 +290,16 @@ CREATE TABLE symboldb.symlink (
   attribute_id INTEGER NOT NULL REFERENCES symboldb.file_attribute,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
   target TEXT NOT NULL CHECK (LENGTH(target) > 0) COLLATE "C",
-  mtime NUMERIC NOT NULL CHECK (mtime >= 0),
-  normalized BOOLEAN NOT NULL
+  mtime NUMERIC NOT NULL CHECK (mtime >= 0)
 );
-COMMENT ON COLUMN symboldb.symlink.normalized IS
-  'indicates that the symlink name has been forced to UTF-8 encoding';
 
 CREATE TABLE symboldb.directory (
   package_id INTEGER NOT NULL
     REFERENCES symboldb.package ON DELETE CASCADE,
   attribute_id INTEGER NOT NULL REFERENCES symboldb.file_attribute,
   name TEXT NOT NULL CHECK (LENGTH(name) > 0) COLLATE "C",
-  mtime NUMERIC NOT NULL CHECK (mtime >= 0),
-  normalized BOOLEAN NOT NULL
+  mtime NUMERIC NOT NULL CHECK (mtime >= 0)
 );
-COMMENT ON COLUMN symboldb.directory.normalized IS
-  'indicates that the directory name has been forced to UTF-8 encoding';
 
 CREATE TABLE symboldb.elf_file (
   contents_id INTEGER NOT NULL PRIMARY KEY

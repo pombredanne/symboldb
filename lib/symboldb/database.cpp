@@ -84,7 +84,7 @@ struct database::impl {
   pgconn_handle conn;
 
   typedef std::tr1::tuple<
-    int, int, std::string, std::string, std::string> attribute_row;
+    int, int, std::string, std::string, std::string, bool> attribute_row;
   typedef std::map<attribute_row, attribute_id> file_attribute_map;
   file_attribute_map file_attribute_cache;
 };
@@ -284,6 +284,7 @@ intern_hash(const rpm_file_info &info, std::vector<unsigned char> &result)
   struct data {
     unsigned mode;
     unsigned flags;
+    unsigned normalized;
   };
   union {
     data dat;
@@ -291,6 +292,7 @@ intern_hash(const rpm_file_info &info, std::vector<unsigned char> &result)
   } u;
   u.dat.mode = cpu_to_le_32(info.mode);
   u.dat.flags = cpu_to_le_32(info.flags);
+  u.dat.normalized = cpu_to_le_32(info.normalized);
   to_hash.insert(to_hash.end(),
 		 u.data_bytes + 0, u.data_bytes + sizeof(u.data_bytes));
   to_hash.insert(to_hash.end(),
@@ -345,7 +347,7 @@ database::intern_file_attribute(const rpm_file_info &info)
   }
 
   impl::attribute_row row
-    (mode, flags, info.user, info.group, info.capabilities);
+    (mode, flags, info.user, info.group, info.capabilities, info.normalized);
   attribute_id &aid(impl_->file_attribute_cache[row]);
   if (aid.value() != 0) {
     return aid;
@@ -358,9 +360,10 @@ database::intern_file_attribute(const rpm_file_info &info)
   using namespace std::tr1;
   pg_query_binary
     (impl_->conn, r,
-     "SELECT symboldb.intern_file_attribute($1, $2, $3, $4, $5, $6)",
+     "SELECT symboldb.intern_file_attribute($1, $2, $3, $4, $5, $6, $7)",
      row_hash,
-     get<0>(row), get<1>(row), get<2>(row), get<3>(row), get<4>(row));
+     get<0>(row), get<1>(row), get<2>(row), get<3>(row), get<4>(row),
+     get<5>(row));
   int aidint;
   pg_response(r, 0, aidint);
   aid = attribute_id(aidint);
@@ -473,7 +476,7 @@ database::add_package_trigger(package_id pkg,
 }
 
 database::file_id
-database::add_file(package_id pkg, const std::string &name, bool normalized,
+database::add_file(package_id pkg, const std::string &name,
 		   long long mtime, int inode,
 		   contents_id cid, attribute_id aid)
 {
@@ -482,10 +485,10 @@ database::add_file(package_id pkg, const std::string &name, bool normalized,
   pgresult_handle res;
   pg_query_binary
     (impl_->conn, res,
-     "INSERT INTO " FILE_TABLE " (package_id, name, mtime, inode,"
-     " contents_id, attribute_id, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING file_id",
-     pkg.value(), name, mtime, inode, cid.value(), aid.value(), normalized);
+     "INSERT INTO " FILE_TABLE
+     " (package_id, name, mtime, inode, contents_id, attribute_id)"
+     " VALUES ($1, $2, $3, $4, $5, $6) RETURNING file_id",
+     pkg.value(), name, mtime, inode, cid.value(), aid.value());
   return file_id(get_id_force(res));
 }
 
@@ -521,9 +524,9 @@ database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
   pg_query_binary
     (impl_->conn, res,
      "SELECT * FROM symboldb.add_file"
-     "($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+     "($1, $2, $3, $4, $5, $6, $7, $8)",
      length, digest, contents, aid.value(), pkg.value(),
-     ino, mtime, info.name, info.normalized);
+     ino, mtime, info.name);
   int fidint;
   int cidint;
   pg_response(res, 0, fidint, cidint, added, contents_length);
@@ -553,8 +556,8 @@ database::add_directory(package_id pkg, const rpm_file_info &info)
   pg_query
     (impl_->conn, res,
      "INSERT INTO " DIRECTORY_TABLE
-     " (package_id, attribute_id, name, mtime, normalized)"
-     " VALUES ($1, $2, $3, $4, $5)",
+     " (package_id, attribute_id, name, mtime)"
+     " VALUES ($1, $2, $3, $4)",
      pkg.value(), aid.value(), info.name,
      static_cast<long long>(info.mtime),
      info.normalized);
@@ -574,8 +577,8 @@ database::add_symlink(package_id pkg, const rpm_file_info &info)
   pg_query
     (impl_->conn, res,
      "INSERT INTO " SYMLINK_TABLE
-     " (package_id, attribute_id, name, target, mtime, normalized)"
-     " VALUES ($1, $2, $3, $4, $5, $6)",
+     " (package_id, attribute_id, name, target, mtime)"
+     " VALUES ($1, $2, $3, $4, $5)",
      pkg.value(), aid.value(),
      info.name, info.linkto, static_cast<long long>(info.mtime),
      info.normalized);
