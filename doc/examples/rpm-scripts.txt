@@ -1,0 +1,43 @@
+Errors in RPM scripts
+---------------------
+
+RPM scripts are specified using %postin, %preun etc. in the spec file
+and run at specific points during the package installation life cycle.
+
+An RPM macro which failed expansion is usually left at the start of a
+line.  This causes error messages like "fg: no job control" when the
+script is later executed by RPM.  "%{" or "%" followed by two letters
+are often failed expansions, too.
+
+    SELECT symboldb.nevra(package), s.kind, script
+      FROM symboldb.package_script s
+      JOIN symboldb.package USING (package_id)
+      JOIN symboldb.package_set_member USING (package_id)
+      WHERE script ~ '(?n)(^%|^[^#]*%(\{|[a-z]{2}))'
+      AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
+      ORDER BY 1, 2;
+
+Similar issues can affect RPM trigger scripts:
+
+    SELECT symboldb.nevra(package), script
+      FROM symboldb.package_trigger_script s
+      JOIN symboldb.package USING (package_id)
+      JOIN symboldb.package_set_member USING (package_id)
+      WHERE script ~ '(?n)(^%|^[^#]*%(\{|[a-z]{2}))'
+      AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
+      ORDER BY 1;
+
+To see the source of a macro definition, you can use this query:
+
+    SELECT symboldb.nevra(package), file.name, encode(contents, 'escape')
+      FROM symboldb.file
+      JOIN symboldb.file_contents USING (contents_id)
+      JOIN symboldb.package USING (package_id)
+      JOIN symboldb.package_set_member USING (package_id)
+      WHERE file.name LIKE '/etc/rpm/macros%'
+      AND contents LIKE '%iconsdir%'
+      AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
+      ORDER BY 1, 2;
+
+This works because symboldb keeps complete copies of files under /etc
+in the database.
