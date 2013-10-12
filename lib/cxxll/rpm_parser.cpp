@@ -54,7 +54,7 @@ cxxll::rpm_parser_deinit()
   rpmFreeCrypto();
 }
 
-struct rpm_parser_state::impl {
+struct rpm_parser::impl {
   FD_t fd;
   Header header;
   std::vector<rpm_dependency> dependencies;
@@ -138,7 +138,7 @@ get_unsigned(Header header, const char *name, rpmTagVal tag)
 }
 
 void
-rpm_parser_state::impl::get_header()
+rpm_parser::impl::get_header()
 {
   if (!headerGet(header, RPMTAG_NEVRA, nevra.raw, HEADERGET_EXT)) {
     throw rpm_parser_exception("could not get NEVRA header from RPM package");
@@ -209,7 +209,7 @@ hardlink_ino(rpmfi_handle &fi)
 }
 
 void
-rpm_parser_state::impl::get_files_from_header()
+rpm_parser::impl::get_files_from_header()
 {
   fi.reset_header(header);
   while (fi.next()) {
@@ -223,7 +223,7 @@ rpm_parser_state::impl::get_files_from_header()
 }
 
 void
-rpm_parser_state::impl::seek_fi(uint32_t fx)
+rpm_parser::impl::seek_fi(uint32_t fx)
 {
   rpmfiSetFX(fi.get(), fx);
   // The rpmfiSetFX return value is not suitable for error checking.
@@ -339,7 +339,7 @@ static void get_deps(Header header,
 }
 
 void
-rpm_parser_state::impl::get_dependencies()
+rpm_parser::impl::get_dependencies()
 {
   get_deps(header, dependencies, rpm_dependency::require, false,
 	   RPMTAG_REQUIRENAME, "REQUIRENAME",
@@ -360,7 +360,7 @@ rpm_parser_state::impl::get_dependencies()
 }
 
 void
-rpm_parser_state::impl::open_payload()
+rpm_parser::impl::open_payload()
 {
   get_files_from_header();
   payload_is_open = true;
@@ -385,7 +385,7 @@ rpm_parser_state::impl::open_payload()
 }
 
 bool
-rpm_parser_state::impl::read_file_ghost(rpm_file_entry &file)
+rpm_parser::impl::read_file_ghost(rpm_file_entry &file)
 {
   while (ghost_files != files.end()) {
     if (!ghost_files->second.seen_) {
@@ -406,7 +406,7 @@ rpm_parser_state::impl::read_file_ghost(rpm_file_entry &file)
   return false;
 }
 
-rpm_parser_state::rpm_parser_state(const char *path)
+rpm_parser::rpm_parser(const char *path)
   : impl_(new impl)
 {
   // The code below roughly follows rpm2cpio.
@@ -436,24 +436,24 @@ rpm_parser_state::rpm_parser_state(const char *path)
   impl_->get_dependencies();
 }
 
-rpm_parser_state::~rpm_parser_state()
+rpm_parser::~rpm_parser()
 {
 }
 
 const char *
-rpm_parser_state::nevra() const
+rpm_parser::nevra() const
 {
   return rpmtdGetString(impl_->nevra.raw);
 }
 
 const rpm_package_info &
-rpm_parser_state::package() const
+rpm_parser::package() const
 {
   return impl_->pkg;
 }
 
 const std::vector<rpm_dependency> &
-rpm_parser_state::dependencies() const
+rpm_parser::dependencies() const
 {
   return impl_->dependencies;
 }
@@ -487,7 +487,7 @@ get_script(Header header, std::vector<rpm_script> &result,
 }
 
 void
-rpm_parser_state::scripts(std::vector<rpm_script> &result) const
+rpm_parser::scripts(std::vector<rpm_script> &result) const
 {
   get_script(impl_->header, result,
 	     rpm_script::pretrans, RPMTAG_PRETRANS, RPMTAG_PRETRANSPROG);
@@ -506,7 +506,7 @@ rpm_parser_state::scripts(std::vector<rpm_script> &result) const
 }
 
 void
-rpm_parser_state::triggers(std::vector<rpm_trigger> &result) const
+rpm_parser::triggers(std::vector<rpm_trigger> &result) const
 {
   result.clear();
 
@@ -571,7 +571,7 @@ rpm_parser_state::triggers(std::vector<rpm_trigger> &result) const
 }
 
 bool
-rpm_parser_state::read_file(rpm_file_entry &file)
+rpm_parser::read_file(rpm_file_entry &file)
 {
   if (!impl_->payload_is_open) {
     impl_->open_payload();

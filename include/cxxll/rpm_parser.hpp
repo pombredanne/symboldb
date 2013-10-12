@@ -30,20 +30,20 @@ class rpm_package_info;
 class rpm_script;
 class rpm_trigger;
 
-// This needs to be called once before creating any rpm_parser_state
+// This needs to be called once before creating any rpm_parser
 // objects.
 void rpm_parser_init();
 
 // Attempts to clean up the RPM library.
 void rpm_parser_deinit();
 
-class rpm_parser_state {
+class rpm_parser {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
 public:
   // Opens the RPM file at PATH.
-  explicit rpm_parser_state(const char *path);
-  ~rpm_parser_state();
+  explicit rpm_parser(const char *path);
+  ~rpm_parser();
 
   const char *nevra() const;
   const rpm_package_info &package() const;

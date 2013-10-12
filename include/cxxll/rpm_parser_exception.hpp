@@ -23,7 +23,7 @@
 
 namespace cxxll {
 
-// Thrown if constructing an rpm_parser_state object fails.
+// Thrown if constructing an rpm_parser object fails.
 struct rpm_parser_exception : std::runtime_error {
   rpm_parser_exception(const std::string &);
   rpm_parser_exception(const char *);

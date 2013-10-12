@@ -476,9 +476,9 @@ add_files(const symboldb_options &opt, database &db, python_analyzer &pya,
 
 static void
 dependencies(const symboldb_options &, database &db,
-	     database::package_id pkg, rpm_parser_state &st)
+	     database::package_id pkg, rpm_parser &rpmparser)
 {
-  const std::vector<rpm_dependency> &deps(st.dependencies());
+  const std::vector<rpm_dependency> &deps(rpmparser.dependencies());
   for (std::vector<rpm_dependency>::const_iterator
 	 p = deps.begin(), end = deps.end(); p != end; ++p) {
     db.add_package_dependency(pkg, *p);
@@ -487,10 +487,10 @@ dependencies(const symboldb_options &, database &db,
 
 static void
 scripts(const symboldb_options &, database &db,
-	database::package_id pkg, rpm_parser_state &st)
+	database::package_id pkg, rpm_parser &rpmparser)
 {
   std::vector<rpm_script> scripts;
-  st.scripts(scripts);
+  rpmparser.scripts(scripts);
   for (std::vector<rpm_script>::const_iterator
 	 p = scripts.begin(), end = scripts.end(); p != end; ++p) {
     db.add_package_script(pkg, *p);
@@ -499,10 +499,10 @@ scripts(const symboldb_options &, database &db,
 
 static void
 triggers(const symboldb_options &, database &db,
-	 database::package_id pkg, rpm_parser_state &st)
+	 database::package_id pkg, rpm_parser &rpmparser)
 {
   std::vector<rpm_trigger> triggers;
-  st.triggers(triggers);
+  rpmparser.triggers(triggers);
   int i = 0;
   for (std::vector<rpm_trigger>::const_iterator
 	 p = triggers.begin(), end = triggers.end(); p != end; ++p) {
@@ -515,34 +515,34 @@ static database::package_id
 load_rpm_internal(const symboldb_options &opt, database &db,
 		  const char *rpm_path, rpm_package_info &pkginfo)
 {
-  rpm_parser_state rpmst(rpm_path);
+  rpm_parser rpmparser(rpm_path);
   python_analyzer pya;
-  pkginfo = rpmst.package();
+  pkginfo = rpmparser.package();
   // We can destroy the lock immediately because we are running in a
   // transaction.
   lock_rpm(db, pkginfo);
   rpm_file_entry file;
 
   database::package_id pkg;
-  if (!db.intern_package(rpmst.package(), pkg)) {
+  if (!db.intern_package(rpmparser.package(), pkg)) {
     if (opt.output != symboldb_options::quiet) {
       fprintf(stderr, "info: skipping %s from %s\n",
-	      rpmst.nevra(), rpm_path);
+	      rpmparser.nevra(), rpm_path);
     }
     return pkg;
   }
 
   if (opt.output != symboldb_options::quiet) {
-    fprintf(stderr, "info: loading %s from %s\n", rpmst.nevra(), rpm_path);
+    fprintf(stderr, "info: loading %s from %s\n", rpmparser.nevra(), rpm_path);
   }
 
-  dependencies(opt, db, pkg, rpmst);
-  scripts(opt, db, pkg, rpmst);
-  triggers(opt, db, pkg, rpmst);
+  dependencies(opt, db, pkg, rpmparser);
+  scripts(opt, db, pkg, rpmparser);
+  triggers(opt, db, pkg, rpmparser);
 
   // FIXME: We should not read arbitrary files into memory, only ELF
   // files.
-  while (rpmst.read_file(file)) {
+  while (rpmparser.read_file(file)) {
     if (file.infos.size() > 1) {
       // Hard links, so this is a real file.
       add_files(opt, db, pya, pkginfo, pkg, rpm_path, file);

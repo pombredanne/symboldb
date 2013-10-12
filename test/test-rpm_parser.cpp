@@ -29,7 +29,7 @@ test()
 {
   // scripts()
   {
-    rpm_parser_state parser("test/data/shared-mime-info-1.1-1.fc18.x86_64.rpm");
+    rpm_parser parser("test/data/shared-mime-info-1.1-1.fc18.x86_64.rpm");
     std::vector<rpm_script> scripts;
     parser.scripts(scripts);
     COMPARE_NUMBER(scripts.size(), 1);
@@ -44,7 +44,7 @@ test()
 
   // triggers()
   {
-    rpm_parser_state parser("test/data/firewalld-0.2.12-5.fc18.noarch.rpm");
+    rpm_parser parser("test/data/firewalld-0.2.12-5.fc18.noarch.rpm");
     std::vector<rpm_trigger> triggers;
     parser.triggers(triggers);
     COMPARE_NUMBER(triggers.size(), 1);
@@ -64,7 +64,7 @@ test()
     COMPARE_STRING(cond.version, "0.1.3-3");
   }
   {
-    rpm_parser_state parser("test/data/cronie-1.4.10-7.fc19.x86_64.rpm");
+    rpm_parser parser("test/data/cronie-1.4.10-7.fc19.x86_64.rpm");
     std::vector<rpm_trigger> triggers;
     parser.triggers(triggers);
     COMPARE_NUMBER(triggers.size(), 3);
@@ -114,4 +114,4 @@ test()
   }
 }
 
-static test_register t("rpm_parser_state", test);
+static test_register t("rpm_parser", test);

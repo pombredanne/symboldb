@@ -49,8 +49,8 @@ bool get_file(const symboldb_options &opt, database &db,
       continue;
     }
     if (fcache->lookup_path(csum, rpm_path)) {
-      rpm_parser_state rps(rpm_path.c_str());
-      while (rps.read_file(rfe)) {
+      rpm_parser rp(rpm_path.c_str());
+      while (rp.read_file(rfe)) {
 	typedef std::vector<rpm_file_info>::const_iterator iterator;
 	const iterator end = rfe.infos.end();
 	for (iterator p = rfe.infos.begin(); p != end; ++p) {
