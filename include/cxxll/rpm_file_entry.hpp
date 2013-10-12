@@ -16,14 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cxxll/rpm_file_entry.hpp>
+#pragma once
 
-using namespace cxxll;
+#include <cxxll/rpm_file_info.hpp>
 
-rpm_file_entry::rpm_file_entry()
-{
-}
+#include <vector>
 
-rpm_file_entry::~rpm_file_entry()
-{
-}
+namespace cxxll {
+
+// Combination of RPM file information and file content.
+struct rpm_file_entry {
+  std::vector<rpm_file_info> infos;
+  std::vector<unsigned char> contents;
+
+  rpm_file_entry();
+  ~rpm_file_entry();
+};
+
+} // namespace cxxll

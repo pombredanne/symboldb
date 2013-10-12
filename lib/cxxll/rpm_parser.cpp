@@ -20,6 +20,7 @@
 #include <cxxll/rpm_parser_exception.hpp>
 #include <cxxll/cpio_reader.hpp>
 #include <cxxll/rpm_file_info.hpp>
+#include <cxxll/rpm_file_entry.hpp>
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpmtd_wrapper.hpp>
 #include <cxxll/rpmfi_handle.hpp>

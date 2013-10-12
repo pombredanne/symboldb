@@ -22,6 +22,8 @@
 #include <cxxll/sink.hpp>
 #include <cxxll/file_cache.hpp>
 #include <cxxll/rpm_parser.hpp>
+#include <cxxll/checksum.hpp>
+#include <cxxll/rpm_file_entry.hpp>
 
 using namespace cxxll;
 

@@ -33,6 +33,7 @@
 #include <cxxll/rpm_package_info.hpp>
 #include <cxxll/rpm_parser.hpp>
 #include <cxxll/rpm_parser_exception.hpp>
+#include <cxxll/rpm_file_entry.hpp>
 #include <cxxll/rpm_script.hpp>
 #include <cxxll/rpm_trigger.hpp>
 #include <cxxll/source_sink.hpp>

@@ -18,15 +18,14 @@
 
 #pragma once
 
-#include "rpm_file_info.hpp"
 #include "rpm_dependency.hpp"
 
-#include <stdexcept>
 #include <tr1/memory>
 #include <vector>
 
 namespace cxxll {
 
+class rpm_file_entry;
 class rpm_package_info;
 class rpm_script;
 class rpm_trigger;
@@ -37,14 +36,6 @@ void rpm_parser_init();
 
 // Attempts to clean up the RPM library.
 void rpm_parser_deinit();
-
-struct rpm_file_entry {
-  std::vector<rpm_file_info> infos;
-  std::vector<unsigned char> contents;
-
-  rpm_file_entry();
-  ~rpm_file_entry();
-};
 
 class rpm_parser_state {
   struct impl;
