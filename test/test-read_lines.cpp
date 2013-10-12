@@ -50,7 +50,7 @@ test()
     read_lines("test/test-read_lines.cpp", lines);
     COMPARE_STRING(lines.at(0), "/*");
     COMPARE_STRING(lines.back(),
-		   "static test_register t(\"read_read_lines\", test);");
+		   "static test_register t(\"read_lines\", test);");
     for (std::vector<std::string>::const_iterator
 	   p = lines.begin(), end = lines.end(); p != end; ++p) {
       bytes.insert(bytes.end(), p->begin(), p->end());
@@ -61,4 +61,4 @@ test()
   }
 }
 
-static test_register t("read_read_lines", test);
+static test_register t("read_lines", test);
