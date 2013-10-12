@@ -49,14 +49,14 @@ namespace cxxll {
 class const_stringref {
   const char *start_;
   size_t size_;
-    __attribute__((noreturn));
   void check_index(size_t index) const;
   void check_index_equal_ok(size_t index) const;
 
   // Out-of-line copies to avoid bloat.  We do not leak the this
   // pointer to these functions so that optimizations are not
   // impaired.
-  static void throw_bad_index(size_t size, size_t index);
+  static void throw_bad_index(size_t size, size_t index)
+    __attribute__((noreturn));
   static void throw_bad_empty() __attribute__((noreturn));
   static bool less_than(const_stringref, const_stringref);
   static bool less_than_equal(const_stringref, const_stringref);
