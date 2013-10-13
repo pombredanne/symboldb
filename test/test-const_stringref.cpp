@@ -230,6 +230,8 @@ test()
     COMPARE_STRING(s.upto(const_stringref()).str(), "LONG STRING");
     COMPARE_STRING(s.upto(const_stringref("empty", 0)).str(), "LONG STRING");
 
+    COMPARE_STRING(s.c_str(), s.str());
+
     malloc_handle<char> ptr(s.ndup());
     COMPARE_STRING(ptr.get(), s.str());
   }

@@ -25,6 +25,7 @@
 #include <cstring>
 
 #include <cxxll/char_cast.hpp>
+#include <cxxll/temporary_string_holder.hpp>
 
 namespace cxxll {
 
@@ -109,6 +110,13 @@ public:
   // are not COUNT characters, the returned string is truncated
   // silently.
   const_stringref substr(size_t pos, size_t count = -1) const;
+
+  // Returns a temporary pointer to NUL-terminated string.  The string
+  // is deallocated when the implicit temporary_string_holder object
+  // is destroyed (usually, when the containing full expression is
+  // left).
+  const char *c_str(const temporary_string_holder & =
+		    temporary_string_holder()) const;
 
   // Chops off the specified number of characters.  Throws
   // bad_string_index if there are not enough characters in the
@@ -280,6 +288,13 @@ inline const_stringref
 const_stringref::substr(size_t pos, size_t count) const
 {
   return substr(*this, pos, count);
+}
+
+inline const char *
+const_stringref::c_str(const temporary_string_holder &h) const
+{
+  h.ptr_ = ndup();
+  return h.ptr_;
 }
 
 inline const_stringref
