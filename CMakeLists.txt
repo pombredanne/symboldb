@@ -98,15 +98,22 @@ add_library (CXXLL
   lib/cxxll/maven_url.cpp
   lib/cxxll/memory_range_source.cpp
   lib/cxxll/mutex.cpp
-  lib/cxxll/os.cpp
-  lib/cxxll/os_error_string.cpp
+  lib/cxxll/os/current_directory.cpp
+  lib/cxxll/os/error_string.cpp
+  lib/cxxll/os/home_directory.cpp
+  lib/cxxll/os/is_directory.cpp
+  lib/cxxll/os/is_executable.cpp
+  lib/cxxll/os/make_directory_hierarchy.cpp
+  lib/cxxll/os/make_temporary_directory.cpp
+  lib/cxxll/os/path_exists.cpp
+  lib/cxxll/os/readlink.cpp
+  lib/cxxll/os/realpath.cpp
+  lib/cxxll/os/remove_directory_tree.cpp
+  lib/cxxll/os/temporary_directory_path.cpp
+  lib/cxxll/os/ticks.cpp
   lib/cxxll/os_exception.cpp
   lib/cxxll/os_exception_function.cpp
   lib/cxxll/os_exception_defaults.cpp
-  lib/cxxll/os_current_directory.cpp
-  lib/cxxll/os_readlink.cpp
-  lib/cxxll/os_remove_directory_tree.cpp
-  lib/cxxll/os_ticks.cpp
   lib/cxxll/pg_encode_array.cpp
   lib/cxxll/pg_exception.cpp
   lib/cxxll/pg_private.cpp
