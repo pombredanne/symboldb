@@ -213,6 +213,13 @@ test()
       COMPARE_NUMBER(e.size(), s.size());
     }
 
+    // const_stringref::str(std::string &)
+    {
+      std::string target("other string");
+      CHECK(&s.str(target) == &target);
+      COMPARE_STRING(target, "LONG STRING");
+    }
+
     // const_stringref::chr(char)
     COMPARE_STRING(s.chr('S').str(), "STRING");
     COMPARE_STRING(s.chr('L').str(), "LONG STRING");

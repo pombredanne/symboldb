@@ -86,8 +86,10 @@ public:
   // Creates a reference to the contents of a C++ string.
   const_stringref(const std::string &);
 
-  // Returns a copy of the string.
+  // Returns a copy of the string.  The second version uses the
+  // passed-in string for storage.
   std::string str() const;
+  std::string &str(std::string &) const;
 
   // Members modelled after std::string
 
@@ -252,6 +254,12 @@ inline std::string
 const_stringref::str() const
 {
   return std::string(start_, size_);
+}
+
+inline std::string &
+const_stringref::str(std::string &result) const
+{
+  return result.assign(start_, size_);
 }
 
 inline const char *
