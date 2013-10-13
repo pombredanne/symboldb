@@ -59,12 +59,19 @@ check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_p
 
   pg_query(dbh, r,
 	   "CREATE TEMP TABLE file_list AS"
-	   " SELECT symboldb.file_mode(fa.mode), fa.caps,"
+	   " SELECT symboldb.file_mode_full(fa.mode), fa.caps,"
 	   " symboldb.file_flags(fa.flags)::text AS flags,"
 	   " file.inode, fa.user_name, fa.group_name,"
-	   " fc.length, file.name"
-	   " FROM symboldb.file JOIN symboldb.package USING (package_id)"
+	   " file.length, file.name"
+	   " FROM (SELECT package_id, attribute_id, name, length, inode"
+	   " FROM symboldb.file"
 	   " JOIN symboldb.file_contents fc USING (contents_id)"
+	   " UNION ALL SELECT package_id, attribute_id, name, 0, 0"
+	   " FROM symboldb.directory"
+	   " UNION ALL SELECT package_id, attribute_id,"
+	   " name || ' -> ' || target, LENGTH(target), 0"
+	   " FROM symboldb.symlink) file"
+	   " JOIN symboldb.package USING (package_id)"
 	   " JOIN symboldb.file_attribute fa USING (attribute_id)"
 	   " WHERE symboldb.nvra(package) = $1"
 	   " ORDER BY file.name", nvra);

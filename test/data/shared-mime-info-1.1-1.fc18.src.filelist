@@ -1,7 +1,7 @@
-rw-r--r--,"","",1,mockbuild,mockbuild,11543,0001-Remove-sub-classing-from-OO.o-mime-types.patch
-rw-r--r--,"","",2,mockbuild,mockbuild,4976,defaults.list
-rw-r--r--,"","",3,mockbuild,mockbuild,4735,file-roller-defaults.list
-rw-rw-r--,"","",4,mockbuild,mockbuild,506660,shared-mime-info-1.1.tar.xz
-rw-r--r--,"",s,5,mockbuild,mockbuild,15947,shared-mime-info.spec
-rw-r--r--,"","",6,mockbuild,mockbuild,2005,shotwell-viewer-defaults.list
-rw-r--r--,"","",7,mockbuild,mockbuild,3814,totem-defaults.list
+-rw-r--r--,"","",1,mockbuild,mockbuild,11543,0001-Remove-sub-classing-from-OO.o-mime-types.patch
+-rw-r--r--,"","",2,mockbuild,mockbuild,4976,defaults.list
+-rw-r--r--,"","",3,mockbuild,mockbuild,4735,file-roller-defaults.list
+-rw-rw-r--,"","",4,mockbuild,mockbuild,506660,shared-mime-info-1.1.tar.xz
+-rw-r--r--,"",s,5,mockbuild,mockbuild,15947,shared-mime-info.spec
+-rw-r--r--,"","",6,mockbuild,mockbuild,2005,shotwell-viewer-defaults.list
+-rw-r--r--,"","",7,mockbuild,mockbuild,3814,totem-defaults.list

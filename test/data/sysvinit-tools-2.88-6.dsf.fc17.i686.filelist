@@ -1,16 +1,19 @@
-rwxr-xr-x,"","",2369034,root,root,16564,/sbin/killall5
-rwxr-xr-x,"","",2369029,root,root,10664,/sbin/sulogin
-rwxr-xr-x,"","",2368992,root,root,14408,/usr/bin/last
-rwxr-xr-x,"","",2369020,root,root,4868,/usr/bin/mesg
-rwxr-xr-x,"","",2369014,root,root,8912,/usr/bin/utmpdump
-r-xr-sr-x,"","",2369024,root,tty,9236,/usr/bin/wall
-rw-r--r--,"",d,2369054,root,root,1217,/usr/share/doc/sysvinit-tools-2.88/COPYRIGHT
-rw-r--r--,"",d,2369053,root,root,31254,/usr/share/doc/sysvinit-tools-2.88/Changelog
-rw-r--r--,"",d,2369008,root,root,1965,/usr/share/man/man1/last.1.gz
-rw-r--r--,"",d,2369009,root,root,36,/usr/share/man/man1/lastb.1.gz
-rw-r--r--,"",d,2369010,root,root,982,/usr/share/man/man1/mesg.1.gz
-rw-r--r--,"",d,2369051,root,root,1052,/usr/share/man/man1/utmpdump.1.gz
-rw-r--r--,"",d,2369007,root,root,1083,/usr/share/man/man1/wall.1.gz
-rw-r--r--,"",d,2369018,root,root,1021,/usr/share/man/man8/killall5.8.gz
-rw-r--r--,"",d,2369012,root,root,1680,/usr/share/man/man8/pidof.8.gz
-rw-r--r--,"",d,2369017,root,root,1682,/usr/share/man/man8/sulogin.8.gz
+-rwxr-xr-x,"","",2369034,root,root,16564,/sbin/killall5
+lrwxrwxrwx,"","",0,root,root,8,/sbin/pidof -> killall5
+-rwxr-xr-x,"","",2369029,root,root,10664,/sbin/sulogin
+-rwxr-xr-x,"","",2368992,root,root,14408,/usr/bin/last
+lrwxrwxrwx,"","",0,root,root,4,/usr/bin/lastb -> last
+-rwxr-xr-x,"","",2369020,root,root,4868,/usr/bin/mesg
+-rwxr-xr-x,"","",2369014,root,root,8912,/usr/bin/utmpdump
+-r-xr-sr-x,"","",2369024,root,tty,9236,/usr/bin/wall
+drwxr-xr-x,"","",0,root,root,0,/usr/share/doc/sysvinit-tools-2.88
+-rw-r--r--,"",d,2369054,root,root,1217,/usr/share/doc/sysvinit-tools-2.88/COPYRIGHT
+-rw-r--r--,"",d,2369053,root,root,31254,/usr/share/doc/sysvinit-tools-2.88/Changelog
+-rw-r--r--,"",d,2369008,root,root,1965,/usr/share/man/man1/last.1.gz
+-rw-r--r--,"",d,2369009,root,root,36,/usr/share/man/man1/lastb.1.gz
+-rw-r--r--,"",d,2369010,root,root,982,/usr/share/man/man1/mesg.1.gz
+-rw-r--r--,"",d,2369051,root,root,1052,/usr/share/man/man1/utmpdump.1.gz
+-rw-r--r--,"",d,2369007,root,root,1083,/usr/share/man/man1/wall.1.gz
+-rw-r--r--,"",d,2369018,root,root,1021,/usr/share/man/man8/killall5.8.gz
+-rw-r--r--,"",d,2369012,root,root,1680,/usr/share/man/man8/pidof.8.gz
+-rw-r--r--,"",d,2369017,root,root,1682,/usr/share/man/man8/sulogin.8.gz

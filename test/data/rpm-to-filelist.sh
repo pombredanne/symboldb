@@ -20,13 +20,17 @@
 
 for rpmfile in "$@" ; do
     listfile="$(basename "$rpmfile" .rpm).filelist"
-    # grep filters out non-files
-    # sed removes the file type column, translates empty fields (twice),
+    # sed removes "-> " from non-symlinks,
+    # normalizes directory size and inode, symlink inode,
+    # translates empty fields (twice),
     # rewrites "(none)" from missing file capabilities, and
     # normalizes ghost hard links and size to zero.
-    rpm -qp --qf '[%{filemodes:perms},%{filecaps},%{fileflags:fflags},%{fileinodes},%{fileusername},%{filegroupname},%{filesizes},%{filenames}\n]' "$rpmfile" \
-	| grep ^- | sed -e s/^-// -e 's/,,/,"",/' -e 's/,(none),/,,/' \
-	| sed  -e 's/,,/,"",/' -e 's/,g,[^0][0-9]*,\([^,]*,[^,]*\),[0-9]*,/,g,0,\1,0,/' \
+    rpm -qp --qf '[%{filemodes:perms},%{filecaps},%{fileflags:fflags},%{fileinodes},%{fileusername},%{filegroupname},%{filesizes},%{filenames} -> %{filelinktos}\n]' "$rpmfile" \
+	| sed -e '/^[^l]/{s/ -> $//}' \
+          -e 's/^\(d.*\),[1-9][0-9]*,\([^,]*\)/\1,0,\2/' \
+          -e '/^[ld]/{s/,[1-9][0-9]*,/,0,/}' \
+	  -e 's/,,/,"",/' -e 's/,(none),/,,/' \
+	| sed -e 's/,,/,"",/' -e 's/,g,[^0][0-9]*,\([^,]*,[^,]*\),[0-9]*,/,g,0,\1,0,/' \
 	> "$listfile"
 done
 
