@@ -572,6 +572,17 @@ $$ IMMUTABLE STRICT LANGUAGE SQL;
 COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
   'format the integer as a file permission string';
 
+CREATE FUNCTION symboldb.file_mode_full (INTEGER) RETURNS TEXT AS $$
+  SELECT CASE $1 >> 12
+      WHEN 4 THEN 'd'
+      WHEN 8 THEN '-'
+      WHEN 10 THEN 'l'
+      ELSE '?'
+    END	 || symboldb.file_mode ($1);
+$$ IMMUTABLE STRICT LANGUAGE SQL;
+COMMENT ON FUNCTION symboldb.file_mode (INTEGER) IS
+  'format the integer as a file mode string (file type and permissions)';
+
 CREATE FUNCTION symboldb.file_flags_internal (INTEGER, INTEGER, TEXT)
   RETURNS TEXT AS $$
   SELECT CASE WHEN ($1 & $2) <> 0 THEN $3 ELSE '' END;
