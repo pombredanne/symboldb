@@ -220,6 +220,20 @@ test()
     src.unnest();
     CHECK(src.state() == expat_source::EOD);
   }
+
+  try {
+    string_source xml("<root></malformed>rest");
+    expat_source src(&xml);
+    src.next();
+    CHECK(false);
+  } catch (expat_source::malformed &e){
+    COMPARE_STRING(e.what(), "1:8: error=\"mismatched tag\" "
+                   "before=\"<root></\" after=\"malformed>rest\"");
+    COMPARE_STRING(e.before(), "<root></");
+    COMPARE_STRING(e.after(), "malformed>rest");
+    COMPARE_NUMBER(e.line(), 1);
+    COMPARE_NUMBER(e.column(), 8);
+  }
 }
 
 static test_register t("expat_source", test);
