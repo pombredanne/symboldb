@@ -556,7 +556,6 @@ load_rpm_internal(const symboldb_options &opt, database &db,
     } else if (info.is_symlink()) {
       db.add_symlink(pkg, info);
     } else {
-      // FIXME: deal with special files.
       add_files(opt, db, pya, pkginfo, pkg, rpm_path, file);
     }
   }
