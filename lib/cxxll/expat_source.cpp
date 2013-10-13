@@ -21,6 +21,7 @@
 #include <cxxll/source.hpp>
 #include <cxxll/string_support.hpp>
 #include <cxxll/raise.hpp>
+#include <cxxll/const_stringref.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -107,7 +108,7 @@ struct expat_source::impl {
   void feed();
 
   // Throws an exception if an error occured.
-  void check_error(enum XML_Status status, const char *, size_t);
+  void check_error(enum XML_Status status, const_stringref buf);
 
   // Adds line and column to the end of upcoming_, based on the state
   // of handle_.
@@ -191,7 +192,7 @@ expat_source::impl::feed()
     size_t ret = source_->read(reinterpret_cast<unsigned char *>(buf),
 			       sizeof(buf));
     check_error(XML_Parse(handle_.raw, buf, ret, /* isFinal */ ret == 0),
-		buf, ret);
+		const_stringref(buf, ret));
     consumed_bytes_ += ret;
     if (ret == 0) {
       upcoming_.push_back(ENC_EOD);
@@ -200,20 +201,19 @@ expat_source::impl::feed()
 }
 
 void
-expat_source::impl::check_error(enum XML_Status status,
-				const char *buf, size_t len)
+expat_source::impl::check_error(enum XML_Status status, const_stringref buf)
 {
   if (bad_alloc_) {
     raise<std::bad_alloc>();
   }
   if (bad_entity_) {
-    throw entity_declaration(this, buf, len);
+    throw entity_declaration(this, buf);
   }
   if (!error_.empty()) {
     throw source_error(this);
   }
   if (status != XML_STATUS_OK) {
-    throw malformed(this, buf, len);
+    throw malformed(this, buf);
   }
 }
 
@@ -584,7 +584,7 @@ expat_source::exception::what() const throw()
 //////////////////////////////////////////////////////////////////////
 // expat_source::malformed
 
-expat_source::malformed::malformed(const impl *p, const char *buf, size_t len)
+expat_source::malformed::malformed(const impl *p, const_stringref buf)
   : exception(p, false)
 {
   message_ = XML_ErrorString(XML_GetErrorCode(p->handle_.raw));
@@ -594,9 +594,9 @@ expat_source::malformed::malformed(const impl *p, const char *buf, size_t len)
   if (index >= p->consumed_bytes_) {
     index -= p->consumed_bytes_;
     size_t before_count = std::min(index, 50ULL);
-    size_t after_count = std::min(len - index, 50ULL);
-    before_ = std::string(buf + index - before_count, buf + index);
-    after_ = std::string(buf + index, buf + index + after_count);
+    size_t after_count = std::min(buf.size() - index, 50ULL);
+    buf.substr(index - before_count, before_count).str(before_ );
+    buf.substr(index, after_count).str(after_);
 
     if (!before_.empty()) {
       msg << " before=\"" << quote(before_) << '"';
@@ -616,8 +616,8 @@ expat_source::malformed::~malformed() throw()
 // expat_source::malformed
 
 expat_source::entity_declaration::entity_declaration
-  (const impl *p, const char *buf, size_t len)
-    : malformed(p, buf, len)
+  (const impl *p, const_stringref buf)
+    : malformed(p, buf)
 {
   // FIXME: We should refactor this using C++11 delegating
   // constructors.

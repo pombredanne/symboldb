@@ -25,6 +25,7 @@
 
 namespace cxxll {
 
+class const_stringref;
 class source;
 
 // Pull-based XML parser.
@@ -128,7 +129,7 @@ public:
     const char *message_;
     std::string before_;
     std::string after_;
-    malformed(const impl *, const char *buf, size_t len);
+    malformed(const impl *, const_stringref);
   public:
     ~malformed() throw();
     const char *message() const;
@@ -139,7 +140,7 @@ public:
   // Thrown if an entity declaration is encountered.
   class entity_declaration : public malformed {
   public:
-    entity_declaration(const impl *, const char *buf, size_t len);
+    entity_declaration(const impl *, const_stringref);
     ~entity_declaration() throw();
   };
 
