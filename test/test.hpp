@@ -85,4 +85,4 @@ struct test_register {
   ~test_register();
 };
 
-int run_tests();
+int run_tests(const char *pattern);

@@ -19,7 +19,7 @@
 #include "test.hpp"
 
 int
-main()
+main(int, char **argv)
 {
-  return run_tests();
+  return run_tests(argv[1]);
 }

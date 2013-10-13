@@ -26,6 +26,7 @@
 #include <cxxll/elf_image.hpp>
 #include <cxxll/rpm_parser.hpp>
 #include <cxxll/curl_fetch_result.hpp>
+#include <cxxll/regex_handle.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -287,8 +288,13 @@ report_descriptors(const char *prefix, const std::vector<int> &fds, bool all)
 
 
 int
-run_tests()
+run_tests(const char *pattern)
 {
+  regex_handle regexp(pattern ? pattern : ".*");
+  if (pattern != NULL) {
+    fprintf(stderr, "info: test sets matching: %s\n", pattern);
+  }
+
   std::vector<int> start_fds(file_descriptors());
   if (!file_descriptors_valid(start_fds)) {
     fprintf(stderr, "warning: invalid set of file descriptors:\n");
@@ -310,6 +316,12 @@ run_tests()
 
   for (test_suite::iterator p = tests->begin(), end = tests->end();
        p != end; ++p) {
+    if (!regexp.match(p->name)) {
+      continue;
+    }
+    if (pattern != NULL) {
+      fprintf(stderr, "info: running test set: %s\n", p->name);
+    }
     current_test = p->name;
     try {
       p->func();
