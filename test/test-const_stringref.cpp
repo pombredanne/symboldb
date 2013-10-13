@@ -211,6 +211,14 @@ test()
       COMPARE_NUMBER(e.index(), s.size() + 1);
       COMPARE_NUMBER(e.size(), s.size());
     }
+
+    COMPARE_STRING(s.chr('S').str(), "STRING");
+    COMPARE_STRING(s.chr('L').str(), "LONG STRING");
+    COMPARE_STRING(s.chr('G').str(), "G STRING");
+    COMPARE_STRING(const_stringref("LONG\000STRING", 12).chr('S').str(),
+		   std::string("STRING", 7));
+    CHECK(s.chr('X').empty());
+    CHECK(s.chr(0).empty());
   }
 
   {

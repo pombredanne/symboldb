@@ -125,8 +125,13 @@ public:
   // Members modelled after C run-time library functions.
 
   // Returns the length of the string, stopping at the first NUL
-  // character.
+  // character.  (Replacement for strnlen.)
   size_t nlen() const;
+
+  // Returns the slice starting at the first occurrence of CH, or an
+  // empty slice if CH is not present in the string.  (Replacement for
+  // memchr.)
+  const_stringref chr(char ch) const;
 
   // Members for iterator support.
 
@@ -312,6 +317,17 @@ inline size_t
 const_stringref::nlen() const
 {
   return strnlen(start_, size_);
+}
+
+inline const_stringref
+const_stringref::chr(char ch) const
+{
+  const char *ptr = static_cast<const char *>(memchr(start_, ch, size_));
+  if (ptr) {
+    return const_stringref(ptr, (start_ + size_) - ptr);
+  } else {
+    return const_stringref();
+  }
 }
 
 inline const_stringref &
