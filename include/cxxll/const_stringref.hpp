@@ -134,6 +134,10 @@ public:
   // memchr.)
   const_stringref chr(char ch) const;
 
+  // Returns a malloced-copy of the string up to the first NUL
+  // character (if any).  (Replacement for strndup.)
+  char *ndup() const;
+
   // Members for iterator support.
 
   // Chops off characters at the start of the slice.
@@ -336,6 +340,12 @@ const_stringref::chr(char ch) const
   } else {
     return const_stringref();
   }
+}
+
+inline char *
+const_stringref::ndup() const
+{
+  return strndup(start_, size_);
 }
 
 inline const_stringref &

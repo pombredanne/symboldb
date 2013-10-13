@@ -18,6 +18,7 @@
 
 #include <cxxll/const_stringref.hpp>
 #include <cxxll/bad_string_index.hpp>
+#include <cxxll/malloc_handle.hpp>
 
 #include <sstream>
 
@@ -228,6 +229,9 @@ test()
     COMPARE_STRING(s.upto(s + s.size()).str(), "LONG STRING");
     COMPARE_STRING(s.upto(const_stringref()).str(), "LONG STRING");
     COMPARE_STRING(s.upto(const_stringref("empty", 0)).str(), "LONG STRING");
+
+    malloc_handle<char> ptr(s.ndup());
+    COMPARE_STRING(ptr.get(), s.str());
   }
 
   {
