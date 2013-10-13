@@ -16,7 +16,7 @@
 
 -- This file contains the indexes not essential for loading.
 
-CREATE INDEX ON symboldb.package (name, version);
+CREATE INDEX package_name_version_idx ON symboldb.package (name, version);
 CREATE INDEX ON symboldb.package (symboldb.nvra(package));
 CREATE INDEX ON symboldb.package (symboldb.nevra(package));
 CREATE INDEX ON symboldb.package USING GIN (name gin_trgm_ops);
