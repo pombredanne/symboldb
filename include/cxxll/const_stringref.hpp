@@ -108,7 +108,7 @@ public:
   // characters.  Throws bad_string_index if POS > size().  If there
   // are not COUNT characters, the returned string is truncated
   // silently.
-  const_stringref substr(size_t pos, size_t count = -1);
+  const_stringref substr(size_t pos, size_t count = -1) const;
 
   // Chops off the specified number of characters.  Throws
   // bad_string_index if there are not enough characters in the
@@ -273,7 +273,7 @@ const_stringref::operator[](size_t index) const
 }
 
 inline const_stringref
-const_stringref::substr(size_t pos, size_t count)
+const_stringref::substr(size_t pos, size_t count) const
 {
   return substr(*this, pos, count);
 }
