@@ -113,33 +113,20 @@ pg_exception::what() const throw()
 namespace {
   void
   dump1(const char *prefix, const char *infix1, const char *infix2,
-	const char *messageptr, FILE *out)
+	const_stringref message, FILE *out)
   {
-    const_stringref message = messageptr;
     bool first = true;
-    while (true) {
+    while (!message.empty()) {
       const_stringref nl = message.chr('\n');
-      if (message.empty()) {
-	break;
-      }
       const_stringref line = message.upto(nl);
       fprintf(out, "%s%s", prefix, first ? infix1 : infix2);
       fwrite(line.data(), line.size(), 1, out);
       putc('\n', out);
       first = false;
       message = nl;
-      if (!message.empty() && message[0] == '\n') {
-	++message;
+      if (!message.empty()) {
+	++message;		// skip '\n'
       }
-    }
-  }
-
-  void
-  dump1(const char *prefix, const char *infix1, const char *infix2,
-	const std::string &message, FILE *out)
-  {
-    if (!message.empty()) {
-      dump1(prefix, infix1, infix2, message.c_str(), out);
     }
   }
 }
