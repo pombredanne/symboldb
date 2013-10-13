@@ -61,6 +61,7 @@ class const_stringref {
   static bool less_than(const_stringref, const_stringref);
   static bool less_than_equal(const_stringref, const_stringref);
   static const_stringref substr(const_stringref, size_t pos, size_t count);
+  static const_stringref upto(const_stringref, const_stringref stop);
 public:
   // Initializes the string reference to an empty string.
   const_stringref();
@@ -139,6 +140,13 @@ public:
   const_stringref &operator++();
   const_stringref operator++(int);
   const_stringref &operator+=(size_t);
+
+  // Slice construction functions.
+
+  // Returns the substring ending at the start of STOP.  Throws
+  // bad_string_index if STOP is not part of or adjacent to this
+  // string.
+  const_stringref upto(const_stringref stop) const;
 };
 
 inline void
@@ -358,6 +366,11 @@ const_stringref::operator+=(size_t index)
   return *this;
 }
 
+inline const_stringref
+const_stringref::upto(const_stringref stop) const
+{
+  return upto(*this, stop);
+}
 
 // Non-member operator definitions.
 

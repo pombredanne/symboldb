@@ -212,6 +212,7 @@ test()
       COMPARE_NUMBER(e.size(), s.size());
     }
 
+    // const_stringref::chr(char)
     COMPARE_STRING(s.chr('S').str(), "STRING");
     COMPARE_STRING(s.chr('L').str(), "LONG STRING");
     COMPARE_STRING(s.chr('G').str(), "G STRING");
@@ -219,6 +220,14 @@ test()
 		   std::string("STRING", 7));
     CHECK(s.chr('X').empty());
     CHECK(s.chr(0).empty());
+
+    // const_stringref::upto(const_stringref)
+    COMPARE_STRING(s.upto(s.chr('S')).str(), "LONG ");
+    CHECK(s.upto(s.chr('L')).empty());
+    COMPARE_STRING(s.upto(s.chr('G')).str(), "LON");
+    COMPARE_STRING(s.upto(s + s.size()).str(), "LONG STRING");
+    COMPARE_STRING(s.upto(const_stringref()).str(), "LONG STRING");
+    COMPARE_STRING(s.upto(const_stringref("empty", 0)).str(), "LONG STRING");
   }
 
   {

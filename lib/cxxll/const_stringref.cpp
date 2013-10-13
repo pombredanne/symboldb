@@ -68,3 +68,15 @@ cxxll::const_stringref::substr(cxxll::const_stringref s, size_t pos, size_t coun
   s.check_index_equal_ok(pos);
   return const_stringref(s.data() + pos, std::min(count, s.size() - pos));
 }
+
+cxxll::const_stringref
+cxxll::const_stringref::upto(const_stringref s, const_stringref stop)
+{
+  // Empty stop slices do not necessarily point into the initial slice.x
+  if (stop.empty()) {
+    return s;
+  }
+  size_t end = stop.start_ - s.start_;
+  s.check_index_equal_ok(end);
+  return const_stringref(s.start_, end);
+}
