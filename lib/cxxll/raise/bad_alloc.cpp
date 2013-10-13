@@ -16,10 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cxxll/exception.hpp>
+#include <cxxll/raise.hpp>
 
 template void cxxll::raise<std::bad_alloc>();
-template void cxxll::raise<std::runtime_error>(const char *msg);
-template void cxxll::raise<std::runtime_error>(const std::string &);
-template void cxxll::raise<std::logic_error>(const char *msg);
-template void cxxll::raise<std::logic_error>(const std::string &);

@@ -17,7 +17,7 @@
  */
 
 #include <cxxll/pg_split_statement.hpp>
-#include <cxxll/exception.hpp>
+#include <cxxll/raise.hpp>
 
 #include <cstring>
 

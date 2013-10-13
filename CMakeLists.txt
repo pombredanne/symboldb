@@ -84,7 +84,6 @@ add_library (CXXLL
   lib/cxxll/elf_symbol_definition.cpp
   lib/cxxll/elf_symbol_reference.cpp
   lib/cxxll/eof_exception.cpp
-  lib/cxxll/exception.cpp
   lib/cxxll/expat_handle.cpp
   lib/cxxll/expat_minidom.cpp
   lib/cxxll/expat_source.cpp
@@ -119,6 +118,11 @@ add_library (CXXLL
   lib/cxxll/read_file.cpp
   lib/cxxll/read_lines.cpp
   lib/cxxll/regex_handle.cpp
+  lib/cxxll/raise/bad_alloc.cpp
+  lib/cxxll/raise/runtime.cpp
+  lib/cxxll/raise/runtime_string.cpp
+  lib/cxxll/raise/logic.cpp
+  lib/cxxll/raise/logic_string.cpp
   lib/cxxll/rpm_evr.cpp
   lib/cxxll/rpm_dependency.cpp
   lib/cxxll/rpm_file_entry.cpp
