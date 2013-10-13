@@ -19,6 +19,7 @@
 #include <cxxll/pg_query.hpp>
 #include <cxxll/pg_exception.hpp>
 #include <cxxll/string_support.hpp>
+#include <cxxll/raise.hpp>
 
 #include <cerrno>
 #include <climits>
@@ -200,7 +201,7 @@ load_text(PGresult *res, int row, int col, T &val)
     unsigned char *blob =
       PQunescapeBytea(reinterpret_cast<const unsigned char *>(ptr), &len);
     if (blob == NULL) {
-      throw std::bad_alloc();
+      raise<std::bad_alloc>();
     }
     try {
       val.assign(blob, blob + len);

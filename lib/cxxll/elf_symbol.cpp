@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/elf_symbol.hpp>
+#include <cxxll/raise.hpp>
 
 #include <stdexcept>
 
@@ -47,5 +48,5 @@ elf_symbol::visibility() const
   case STV_PROTECTED:
     return "protected";
   }
-  throw std::logic_error("invalid visibility value");
+  raise<std::logic_error>("invalid visibility value");
 }

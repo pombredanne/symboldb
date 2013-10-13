@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/rpm_script.hpp>
+#include <cxxll/raise.hpp>
 
 #include <stdexcept>
 
@@ -41,7 +42,7 @@ rpm_script::to_string(kind type)
   case verify:
     return "verify";
   }
-  throw std::logic_error("invalid cxxll::rpm_script::kind value");
+  raise<std::logic_error>("invalid cxxll::rpm_script::kind value");
 }
 
 rpm_script::rpm_script(kind k)

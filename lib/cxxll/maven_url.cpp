@@ -19,6 +19,7 @@
 #include <cxxll/maven_url.hpp>
 #include <cxxll/expat_source.hpp>
 #include <cxxll/string_support.hpp>
+#include <cxxll/raise.hpp>
 
 #include <cassert>
 #include <cstring>
@@ -52,7 +53,7 @@ cxxll::maven_url::to_string(kind type)
     X(developerConnection);
 #undef X
   }
-  throw std::runtime_error("cxxll::maven_url::to_string");
+  raise<std::runtime_error>("cxxll::maven_url::to_string");
 }
 
 maven_url::kind

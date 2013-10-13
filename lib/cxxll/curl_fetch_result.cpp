@@ -20,6 +20,7 @@
 #include <cxxll/curl_fetch_result.hpp>
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/sink.hpp>
+#include <cxxll/raise.hpp>
 
 #include <cstring>
 
@@ -177,7 +178,7 @@ void
 curl_fetch_result::global_init()
 {
   if (curl_global_init(CURL_GLOBAL_ALL) != 0) {
-    throw std::runtime_error("libcurl initialization failed");
+    raise<std::runtime_error>("libcurl initialization failed");
   }
 }
 

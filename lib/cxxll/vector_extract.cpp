@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/vector_extract.hpp>
+#include <cxxll/raise.hpp>
 
 #include <stdexcept>
 
@@ -26,7 +27,7 @@ cxxll::extract(const std::vector<unsigned char> &vec,
 {
   size_t end = offset + length;
   if (end < offset || end > vec.size()) {
-    throw std::out_of_range("cxxll::extract");
+    raise<std::out_of_range>("cxxll::extract");
   }
   std::vector<unsigned char>::const_iterator p = vec.begin();
   target.assign(p + offset, p + end);

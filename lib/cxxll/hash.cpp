@@ -20,10 +20,10 @@
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/os.hpp>
 #include <cxxll/checksum.hpp>
+#include <cxxll/raise.hpp>
 
 #include <algorithm>
 #include <cassert>
-#include <stdexcept>
 
 #include <fcntl.h>
 #include <limits.h>
@@ -56,11 +56,11 @@ struct hash_sink::impl {
       digest_length = 32;
       break;
     default:
-      throw std::logic_error("invalid hash_sink::type");
+      raise<std::logic_error>("invalid hash_sink::type");
     }
     raw = PK11_CreateDigestContext(oid);
     if (raw == NULL) {
-      throw std::runtime_error("PK11_CreateDigestContext");
+      raise<std::runtime_error>("PK11_CreateDigestContext");
     }
   }
 
@@ -74,7 +74,7 @@ hash_sink::hash_sink(type t)
   : impl_(new impl(t))
 {
   if (PK11_DigestBegin(impl_->raw) != SECSuccess) {
-    throw std::runtime_error("PK11_DigestBegin");
+    raise<std::runtime_error>("PK11_DigestBegin");
   }
 }
 
@@ -88,7 +88,7 @@ hash_sink::write(const unsigned char *buf, size_t len)
   while (len > 0) {
     size_t to_hash = std::min(len, static_cast<size_t>(INT_MAX) / 2);
     if (PK11_DigestOp(impl_->raw, buf, to_hash) != SECSuccess) {
-      throw std::runtime_error("PK11_DigestOp");
+      raise<std::runtime_error>("PK11_DigestOp");
     }
     impl_->octets += to_hash;
     buf += to_hash;
@@ -102,7 +102,7 @@ hash_sink::digest(std::vector<unsigned char> &d)
   d.resize(impl_->digest_length);
   unsigned len = d.size();
   if (PK11_DigestFinal(impl_->raw, d.data(), &len, d.size()) != SECSuccess) {
-    throw std::runtime_error("PK11_DigestFinal");
+    raise<std::runtime_error>("PK11_DigestFinal");
   }
   assert(len == d.size());
 }
@@ -124,7 +124,7 @@ hash_sink::from_string(const char *str)
   } else if (strcmp(str, "sha256") == 0) {
     return sha256;
   } else {
-    throw std::runtime_error("unknown hash type: " + std::string(str));
+    raise<std::runtime_error>("unknown hash type: " + std::string(str));
   }
 }
 
@@ -139,7 +139,7 @@ hash_sink::to_string(type hash)
   case sha256:
     return "sha256";
   default:
-    throw std::runtime_error("unknown numeric hash type");
+    raise<std::runtime_error>("unknown numeric hash type");
   }
 }
 

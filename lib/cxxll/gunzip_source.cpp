@@ -18,10 +18,10 @@
 
 #include <cxxll/gunzip_source.hpp>
 #include <cxxll/zlib_inflate_exception.hpp>
+#include <cxxll/raise.hpp>
 
 #include <cassert>
 #include <cstring>
-#include <stdexcept>
 
 #include <zlib.h>
 
@@ -44,7 +44,7 @@ struct gunzip_source::impl {
     stream_.next_in = buffer_;
     int ret = inflateInit2(&stream_, 16 + MAX_WBITS /* gzip */);
     if (ret != Z_OK) {
-      throw std::bad_alloc();
+      raise<std::bad_alloc>();
     }
   }
 

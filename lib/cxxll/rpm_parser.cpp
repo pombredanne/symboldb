@@ -26,6 +26,7 @@
 #include <cxxll/rpmfi_handle.hpp>
 #include <cxxll/rpm_script.hpp>
 #include <cxxll/rpm_trigger.hpp>
+#include <cxxll/raise.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -374,10 +375,10 @@ rpm_parser::impl::open_payload()
   }
   FD_t gzfd = Fdopen(fd, rpmio_flags.c_str());
   if (gzfd == NULL) {
-    throw std::runtime_error("could not allocate compression handle");
+    raise<std::runtime_error>("could not allocate compression handle");
   }
   if (gzfd != fd) {
-    throw std::logic_error("handle changed unexpectedly");
+    raise<std::logic_error>("handle changed unexpectedly");
   }
   if (Ferror(fd)) {
     throw rpm_parser_exception(Fstrerror(fd));

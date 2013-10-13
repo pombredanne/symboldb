@@ -20,6 +20,7 @@
 #include <cxxll/expat_handle.hpp>
 #include <cxxll/source.hpp>
 #include <cxxll/string_support.hpp>
+#include <cxxll/raise.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -203,7 +204,7 @@ expat_source::impl::check_error(enum XML_Status status,
 				const char *buf, size_t len)
 {
   if (bad_alloc_) {
-    throw std::bad_alloc();
+    raise<std::bad_alloc>();
   }
   if (bad_entity_) {
     throw entity_declaration(this, buf, len);
@@ -552,7 +553,7 @@ expat_source::state_string(state_type e)
   case EOD:
     return "EOD";
   }
-  throw std::logic_error("expat_source::state_string");
+  raise<std::logic_error>("expat_source::state_string");
 }
 
 //////////////////////////////////////////////////////////////////////

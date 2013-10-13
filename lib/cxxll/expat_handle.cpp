@@ -17,8 +17,7 @@
  */
 
 #include <cxxll/expat_handle.hpp>
-
-#include <stdexcept>
+#include <cxxll/raise.hpp>
 
 using namespace cxxll;
 
@@ -26,7 +25,7 @@ expat_handle::expat_handle()
 {
   raw = XML_ParserCreate(NULL);
   if (raw == NULL) {
-    throw std::bad_alloc();
+    raise<std::bad_alloc>();
   }
 }
 

@@ -21,6 +21,7 @@
 #include <cxxll/string_support.hpp>
 #include <cxxll/checksum.hpp>
 #include <cxxll/url.hpp>
+#include <cxxll/raise.hpp>
 
 using namespace cxxll;
 
@@ -37,7 +38,7 @@ struct repomd::primary::impl {
     source_.next();
     if (source_.name() != "metadata") {
       // FIXME: proper exception
-      throw std::runtime_error("invalid root element: " + source_.name());
+      raise<std::runtime_error>("invalid root element: " + source_.name());
     }
     source_.next(); // in <metadata>
   }
@@ -61,7 +62,7 @@ struct repomd::primary::impl {
   {
     // FIXME: proper exception
     if (info_.name.empty()) {
-      throw std::runtime_error("missing <name> element");
+      raise<std::runtime_error>("missing <name> element");
     }
     check_attr("<version>", info_.version); // covers release
     check_attr("<arch>", info_.arch);
@@ -69,10 +70,10 @@ struct repomd::primary::impl {
     // check_attr("<format>/<rpm:sourcerpm>", info_.source_rpm);
     check_attr("<location>/href", href_);
     if (checksum_.value.empty()) {
-      throw std::runtime_error("missing <checksum> element");
+      raise<std::runtime_error>("missing <checksum> element");
     }
     if (checksum_.length == ::checksum::no_length) {
-      throw std::runtime_error("missing <size> element");
+      raise<std::runtime_error>("missing <size> element");
     }
   }
 
@@ -96,7 +97,7 @@ struct repomd::primary::impl {
     // At <package>.
     if (source_.attribute("type") != "rpm") {
       // FIXME: proper exception
-      throw std::runtime_error("invalid package type: "
+      raise<std::runtime_error>("invalid package type: "
 			       + source_.attribute("type"));
     }
     source_.next();
@@ -202,7 +203,7 @@ repomd::primary::impl::check_attr(const char *name, const std::string &value)
     msg += name;
     msg += " element in package: ";
     msg += info_.name;
-    throw std::runtime_error(msg); // FIXME
+    raise<std::runtime_error>(msg); // FIXME
   }
 }
 

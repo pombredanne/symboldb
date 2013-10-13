@@ -24,6 +24,7 @@
 #include <cxxll/url.hpp>
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/base16.hpp>
+#include <cxxll/raise.hpp>
 
 #include <stdexcept>
 #include <vector>
@@ -84,7 +85,7 @@ repomd::primary_xml::primary_xml(const repomd &rp,
     }
   }
   // FIXME: use a more specific exception
-  throw std::runtime_error(rp.base_url + ": could not find primary.xml");
+  raise<std::runtime_error>(rp.base_url + ": could not find primary.xml");
 }
 
 repomd::primary_xml::~primary_xml()

@@ -20,6 +20,7 @@
 #include <cxxll/malloc_handle.hpp>
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/os_exception.hpp>
+#include <cxxll/raise.hpp>
 
 #include <assert.h>
 #include <errno.h>
@@ -33,7 +34,6 @@
 #include <unistd.h>
 
 #include <vector>
-#include <stdexcept>
 
 using namespace cxxll;
 
@@ -55,7 +55,7 @@ namespace {
     assert(s != NULL);
     char *snew = strdup(s);
     if (snew == NULL) {
-      throw std::bad_alloc();
+      raise<std::bad_alloc>();
     }
     return snew;
   }
@@ -173,7 +173,7 @@ subprocess::command_name() const
 {
   const char *name = impl_->argv.at(0);
   if (name == NULL) {
-    throw std::logic_error("subprocess::command_name not set");
+    raise<std::logic_error>("subprocess::command_name not set");
   }
   return name;
 }
@@ -190,12 +190,12 @@ subprocess &
 subprocess::env(const char *key, const char *value)
 {
   if (strchr(key, '=') != NULL) {
-    throw std::logic_error("subprocess:env key contains '='");
+    raise<std::logic_error>("subprocess:env key contains '='");
   }
   char *ptr;
   int ret = asprintf(&ptr, "%s=%s", key, value);
   if (ret < 0) {
-    throw std::bad_alloc();
+    raise<std::bad_alloc>();
   }
   impl_->envv.back() = ptr;
   impl_->envv.push_back(NULL);
@@ -239,7 +239,7 @@ void
 subprocess::start()
 {
   if (impl_->pid != 0) {
-    throw std::logic_error("subprocess::start called for running process");
+    raise<std::logic_error>("subprocess::start called for running process");
   }
 
   attr_handle attr;
@@ -330,10 +330,10 @@ subprocess::pipefd(standard_fd fd) const
 {
   assert(fd == in || fd == out || fd == err);
   if (impl_->pid == 0) {
-    throw std::logic_error("subprocess::wait needs started process");
+    raise<std::logic_error>("subprocess::wait needs started process");
   }
   if (impl_->activity[fd] != pipe) {
-    throw std::logic_error("subprocess: access to non-pipe descriptor");
+    raise<std::logic_error>("subprocess: access to non-pipe descriptor");
   }
   return impl_->pipes[fd].get();
 }
@@ -343,10 +343,10 @@ subprocess::closefd(standard_fd fd)
 {
   assert(fd == in || fd == out || fd == err);
   if (impl_->pid == 0) {
-    throw std::logic_error("subprocess::wait needs started process");
+    raise<std::logic_error>("subprocess::wait needs started process");
   }
   if (impl_->activity[fd] != pipe) {
-    throw std::logic_error("subprocess: non-pipe descriptor cannot be closed");
+    raise<std::logic_error>("subprocess: non-pipe descriptor cannot be closed");
   }
   impl_->pipes[fd].close();
 }
@@ -355,7 +355,7 @@ int
 subprocess::wait()
 {
   if (impl_->pid == 0) {
-    throw std::logic_error("subprocess::wait needs started process");
+    raise<std::logic_error>("subprocess::wait needs started process");
   }
   int status;
   pid_t ret = ::waitpid(impl_->pid, &status, 0);
@@ -389,7 +389,7 @@ void
 subprocess::kill(int signo)
 {
   if (impl_->pid == 0) {
-    throw std::logic_error("subprocess::kill needs started process");
+    raise<std::logic_error>("subprocess::kill needs started process");
   }
   if (::kill(impl_->pid, signo) != 0) {
     // FIXME: pid?

@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/rpm_dependency.hpp>
+#include <cxxll/raise.hpp>
 
 #include <stdexcept>
 
@@ -35,7 +36,7 @@ rpm_dependency::to_string(kind_type typ)
   case obsolete:
     return "obsolete";
   }
-  throw std::logic_error("invalid value for cxxll::rpm_dependency::kind_type");
+  raise<std::logic_error>("invalid value for cxxll::rpm_dependency::kind_type");
 }
 
 rpm_dependency::rpm_dependency(kind_type typ)

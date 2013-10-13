@@ -17,8 +17,7 @@
  */
 
 #include <cxxll/curl_handle.hpp>
-
-#include <stdexcept>
+#include <cxxll/raise.hpp>
 
 using namespace cxxll;
 
@@ -26,7 +25,7 @@ curl_handle::curl_handle()
 {
   raw = curl_easy_init();
   if (raw == 0) {
-    throw std::bad_alloc();
+    raise<std::bad_alloc>();
   }
 }
 

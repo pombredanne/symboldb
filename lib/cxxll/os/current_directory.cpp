@@ -18,6 +18,7 @@
 
 #include <cxxll/os.hpp>
 #include <cxxll/os_exception.hpp>
+#include <cxxll/raise.hpp>
 
 #include <vector>
 
@@ -48,7 +49,7 @@ cxxll::current_directory()
 
       size_t new_size = 2 * vec.size();
       if (new_size < vec.size()) {
-	throw std::bad_alloc();
+	raise<std::bad_alloc>();
       }
       vec.resize(new_size);
     }

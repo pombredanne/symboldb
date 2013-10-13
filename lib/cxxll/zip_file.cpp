@@ -21,8 +21,7 @@
 #include <cxxll/source_sink.hpp>
 #include <cxxll/vector_sink.hpp>
 #include <cxxll/os_exception.hpp>
-
-#include <stdexcept>
+#include <cxxll/raise.hpp>
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -49,7 +48,7 @@ cxxll::zip_file::impl::impl(const std::vector<unsigned char> *buffer)
   : buffer_(buffer), archive_(archive_read_new())
 {
   if (archive_ == NULL) {
-    throw std::bad_alloc();
+    raise<std::bad_alloc>();
   }
   if (archive_read_support_format_zip(archive_) != ARCHIVE_OK
       || (archive_read_open_memory(archive_,
@@ -58,7 +57,7 @@ cxxll::zip_file::impl::impl(const std::vector<unsigned char> *buffer)
 	  != ARCHIVE_OK)
       || (entry_ = archive_entry_new2(archive_)) == NULL) {
     archive_read_finish(archive_);
-    throw std::runtime_error("archive_read_support_format_zip");
+    raise<std::runtime_error>("archive_read_support_format_zip");
   }
 }
 

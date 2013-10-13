@@ -36,6 +36,7 @@
 #include <cxxll/hash.hpp>
 #include <cxxll/java_class.hpp>
 #include <cxxll/maven_url.hpp>
+#include <cxxll/raise.hpp>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -316,7 +317,7 @@ database::intern_file_contents(const rpm_file_info &info,
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   long long length = info.digest.length;
   if (length < 0) {
-    throw std::runtime_error("file length out of range");
+    raise<std::runtime_error>("file length out of range");
   }
 
   // Ideally, we would like to obtain a lock here, but for large RPM
@@ -339,11 +340,11 @@ database::intern_file_attribute(const rpm_file_info &info)
 {
   int mode = info.mode;
   if (mode < 0) {
-    throw std::runtime_error("file mode out of range");
+    raise<std::runtime_error>("file mode out of range");
   }
   int flags = info.flags;
   if (flags < 0) {
-    throw std::runtime_error("file flags out of range");
+    raise<std::runtime_error>("file flags out of range");
   }
 
   impl::attribute_row row
@@ -378,10 +379,10 @@ database::add_package_digest(package_id pkg,
   // FIXME: This needs a transaction and locking.
 
   if (digest.size() < 16) {
-    throw std::logic_error("invalid digest length");
+    raise<std::logic_error>("invalid digest length");
   }
   if (length > (1ULL << 60)) {
-    throw std::logic_error("invalid length");
+    raise<std::logic_error>("invalid length");
   }
 
   // Try to locate existing row.
@@ -415,7 +416,7 @@ database::package_id
 database::package_by_digest(const std::vector<unsigned char> &digest)
 {
   if (digest.size() < 16) {
-    throw std::logic_error("invalid digest length");
+    raise<std::logic_error>("invalid digest length");
   }
   pgresult_handle res;
   pg_query_binary
@@ -503,19 +504,19 @@ database::add_file(package_id pkg, const cxxll::rpm_file_info &info,
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   long long length = info.digest.length;
   if (length < 0) {
-    throw std::runtime_error("file length out of range");
+    raise<std::runtime_error>("file length out of range");
   }
   int mode = info.mode;
   if (mode < 0) {
-    throw std::runtime_error("file mode out of range");
+    raise<std::runtime_error>("file mode out of range");
   }
   int ino = info.ino;
   if (ino < 0) {
-    throw std::runtime_error("file inode out of range");
+    raise<std::runtime_error>("file inode out of range");
   }
   int mtime = info.mtime;
   if (mtime < 0) {
-    throw std::runtime_error("file mtime out of range");
+    raise<std::runtime_error>("file mtime out of range");
   }
 
   attribute_id aid = intern_file_attribute(info);
@@ -570,7 +571,7 @@ database::add_symlink(package_id pkg, const rpm_file_info &info)
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   assert(info.is_symlink());
   if (info.linkto.empty()) {
-    throw std::runtime_error("symlink with invalid target");
+    raise<std::runtime_error>("symlink with invalid target");
   }
   attribute_id aid(intern_file_attribute(info));
   pgresult_handle res;
@@ -1186,7 +1187,7 @@ database::print_elf_soname_conflicts(package_set_id set)
 	 " FROM symboldb.file f JOIN symboldb.package p USING (package_id)"
 	 " WHERE f.file_id = $1", fid.value());
       if (res.ntuples() != 1) {
-	throw std::runtime_error("could not locate symboldb.file row");
+	raise<std::runtime_error>("could not locate symboldb.file row");
       }
       pg_response(res, 0, entry.file, entry.nevra);
       return entry;

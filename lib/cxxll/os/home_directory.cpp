@@ -17,10 +17,9 @@
  */
 
 #include <cxxll/os.hpp>
+#include <cxxll/raise.hpp>
 
 #include <stdlib.h>
-
-#include <stdexcept>
 
 using namespace cxxll;
 
@@ -33,5 +32,5 @@ cxxll::home_directory()
   }
   // TODO: use getpwuid_r to obtain the directory from the user
   // databse.
-  throw std::runtime_error("could not determine HOME directory");
+  raise<std::runtime_error>("could not determine HOME directory");
 }

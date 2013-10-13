@@ -20,9 +20,9 @@
 
 #include <cxxll/mutex.hpp>
 #include <cxxll/cond.hpp>
+#include <cxxll/raise.hpp>
 
 #include <map>
-#include <stdexcept>
 
 namespace cxxll {
 
@@ -99,7 +99,7 @@ bounded_ordered_queue<Key, Value>::add_producer()
   mutex::locker ml(&mutex_);
   ++producers_;
   if (producers_ == 0) {
-    throw std::runtime_error("too many producers");
+    raise<std::runtime_error>("too many producers");
   }
 }
 
@@ -108,7 +108,7 @@ bounded_ordered_queue<Key, Value>::remove_producer()
 {
   mutex::locker ml(&mutex_);
   if (producers_ == 0) {
-    throw queue_without_producers();
+    raise<queue_without_producers>();
   }
   --producers_;
   if (producers_ == 0) {
@@ -128,7 +128,8 @@ bounded_ordered_queue<Key, Value>::push(const Key &key, const Value &value)
 {
   mutex::locker ml(&mutex_);
   if (producers_ == 0) {
-    throw std::logic_error("bounded_ordered_queue push without producers");
+    raise<std::logic_error>
+      ("bounded_ordered_queue push without producers");
   }
   while (map_.size() >= capacity_) {
     writer_.wait(mutex_);
@@ -162,7 +163,7 @@ bounded_ordered_queue<Key, Value>::pop()
 {
   std::pair<Key, Value> result;
   if (!pop(result.first, result.second)) {
-    throw queue_without_producers();
+    raise<queue_without_producers>();
   }
   return result;
 }
@@ -179,7 +180,8 @@ template <class Key, class Value> void
 bounded_ordered_queue<Key, Value>::check() const
 {
   if (capacity_ == 0) {
-    throw std::logic_error("bounded_ordered_queue capacity must not be zero");
+    raise<std::logic_error>
+      ("bounded_ordered_queue capacity must not be zero");
   }
 }
 

@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/elf_exception.hpp>
+#include <cxxll/raise.hpp>
 
 #include <libelf.h>
 
@@ -45,7 +46,7 @@ elf_exception::raise(const char *msg, ...)
   int ret = vasprintf(&buffer, msg, ap);
   va_end(ap);
   if (ret < 0) {
-    throw std::runtime_error("vasprintf failed");
+    cxxll::raise<std::runtime_error>("vasprintf failed");
   }
   try {
     throw elf_exception(buffer);

@@ -48,6 +48,7 @@
 #include <cxxll/expat_source.hpp>
 #include <cxxll/maven_url.hpp>
 #include <cxxll/looks_like_xml.hpp>
+#include <cxxll/raise.hpp>
 
 #include <map>
 #include <sstream>
@@ -130,7 +131,7 @@ load_elf(const symboldb_options &opt, database &db,
 	} else if (symbols.reference()) {
 	  dump_ref(opt, db, cid, elf_path, *symbols.reference());
 	} else {
-	  throw std::logic_error("unknown elf_symbol type");
+	  raise<std::logic_error>("unknown elf_symbol type");
 	}
       }
     }
@@ -320,15 +321,14 @@ check_digest(const char *rpm_path, const std::string &file,
 	     const checksum &actual, const checksum &expected)
 {
   if (actual.value != expected.value) {
-    throw std::runtime_error(std::string(rpm_path)
-			     + ": digest mismatch for "
-			     + file + " (actual "
-			     + base16_encode(actual.value.begin(),
-					     actual.value.end())
-			     + ", expected "
-			     + base16_encode(expected.value.begin(),
-					     expected.value.end())
-			     + ")");
+    raise<std::runtime_error>
+      (std::string(rpm_path)
+       + ": digest mismatch for "
+       + file + " (actual "
+       + base16_encode(actual.value.begin(), actual.value.end())
+       + ", expected "
+       + base16_encode(expected.value.begin(), expected.value.end())
+       + ")");
   }
 }
 
@@ -570,7 +570,7 @@ rpm_load(const symboldb_options &opt, database &db,
 {
   if (expected && (expected->type != hash_sink::sha256
 		   && expected->type != hash_sink::sha1)) {
-    throw std::runtime_error("unsupported hash type");
+    raise<std::runtime_error>("unsupported hash type");
   }
 
   // Unreferenced RPMs should not be visible to analyzers, so we can
@@ -596,13 +596,13 @@ rpm_load(const symboldb_options &opt, database &db,
   db.add_package_digest(pkg, digest, sha256.octets());
   if (expected && expected->type == hash_sink::sha256
       && expected->value != digest) {
-    throw std::runtime_error("checksum mismatch");
+    raise<std::runtime_error>("checksum mismatch");
   }
   sha1.digest(digest);
   db.add_package_digest(pkg, digest, sha1.octets());
   if (expected && expected->type == hash_sink::sha1
       && expected->value != digest) {
-    throw std::runtime_error("checksum mismatch");
+    raise<std::runtime_error>("checksum mismatch");
   }
   if (url != NULL) {
     db.add_package_url(pkg, url);
