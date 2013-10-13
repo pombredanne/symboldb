@@ -84,6 +84,7 @@ add_library (CXXLL
   lib/cxxll/elf_symbol_definition.cpp
   lib/cxxll/elf_symbol_reference.cpp
   lib/cxxll/eof_exception.cpp
+  lib/cxxll/exception.cpp
   lib/cxxll/expat_handle.cpp
   lib/cxxll/expat_minidom.cpp
   lib/cxxll/expat_source.cpp
