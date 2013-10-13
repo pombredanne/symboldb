@@ -17,24 +17,26 @@
  */
 
 #include <cxxll/pg_split_statement.hpp>
+#include <cxxll/const_stringref.hpp>
 #include <cxxll/raise.hpp>
 
 #include <cstring>
 
 void
-cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
+cxxll::pg_split_statement(const char *sqlptr, std::vector<std::string> &result)
 {
-  const char *last = sql;
+  const_stringref sql(sqlptr);
+  const_stringref last = sql;
   bool in_statement = false;
-  while (*sql) {
-    char ch = *sql;
+  while (!sql.empty()) {
+    char ch = sql[0];
     ++sql;
     switch (ch) {
     case '-':
       // Comment.
-      if (*sql == '-') {
-	sql = strchr(sql + 1, '\n');
-	if (!sql) {
+      if (!sql.empty() && sql[0] == '-') {
+	sql = (sql + 1).chr('\n');
+	if (sql.empty()) {
 	  return;
 	}
 	++sql;
@@ -47,16 +49,16 @@ cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
       if (!in_statement) {
 	raise<std::runtime_error>("string at start of SQL statement");
       }
-      while (*sql) {
-	if (*sql == '\'') {
+      while (!sql.empty()) {
+	if (sql[0] == '\'') {
 	  ++sql;
-	  if (*sql != '\'') {
+	  if (sql.empty() || sql[0] != '\'') {
 	    break;
 	  }
 	}
 	++sql;
       }
-      if (*sql == '\0') {
+      if (sql.empty()) {
 	raise<std::runtime_error>("unterminated string in SQL statement");
       }
       break;
@@ -64,13 +66,13 @@ cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
       if (!in_statement) {
 	raise<std::runtime_error>("$ at start of SQL statement");
       }
-      if (*sql == '$') {
+      if (!sql.empty() && sql[0] == '$') {
 	// $$-terminated string.
 	++sql;
-	while (*sql) {
-	  if (*sql == '$') {
+	while (!sql.empty()) {
+	  if (sql[0] == '$') {
 	    ++sql;
-	    if (*sql == '$') {
+	    if (!sql.empty() && sql[0] == '$') {
 	      ++sql;
 	      break;
 	    }
@@ -78,7 +80,7 @@ cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
 	    ++sql;
 	  }
 	}
-	if (*sql == '\0') {
+	if (sql.empty()) {
 	  raise<std::runtime_error>("unterminated $$ string in SQL statement");
 	}
       }
@@ -87,7 +89,7 @@ cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
       if (!in_statement) {
 	raise<std::runtime_error>("empty SQL statement");
       }
-      result.push_back(std::string(last, sql));
+      result.push_back(last.upto(sql).str());
       if (result.back().empty()) {
 	result.pop_back();
       }
@@ -101,7 +103,7 @@ cxxll::pg_split_statement(const char *sql, std::vector<std::string> &result)
       }
     }
   }
-  if (last != sql) {
+  if (!last.empty()) {
     raise<std::runtime_error>("unterminated final SQL statement");
   }
 }
