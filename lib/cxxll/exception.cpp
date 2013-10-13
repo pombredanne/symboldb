@@ -18,8 +18,8 @@
 
 #include <cxxll/exception.hpp>
 
-template void cxxll::call_throw<std::bad_alloc>();
-template void cxxll::call_throw<std::runtime_error>(const char *msg);
-template void cxxll::call_throw<std::runtime_error>(const std::string &);
-template void cxxll::call_throw<std::logic_error>(const char *msg);
-template void cxxll::call_throw<std::logic_error>(const std::string &);
+template void cxxll::raise<std::bad_alloc>();
+template void cxxll::raise<std::runtime_error>(const char *msg);
+template void cxxll::raise<std::runtime_error>(const std::string &);
+template void cxxll::raise<std::logic_error>(const char *msg);
+template void cxxll::raise<std::logic_error>(const std::string &);

@@ -24,33 +24,33 @@ namespace cxxll {
 
 // Out-of-line throw operation.  Equivalent to throw T() or throw
 // T(msg), but the code is not expanded inline.
-template <class T> void call_throw() __attribute__((noreturn));
-template <class T> void call_throw(const char *msg) __attribute__((noreturn));
-template <class T> void call_throw(const std::string &msg)
+template <class T> void raise() __attribute__((noreturn));
+template <class T> void raise(const char *msg) __attribute__((noreturn));
+template <class T> void raise(const std::string &msg)
   __attribute__((noreturn));
 
 template <class T>
-void call_throw()
+void raise()
 {
   throw T();
 }
 
 template <class T>
-void call_throw(const char *msg)
+void raise(const char *msg)
 {
   throw T(msg);
 }
 
 template <class T>
-void call_throw(const std::string &msg)
+void raise(const std::string &msg)
 {
   throw T(msg);
 }
 
-extern template void call_throw<std::bad_alloc>();
-extern template void call_throw<std::runtime_error>(const char *msg);
-extern template void call_throw<std::runtime_error>(const std::string &);
-extern template void call_throw<std::logic_error>(const char *msg);
-extern template void call_throw<std::logic_error>(const std::string &);
+extern template void raise<std::bad_alloc>();
+extern template void raise<std::runtime_error>(const char *msg);
+extern template void raise<std::runtime_error>(const std::string &);
+extern template void raise<std::logic_error>(const char *msg);
+extern template void raise<std::logic_error>(const std::string &);
 
 }
