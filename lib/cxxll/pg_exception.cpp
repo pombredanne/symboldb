@@ -17,6 +17,7 @@
  */
 
 #include <cxxll/pg_exception.hpp>
+#include <cxxll/const_stringref.hpp>
 
 #include <string.h>
 
@@ -112,23 +113,22 @@ pg_exception::what() const throw()
 namespace {
   void
   dump1(const char *prefix, const char *infix1, const char *infix2,
-	const char *message, FILE *out)
+	const char *messageptr, FILE *out)
   {
+    const_stringref message = messageptr;
     bool first = true;
     while (true) {
-      const char *nl = strchr(message, '\n');
-      if (nl == NULL) {
-	nl = message + strlen(message);
-      }
-      if (*message == '\0') {
+      const_stringref nl = message.chr('\n');
+      if (message.empty()) {
 	break;
       }
+      const_stringref line = message.upto(nl);
       fprintf(out, "%s%s", prefix, first ? infix1 : infix2);
-      fwrite(message, nl - message, 1, out);
+      fwrite(line.data(), line.size(), 1, out);
       putc('\n', out);
       first = false;
       message = nl;
-      if (*message == '\n') {
+      if (!message.empty() && message[0] == '\n') {
 	++message;
       }
     }
