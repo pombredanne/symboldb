@@ -18,6 +18,7 @@
 
 #include <cxxll/const_stringref.hpp>
 #include <cxxll/bad_string_index.hpp>
+#include <cxxll/raise.hpp>
 
 #include <algorithm>
 
@@ -67,6 +68,16 @@ cxxll::const_stringref::substr(cxxll::const_stringref s, size_t pos, size_t coun
 {
   s.check_index_equal_ok(pos);
   return const_stringref(s.data() + pos, std::min(count, s.size() - pos));
+}
+
+char *
+cxxll::const_stringref::ndup(cxxll::const_stringref s)
+{
+  char *ptr = strndup(s.start_, s.size_);
+  if (ptr == NULL) {
+    raise<std::bad_alloc>();
+  }
+  return ptr;
 }
 
 cxxll::const_stringref

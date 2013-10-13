@@ -62,6 +62,7 @@ class const_stringref {
   static bool less_than(const_stringref, const_stringref);
   static bool less_than_equal(const_stringref, const_stringref);
   static const_stringref substr(const_stringref, size_t pos, size_t count);
+  static char *ndup(const_stringref);
   static const_stringref upto(const_stringref, const_stringref stop);
 public:
   // Initializes the string reference to an empty string.
@@ -295,6 +296,7 @@ const_stringref::c_str(const temporary_string_holder &h) const
 {
   h.ptr_ = ndup();
   return h.ptr_;
+  return ndup(*this);
 }
 
 inline const_stringref
@@ -360,7 +362,7 @@ const_stringref::chr(char ch) const
 inline char *
 const_stringref::ndup() const
 {
-  return strndup(start_, size_);
+  return ndup(*this);
 }
 
 inline const_stringref &
