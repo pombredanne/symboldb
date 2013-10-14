@@ -27,6 +27,7 @@
 #include <cxxll/rpm_script.hpp>
 #include <cxxll/rpm_trigger.hpp>
 #include <cxxll/raise.hpp>
+#include <cxxll/const_stringref.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -42,15 +43,39 @@
 
 using namespace cxxll;
 
+static rpmlogCallback old_log_callback;
+
+static int
+log_callback(rpmlogRec rec, rpmlogCallbackData)
+{
+  // Workaround to suppress an error message from the librpm version
+  // in Debian wheezy.  See this Debian bug:
+  // <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=702958>
+  static const const_stringref suppress1 =
+    "Macro %__isa_name has empty body\n";
+  static const const_stringref suppress2 =
+    "Macro %__isa_bits has empty body\n";
+  const_stringref message = rpmlogRecMessage(rec);
+  if (message == suppress1 || message == suppress2) {
+    return 0;
+  }
+  return RPMLOG_DEFAULT;
+}
+
 void
 cxxll::rpm_parser_init()
 {
+  old_log_callback = rpmlogSetCallback(log_callback, NULL);
   rpmReadConfigFiles("", "noarch");
 }
 
 void
 cxxll::rpm_parser_deinit()
 {
+  if (old_log_callback != NULL) {
+    rpmlogSetCallback(old_log_callback, NULL);
+    old_log_callback = NULL;
+  }
   rpmInitCrypto();
   rpmFreeCrypto();
 }
