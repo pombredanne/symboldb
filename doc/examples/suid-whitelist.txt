@@ -1,0 +1,54 @@
+Comparing files in a package set against a SUID whitelist
+---------------------------------------------------------
+
+The input file needs the following format:
+
+    <permissions><TAB><user name><TAB><group name><TAB><file path><NL>
+
+The permissions are in the rwx format and need to include the initial
+"-" (for "regular file"), e.g.:
+
+    -rwsr-xr-x	root	root	/usr/bin/su
+
+The SQL for performing the comparison follows.  You need to replace
+the COPY statement with something that loads the `whitelist` table.
+
+    CREATE TEMPORARY TABLE whitelist
+      (permissions TEXT NOT NULL, user_name TEXT NOT NULL,
+       group_name TEXT NOT NULL, path TEXT NOT NULL PRIMARY KEY);
+    -- Load the table:
+    -- COPY whitelist FROM STDIN;
+    CREATE TEMPORARY TABLE suid_files AS SELECT
+        symboldb.nevra(package), file.name AS path,
+        fa.user_name, fa.group_name,
+        symboldb.file_mode_full(fa.mode) AS permissions
+      FROM symboldb.package JOIN symboldb.file USING (package_id)
+      JOIN symboldb.file_attribute fa USING (attribute_id)
+      JOIN symboldb.package_set_member USING (package_id)
+      WHERE set_id = symboldb.package_set('Fedora/rawhide/x86_64')
+        AND (fa.mode & 3072) <> 0;
+    SELECT nevra COLLATE "C", path COLLATE "C",
+        suid_files.user_name AS actual_user,
+        suid_files.group_name AS actual_group,
+        suid_files.permissions AS actual_perms,
+        whitelist.user_name AS expected_user,
+        whitelist.group_name AS expected_group,
+        whitelist.permissions AS expected_perms
+        FROM whitelist JOIN suid_files USING (path)
+      WHERE
+        (whitelist.user_name, whitelist.group_name, whitelist.permissions)
+        IS DISTINCT FROM
+        (suid_files.user_name, suid_files.group_name, suid_files.permissions)
+    UNION ALL SELECT nevra, path, user_name, group_name, permissions,
+        '<unexpected>', '<unexpected>', '<unexpected>'
+      FROM suid_files WHERE path NOT IN (SELECT path FROM whitelist)
+    UNION ALL SELECT '<missing>', path, '<missing>', '<missing>', '<missing>',
+        user_name, group_name, permissions
+      FROM whitelist WHERE path NOT IN (SELECT path FROM suid_files)
+    ORDER BY 1, 2;
+
+This shows only differences between the whitelist and the actual file
+system view.  `<unexpected>` entries are missing from the whitelist
+(but there is a package installing these files).  `<missing>` entries
+are present in the whitelist, but there is no RPM package which
+contains them.
