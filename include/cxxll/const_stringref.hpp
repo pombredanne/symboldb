@@ -96,6 +96,9 @@ public:
   // Returns the pointer to the first character.  Note that this is
   // not guaranteed to be a C-style NUL-terminated string.
   const char *data() const;
+
+  // Same as data(), but with an unsigned char pointer.
+  const unsigned char *udata() const;
   
   // Returns true if there are no characters.
   bool empty() const;
@@ -266,6 +269,13 @@ inline const char *
 const_stringref::data() const
 {
   return start_;
+}
+
+inline const unsigned char *
+const_stringref::udata() const
+{
+  // FIXME: use better char_cast
+  return reinterpret_cast<const unsigned char *>(start_);
 }
 
 inline bool
