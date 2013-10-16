@@ -35,7 +35,7 @@ struct fd_sink : sink {
 
   ~fd_sink();
 
-  void write(const unsigned char *, size_t);
+  void write(const_stringref);
 };
 
 } // namespace cxxll

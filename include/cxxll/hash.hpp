@@ -46,7 +46,7 @@ public:
   ~hash_sink();
 
   // Hashes the specified byte array.
-  void write(const unsigned char *, size_t);
+  void write(const_stringref);
 
   // Finalizes the hash computation and writes the 32 bytes of digest
   // to its argument.

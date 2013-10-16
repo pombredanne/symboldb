@@ -35,7 +35,7 @@ test(void)
     fd_sink s(h.get());
     unsigned char buf[3] = {65, 66, 67};
     try {
-      s.write(buf, sizeof(buf));
+      s.write(const_stringref(buf, sizeof(buf)));
     } catch (os_exception &e) {
       CHECK(starts_with(e.what(), "function=write["));
       CHECK(ends_with(e.what(),

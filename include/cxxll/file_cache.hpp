@@ -66,7 +66,7 @@ public:
     add_sink(file_cache &, const checksum &);
     ~add_sink();
 
-    void write(const unsigned char *, size_t);
+    void write(const_stringref);
 
     // Performs checksum validation
     void finish(std::string &path);

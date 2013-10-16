@@ -40,18 +40,18 @@ fd_sink::~fd_sink()
 
 void
 fd_sink::
-write(const unsigned char *buf, size_t len)
+write(const_stringref buf)
 {
-  while (len > 0) {
-    ssize_t ret = ::write(raw, buf, len);
+  while (!buf.empty()) {
+    ssize_t ret = ::write(raw, buf.data(), buf.size());
     if (ret == 0) {
       ret = -1;
       errno = ENOSPC;
     }
     if (ret < 0) {
-      throw os_exception().fd(raw).count(len).function(::write).defaults();
+      throw os_exception().fd(raw).count(buf.size())
+	.function(::write).defaults();
     }
     buf += ret;
-    len -= ret;
   }
 }

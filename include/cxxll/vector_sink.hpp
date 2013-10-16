@@ -28,7 +28,7 @@ struct vector_sink : sink {
   std::vector<unsigned char> data;
   vector_sink();
   ~vector_sink();
-  void write(const unsigned char *, size_t);
+  void write(const_stringref);
 };
 
 } // namespace cxxll

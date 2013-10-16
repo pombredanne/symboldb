@@ -28,7 +28,7 @@ struct string_sink : sink {
   std::string data;
   string_sink();
   ~string_sink();
-  void write(const unsigned char *, size_t);
+  void write(const_stringref);
 };
 
 } // namespace cxxll

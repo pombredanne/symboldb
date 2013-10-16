@@ -29,7 +29,7 @@ struct tee_sink : sink {
   sink *right;
   tee_sink(sink *left, sink *right);
   ~tee_sink();
-  void write(const unsigned char *, size_t);
+  void write(const_stringref);
 };
 
 } // namespace cxxll

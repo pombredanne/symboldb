@@ -83,16 +83,15 @@ hash_sink::~hash_sink()
 }
 
 void
-hash_sink::write(const unsigned char *buf, size_t len)
+hash_sink::write(const_stringref buf)
 {
-  while (len > 0) {
-    size_t to_hash = std::min(len, static_cast<size_t>(INT_MAX) / 2);
-    if (PK11_DigestOp(impl_->raw, buf, to_hash) != SECSuccess) {
+  while (!buf.empty()) {
+    size_t to_hash = std::min(buf.size(), static_cast<size_t>(INT_MAX) / 2);
+    if (PK11_DigestOp(impl_->raw, buf.udata(), to_hash) != SECSuccess) {
       raise<std::runtime_error>("PK11_DigestOp");
     }
     impl_->octets += to_hash;
     buf += to_hash;
-    len -= to_hash;
   }
 }
 
@@ -149,7 +148,7 @@ std::vector<unsigned char>
 cxxll::hash(hash_sink::type t, const std::vector<unsigned char> &data)
 {
   hash_sink sink(t);
-  sink.write(data.data(), data.size());
+  sink.write(data);
   std::vector<unsigned char> digest;
   sink.digest(digest);
   return digest;
@@ -170,7 +169,7 @@ cxxll::hash_file(hash_sink::type t,
     if (ret == 0) {
       break;
     }
-    sink.write(buf, ret);
+    sink.write(const_stringref(buf, ret));
   }
   sink.digest(digest);
 }
@@ -188,7 +187,7 @@ cxxll::hash_file(hash_sink::type t, const char *path, checksum &csum)
     if (ret == 0) {
       break;
     }
-    sink.write(buf, ret);
+    sink.write(const_stringref(buf, ret));
   }
   sink.digest(csum.value);
   csum.type = t;

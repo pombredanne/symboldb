@@ -39,7 +39,7 @@ download(const download_options &opt, database &db,
     {
       std::vector<unsigned char> data;
       if (db.url_cache_fetch(url, data)) {
-	target->write(data.data(), data.size());
+	target->write(data);
 	return;
       }
       if (opt.cache_mode == download_options::only_cache) {
@@ -58,7 +58,7 @@ download(const download_options &opt, database &db,
       if (r.http_date > 0 && r.http_size >= 0
 	  && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
 				r.http_date, vsink.data)) {
-	target->write(vsink.data.data(), vsink.data.size());
+	target->write(vsink.data);
 	return;
       }
     }

@@ -113,8 +113,8 @@ namespace {
       unsigned char buf[sizeof(unsigned)];
     } u;
     u.number = cpu_to_be_32(str.size());
-    sink.write(u.buf, sizeof(u.buf));
-    sink.write(str.data(), str.size());
+    sink.write(const_stringref(u.buf, sizeof(u.buf)));
+    sink.write(str);
   }
 
   unsigned

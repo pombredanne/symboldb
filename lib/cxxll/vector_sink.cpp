@@ -29,7 +29,7 @@ vector_sink::~vector_sink()
 }
 
 void
-vector_sink::write(const unsigned char *buf, size_t len)
+vector_sink::write(const_stringref buf)
 {
-  data.insert(data.end(), buf, buf + len);
+  data.insert(data.end(), buf.data(), buf.data() + buf.size());
 }

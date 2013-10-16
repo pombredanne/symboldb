@@ -148,7 +148,7 @@ test()
     proc.redirect(subprocess::out, subprocess::pipe);
     proc.start();
     fd_sink sink(proc.pipefd(subprocess::in));
-    sink.write(reinterpret_cast<const unsigned char *>("abc"), 3);
+    sink.write("abc");
     proc.closefd(subprocess::in);
     fd_source source(proc.pipefd(subprocess::out));
     string_sink strsink;

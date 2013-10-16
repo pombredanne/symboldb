@@ -55,7 +55,7 @@ bool get_file(const symboldb_options &opt, database &db,
 	const iterator end = rfe.infos.end();
 	for (iterator p = rfe.infos.begin(); p != end; ++p) {
 	  if (p->name == fwd.file_name()) {
-	    target.write(rfe.contents.data(), rfe.contents.size());
+	    target.write(rfe.contents);
 	    return true;
 	  }
 	}

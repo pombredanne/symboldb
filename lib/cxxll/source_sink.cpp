@@ -35,7 +35,7 @@ cxxll::copy_source_to_sink(source &src, sink &dst)
     if (ret == 0) {
       break;
     }
-    dst.write(buf, ret);
+    dst.write(const_stringref(buf, ret));
     count += ret;
   }
   return count;

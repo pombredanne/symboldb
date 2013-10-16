@@ -29,7 +29,7 @@ string_sink::~string_sink()
 }
 
 void
-string_sink::write(const unsigned char *buf, size_t len)
+string_sink::write(const_stringref buf)
 {
-  data.insert(data.end(), buf, buf + len);
+  data += buf;
 }

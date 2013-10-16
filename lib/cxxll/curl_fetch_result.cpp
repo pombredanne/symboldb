@@ -34,7 +34,7 @@ curl_fetch_result::write_function(char *ptr, size_t size, size_t nmemb,
   size = size * nmemb;
   if (r.error.empty()) {
     try {
-      r.target->write(reinterpret_cast<unsigned char *>(ptr), size);
+      r.target->write(const_stringref(ptr, size));
     } catch (std::exception &e) {
       r.error = e.what();		// FIXME: handle bad_alloc
     }

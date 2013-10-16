@@ -149,10 +149,10 @@ file_cache::add_sink::~add_sink()
 }
 
 void
-file_cache::add_sink::write(const unsigned char *buf, size_t len)
+file_cache::add_sink::write(const_stringref buf)
 {
-  impl_->tee.write(buf, len);
-  impl_->length += len;
+  impl_->tee.write(buf);
+  impl_->length += buf.size();
 }
 
 void
@@ -186,7 +186,7 @@ file_cache::add(const checksum &csum, const std::vector<unsigned char> &data,
 		std::string &path)
 {
   add_sink sink(*this, csum);
-  sink.write(data.data(), data.size());
+  sink.write(data);
   sink.finish(path);
 }
 

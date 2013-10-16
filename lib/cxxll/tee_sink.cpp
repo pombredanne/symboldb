@@ -30,8 +30,8 @@ tee_sink::~tee_sink()
 }
 
 void
-tee_sink::write(const unsigned char *buf, size_t len)
+tee_sink::write(const_stringref buf)
 {
-  left->write(buf, len);
-  right->write(buf, len);
+  left->write(buf);
+  right->write(buf);
 }
