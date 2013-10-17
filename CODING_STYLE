@@ -58,7 +58,7 @@ std::tr1::shared_ptr -> std::unique_ptr or std::shared_ptr with
 std::make_shared).  Several enums can be switched to enum classes.
 Custom thread support facilities can be removed.
 
-pg_query and pg_response will benefite from variadic templates.
+pg_query and pg_response will benefit from variadic templates.
 pg_query can be optimized using perfect forwarding (instead of inlining
 and the arg typedef), and constexpr functions can check the number of
 placeholders against the parameter count.
