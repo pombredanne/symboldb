@@ -262,6 +262,7 @@ add_executable (runtests
   test/test-string_source.cpp
   test/test-string_support.cpp
   test/test-subprocess.cpp
+  test/test-symboldb-integration.cpp
   test/test-task.cpp
   test/test-temporary_directory.cpp
   test/test-utf8.cpp
