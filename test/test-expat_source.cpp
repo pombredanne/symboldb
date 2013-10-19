@@ -231,8 +231,8 @@ test()
                    "before=\"<root></\" after=\"malformed>rest\"");
     COMPARE_STRING(e.before(), "<root></");
     COMPARE_STRING(e.after(), "malformed>rest");
-    COMPARE_NUMBER(e.line(), 1);
-    COMPARE_NUMBER(e.column(), 8);
+    COMPARE_NUMBER(e.line(), 1U);
+    COMPARE_NUMBER(e.column(), 8U);
   }
 }
 

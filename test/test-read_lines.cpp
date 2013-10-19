@@ -31,7 +31,7 @@ test()
 
   lines.push_back("line 0");
   read_lines("/dev/null", lines);
-  COMPARE_NUMBER(lines.size(), 1);
+  COMPARE_NUMBER(lines.size(), 1U);
   COMPARE_STRING(lines.at(0), "line 0");
 
   try {

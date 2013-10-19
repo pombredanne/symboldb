@@ -36,13 +36,13 @@ test()
     const_stringref s;
     CHECK(s.data());
     CHECK(s.empty());
-    COMPARE_NUMBER(s.size(), 0);
-    COMPARE_NUMBER(s.nlen(), 0);
+    COMPARE_NUMBER(s.size(), 0U);
+    COMPARE_NUMBER(s.nlen(), 0U);
     s.at(0);
     CHECK(false);
   } catch (bad_string_index &e) {
-    COMPARE_NUMBER(e.index(), 0);
-    COMPARE_NUMBER(e.size(), 0);
+    COMPARE_NUMBER(e.index(), 0U);
+    COMPARE_NUMBER(e.size(), 0U);
     COMPARE_STRING(e.what(), "size = 0, index = 0");
   }
 
@@ -98,16 +98,16 @@ test()
     s[0];
     CHECK(false);
   } catch (bad_string_index &e) {
-    COMPARE_NUMBER(e.index(), 0);
-    COMPARE_NUMBER(e.size(), 0);
+    COMPARE_NUMBER(e.index(), 0U);
+    COMPARE_NUMBER(e.size(), 0U);
     COMPARE_STRING(e.what(), "size = 0, index = 0");
   }
 
   {
     char buf[2] = "a";
     const_stringref s(buf);
-    COMPARE_NUMBER(s.size(), 1);
-    COMPARE_NUMBER(s.nlen(), 1);
+    COMPARE_NUMBER(s.size(), 1U);
+    COMPARE_NUMBER(s.nlen(), 1U);
     COMPARE_NUMBER(s.at(0), 'a');
     COMPARE_NUMBER(s[0], 'a');
     COMPARE_STRING(s.str(), "a");
@@ -116,38 +116,38 @@ test()
     COMPARE_NUMBER(s[0], 'b');
     COMPARE_STRING(s.str(), "b");
 
-    COMPARE_NUMBER((s + 1).size(), 0);
+    COMPARE_NUMBER((s + 1).size(), 0U);
     COMPARE_STRING((s + 1).str(), "");
 
     try {
       s.at(1);
       CHECK(false);
     } catch (bad_string_index &e) {
-      COMPARE_NUMBER(e.index(), 1);
-      COMPARE_NUMBER(e.size(), 1);
+      COMPARE_NUMBER(e.index(), 1U);
+      COMPARE_NUMBER(e.size(), 1U);
       COMPARE_STRING(e.what(), "size = 1, index = 1");
     }
     try {
       s[1];
       CHECK(false);
     } catch (bad_string_index &e) {
-      COMPARE_NUMBER(e.index(), 1);
-      COMPARE_NUMBER(e.size(), 1);
+      COMPARE_NUMBER(e.index(), 1U);
+      COMPARE_NUMBER(e.size(), 1U);
       COMPARE_STRING(e.what(), "size = 1, index = 1");
     }
     try {
       s + size_t(-1);
       CHECK(false);
     } catch (bad_string_index &e) {
-      COMPARE_NUMBER(e.index(), -1);
-      COMPARE_NUMBER(e.size(), 1);
+      COMPARE_NUMBER(e.index(), static_cast<size_t>(-1));
+      COMPARE_NUMBER(e.size(), 1U);
     }
 
     const_stringref s1;
     s1 = s;
-    COMPARE_NUMBER((++s1).size(), 0);
+    COMPARE_NUMBER((++s1).size(), 0U);
     s1 = s;
-    COMPARE_NUMBER((s1++).size(), 1);
+    COMPARE_NUMBER((s1++).size(), 1U);
     s1 = s;
     CHECK((s1++) == "b");
     s1 = s;
@@ -155,9 +155,9 @@ test()
     s1 = s;
     s1 += 0;
     COMPARE_STRING(s1.str(), "b");
-    COMPARE_NUMBER(s1.size(), 1);
+    COMPARE_NUMBER(s1.size(), 1U);
     s1 += 1;
-    COMPARE_NUMBER(s1.size(), 0);
+    COMPARE_NUMBER(s1.size(), 0U);
     COMPARE_STRING(s1.str(), "");
     CHECK(const_stringref(s1) == (s1 += 0));
 
@@ -165,22 +165,22 @@ test()
       ++s1;
       CHECK(false);
     } catch (bad_string_index &e) {
-      COMPARE_NUMBER(e.index(), 0);
-      COMPARE_NUMBER(e.size(), 0);
+      COMPARE_NUMBER(e.index(), 0U);
+      COMPARE_NUMBER(e.size(), 0U);
       COMPARE_STRING(e.what(), "size = 0, index = 0");
     }
     try {
       s1++;
       CHECK(false);
     } catch (bad_string_index &e) {
-      COMPARE_NUMBER(e.index(), 0);
-      COMPARE_NUMBER(e.size(), 0);
+      COMPARE_NUMBER(e.index(), 0U);
+      COMPARE_NUMBER(e.size(), 0U);
       COMPARE_STRING(e.what(), "size = 0, index = 0");
     }
 
     buf[0] = '\0';
-    COMPARE_NUMBER(s.size(), 1);
-    COMPARE_NUMBER(s.nlen(), 0);
+    COMPARE_NUMBER(s.size(), 1U);
+    COMPARE_NUMBER(s.nlen(), 0U);
   }
 
   {
@@ -195,7 +195,7 @@ test()
       s.substr(-1);
       CHECK(false);
     } catch (bad_string_index &e) {
-      COMPARE_NUMBER(e.index(), -1);
+      COMPARE_NUMBER(e.index(), static_cast<size_t>(-1));
       COMPARE_NUMBER(e.size(), s.size());
     }
     try {

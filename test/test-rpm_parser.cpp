@@ -32,10 +32,10 @@ test()
     rpm_parser parser("test/data/shared-mime-info-1.1-1.fc18.x86_64.rpm");
     std::vector<rpm_script> scripts;
     parser.scripts(scripts);
-    COMPARE_NUMBER(scripts.size(), 1);
+    COMPARE_NUMBER(scripts.size(), 1U);
     COMPARE_STRING(rpm_script::to_string(scripts.at(0).type), "postin");
     CHECK(scripts.at(0).script_present);
-    COMPARE_NUMBER(scripts.at(0).prog.size(), 1);
+    COMPARE_NUMBER(scripts.at(0).prog.size(), 1U);
     COMPARE_STRING(scripts.at(0).prog.at(0), "/bin/sh");
     COMPARE_STRING(scripts.at(0).script,
       "# Should fail, as it would mean a problem in the mime database\n"
@@ -47,7 +47,7 @@ test()
     rpm_parser parser("test/data/firewalld-0.2.12-5.fc18.noarch.rpm");
     std::vector<rpm_trigger> triggers;
     parser.triggers(triggers);
-    COMPARE_NUMBER(triggers.size(), 1);
+    COMPARE_NUMBER(triggers.size(), 1U);
     COMPARE_STRING(triggers.at(0).script,
       "# Save the current service runlevel info\n"
       "# User must manually run systemd-sysv-convert --apply firewalld\n"
@@ -58,7 +58,7 @@ test()
       "/sbin/chkconfig --del firewalld >/dev/null 2>&1 || :\n"
       "/bin/systemctl try-restart firewalld.service >/dev/null 2>&1 || :");
     COMPARE_STRING(triggers.at(0).prog, "/bin/sh");
-    COMPARE_NUMBER(triggers.at(0).conditions.size(), 1);
+    COMPARE_NUMBER(triggers.at(0).conditions.size(), 1U);
     const rpm_trigger::condition &cond(triggers.at(0).conditions.at(0));
     COMPARE_STRING(cond.name, "firewalld");
     COMPARE_STRING(cond.version, "0.1.3-3");
@@ -67,7 +67,7 @@ test()
     rpm_parser parser("test/data/cronie-1.4.10-7.fc19.x86_64.rpm");
     std::vector<rpm_trigger> triggers;
     parser.triggers(triggers);
-    COMPARE_NUMBER(triggers.size(), 3);
+    COMPARE_NUMBER(triggers.size(), 3U);
     for (unsigned i = 0; i < triggers.size(); ++i) {
       COMPARE_STRING(triggers.at(i).prog, "/bin/sh");
     }
@@ -80,7 +80,7 @@ test()
       "  -e '/^22 4 \\* \\* 0 root run-parts \\/etc\\/cron\\.weekly/d'\\\n"
       "  -e '/^42 4 1 \\* \\* root run-parts \\/etc\\/cron\\.monthly/d' /etc/crontab.rpmsave > /etc/crontab\n"
       "exit 0");
-    COMPARE_NUMBER(triggers.at(0).conditions.size(), 1);
+    COMPARE_NUMBER(triggers.at(0).conditions.size(), 1U);
     COMPARE_STRING(triggers.at(0).conditions.at(0).name, "cronie-anacron");
     COMPARE_STRING(triggers.at(0).conditions.at(0).version, "1.4.1");
     // triggerun scriptlet (using /bin/sh) -- cronie < 1.4.7-2\n"
@@ -96,7 +96,7 @@ test()
       "/sbin/chkconfig --del crond >/dev/null 2>&1 || :\n"
       "/bin/systemctl try-restart crond.service >/dev/null 2>&1 || :\n"
       "/bin/systemctl daemon-reload >/dev/null 2>&1 || :");
-    COMPARE_NUMBER(triggers.at(1).conditions.size(), 1);
+    COMPARE_NUMBER(triggers.at(1).conditions.size(), 1U);
     COMPARE_STRING(triggers.at(1).conditions.at(0).name, "cronie");
     COMPARE_STRING(triggers.at(1).conditions.at(0).version, "1.4.7-2");
     // triggerin scriptlet (using /bin/sh) -- pam, glibc, libselinux\n"
@@ -104,7 +104,7 @@ test()
       "# changes in pam, glibc or libselinux can make crond crash\n"
       "# when it calls pam\n"
       "/bin/systemctl try-restart crond.service >/dev/null 2>&1 || :");
-    COMPARE_NUMBER(triggers.at(2).conditions.size(), 3);
+    COMPARE_NUMBER(triggers.at(2).conditions.size(), 3U);
     COMPARE_STRING(triggers.at(2).conditions.at(0).name, "pam");
     CHECK(triggers.at(2).conditions.at(0).version.empty());
     COMPARE_STRING(triggers.at(2).conditions.at(1).name, "glibc");
