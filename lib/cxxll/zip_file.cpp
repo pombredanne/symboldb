@@ -56,7 +56,7 @@ cxxll::zip_file::impl::impl(const std::vector<unsigned char> *buffer)
 				   buffer->size())
 	  != ARCHIVE_OK)
       || (entry_ = archive_entry_new2(archive_)) == NULL) {
-    archive_read_finish(archive_);
+    archive_read_free(archive_);
     raise<std::runtime_error>("archive_read_support_format_zip");
   }
 }
@@ -64,7 +64,7 @@ cxxll::zip_file::impl::impl(const std::vector<unsigned char> *buffer)
 cxxll::zip_file::impl::~impl()
 {
   archive_entry_free(entry_);
-  archive_read_finish(archive_);
+  archive_read_free(archive_);
 }
 
 size_t
