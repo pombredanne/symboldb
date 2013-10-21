@@ -1,5 +1,5 @@
 Name:           symboldb
-Version:        0.1.1
+Version:        0.2.0
 Release:        1%{?dist}
 Summary:        Database of ELF, Java and Python symbols
 
@@ -65,5 +65,10 @@ cd build
 %doc
 /usr/share/man/man1/symboldb.1.gz
 %changelog
+* Mon Oct 21 2013 Florian Weimer <fweimer@redhat.com> - 0.2.0-1
+- Numerous schema changes to support file capabilities,
+  RPM script extraction
+- Fix run-time requirement of python3
+
 * Thu Jul 18 2013 Florian Weimer <fweimer@redhat.com> - 0.1.1-1
 - Initial RPM release
