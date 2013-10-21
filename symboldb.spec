@@ -65,3 +65,5 @@ cd build
 %doc
 /usr/share/man/man1/symboldb.1.gz
 %changelog
+* Thu Jul 18 2013 Florian Weimer <fweimer@redhat.com> - 0.1.1-1
+- Initial RPM release
