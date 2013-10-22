@@ -1,9 +1,8 @@
-Errors in RPM scripts
+Unexpanded RPM macros
 ---------------------
 
 RPM scripts are specified using %postin, %preun etc. in the spec file
 and run at specific points during the package installation life cycle.
-
 An RPM macro which failed expansion is usually left at the start of a
 line.  This causes error messages like "fg: no job control" when the
 script is later executed by RPM.  "%{" or "%" followed by two letters
