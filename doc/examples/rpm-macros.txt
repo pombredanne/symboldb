@@ -26,7 +26,18 @@ Similar issues can affect RPM trigger scripts:
       AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
       ORDER BY 1;
 
-To see the source of a macro definition, you can use this query:
+File names sometimes contain unexpanded macros as well:
+
+    SELECT symboldb.nevra(package), file.name
+      FROM symboldb.file JOIN symboldb.package USING (package_id)
+      JOIN symboldb.package_set_member USING (package_id)
+      WHERE file.name ~ '.*%(\{|[a-z]{2})'
+      AND set_id = symboldb.package_set('Fedora/rawhide/x86_64')
+      ORDER BY 1, 2;
+
+The most frequent cause of a failed macro expansion is a missing build
+dependency.  To see the source of a macro definition, you can use this
+query:
 
     SELECT symboldb.nevra(package), file.name, encode(contents, 'escape')
       FROM symboldb.file
