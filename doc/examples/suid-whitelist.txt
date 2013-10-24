@@ -3,12 +3,12 @@ Comparing files in a package set against a SUID whitelist
 
 The input file needs the following format:
 
-    <permissions><TAB><user name><TAB><group name><TAB><file path><NL>
+<permissions><TAB><user name><TAB><group name><TAB><file path><NL>
 
 The permissions are in the rwx format and need to include the initial
 "-" (for "regular file"), e.g.:
 
-    -rwsr-xr-x	root	root	/usr/bin/su
+-rwsr-xr-x	root	root	/usr/bin/su
 
 The SQL for performing the comparison follows.  You need to replace
 the COPY statement with something that loads the `whitelist` table.
