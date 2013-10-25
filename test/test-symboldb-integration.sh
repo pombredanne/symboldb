@@ -41,6 +41,7 @@ symboldb --create-schema-base
 symboldb --load-rpm test/data/*.rpm
 symboldb --create-schema-index
 symboldb --expire
+symboldb --run-example doc/examples/*.txt
 
 # Test single-step schema creation.
 PGDATABASE=symboldb1 "$symboldb" --create-schema
