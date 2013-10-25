@@ -96,21 +96,21 @@ RPM file is loaded concurrently.
 RPMs can be assigned to a package set (roughly equivalent to a
 compose) using:
 
-    symboldb --create-set=Fedora/18/x86_64 *.rpm
+    symboldb --create-set=Fedora/rawhide/x86_64 *.rpm
 
 To load RPMs from a combination of composes, use this command
 
-    symboldb --create-set=Fedora/18/x86_64
-    symboldb --update-set-from-repo=Fedora/18/x86_64 \
-      http://download.fedoraproject.org/pub/fedora/linux/updates/18/x86_64/ \
-      http://download.fedoraproject.org/pub/fedora/linux/releases/18/Everything/x86_64/os/
+    symboldb --create-set=Fedora/rawhide/x86_64
+    symboldb --update-set-from-repo=Fedora/rawhide/x86_64 \
+      http://download.fedoraproject.org/pub/fedora/linux/updates/rawhide/x86_64/ \
+      http://download.fedoraproject.org/pub/fedora/linux/releases/rawhide/Everything/x86_64/os/
 
 This only downloads the latest version for each package
 name/architecture combination.  RPMs are cached in a directory under
 ~/.cache/symboldb by default.
 
 A single package set can cover multiple architectures.  The name of
-the package set, Fedora/18/x86_64 in the example, just follows a
+the package set, Fedora/rawhide/x86_64 in the example, just follows a
 naming convention and is not interpreted by the tool.
 
 A symboldb.1 manual page will be written to the build directory.
