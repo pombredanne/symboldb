@@ -228,6 +228,16 @@ target_link_libraries (pgtestshell
 
 install (TARGETS pgtestshell DESTINATION bin)
 
+add_executable (tosrpm
+  src/tosrpm.cpp
+)
+
+target_link_libraries (tosrpm
+  CXXLL
+)
+
+install (TARGETS tosrpm DESTINATION bin)
+
 add_executable (runtests
   test/runtests.cpp
   test/test-base16.cpp
