@@ -66,14 +66,28 @@ find_spec_file(const char *path)
   return realpath(path);
 }
 
+static std::string
+find_source_tree(const char *path)
+{
+  if (!is_directory(path)) {
+    fprintf(stderr, "error: source tree argument is not a directory: %s\n",
+	    path);
+    exit(1);
+  }
+  return realpath(path);
+}
+
 static void
 usage(const char *progname, const char *error = NULL)
 {
   if (error) {
     fprintf(stderr, "error: %s\n", error);
   }
-  fprintf(stderr, "Usage: %1$s [OPTIONS] [PATH]\n\n"
-"Builds a SRPM from PATH, or the current directory if ommitted.\n"
+  fprintf(stderr, "Usage: %1$s [OPTIONS] [SPEC [DIRECTORY]]\n\n"
+"Builds a SRPM from SPEC, using DIRECTORY as the contents of the tarball.\n\n"
+"SPEC can be a directory, and it must contain a single *.spec file.  If SPEC\n"
+"is a file, it is use directly.  If SPEC or DIRECTORY are omitted, they\n"
+"default to the current directory.\n"
 "\nOptions:\n"
 "  --quiet, -q            less output, only print the SRPM path on success\n"
 "  --verbose, -v          more verbose output\n\n",
@@ -105,17 +119,32 @@ main(int argc, char **argv)
 	usage(argv[0]);
       }
     }
-    const char *path;
-    if (optind == argc) {
-      path = ".";
-    } else if (argc - optind == 1) {
-      path = argv[optind];
-    } else {
+    const char *spec_arg;
+    const char *tree_arg;
+    switch (argc - optind) {
+    case 0:
+      spec_arg = ".";
+      tree_arg = ".";
+      break;
+    case 1:
+      spec_arg = argv[optind];
+      tree_arg = ".";
+      break;
+    case 2:
+      spec_arg = argv[optind];
+      tree_arg = argv[optind + 1];
+      break;
+    default:
       usage(argv[0], "too many arguments");
     }
-    std::string spec_file(find_spec_file(path));
+    std::string spec_file(find_spec_file(spec_arg));
     if (verbosity != QUIET) {
-      fprintf(stderr, "info: using spec file: %s\n", spec_file.c_str());
+      fprintf(stderr, "info: spec file: %s\n", spec_file.c_str());
     }
+    std::string source_tree(find_source_tree(tree_arg));
+    if (verbosity != QUIET) {
+      fprintf(stderr, "info: source tree: %s\n", source_tree.c_str());
+    }
+
     return 0;
 }
