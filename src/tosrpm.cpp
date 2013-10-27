@@ -246,6 +246,54 @@ namespace {
 }
 
 static void
+cp_or_mv(const char *cpmv, const char *from, const char *to)
+{
+  subprocess proc;
+  proc.command(cpmv);
+  proc.arg("--").arg(from).arg(to);
+  proc.start();
+  int ret = proc.wait();
+  if (ret != 0) {
+    fprintf(stderr, "error: %s \"%s\" \"%s\" failed", cpmv, from, to);
+    exit(1);
+  }
+}
+
+static void
+move_file(const char *from, const char *to)
+{
+  cp_or_mv("/bin/mv", from, to);
+}
+
+static std::string
+run_rpmbuild(const temporary_directory &tempdir,
+	     const std::string &spec_path,
+	     const spec_info &spec)
+{
+  subprocess proc;
+  proc.command("/usr/bin/rpmbuild");
+  proc.arg("--buildroot=/var/empty");
+  proc.arg(("-D _topdir " + tempdir.path()).c_str());
+  proc.arg(("-D _sourcedir " + tempdir.path()).c_str());
+  proc.arg(("-D _srcrpmdir " + tempdir.path()).c_str());
+  proc.arg("-bs");
+  proc.arg(spec_path.c_str());
+  proc.start();
+  int ret = proc.wait();
+  if (ret != 0) {
+    fprintf(stderr, "error: rpmbuild failed with exit status: %d\n", ret);
+    exit(1);
+  }
+  std::string result(tempdir.path(spec.srpm.c_str()));
+  if (!path_exists(result.c_str())) {
+    fprintf(stderr, "error: rpmbuild failed to produce SRPM file: %s\n",
+	    result.c_str());
+    exit(1);
+  }
+  return result;
+}
+
+static void
 usage(const char *progname, const char *error = NULL)
 {
   if (error) {
@@ -343,6 +391,11 @@ main(int argc, char **argv)
       if (verbosity != QUIET) {
 	fprintf(stderr, "info: built tarball: %s\n",
 		full_tarball_path.c_str());
+      }
+      std::string srpm(run_rpmbuild(tempdir, spec_file, spec));
+      move_file(srpm.c_str(), output_path.c_str());
+      if (verbosity != QUIET) {
+	fprintf(stderr, "info: created SRPM file: %s\n", output_path.c_str());
       }
     }
     return 0;
