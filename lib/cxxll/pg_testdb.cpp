@@ -237,7 +237,7 @@ wait_for_server(pg_testdb *db)
       pgconn_handle handle(db->connect("template1"));
       break;
     } catch (pg_exception &e) {
-      if (e.message_ == "FATAL:  the database system is starting up") {
+      if (e.message_ == "FATAL:  the database system is starting up\n") {
 	usleep(100 * 1000);
 	continue;
       }
