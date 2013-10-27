@@ -413,12 +413,12 @@ main(int argc, char **argv)
       output_path += '/';
       output_path += spec.srpm;
     }
-    if (verbosity != QUIET) {
+    if (verbosity == VERBOSE) {
       fprintf(stderr, "info: output SRPM: %s\n", output_path.c_str());
       fprintf(stderr, "info: tarball: %s\n", spec.tarball.c_str());
     }
     tarball_compressor compressed(spec.tarball);
-    if (verbosity != QUIET) {
+    if (verbosity == VERBOSE) {
       fprintf(stderr, "info: uncompressed: %s, with %s\n",
 	      compressed.uncompressed_name.c_str(),
 	      compressed.compressor.c_str());
@@ -427,15 +427,13 @@ main(int argc, char **argv)
       temporary_directory tempdir;
       std::string full_tarball_path
 	(compressed.build(tempdir, source_tree, spec));
-      if (verbosity != QUIET) {
+      if (verbosity == VERBOSE) {
 	fprintf(stderr, "info: built tarball: %s\n",
 		full_tarball_path.c_str());
       }
       std::string srpm(run_rpmbuild(tempdir, spec_file, spec));
       move_file(srpm.c_str(), output_path.c_str());
-      if (verbosity != QUIET) {
-	fprintf(stderr, "info: created SRPM file: %s\n", output_path.c_str());
-      }
+      printf("%s\n", output_path.c_str());
     }
     return 0;
 }
