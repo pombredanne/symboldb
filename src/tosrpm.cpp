@@ -20,6 +20,8 @@
 #include <cxxll/string_support.hpp>
 #include <cxxll/dir_handle.hpp>
 #include <cxxll/rpm_parser.hpp>
+#include <cxxll/temporary_directory.hpp>
+#include <cxxll/subprocess.hpp>
 
 #include <string>
 
@@ -121,6 +123,108 @@ get_tarball_from_spec(const char *spec)
   return name;
 }
 
+namespace {
+  struct tarball_compressor {
+    std::string compressed_name;
+    std::string uncompressed_name;
+    std::string compressor;
+    explicit tarball_compressor(const std::string &tarball);
+    std::string build(const temporary_directory &tempdir,
+		      const std::string &source_tree);
+  };
+
+  tarball_compressor::tarball_compressor(const std::string &tarball)
+  {
+    compressed_name = tarball;
+    uncompressed_name = tarball;
+    if (ends_with(uncompressed_name, ".tar.gz")) {
+      uncompressed_name.resize(uncompressed_name.size() - 3);
+      compressor = "gzip";
+    } else if (ends_with(uncompressed_name, ".tar.bz2")) {
+      uncompressed_name.resize(uncompressed_name.size() - 4);
+      compressor = "bzip2";
+    } else if (ends_with(uncompressed_name, ".tar.xz")) {
+      uncompressed_name.resize(uncompressed_name.size() - 3);
+      compressor = "xz";
+    } else {
+      fprintf(stderr, "error: could not determine tarball compressor: %s\n",
+	      tarball.c_str());
+      exit(1);
+    }
+
+    compressor = "/bin/" + compressor;
+    if (!is_executable(compressor.c_str())) {
+      compressor = "/usr" + compressor;
+      if (!is_executable(compressor.c_str())) {
+	fprintf(stderr, "error: could not find compressor: %s\n",
+		compressor.c_str());
+      }
+    }
+  }
+
+  std::string
+  tarball_compressor::build(const temporary_directory &tempdir,
+			    const std::string &source_tree)
+  {
+    std::string tarball_full(tempdir.path(uncompressed_name.c_str()));
+    if (path_exists(tarball_full.c_str())) {
+      fprintf(stderr, "error: output tarball already exists: %s\n",
+	      tarball_full.c_str());
+      exit(1);
+    }
+    {
+      subprocess proc;
+      proc.inherit_environ();
+      proc.redirect(subprocess::in, subprocess::null);
+      proc.command("/usr/bin/git");
+      proc.arg(("--git-dir=" + source_tree + "/.git").c_str());
+      proc.arg(("--work-tree=" + source_tree).c_str());
+      proc.arg("archive");
+      proc.arg("--format=tar");
+      proc.arg(("--output=" + tarball_full).c_str());
+      proc.arg("HEAD");
+      proc.start();
+      int ret = proc.wait();
+      if (ret != 0) {
+	fprintf(stderr, "error: \"git archive\" exited with status: %d\n", ret);
+	exit(1);
+      }
+    }
+    if (!path_exists(tarball_full.c_str())) {
+      fprintf(stderr, "error: \"git archive\" did not create tarball\n");;
+      exit(1);
+    }
+
+    std::string compressed_full(tempdir.path(compressed_name.c_str()));
+    if (path_exists(compressed_full.c_str())) {
+      fprintf(stderr, "error: output tarball already exists: %s\n",
+	      compressed_full.c_str());
+      exit(1);
+    }
+    {
+      subprocess proc;
+      proc.inherit_environ();
+      proc.redirect(subprocess::in, subprocess::null);
+      proc.command(compressor.c_str());
+      proc.arg(tarball_full.c_str());
+      proc.start();
+      int ret = proc.wait();
+      if (ret != 0) {
+	fprintf(stderr, "error: %s exited with status: %d\n",
+		compressor.c_str(), ret);
+	exit(1);
+      }
+    }
+    if (!path_exists(compressed_full.c_str())) {
+      fprintf(stderr, "error: %s did not create compressed tarball\n",
+	      compressor.c_str());;
+      exit(1);
+    }
+
+    return compressed_full;
+  }
+}
+
 static void
 usage(const char *progname, const char *error = NULL)
 {
@@ -193,6 +297,19 @@ main(int argc, char **argv)
     if (verbosity != QUIET) {
       fprintf(stderr, "info: tarball: %s\n", tarball.c_str());
     }
-
+    tarball_compressor compressed(tarball);
+    if (verbosity != QUIET) {
+      fprintf(stderr, "info: uncompressed: %s, with %s\n",
+	      compressed.uncompressed_name.c_str(),
+	      compressed.compressor.c_str());
+    }
+    {
+      temporary_directory tempdir;
+      std::string full_tarball_path(compressed.build(tempdir, source_tree));
+      if (verbosity != QUIET) {
+	fprintf(stderr, "info: built tarball: %s\n",
+		full_tarball_path.c_str());
+      }
+    }
     return 0;
 }
