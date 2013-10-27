@@ -42,3 +42,10 @@
   means re-opening the RPM file and re-start processing, expecting
   that the race condition will not reappear (because the row is now
   present).
+
+* tosrpm: Add spec file rewriting, to bump the release and add a
+  changelog entry with the shortened commit log (since the last tag or
+  spec file commit).
+
+* tosrpm: Extract the argument to "setup -n", to build the expected
+  prefix for the tarball.
