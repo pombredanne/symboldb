@@ -162,6 +162,7 @@ namespace {
   }
 
   struct tarball_compressor {
+    std::string prefix;
     std::string compressed_name;
     std::string uncompressed_name;
     std::string compressor;
@@ -173,22 +174,24 @@ namespace {
 
   tarball_compressor::tarball_compressor(const std::string &tarball)
   {
+    prefix = tarball;
     compressed_name = tarball;
     uncompressed_name = tarball;
+    size_t suffix_len = 2;
     if (ends_with(uncompressed_name, ".tar.gz")) {
-      uncompressed_name.resize(uncompressed_name.size() - 3);
       compressor = "gzip";
     } else if (ends_with(uncompressed_name, ".tar.bz2")) {
-      uncompressed_name.resize(uncompressed_name.size() - 4);
+      suffix_len = 3;
       compressor = "bzip2";
     } else if (ends_with(uncompressed_name, ".tar.xz")) {
-      uncompressed_name.resize(uncompressed_name.size() - 3);
       compressor = "xz";
     } else {
       fprintf(stderr, "error: could not determine tarball compressor: %s\n",
 	      tarball.c_str());
       exit(1);
     }
+    prefix.resize(prefix.size() - suffix_len - 5);
+    uncompressed_name.resize(uncompressed_name.size() - suffix_len - 1);
 
     compressor = "/bin/" + compressor;
     if (!is_executable(compressor.c_str())) {
@@ -213,10 +216,19 @@ namespace {
     }
     {
       std::string prefixopt("--prefix=");
-      prefixopt += spec.name;
-      prefixopt += '-';
-      prefixopt += spec.version;
-      prefixopt += '/';
+      {
+	std::string expected(spec.name);
+	expected += '-';
+	expected += spec.version;
+	if (prefix != expected) {
+	  fprintf(stderr, "warning: unexpected name of tarball: %s\n",
+		  prefix.c_str());
+	  fprintf(stderr, "warning:   expected: %s\n", expected.c_str());
+	}
+	// This seems to allow more packages to actually build.
+	prefixopt += expected;
+	prefixopt += '/';
+      }
 
       subprocess proc;
       proc.inherit_environ();
