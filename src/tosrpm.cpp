@@ -22,6 +22,7 @@
 #include <cxxll/rpm_parser.hpp>
 #include <cxxll/temporary_directory.hpp>
 #include <cxxll/subprocess.hpp>
+#include <cxxll/rpmtd_wrapper.hpp>
 
 #include <string>
 
@@ -83,47 +84,66 @@ find_source_tree(const char *path)
   return realpath(path);
 }
 
-static std::string
-get_tarball_from_spec(const char *spec)
-{
-  rpm_parser_init();
-  rpmSpec parsed = rpmSpecParse(spec, RPMSPEC_FORCE, "/var/empty");
-  if (parsed == NULL) {
-    fprintf(stderr, "error: could not parse spec file: %s\n", spec);
-    exit(1);
-  }
-  rpmSpecSrcIter iter = rpmSpecSrcIterInit(parsed);
-  if (iter == NULL) {
-    fprintf(stderr, "error: could not extract sources from: %s\n", spec);
-    exit(1);
-  }
-  std::string name;
-  unsigned count = 0;
-  while (rpmSpecSrc src = rpmSpecSrcIterNext(iter)) {
-    ++count;
-    name = rpmSpecSrcFilename(src, /* full */ false);
-  }
-  switch (count) {
-  case 0:
-    fprintf(stderr, "error: no source tarballs in: %s\n", spec);
-    exit(1);
-  case 1:
-    break;
-  default:
-    fprintf(stderr, "error: %u source files in: %s\n", count, spec);
-    exit(1);
-  }
-  rpmSpecSrcIterFree(iter);
-  parsed = rpmSpecFree(parsed);
-  rpm_parser_deinit();
-  if (name.find('/') != std::string::npos) {
-    fprintf(stderr, "error: %s contains tarball with '/': %s",
-	    spec, name.c_str());
-  }
-  return name;
-}
-
 namespace {
+  struct spec_info {
+    std::string tarball;
+    std::string srpm;
+
+    explicit spec_info(const std::string &path);
+  };
+
+  spec_info::spec_info(const std::string &path)
+  {
+    rpm_parser_init();
+    rpmSpec spec = rpmSpecParse(path.c_str(), RPMSPEC_FORCE, "/var/empty");
+    if (spec == NULL) {
+      fprintf(stderr, "error: could not parse spec file: %s\n", path.c_str());
+      exit(1);
+    }
+
+    // Determine tarball.
+    rpmSpecSrcIter iter = rpmSpecSrcIterInit(spec);
+    if (iter == NULL) {
+      fprintf(stderr, "error: could not extract sources from: %s\n", path.c_str());
+      exit(1);
+    }
+    unsigned count = 0;
+    while (rpmSpecSrc src = rpmSpecSrcIterNext(iter)) {
+      ++count;
+      tarball = rpmSpecSrcFilename(src, /* full */ false);
+    }
+    switch (count) {
+    case 0:
+      fprintf(stderr, "error: no source tarballs in: %s\n", path.c_str());
+      exit(1);
+    case 1:
+      break;
+    default:
+      fprintf(stderr, "error: %u source files in: %s\n", count, path.c_str());
+      exit(1);
+    }
+    if (tarball.find('/') != std::string::npos) {
+      fprintf(stderr, "error: %s contains tarball with '/': %s",
+	      path.c_str(), tarball.c_str());
+    }
+    rpmSpecSrcIterFree(iter);
+
+    // Determine SRPM name.
+    Header header = rpmSpecSourceHeader(spec);
+    rpmtd_wrapper td;
+    const char *str;
+    if (!headerGet(header, RPMTAG_NVR, td.raw, HEADERGET_ALLOC | HEADERGET_EXT)
+	|| (str = rpmtdGetString(td.raw)) == NULL) {
+      fprintf(stderr, "error: could not obtain NVR from: %s\n", path.c_str());
+      exit(1);
+    }
+    srpm = str;
+    srpm += ".src.rpm";
+
+    spec = rpmSpecFree(spec);
+    rpm_parser_deinit();
+  }
+
   struct tarball_compressor {
     std::string compressed_name;
     std::string uncompressed_name;
@@ -237,8 +257,9 @@ usage(const char *progname, const char *error = NULL)
 "is a file, it is use directly.  If SPEC or DIRECTORY are omitted, they\n"
 "default to the current directory.\n"
 "\nOptions:\n"
-"  --quiet, -q            less output, only print the SRPM path on success\n"
-"  --verbose, -v          more verbose output\n\n",
+"  --output=PATH, -o PATH   output location of the SRPM file\n"
+"  --quiet, -q              less output, only print the SRPM path on success\n"
+"  --verbose, -v            more verbose output\n\n",
 	  progname);
   exit(2);
 }
@@ -247,6 +268,7 @@ int
 main(int argc, char **argv)
 {
     static const struct option long_options[] = {
+      {"output", required_argument, 0, 'o'},
       {"verbose", no_argument, 0, 'v'},
       {"quiet", no_argument, 0, 'q'},
       {0, 0, 0, 0}
@@ -254,7 +276,8 @@ main(int argc, char **argv)
     int ch;
     int index;
     verbosity_t verbosity = DEFAULT_VERBOSITY;
-    while ((ch = getopt_long(argc, argv, "qv",
+    std::string output_path = "..";
+    while ((ch = getopt_long(argc, argv, "o:qv",
 			     long_options, &index)) != -1) {
       switch (ch) {
       case 'q':
@@ -262,6 +285,9 @@ main(int argc, char **argv)
 	break;
       case 'v':
 	verbosity = VERBOSE;
+	break;
+      case 'o':
+	output_path = optarg;
 	break;
       default:
 	usage(argv[0]);
@@ -285,6 +311,7 @@ main(int argc, char **argv)
     default:
       usage(argv[0], "too many arguments");
     }
+
     std::string spec_file(find_spec_file(spec_arg));
     if (verbosity != QUIET) {
       fprintf(stderr, "info: spec file: %s\n", spec_file.c_str());
@@ -293,11 +320,18 @@ main(int argc, char **argv)
     if (verbosity != QUIET) {
       fprintf(stderr, "info: source tree: %s\n", source_tree.c_str());
     }
-    std::string tarball(get_tarball_from_spec(spec_file.c_str()));
-    if (verbosity != QUIET) {
-      fprintf(stderr, "info: tarball: %s\n", tarball.c_str());
+
+    spec_info spec(spec_file);
+    if (is_directory(output_path.c_str())) {
+      output_path = realpath(output_path.c_str());
+      output_path += '/';
+      output_path += spec.srpm;
     }
-    tarball_compressor compressed(tarball);
+    if (verbosity != QUIET) {
+      fprintf(stderr, "info: output SRPM: %s\n", output_path.c_str());
+      fprintf(stderr, "info: tarball: %s\n", spec.tarball.c_str());
+    }
+    tarball_compressor compressed(spec.tarball);
     if (verbosity != QUIET) {
       fprintf(stderr, "info: uncompressed: %s, with %s\n",
 	      compressed.uncompressed_name.c_str(),
