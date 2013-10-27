@@ -1,5 +1,5 @@
 Name:           symboldb
-Version:        0.2.0
+Version:        0.2.1
 Release:        1%{?dist}
 Summary:        Database of ELF, Java and Python symbols
 
@@ -62,9 +62,14 @@ cd build
 %files
 /usr/bin/symboldb
 /usr/bin/pgtestshell
+/usr/bin/tosrpm
 %doc
 /usr/share/man/man1/symboldb.1.gz
 %changelog
+* Sun Oct 27 2013 Florian Weimer <fweimer@redhat.com> - 0.2.1-1
+- Add tosrpm tool
+- Fix spurious test suite failure due to delayed PostgrSQL start
+
 * Mon Oct 21 2013 Florian Weimer <fweimer@redhat.com> - 0.2.0-1
 - Numerous schema changes to support file capabilities,
   RPM script extraction
