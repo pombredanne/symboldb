@@ -19,12 +19,16 @@
 #include <cxxll/os.hpp>
 #include <cxxll/string_support.hpp>
 #include <cxxll/dir_handle.hpp>
+#include <cxxll/rpm_parser.hpp>
 
 #include <string>
 
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <rpm/rpmspec.h>
+#include <rpm/rpmbuild.h>
 
 using namespace cxxll;
 
@@ -75,6 +79,46 @@ find_source_tree(const char *path)
     exit(1);
   }
   return realpath(path);
+}
+
+static std::string
+get_tarball_from_spec(const char *spec)
+{
+  rpm_parser_init();
+  rpmSpec parsed = rpmSpecParse(spec, RPMSPEC_FORCE, "/var/empty");
+  if (parsed == NULL) {
+    fprintf(stderr, "error: could not parse spec file: %s\n", spec);
+    exit(1);
+  }
+  rpmSpecSrcIter iter = rpmSpecSrcIterInit(parsed);
+  if (iter == NULL) {
+    fprintf(stderr, "error: could not extract sources from: %s\n", spec);
+    exit(1);
+  }
+  std::string name;
+  unsigned count = 0;
+  while (rpmSpecSrc src = rpmSpecSrcIterNext(iter)) {
+    ++count;
+    name = rpmSpecSrcFilename(src, /* full */ false);
+  }
+  switch (count) {
+  case 0:
+    fprintf(stderr, "error: no source tarballs in: %s\n", spec);
+    exit(1);
+  case 1:
+    break;
+  default:
+    fprintf(stderr, "error: %u source files in: %s\n", count, spec);
+    exit(1);
+  }
+  rpmSpecSrcIterFree(iter);
+  parsed = rpmSpecFree(parsed);
+  rpm_parser_deinit();
+  if (name.find('/') != std::string::npos) {
+    fprintf(stderr, "error: %s contains tarball with '/': %s",
+	    spec, name.c_str());
+  }
+  return name;
 }
 
 static void
@@ -144,6 +188,10 @@ main(int argc, char **argv)
     std::string source_tree(find_source_tree(tree_arg));
     if (verbosity != QUIET) {
       fprintf(stderr, "info: source tree: %s\n", source_tree.c_str());
+    }
+    std::string tarball(get_tarball_from_spec(spec_file.c_str()));
+    if (verbosity != QUIET) {
+      fprintf(stderr, "info: tarball: %s\n", tarball.c_str());
     }
 
     return 0;

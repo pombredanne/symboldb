@@ -234,6 +234,7 @@ add_executable (tosrpm
 
 target_link_libraries (tosrpm
   CXXLL
+  -lrpm -lrpmio -lrpmbuild
 )
 
 install (TARGETS tosrpm DESTINATION bin)
