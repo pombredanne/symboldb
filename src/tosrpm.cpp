@@ -87,6 +87,8 @@ find_source_tree(const char *path)
 namespace {
   struct spec_info {
     std::string tarball;
+    std::string name;
+    std::string version;
     std::string srpm;
 
     explicit spec_info(const std::string &path);
@@ -128,10 +130,11 @@ namespace {
     }
     rpmSpecSrcIterFree(iter);
 
-    // Determine SRPM name.
     Header header = rpmSpecSourceHeader(spec);
     rpmtd_wrapper td;
     const char *str;
+
+    // Determine SRPM name.
     if (!headerGet(header, RPMTAG_NVR, td.raw, HEADERGET_ALLOC | HEADERGET_EXT)
 	|| (str = rpmtdGetString(td.raw)) == NULL) {
       fprintf(stderr, "error: could not obtain NVR from: %s\n", path.c_str());
@@ -139,6 +142,20 @@ namespace {
     }
     srpm = str;
     srpm += ".src.rpm";
+
+    if (!headerGet(header, RPMTAG_NAME, td.raw, 0)
+	|| (str = rpmtdGetString(td.raw)) == NULL) {
+      fprintf(stderr, "error: could not obtain NAME from: %s\n", path.c_str());
+      exit(1);
+    }
+    name = str;
+
+    if (!headerGet(header, RPMTAG_VERSION, td.raw, 0)
+	|| (str = rpmtdGetString(td.raw)) == NULL) {
+      fprintf(stderr, "error: could not obtain VERSION from: %s\n", path.c_str());
+      exit(1);
+    }
+    version = str;
 
     spec = rpmSpecFree(spec);
     rpm_parser_deinit();
@@ -150,7 +167,8 @@ namespace {
     std::string compressor;
     explicit tarball_compressor(const std::string &tarball);
     std::string build(const temporary_directory &tempdir,
-		      const std::string &source_tree);
+		      const std::string &source_tree,
+		      const spec_info &spec);
   };
 
   tarball_compressor::tarball_compressor(const std::string &tarball)
@@ -184,7 +202,8 @@ namespace {
 
   std::string
   tarball_compressor::build(const temporary_directory &tempdir,
-			    const std::string &source_tree)
+			    const std::string &source_tree,
+			    const spec_info &spec)
   {
     std::string tarball_full(tempdir.path(uncompressed_name.c_str()));
     if (path_exists(tarball_full.c_str())) {
@@ -193,6 +212,12 @@ namespace {
       exit(1);
     }
     {
+      std::string prefixopt("--prefix=");
+      prefixopt += spec.name;
+      prefixopt += '-';
+      prefixopt += spec.version;
+      prefixopt += '/';
+
       subprocess proc;
       proc.inherit_environ();
       proc.redirect(subprocess::in, subprocess::null);
@@ -202,6 +227,7 @@ namespace {
       proc.arg("archive");
       proc.arg("--format=tar");
       proc.arg(("--output=" + tarball_full).c_str());
+      proc.arg(prefixopt.c_str());
       proc.arg("HEAD");
       proc.start();
       int ret = proc.wait();
@@ -387,7 +413,8 @@ main(int argc, char **argv)
     }
     {
       temporary_directory tempdir;
-      std::string full_tarball_path(compressed.build(tempdir, source_tree));
+      std::string full_tarball_path
+	(compressed.build(tempdir, source_tree, spec));
       if (verbosity != QUIET) {
 	fprintf(stderr, "info: built tarball: %s\n",
 		full_tarball_path.c_str());
