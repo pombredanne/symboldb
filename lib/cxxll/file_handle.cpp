@@ -83,7 +83,8 @@ file_handle::getline(line &l)
   l.ptr.reset(lineptr);
   if (ret < 0) {
     l.length = 0;
-    if (err == 0) {
+    // Some libc versions return -1 on EOF and clobber errno.
+    if (err == 0 || !ferror(raw)) {
       return false;
     } else {
       throw os_exception(err).function(::getline).fd(fileno(raw)).defaults();
