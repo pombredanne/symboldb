@@ -22,7 +22,8 @@ CREATE TYPE symboldb.elf_arch AS ENUM (
   'i386', 'x86_64',
   'ppc', 'ppc64',
   's390', 's390x',
-  'sparc', 'sparc64'
+  'sparc', 'sparc64',
+  'arm', 'aarch64'
 );
 
 CREATE TYPE symboldb.rpm_kind AS ENUM ('binary', 'source');
