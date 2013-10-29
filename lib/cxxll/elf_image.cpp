@@ -64,6 +64,8 @@ get_arch(unsigned char ei_class, unsigned short e_machine)
     {EM_PPC64, NULL, "ppc64"},
     {EM_S390, "s390", "s390x"},
     {EM_X86_64, NULL, "x86_64"},
+    {EM_ARM, "arm", NULL},
+    {183 /* EM_AARCH64 */, NULL, "aarch64"},
     {0, 0, 0}
   };
   for (unsigned i = 0; archlist[i].machine; ++i) {
