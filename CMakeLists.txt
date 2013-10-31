@@ -67,6 +67,12 @@ add_custom_command (
 )
 
 add_library (CXXLL
+  lib/cxxll/asdl/cardinality.cpp
+  lib/cxxll/asdl/constructor.cpp
+  lib/cxxll/asdl/declarator.cpp
+  lib/cxxll/asdl/definition.cpp
+  lib/cxxll/asdl/field.cpp
+  lib/cxxll/asdl/identifier.cpp
   lib/cxxll/checksum.cpp
   lib/cxxll/bad_string_index.cpp
   lib/cxxll/base16.cpp
@@ -241,6 +247,7 @@ install (TARGETS tosrpm DESTINATION bin)
 
 add_executable (runtests
   test/runtests.cpp
+  test/test-asdl.cpp
   test/test-base16.cpp
   test/test-bounded_ordered_queue.cpp
   test/test-const_stringref.cpp
