@@ -4,7 +4,7 @@ project (symboldb)
 include(CheckCSourceCompiles)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "-std=gnu++03 -O2 -g -Wall -W -fstack-protector -D_GNU_SOURCE -D_FORTIFY_SOURCE=2")
+  set(CMAKE_CXX_FLAGS "-std=gnu++11 -O2 -g -Wall -W -fstack-protector -D_GNU_SOURCE -D_FORTIFY_SOURCE=2")
   set(CMAKE_EXE_LINKER_FLAGS "-g")
 endif()
 
