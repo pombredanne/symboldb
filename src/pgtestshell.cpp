@@ -35,7 +35,7 @@ main(int argc, char **argv)
   subprocess proc;
   if (argc <= 1) {
     const char *shell = getenv("SHELL");
-    if (shell == NULL) {
+    if (shell == nullptr) {
       shell = "/bin/sh";
     }
     proc.command(shell);

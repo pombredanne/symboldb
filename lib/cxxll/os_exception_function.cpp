@@ -50,7 +50,7 @@ os_exception::function(void *addr)
   function_ = addr;
   Dl_info info;
   int ret = dladdr(addr, &info);
-  if (ret == 0 || info.dli_fname == NULL) {
+  if (ret == 0 || info.dli_fname == nullptr) {
     // This leaks information about the address space layout.
     char buf[128];
     snprintf(buf, sizeof(buf), "[%p]", addr);

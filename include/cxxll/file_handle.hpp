@@ -75,7 +75,7 @@ public:
 
 inline
 file_handle::file_handle()
-  : raw(NULL)
+  : raw(nullptr)
 {
 }
 
@@ -89,7 +89,7 @@ inline FILE *
 file_handle::release()
 {
   FILE *p = raw;
-  raw = NULL;
+  raw = nullptr;
   return p;
 }
 

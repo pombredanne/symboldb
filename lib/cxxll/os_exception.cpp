@@ -41,7 +41,7 @@ os_exception::os_exception(int code)
 void
 os_exception::init()
 {
-  function_ = NULL;
+  function_ = nullptr;
   offset_ = 0;
   length_ = 0;
   count_ = 0;

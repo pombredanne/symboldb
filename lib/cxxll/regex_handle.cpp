@@ -50,7 +50,7 @@ regex_handle::impl::~impl()
 inline bool
 regex_handle::impl::match(const char *subject)
 {
-  int ret = regexec(&rx, subject, 0, NULL, 0);
+  int ret = regexec(&rx, subject, 0, nullptr, 0);
   switch (ret) {
   case 0:
     return true;

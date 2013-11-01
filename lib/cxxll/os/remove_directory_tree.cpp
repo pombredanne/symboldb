@@ -66,7 +66,7 @@ namespace {
       try {
 	stack.push_back(entry(p, name));
       } catch (...) {
-	if (p != NULL) {
+	if (p != nullptr) {
 	  closedir(p);
 	}
 	throw;
@@ -76,7 +76,7 @@ namespace {
     void pop()
     {
       DIR *p = stack.back().raw;
-      if (p != NULL) {
+      if (p != nullptr) {
 	closedir(p);
       }
       stack.pop_back();
@@ -94,7 +94,7 @@ cxxll::remove_directory_tree(const char *root)
   fd.open(root, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   DIR_stack stack;
   stack.push(fdopendir(fd.get()), "");
-  if (stack.top().raw == NULL) {
+  if (stack.top().raw == nullptr) {
     throw os_exception().fd(fd.get()).path(root).function(fdopendir).defaults();
   }
   fd.release(); // ownership was taken by DIR_stack
@@ -102,7 +102,7 @@ cxxll::remove_directory_tree(const char *root)
     errno = 0;
     DIR *dirp = stack.top().raw;
     dirent *e = readdir(dirp);
-    if (e == NULL) {
+    if (e == nullptr) {
       if (errno != 0) {
 	throw os_exception().fd(fd.get()).function(readdir).defaults();
       }
@@ -132,7 +132,7 @@ cxxll::remove_directory_tree(const char *root)
 	// Descend into subdirectory.
 	fd.openat(dirpfd, e->d_name, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
 	stack.push(fdopendir(fd.get()), e->d_name);
-	if (stack.top().raw == NULL) {
+	if (stack.top().raw == nullptr) {
 	  throw os_exception().fd(dirpfd).path2(e->d_name)
 	    .function(fdopendir).defaults();
 	}

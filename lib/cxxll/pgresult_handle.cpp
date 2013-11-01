@@ -27,7 +27,7 @@ using namespace cxxll;
 static void
 do_check(PGresult *raw)
 {
-  if (raw == NULL) {
+  if (raw == nullptr) {
     throw pg_exception(raw);
   }
   switch (PQresultStatus(raw)) {
@@ -110,5 +110,5 @@ pgresult_handle::execParamsCustom(pgconn_handle &conn,
 void
 pgresult_handle::execBinary(pgconn_handle &conn, const char *command)
 {
-  execParamsCustom(conn, command, 0, NULL, NULL, NULL, NULL, 1);
+  execParamsCustom(conn, command, 0, nullptr, nullptr, nullptr, nullptr, 1);
 }

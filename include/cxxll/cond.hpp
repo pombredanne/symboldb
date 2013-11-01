@@ -56,7 +56,7 @@ public:
 inline
 cond::cond()
 {
-  int ret = pthread_cond_init(&cond_, NULL);
+  int ret = pthread_cond_init(&cond_, nullptr);
   if (ret != 0) {
     throw_init_error(ret);
   }

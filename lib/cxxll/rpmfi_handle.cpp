@@ -22,7 +22,7 @@
 cxxll::rpmfi_handle::rpmfi_handle(Header header)
 {
   raw_ = rpmfiNew(0, header, 0, 0);
-  if (raw_ == NULL) {
+  if (raw_ == nullptr) {
     throw rpm_parser_exception("rpmfiNew failed");
   }
 }
@@ -35,9 +35,9 @@ cxxll::rpmfi_handle::~rpmfi_handle()
 void
 cxxll::rpmfi_handle::close()
 {
-  if (raw_ != NULL) {
+  if (raw_ != nullptr) {
     rpmfiFree(raw_);
-    raw_ = NULL;
+    raw_ = nullptr;
   }
 }
 
@@ -45,7 +45,7 @@ void
 cxxll::rpmfi_handle::reset_header(Header header)
 {
   rpmfi fi = rpmfiNew(0, header, 0, 0);
-  if (fi == NULL) {
+  if (fi == nullptr) {
     throw rpm_parser_exception("rpmfiNew failed");
   }
   close();

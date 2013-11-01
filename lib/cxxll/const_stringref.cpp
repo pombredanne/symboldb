@@ -74,7 +74,7 @@ char *
 cxxll::const_stringref::ndup(cxxll::const_stringref s)
 {
   char *ptr = strndup(s.start_, s.size_);
-  if (ptr == NULL) {
+  if (ptr == nullptr) {
     raise<std::bad_alloc>();
   }
   return ptr;

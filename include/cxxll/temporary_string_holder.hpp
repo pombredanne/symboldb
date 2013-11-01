@@ -38,7 +38,7 @@ class temporary_string_holder {
 
 inline
 temporary_string_holder::temporary_string_holder()
-  : ptr_(0)
+  : ptr_(nullptr)
 {
 }
 

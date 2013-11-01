@@ -57,16 +57,16 @@ get_arch(unsigned char ei_class, unsigned short e_machine)
     const char *name_32;
     const char *name_64;
   } archlist[] = {
-    {EM_386, "i386", NULL},
-    {EM_SPARC, "sparc", NULL},
-    {EM_SPARCV9, NULL, "sparc64"},
-    {EM_PPC, "ppc", NULL},
-    {EM_PPC64, NULL, "ppc64"},
+    {EM_386, "i386", nullptr},
+    {EM_SPARC, "sparc", nullptr},
+    {EM_SPARCV9, nullptr, "sparc64"},
+    {EM_PPC, "ppc", nullptr},
+    {EM_PPC64, nullptr, "ppc64"},
     {EM_S390, "s390", "s390x"},
-    {EM_X86_64, NULL, "x86_64"},
-    {EM_ARM, "arm", NULL},
-    {183 /* EM_AARCH64 */, NULL, "aarch64"},
-    {0, 0, 0}
+    {EM_X86_64, nullptr, "x86_64"},
+    {EM_ARM, "arm", nullptr},
+    {183 /* EM_AARCH64 */, nullptr, "aarch64"},
+    {0, nullptr, nullptr}
   };
   for (unsigned i = 0; archlist[i].machine; ++i) {
     if (e_machine == archlist[i].machine) {
@@ -75,11 +75,11 @@ get_arch(unsigned char ei_class, unsigned short e_machine)
       } else if (ei_class == ELFCLASS64) {
 	return archlist[i].name_64;
       } else {
-	return NULL;
+	return nullptr;
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 struct elf_image::impl {
@@ -95,17 +95,17 @@ struct elf_image::impl {
   std::vector<unsigned char> build_id;
 
   impl(const void *start, size_t size)
-    : elf(NULL)
+    : elf(nullptr)
   {
     char *p = const_cast<char *>(static_cast<const char *>(start));
     elf = elf_memory(p, size);
-    if (elf == NULL) {
+    if (elf == nullptr) {
       throw elf_exception();
     }
 
     GElf_Ehdr ehdr_mem;
     GElf_Ehdr *ehdr = gelf_getehdr (elf, &ehdr_mem);
-    if (ehdr == NULL) {
+    if (ehdr == nullptr) {
       elf_exception::raise("cannot read ELF header: %s", elf_errmsg (-1));
     }
     ei_class = ehdr->e_ident[EI_CLASS];
@@ -141,10 +141,10 @@ elf_image::impl::set_interp()
   for (size_t i = 0; i < phnum; ++i) {
     GElf_Phdr mem;
     GElf_Phdr *phdr = gelf_getphdr (elf, i, &mem);
-    if (phdr != NULL && phdr->p_type == PT_INTERP) {
+    if (phdr != nullptr && phdr->p_type == PT_INTERP) {
       size_t maxsize;
       char *fileptr = elf_rawfile (elf, &maxsize);
-      if (fileptr == NULL || phdr->p_offset >= maxsize) {
+      if (fileptr == nullptr || phdr->p_offset >= maxsize) {
 	throw elf_exception();
       }
       interp = fileptr + phdr->p_offset;
@@ -158,21 +158,21 @@ elf_image::impl::set_build_id()
 {
   // See handle_notes() in readelf.c (from elfutils).
   if (shnum == 0) {
-    Elf_Scn *scn = NULL;
+    Elf_Scn *scn = nullptr;
     while (true) {
       scn = elf_nextscn(elf, scn);
-      if (scn == NULL) {
+      if (scn == nullptr) {
 	break;
       }
       GElf_Shdr shdr_mem;
       GElf_Shdr *shdr = gelf_getshdr(scn, &shdr_mem);
-      if (shdr == NULL || shdr->sh_type != SHT_NOTE
+      if (shdr == nullptr || shdr->sh_type != SHT_NOTE
 	  || (shdr->sh_flags & SHF_ALLOC) == 0) {
 	continue;
       }
 
-      Elf_Data *data = elf_getdata (scn, NULL);
-      if (data != NULL) {
+      Elf_Data *data = elf_getdata (scn, nullptr);
+      if (data != nullptr) {
 	set_build_id_from_section(data);
 	return;
       }
@@ -184,12 +184,12 @@ elf_image::impl::set_build_id()
   for (size_t i = 0; i < phnum; ++i) {
     GElf_Phdr mem;
     GElf_Phdr *phdr = gelf_getphdr (elf, i, &mem);
-    if (phdr == NULL || phdr->p_type != PT_NOTE) {
+    if (phdr == nullptr || phdr->p_type != PT_NOTE) {
       continue;
     }
     Elf_Data *data =
       elf_getdata_rawchunk (elf, phdr->p_offset, phdr->p_filesz, ELF_T_NHDR);
-    if (data != NULL) {
+    if (data != nullptr) {
       set_build_id_from_section(data);
       return;
     }
@@ -304,7 +304,7 @@ elf_image::program_header_range::state::next()
   }
   GElf_Phdr *phdr = gelf_getphdr (impl_->elf, cnt, &mem);
   ++cnt;
-  if (phdr == NULL) {
+  if (phdr == nullptr) {
     return false;
   }
   return true;
@@ -411,7 +411,7 @@ struct elf_image::symbol_range::state {
   std::tr1::shared_ptr<elf_symbol_reference> ref;
 
   state()
-    : eof(false), scn(NULL), nsyms(0), cnt(0)
+    : eof(false), scn(nullptr), nsyms(0), cnt(0)
   {
   }
 
@@ -427,9 +427,9 @@ elf_image::symbol_range::state::next_section(impl *parent)
     return false;
   }
 
-  while ((scn = elf_nextscn (parent->elf, scn)) != NULL) {
+  while ((scn = elf_nextscn (parent->elf, scn)) != nullptr) {
     shdr = gelf_getshdr (scn, &shdr_mem);
-    if (shdr != NULL && (shdr->sh_type == (GElf_Word) SHT_DYNSYM 
+    if (shdr != nullptr && (shdr->sh_type == (GElf_Word) SHT_DYNSYM
 			 || shdr->sh_type == (GElf_Word) SHT_SYMTAB)) {
       if (init_section(parent)) {
 	return true;
@@ -444,47 +444,47 @@ bool
 elf_image::symbol_range::state::init_section(impl *parent)
 {
   int class_ = gelf_getclass (parent->elf);
-  xndx_data = NULL;
-  versym_data = NULL;
-  verneed_data = NULL;
-  verdef_data = NULL;
+  xndx_data = nullptr;
+  versym_data = nullptr;
+  verneed_data = nullptr;
+  verdef_data = nullptr;
   verneed_stridx = 0;
   verdef_stridx = 0;
 
   /* Get the data of the section.  */
-  data = elf_getdata (scn, NULL);
-  if (data == NULL)
+  data = elf_getdata (scn, nullptr);
+  if (data == nullptr)
     return false;
 
   /* Find out whether we have other sections we might need.  */
-  Elf_Scn *runscn = NULL;
-  while ((runscn = elf_nextscn (parent->elf, runscn)) != NULL)
+  Elf_Scn *runscn = nullptr;
+  while ((runscn = elf_nextscn (parent->elf, runscn)) != nullptr)
     {
       GElf_Shdr runshdr_mem;
       GElf_Shdr *runshdr = gelf_getshdr (runscn, &runshdr_mem);
 
-      if (runshdr != NULL)
+      if (runshdr != nullptr)
 	{
 	  if (runshdr->sh_type == SHT_GNU_versym
 	      && runshdr->sh_link == elf_ndxscn (scn))
 	    /* Bingo, found the version information.  Now get the data.  */
-	    versym_data = elf_getdata (runscn, NULL);
+	    versym_data = elf_getdata (runscn, nullptr);
 	  else if (runshdr->sh_type == SHT_GNU_verneed)
 	    {
 	      /* This is the information about the needed versions.  */
-	      verneed_data = elf_getdata (runscn, NULL);
+	      verneed_data = elf_getdata (runscn, nullptr);
 	      verneed_stridx = runshdr->sh_link;
 	    }
 	  else if (runshdr->sh_type == SHT_GNU_verdef)
 	    {
 	      /* This is the information about the defined versions.  */
-	      verdef_data = elf_getdata (runscn, NULL);
+	      verdef_data = elf_getdata (runscn, nullptr);
 	      verdef_stridx = runshdr->sh_link;
 	    }
 	  else if (runshdr->sh_type == SHT_SYMTAB_SHNDX
 	      && runshdr->sh_link == elf_ndxscn (scn))
 	    /* Extended section index.  */
-	    xndx_data = elf_getdata (runscn, NULL);
+	    xndx_data = elf_getdata (runscn, nullptr);
 	}
     }
 
@@ -496,7 +496,7 @@ elf_image::symbol_range::state::init_section(impl *parent)
   GElf_Shdr glink_mem;
   GElf_Shdr *glink = gelf_getshdr (elf_getscn (parent->elf, shdr->sh_link),
 				   &glink_mem);
-  if (glink == NULL)
+  if (glink == nullptr)
     elf_exception::raise("invalid sh_link value in section %zu",
 				  elf_ndxscn (scn));
 
@@ -525,7 +525,7 @@ elf_image::symbol_range::state::next(impl *parent)
       }
     }
     sym = gelf_getsymshndx (data, xndx_data, cnt, &sym_mem, &xndx);
-    if (sym != NULL) {
+    if (sym != nullptr) {
       break;
     }
     ++cnt;
@@ -538,13 +538,13 @@ elf_image::symbol_range::state::next(impl *parent)
 
   elf_symbol_definition def_new;
   elf_symbol_reference ref_new;
-  if (versym_data != NULL)
+  if (versym_data != nullptr)
     {
       /* Get the version information.  */
       GElf_Versym versym_mem;
       GElf_Versym *versym = gelf_getversym (versym_data, cnt, &versym_mem);
 
-      if (versym != NULL && ((*versym & 0x8000) != 0 || *versym > 1))
+      if (versym != nullptr && ((*versym & 0x8000) != 0 || *versym > 1))
 	{
 	  bool is_nobits = false;
 
@@ -554,7 +554,7 @@ elf_image::symbol_range::state::next(impl *parent)
 	      GElf_Shdr *symshdr =
 		gelf_getshdr (elf_getscn (parent->elf, xndx), &symshdr_mem);
 
-	      is_nobits = (symshdr != NULL
+	      is_nobits = (symshdr != nullptr
 			   && symshdr->sh_type == SHT_NOBITS);
 	    }
 
@@ -562,20 +562,20 @@ elf_image::symbol_range::state::next(impl *parent)
 	    {
 	      /* We must test both.  */
 	      GElf_Vernaux vernaux_mem;
-	      GElf_Vernaux *vernaux = NULL;
+	      GElf_Vernaux *vernaux = nullptr;
 	      size_t vn_offset = 0;
 
 	      GElf_Verneed verneed_mem;
 	      GElf_Verneed *verneed = gelf_getverneed (verneed_data, 0,
 						       &verneed_mem);
-	      while (verneed != NULL)
+	      while (verneed != nullptr)
 		{
 		  size_t vna_offset = vn_offset;
 
 		  vernaux = gelf_getvernaux (verneed_data,
 					     vna_offset += verneed->vn_aux,
 					     &vernaux_mem);
-		  while (vernaux != NULL
+		  while (vernaux != nullptr
 			 && vernaux->vna_other != *versym
 			 && vernaux->vna_next != 0)
 		    {
@@ -583,25 +583,25 @@ elf_image::symbol_range::state::next(impl *parent)
 		      vna_offset += vernaux->vna_next;
 
 		      vernaux = (vernaux->vna_next == 0
-				 ? NULL
+				 ? nullptr
 				 : gelf_getvernaux (verneed_data,
 						    vna_offset,
 						    &vernaux_mem));
 		    }
 
 		  /* Check whether we found the version.  */
-		  if (vernaux != NULL && vernaux->vna_other == *versym)
+		  if (vernaux != nullptr && vernaux->vna_other == *versym)
 		    /* Found it.  */
 		    break;
 
 		  vn_offset += verneed->vn_next;
 		  verneed = (verneed->vn_next == 0
-			     ? NULL
+			     ? nullptr
 			     : gelf_getverneed (verneed_data, vn_offset,
 						&verneed_mem));
 		}
 
-	      if (vernaux != NULL && vernaux->vna_other == *versym)
+	      if (vernaux != nullptr && vernaux->vna_other == *versym)
 		{
 		  ref_new.vna_name =
 		    elf_strptr (parent->elf, verneed_stridx,
@@ -623,7 +623,7 @@ elf_image::symbol_range::state::next(impl *parent)
 	      GElf_Verdef verdef_mem;
 	      GElf_Verdef *verdef = gelf_getverdef (verdef_data, 0,
 						    &verdef_mem);
-	      while (verdef != NULL)
+	      while (verdef != nullptr)
 		{
 		  if (verdef->vd_ndx == (*versym & 0x7fff))
 		    /* Found the definition.  */
@@ -631,12 +631,12 @@ elf_image::symbol_range::state::next(impl *parent)
 
 		  vd_offset += verdef->vd_next;
 		  verdef = (verdef->vd_next == 0
-			    ? NULL
+			    ? nullptr
 			    : gelf_getverdef (verdef_data, vd_offset,
 					      &verdef_mem));
 		}
 
-	      if (verdef != NULL)
+	      if (verdef != nullptr)
 		{
 		  GElf_Verdaux verdaux_mem;
 		  GElf_Verdaux *verdaux
@@ -644,7 +644,7 @@ elf_image::symbol_range::state::next(impl *parent)
 				       vd_offset + verdef->vd_aux,
 				       &verdaux_mem);
 		      
-		  if (verdaux != NULL)
+		  if (verdaux != nullptr)
 		    def_new.vda_name =
 		      elf_strptr (parent->elf, verdef_stridx,
 				  verdaux->vda_name);
@@ -724,18 +724,18 @@ struct elf_image::dynamic_section_range::state {
     for (size_t i = 0; i < impl_->phnum; ++i) {
       GElf_Phdr phdr_mem;
       GElf_Phdr *phdr = gelf_getphdr (impl_->elf, i, &phdr_mem);
-      if (phdr != NULL && phdr->p_type == PT_DYNAMIC) {
+      if (phdr != nullptr && phdr->p_type == PT_DYNAMIC) {
 	Elf_Scn *scn = gelf_offscn (impl_->elf, phdr->p_offset);
 	shdr = gelf_getshdr (scn, &shdr_mem);
-	if (shdr != NULL && shdr->sh_type == SHT_DYNAMIC) {
+	if (shdr != nullptr && shdr->sh_type == SHT_DYNAMIC) {
 	  // Section found, use it for processing if not empty.
-	  data = elf_getdata (scn, NULL);
-	  if (data != NULL) {
+	  data = elf_getdata (scn, nullptr);
+	  if (data != nullptr) {
 	    entries = shdr->sh_size / shdr->sh_entsize;
 	  }
 	  break;
 	} else {
-	  shdr = NULL;
+	  shdr = nullptr;
 	}
       }
     }

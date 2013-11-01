@@ -27,8 +27,8 @@ using namespace cxxll;
 std::string
 cxxll::realpath(const char *path)
 {
-  malloc_handle<char> handle(::realpath(path, NULL));
-  if (handle.get() == NULL) {
+  malloc_handle<char> handle(::realpath(path, nullptr));
+  if (handle.get() == nullptr) {
     throw os_exception().function(::realpath).path(path);
   }
   return std::string(handle.get());

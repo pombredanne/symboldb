@@ -82,7 +82,7 @@ public:
 
 inline
 pgconn_handle::pgconn_handle() throw()
-  : raw(NULL)
+  : raw(nullptr)
 {
 }
 
@@ -102,7 +102,7 @@ inline PGconn *
 pgconn_handle::release() throw()
 {
   PGconn *c = raw;
-  raw = NULL;
+  raw = nullptr;
   return c;
 }
 
@@ -110,7 +110,7 @@ inline void
 pgconn_handle::close() throw()
 {
   PQfinish(raw);
-  raw = NULL;
+  raw = nullptr;
 }
 
 inline PGTransactionStatusType

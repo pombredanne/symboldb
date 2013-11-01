@@ -28,7 +28,7 @@ using namespace cxxll;
 static void
 do_check(PGconn *raw)
 {
-  if (raw == NULL || PQstatus(raw) != CONNECTION_OK) {
+  if (raw == nullptr || PQstatus(raw) != CONNECTION_OK) {
     throw pg_exception(raw);
   }
 }
@@ -64,7 +64,7 @@ pgconn_handle::putCopyData(const char *p, size_t len)
 void
 pgconn_handle::putCopyEnd()
 {
-  putCopyEndError(NULL);
+  putCopyEndError(nullptr);
 }
 
 void

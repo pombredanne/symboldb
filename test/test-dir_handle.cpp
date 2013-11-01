@@ -54,7 +54,7 @@ test()
       ((temporary_directory_path() + "/test-dir_handle-").c_str());
     {
       dir_handle h(tempdir.path().c_str());
-      CHECK(h.readdir() == NULL);
+      CHECK(h.readdir() == nullptr);
     }
 
     {
@@ -73,9 +73,9 @@ test()
       std::set<std::string> files;
       dir_handle h(tempdir.path().c_str());
       dirent *e = h.readdir();
-      CHECK(e != NULL);
+      CHECK(e != nullptr);
       COMPARE_STRING(e->d_name, "subdir");
-      CHECK(h.readdir() == NULL);
+      CHECK(h.readdir() == nullptr);
     }
 
     {

@@ -27,7 +27,7 @@ std::string
 cxxll::temporary_directory_path()
 {
   const char *tmp = getenv("TMPDIR");
-  if (tmp != NULL && is_directory(tmp)
+  if (tmp != nullptr && is_directory(tmp)
       && access(tmp, R_OK | W_OK | X_OK) == 0) {
     return tmp;
   }

@@ -22,7 +22,7 @@ using namespace cxxll;
 
 rpmtd_wrapper::~rpmtd_wrapper()
 {
-  if (raw != NULL) {
+  if (raw != nullptr) {
     rpmtdFreeData(raw);
     rpmtdFree(raw);
   }
@@ -31,7 +31,7 @@ rpmtd_wrapper::~rpmtd_wrapper()
 void
 rpmtd_wrapper::reset()
 {
-  if (raw != NULL) {
+  if (raw != nullptr) {
     rpmtdReset(raw);
   }
 }

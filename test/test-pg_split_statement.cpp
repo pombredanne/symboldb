@@ -46,7 +46,7 @@ test()
     "SELECT $$\n'\n$$;",
     "SELECT 'abc';",
     "SELECT ''';';",
-    NULL
+    nullptr
   };
   size_t i;
   for (i = 0; statements[i]; ++i) {

@@ -49,7 +49,7 @@ public:
 
 inline
 rpmfi_handle::rpmfi_handle()
-  : raw_(NULL)
+  : raw_(nullptr)
 {
 }
 

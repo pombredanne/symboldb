@@ -173,7 +173,7 @@ namespace pg_private {
   {
     // FIXME: strlen call and NULL check should be out of line in the
     // non-constant case.
-    size_t length = str == NULL ? 0 : strlen(str);
+    size_t length = str == nullptr ? 0 : strlen(str);
     if (__builtin_constant_p(length)) {
       return length;
     } else {

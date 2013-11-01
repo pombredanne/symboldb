@@ -23,8 +23,8 @@ using namespace cxxll;
 
 expat_handle::expat_handle()
 {
-  raw = XML_ParserCreate(NULL);
-  if (raw == NULL) {
+  raw = XML_ParserCreate(nullptr);
+  if (raw == nullptr) {
     raise<std::bad_alloc>();
   }
 }

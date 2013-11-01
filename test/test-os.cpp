@@ -97,8 +97,8 @@ test(void)
     CHECK(ends_with(e.what(), "] error=EINVAL path=."));
   }
 
-  CHECK(error_string_or_null(0) == NULL);
-  CHECK(error_string_or_null(-1) == NULL);
+  CHECK(error_string_or_null(0) == nullptr);
+  CHECK(error_string_or_null(-1) == nullptr);
   COMPARE_STRING(error_string(0), "ERROR(0)");
   COMPARE_STRING(error_string(-1), "ERROR(-1)");
   COMPARE_STRING(error_string(EINVAL), "EINVAL");

@@ -165,7 +165,7 @@ struct python_analyzer::impl {
 };
 
 python_analyzer::impl::impl()
-  : active_(NULL)
+  : active_(nullptr)
 {
 }
 
@@ -206,7 +206,7 @@ python_analyzer::~python_analyzer()
 bool
 python_analyzer::parse(const std::vector<unsigned char> &source)
 {
-  impl_->active_ = NULL;
+  impl_->active_ = nullptr;
   impl_->maybe_start(impl_->python2_, "/usr/bin/python", 2);
   if (impl_->bad_string(source)) {
     return false;
@@ -239,7 +239,7 @@ python_analyzer::good() const
 unsigned
 python_analyzer::version() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->version_;
   }
   return 0;
@@ -248,7 +248,7 @@ python_analyzer::version() const
 const std::vector<std::string> &
 python_analyzer::imports() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->result_.imports_;
   }
   static const std::vector<std::string> empty;
@@ -258,7 +258,7 @@ python_analyzer::imports() const
 const std::vector<std::string> &
 python_analyzer::attributes() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->result_.attributes_;
   }
   static const std::vector<std::string> empty;
@@ -268,7 +268,7 @@ python_analyzer::attributes() const
 const std::vector<std::string> &
 python_analyzer::functions() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->result_.functions_;
   }
   static const std::vector<std::string> empty;
@@ -278,7 +278,7 @@ python_analyzer::functions() const
 const std::vector<std::string> &
 python_analyzer::classes() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->result_.classes_;
   }
   static const std::vector<std::string> empty;
@@ -288,7 +288,7 @@ python_analyzer::classes() const
 const std::string &
 python_analyzer::error_message() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->result_.error_;
   }
   static const std::string empty;
@@ -298,7 +298,7 @@ python_analyzer::error_message() const
 unsigned
 python_analyzer::error_line() const
 {
-  if (impl_->active_ != NULL) {
+  if (impl_->active_ != nullptr) {
     return impl_->active_->result_.error_line_;
   }
   return 0;

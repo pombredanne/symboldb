@@ -33,14 +33,14 @@ cxxll::current_directory()
 {
   char buf[4096];
   char *ret = getcwd(buf, sizeof(buf));
-  if (ret == NULL) {
+  if (ret == nullptr) {
     if (errno != ERANGE) {
       throw os_exception().function(getcwd);
     }
     std::vector<char> vec(2 * sizeof(buf));
     while (true) {
       ret = getcwd(vec.data(), vec.size());
-      if (ret != NULL) {
+      if (ret != nullptr) {
 	break;
       }
       if (errno != ERANGE) {

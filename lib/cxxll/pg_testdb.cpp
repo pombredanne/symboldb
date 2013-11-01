@@ -98,7 +98,7 @@ namespace {
     bool found = false;
     cxxll::file_handle::line line;
     while (conf.getline(line)) {
-      found = strstr(line.ptr.get(), "unix_socket_directories") != NULL;
+      found = strstr(line.ptr.get(), "unix_socket_directories") != nullptr;
       if (found) {
 	break;
       }
@@ -285,10 +285,10 @@ PGconn *
 pg_testdb::connect(const char *dbname)
 {
   static const char *keys[] = {
-    "host", "port", "dbname", NULL
+    "host", "port", "dbname", nullptr
   };
   const char *values[] = {
-    impl_->directory.path().c_str(), "5432", dbname, NULL
+    impl_->directory.path().c_str(), "5432", dbname, nullptr
   };
   pgconn_handle handle(PQconnectdbParams(keys, values, 0));
   PQsetNoticeProcessor(handle.get(), impl::notice_processor, impl_.get());

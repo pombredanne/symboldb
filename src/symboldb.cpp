@@ -57,7 +57,8 @@ load_rpms(const symboldb_options &opt, database &db, char **argv,
 {
   rpm_package_info info;
   for (; *argv; ++argv) {
-    database::package_id pkg = rpm_load(opt, db, *argv, info, NULL, NULL);
+    database::package_id pkg =
+      rpm_load(opt, db, *argv, info, nullptr, nullptr);
     if (pkg == database::package_id()) {
       return false;
     }
@@ -295,7 +296,7 @@ do_run_example(const symboldb_options &opt, database &db, char **argv)
 }
 
 static void
-usage(const char *progname, const char *error = NULL)
+usage(const char *progname, const char *error = nullptr)
 {
   if (error) {
     fprintf(stderr, "error: %s\n", error);

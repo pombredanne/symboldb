@@ -180,7 +180,7 @@ load_elf(const symboldb_options &opt, database &db,
     }
     // We used to derive the soname from the file name, but because of
     // hardlinks (and deduplication), we no longer can do this here.
-    const char *sonameptr = soname_seen ? soname.c_str() : NULL;
+    const char *sonameptr = soname_seen ? soname.c_str() : nullptr;
     db.add_elf_image(cid, image, sonameptr);
   } catch (elf_exception e) {
     db.add_elf_error(cid, e.what());
@@ -603,7 +603,7 @@ rpm_load(const symboldb_options &opt, database &db,
       && expected->value != digest) {
     raise<std::runtime_error>("checksum mismatch");
   }
-  if (url != NULL) {
+  if (url != nullptr) {
     db.add_package_url(pkg, url);
   }
 

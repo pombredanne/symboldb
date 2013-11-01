@@ -132,7 +132,7 @@ public:
 
 inline
 pgresult_handle::pgresult_handle() throw()
-  : raw(NULL)
+  : raw(nullptr)
 {
 }
 
@@ -152,7 +152,7 @@ inline PGresult *
 pgresult_handle::release() throw()
 {
   PGresult *c = raw;
-  raw = NULL;
+  raw = nullptr;
   return c;
 }
 
@@ -160,7 +160,7 @@ inline void
 pgresult_handle::close() throw()
 {
   PQclear(raw);
-  raw = NULL;
+  raw = nullptr;
 }
 
 inline int
@@ -221,14 +221,14 @@ template <unsigned N> void
 pgresult_handle::execParams(pgconn_handle &conn,
 			   const char *command, const char *(&paramValues)[N])
 {
-  execParamsCustom(conn, command, N, NULL, paramValues, NULL, NULL, 0);
+  execParamsCustom(conn, command, N, nullptr, paramValues, nullptr, nullptr, 0);
 }
 
 template <unsigned N> void
 pgresult_handle::execParamsBinary(pgconn_handle &conn,
 			   const char *command, const char *(&paramValues)[N])
 {
-  execParamsCustom(conn, command, N, NULL, paramValues, NULL, NULL, 1);
+  execParamsCustom(conn, command, N, nullptr, paramValues, nullptr, nullptr, 1);
 }
 
 } // namespace cxxll

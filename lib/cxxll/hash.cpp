@@ -59,7 +59,7 @@ struct hash_sink::impl {
       raise<std::logic_error>("invalid hash_sink::type");
     }
     raw = PK11_CreateDigestContext(oid);
-    if (raw == NULL) {
+    if (raw == nullptr) {
       raise<std::runtime_error>("PK11_CreateDigestContext");
     }
   }

@@ -55,7 +55,7 @@ public:
 inline
 mutex::mutex()
 {
-  int ret = pthread_mutex_init(&mutex_, NULL);
+  int ret = pthread_mutex_init(&mutex_, nullptr);
   if (ret != 0) {
     throw_init_error(ret);
   }

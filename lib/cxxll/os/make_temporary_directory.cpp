@@ -33,7 +33,7 @@ cxxll::make_temporary_directory(const char *prefix)
   static const char placeholder[7] = "XXXXXX";
   templ.insert(templ.end(), placeholder, placeholder + sizeof(placeholder));
   const char *ret = mkdtemp(templ.data());
-  if (ret == NULL) {
+  if (ret == nullptr) {
     throw os_exception().path(prefix).function(mkdtemp);
   }
   return ret;

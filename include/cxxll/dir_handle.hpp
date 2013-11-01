@@ -31,7 +31,7 @@ public:
 
   // Initialises the raw pointer to NULL.
   dir_handle()
-    : raw(0)
+    : raw(nullptr)
   {
   }
 

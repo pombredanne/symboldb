@@ -29,14 +29,14 @@ cxxll::error_string_or_null(int code) throw()
 #define check(x) if (code == x) return #x;
 #include "error-constants.inc"
 #undef check
-  return NULL;
+  return nullptr;
 }
 
 std::string
 cxxll::error_string(int code)
 {
   const char *errstr = error_string_or_null(code);
-  if (errstr != NULL) {
+  if (errstr != nullptr) {
     return errstr;
   }
   char buf[64];

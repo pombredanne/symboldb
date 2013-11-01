@@ -296,7 +296,7 @@ expat_source::impl::CharacterDataHandler(void *userData,
 					 const XML_Char *s, int len)
 {
   // Expat should error out on embedded NUL characters.
-  assert(memchr(s, 0, len) == NULL);
+  assert(memchr(s, 0, len) == nullptr);
   impl *impl_ = static_cast<impl *>(userData);
   try {
     impl_->upcoming_.push_back(ENC_TEXT);

@@ -28,7 +28,7 @@ namespace {
   set_field_string(PGresult *res, std::string &field, int code)
   {
     const char *p = PQresultErrorField(res, code);
-    if (p != NULL) {
+    if (p != nullptr) {
       field = p;
     }
   }
@@ -37,7 +37,7 @@ namespace {
   set_field_int(PGresult *res, int &field, int code)
   {
     const char *p = PQresultErrorField(res, code);
-    if (p != NULL) {
+    if (p != nullptr) {
       sscanf(p, "%d", &field);
     }
   }
@@ -65,7 +65,7 @@ pg_exception::pg_exception(PGconn *conn)
   : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
   status_ = PGRES_FATAL_ERROR;
-  if (conn == NULL) {
+  if (conn == nullptr) {
     message_ = "out of memory";
   } else {
     message_ = PQerrorMessage(conn);
@@ -77,7 +77,7 @@ pg_exception::pg_exception(PGconn *conn)
 pg_exception::pg_exception(PGresult *res)
   : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
-  if (res == NULL) {
+  if (res == nullptr) {
     status_ = PGRES_FATAL_ERROR;
     message_ = "out of memory";
     severity_ = "FATAL";

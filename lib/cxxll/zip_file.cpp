@@ -47,7 +47,7 @@ struct cxxll::zip_file::impl : source {
 cxxll::zip_file::impl::impl(const std::vector<unsigned char> *buffer)
   : buffer_(buffer), archive_(archive_read_new())
 {
-  if (archive_ == NULL) {
+  if (archive_ == nullptr) {
     raise<std::bad_alloc>();
   }
   if (archive_read_support_format_zip(archive_) != ARCHIVE_OK
@@ -55,7 +55,7 @@ cxxll::zip_file::impl::impl(const std::vector<unsigned char> *buffer)
 				   const_cast<unsigned char *>(buffer->data()),
 				   buffer->size())
 	  != ARCHIVE_OK)
-      || (entry_ = archive_entry_new2(archive_)) == NULL) {
+      || (entry_ = archive_entry_new2(archive_)) == nullptr) {
     archive_read_free(archive_);
     raise<std::runtime_error>("archive_read_support_format_zip");
   }

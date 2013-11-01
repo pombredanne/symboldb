@@ -248,13 +248,13 @@ test_java_class(database &db, pgconn_handle &conn)
       "java/lang/StackOverflowError",
       "java/lang/StringBuilder",
       "java/lang/Thread",
-      NULL
+      nullptr
     };
     unsigned end = res.ntuples();
     for (unsigned i = 0; i <= end; ++i) {
       if (i == end) {
-	CHECK(expected[i] == NULL);
-      } else if (expected[i] == NULL) {
+	CHECK(expected[i] == nullptr);
+      } else if (expected[i] == nullptr) {
 	CHECK(false);
 	break;
       } else {
@@ -296,14 +296,14 @@ test_java_class(database &db, pgconn_handle &conn)
       "org/objectweb/asm/signature/SignatureReader",
       "org/objectweb/asm/signature/SignatureVisitor",
       "org/objectweb/asm/signature/SignatureWriter",
-      NULL
+      nullptr
     };
     unsigned end = res.ntuples();
     CHECK(end > 0);
     for (unsigned i = 0; i <= end; ++i) {
       if (i == end) {
-	CHECK(expected[i] == NULL);
-      } else if (expected[i] == NULL) {
+	CHECK(expected[i] == nullptr);
+      } else if (expected[i] == nullptr) {
 	CHECK(false);
 	break;
       } else {
@@ -440,7 +440,7 @@ test()
 		    ("file://" + rpmpath).c_str()));
 	CHECK(pkg > last_pkg_id);
 	last_pkg_id = pkg;
-	pkg = rpm_load(opt, db, rpmpath.c_str(), info, &csum, NULL);
+	pkg = rpm_load(opt, db, rpmpath.c_str(), info, &csum, nullptr);
 	CHECK(pkg == last_pkg_id);
       }
     }
@@ -868,7 +868,7 @@ test()
 		    " WHERE arch IN ('x86_64', 'i686')", params);
     }
     r1.exec(dbh, "BEGIN");
-    update_elf_closure(dbh, pset, NULL);
+    update_elf_closure(dbh, pset, nullptr);
     r1.exec(dbh, "COMMIT");
 
     std::vector<std::vector<unsigned char> > digests;
@@ -1011,7 +1011,7 @@ test()
 	  "syslog",
 	  "umask",
 	  "write",
-	  NULL
+	  nullptr
 	};
 
 	r1.exec(dbh, "SELECT python_attribute.name"
@@ -1048,7 +1048,7 @@ test()
 	  "service_reader",
 	  "service_writer",
 	  "startElement",
-	  NULL
+	  nullptr
 	};
 
 	r1.exec(dbh, "SELECT python_function_def.name"
@@ -1067,7 +1067,7 @@ test()
 	static const char *const classes[] = {
 	  "Service",
 	  "service_ContentHandler",
-	  NULL
+	  nullptr
 	};
 
 	r1.exec(dbh, "SELECT python_class_def.name"

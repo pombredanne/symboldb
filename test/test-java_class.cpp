@@ -54,12 +54,12 @@ test()
 	"java/lang/StackOverflowError",
 	"java/lang/StringBuilder",
 	"java/lang/Thread",
-	NULL
+	nullptr
       };
       for (unsigned i = 0; i <= classes.size(); ++i) {
 	if (i == classes.size()) {
-	  CHECK(expected[i] == NULL);
-	} else if (expected[i] == NULL) {
+	  CHECK(expected[i] == nullptr);
+	} else if (expected[i] == nullptr) {
 	  CHECK(false);
 	  break;
 	} else {

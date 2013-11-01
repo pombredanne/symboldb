@@ -31,7 +31,7 @@ class malloc_handle {
   T *raw;
 public:
   malloc_handle()
-    : raw(0)
+    : raw(nullptr)
   {
   }
 
@@ -83,7 +83,7 @@ template <class T> inline T *
 malloc_handle<T>::release()
 {
   T *r = raw;
-  raw = NULL;
+  raw = nullptr;
   return r;
 }
 

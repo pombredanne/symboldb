@@ -44,7 +44,7 @@ namespace {
     for (std::vector<char *>::iterator p = v.begin(), end = v.end();
 	 p != end; ++p) {
       char *ptr = *p;
-      *p = NULL;
+      *p = nullptr;
       free(ptr);
     }
   }
@@ -52,9 +52,9 @@ namespace {
   char *
   xstrdup(const char *s)
   {
-    assert(s != NULL);
+    assert(s != nullptr);
     char *snew = strdup(s);
-    if (snew == NULL) {
+    if (snew == nullptr) {
       raise<std::bad_alloc>();
     }
     return snew;
@@ -111,8 +111,8 @@ struct subprocess::impl {
   impl()
     : pid(0)
   {
-    argv.push_back(NULL);
-    envv.push_back(NULL);
+    argv.push_back(nullptr);
+    envv.push_back(nullptr);
     activity[0] = activity[1] = activity[2] = inherit;
   }
 
@@ -163,7 +163,7 @@ subprocess::command_name(const char *cmd)
   free(impl_->argv.at(0));
   impl_->argv.at(0) = dup;
   if (impl_->argv.size() == 1) {
-    impl_->argv.push_back(NULL);
+    impl_->argv.push_back(nullptr);
   }
   return *this;
 }
@@ -172,7 +172,7 @@ const char *
 subprocess::command_name() const
 {
   const char *name = impl_->argv.at(0);
-  if (name == NULL) {
+  if (name == nullptr) {
     raise<std::logic_error>("subprocess::command_name not set");
   }
   return name;
@@ -182,14 +182,14 @@ subprocess &
 subprocess::arg(const char *str)
 {
   impl_->argv.back() = xstrdup(str);
-  impl_->argv.push_back(NULL);
+  impl_->argv.push_back(nullptr);
   return *this;
 }
 
 subprocess &
 subprocess::env(const char *key, const char *value)
 {
-  if (strchr(key, '=') != NULL) {
+  if (strchr(key, '=') != nullptr) {
     raise<std::logic_error>("subprocess:env key contains '='");
   }
   char *ptr;
@@ -198,7 +198,7 @@ subprocess::env(const char *key, const char *value)
     raise<std::bad_alloc>();
   }
   impl_->envv.back() = ptr;
-  impl_->envv.push_back(NULL);
+  impl_->envv.push_back(nullptr);
   return *this;
 }
 
@@ -208,7 +208,7 @@ subprocess::inherit_environ()
   char **p = environ;
   while (*p) {
     impl_->envv.back() = xstrdup(*p);
-    impl_->envv.push_back(NULL);
+    impl_->envv.push_back(nullptr);
     ++p;
   }
   return *this;
@@ -405,7 +405,7 @@ subprocess::destroy_nothrow() throw()
     // Terminate the subprocess.
     // FIXME: we should probably log errors.
     ::kill(impl_->pid, SIGKILL);
-    ::waitpid(impl_->pid, NULL, 0);
+    ::waitpid(impl_->pid, nullptr, 0);
     impl_->pid = 0;
   }
 }

@@ -183,8 +183,8 @@ void test_compare_string(const char *left, const char *right,
 			 const char *left_str, const char *right_str,
 			 const char *file, unsigned line)
 {
-  test_compare_string(left == NULL ? "" : left, left == NULL,
-		      right == NULL ? "" : right, right == NULL,
+  test_compare_string(left == nullptr ? "" : left, left == nullptr,
+		      right == nullptr ? "" : right, right == nullptr,
 		      left_str, right_str, file, line);
 }
 
@@ -192,7 +192,7 @@ void test_compare_string(const char *left, const std::string &right,
 			 const char *left_str, const char *right_str,
 			 const char *file, unsigned line)
 {
-  test_compare_string(left == NULL ? "" : left, left == NULL,
+  test_compare_string(left == nullptr ? "" : left, left == nullptr,
 		      right, false,
 		      left_str, right_str, file, line);
 }
@@ -202,7 +202,7 @@ void test_compare_string(const std::string &left, const char *right,
 			 const char *file, unsigned line)
 {
   test_compare_string(left, false,
-		      right == NULL ? "" : right, right == NULL,
+		      right == nullptr ? "" : right, right == nullptr,
 		      left_str, right_str, file, line);
 }
 
@@ -291,7 +291,7 @@ int
 run_tests(const char *pattern)
 {
   regex_handle regexp(pattern ? pattern : ".*");
-  if (pattern != NULL) {
+  if (pattern != nullptr) {
     fprintf(stderr, "info: test sets matching: %s\n", pattern);
   }
 
@@ -319,7 +319,7 @@ run_tests(const char *pattern)
     if (!regexp.match(p->name)) {
       continue;
     }
-    if (pattern != NULL) {
+    if (pattern != nullptr) {
       fprintf(stderr, "info: running test set: %s\n", p->name);
     }
     current_test = p->name;

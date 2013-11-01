@@ -45,7 +45,7 @@ static const char *const imports[] = {
   ".relative.nested.id9",
   "..relative3",
   "..relative4.id10",
-  NULL
+  nullptr
 };
 
 static const char *const attributes[] = {
@@ -56,20 +56,20 @@ static const char *const attributes[] = {
   "nestedattr5",
   "read",
   "write",
-  NULL
+  nullptr
 };
 
 static const char *const functions[] = {
   "classmember",
   "inner",
   "outer",
-  NULL
+  nullptr
 };
 
 static const char *const classes[] = {
   "DefinedClass",
   "NestedClass",
-  NULL
+  nullptr
 };
 
 static void

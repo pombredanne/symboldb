@@ -65,16 +65,16 @@ log_callback(rpmlogRec rec, rpmlogCallbackData)
 void
 cxxll::rpm_parser_init()
 {
-  old_log_callback = rpmlogSetCallback(log_callback, NULL);
+  old_log_callback = rpmlogSetCallback(log_callback, nullptr);
   rpmReadConfigFiles("", "noarch");
 }
 
 void
 cxxll::rpm_parser_deinit()
 {
-  if (old_log_callback != NULL) {
-    rpmlogSetCallback(old_log_callback, NULL);
-    old_log_callback = NULL;
+  if (old_log_callback != nullptr) {
+    rpmlogSetCallback(old_log_callback, nullptr);
+    old_log_callback = nullptr;
   }
   rpmInitCrypto();
   rpmFreeCrypto();
@@ -96,10 +96,10 @@ struct rpm_parser::impl {
 
   ~impl()
   {
-    if (header != NULL) {
+    if (header != nullptr) {
       headerFree(header);
     }
-    if (fd != NULL) {
+    if (fd != nullptr) {
       Fclose(fd);
     }
   }
@@ -142,7 +142,7 @@ get_string(Header header, const char *name, rpmTagVal tag)
   rpmtd_wrapper td;
   if (headerGet(header, tag, td.raw, 0)) {
     const char *s = rpmtdGetString(td.raw);
-    if (s != NULL) {
+    if (s != nullptr) {
       return s;
     }
   }
@@ -156,7 +156,7 @@ get_unsigned(Header header, const char *name, rpmTagVal tag)
   rpmtd_wrapper td;
   unsigned *p;
   if (!headerGet(header, tag, td.raw, 0)
-      || (p = rpmtdGetUint32(td.raw)) == NULL) {
+      || (p = rpmtdGetUint32(td.raw)) == nullptr) {
     throw rpm_parser_exception
       ("could not get " + std::string(name) + " header");
   }
@@ -206,7 +206,7 @@ rpm_parser::impl::get_header()
       pkg.epoch = -1;
     } else {
       unsigned *p = rpmtdGetUint32(td.raw);
-      if (p == NULL) {
+      if (p == nullptr) {
 	throw rpm_parser_exception("could not get EPOCH header");
       }
       if (*p > INT_MAX) {
@@ -342,17 +342,17 @@ static void get_deps(Header header,
   }
   while (true) {
     const char *namestr = rpmtdNextString(name.raw);
-    if (namestr == NULL) {
+    if (namestr == nullptr) {
       break;
     }
 
     const uint32_t *flagsuint = rpmtdNextUint32(flags.raw);
-    if (flagsuint == NULL) {
+    if (flagsuint == nullptr) {
       throw rpm_parser_exception
 	("missing entries in " + std::string(flagsname) + " header");
     }
     const char *versionstr =rpmtdNextString(version.raw);
-    if (versionstr == NULL) {
+    if (versionstr == nullptr) {
       throw rpm_parser_exception
 	("missing entries in " + std::string(versionname) + " header");
     }
@@ -393,13 +393,13 @@ rpm_parser::impl::open_payload()
   const char *compr =
     headerGetString(header, RPMTAG_PAYLOADCOMPRESSOR);
   std::string rpmio_flags("r.");
-  if (compr == NULL) {
+  if (compr == nullptr) {
     rpmio_flags += "gzip";
   } else {
     rpmio_flags += compr;
   }
   FD_t gzfd = Fdopen(fd, rpmio_flags.c_str());
-  if (gzfd == NULL) {
+  if (gzfd == nullptr) {
     raise<std::runtime_error>("could not allocate compression handle");
   }
   if (gzfd != fd) {
@@ -496,7 +496,7 @@ get_script(Header header, std::vector<rpm_script> &result,
 
   if (headerGet(header, scriptlettag, scriptlet.raw, hflags)) {
     const char *scriptletstr = rpmtdGetString(scriptlet.raw);
-    if (scriptletstr != NULL) {
+    if (scriptletstr != nullptr) {
       script.script = scriptletstr;
       script.script_present = true;
     }
@@ -551,7 +551,7 @@ rpm_parser::triggers(std::vector<rpm_trigger> &result) const
     }
     while (const char *script = rpmtdNextString(scripts.raw)) {
       const char *prog = rpmtdNextString(progs.raw);
-      if (prog == NULL) {
+      if (prog == nullptr) {
 	throw rpm_parser_exception("TRIGGERSCRIPTPROG array too short");
       }
       result.push_back(rpm_trigger(script, prog));
@@ -579,15 +579,15 @@ rpm_parser::triggers(std::vector<rpm_trigger> &result) const
     }
     while (const uint32_t *idx = rpmtdNextUint32(indexes.raw)) {
       const char *name = rpmtdNextString(names.raw);
-      if (name == NULL) {
+      if (name == nullptr) {
 	throw rpm_parser_exception("TRIGGERNAME array too short");
       }
       const char *version = rpmtdNextString(versions.raw);
-      if (version == NULL) {
+      if (version == nullptr) {
 	throw rpm_parser_exception("TRIGGERVERSION array too short");
       }
       uint32_t *flag = rpmtdNextUint32(flags.raw);
-      if (flag == NULL) {
+      if (flag == nullptr) {
 	throw rpm_parser_exception("TRIGGERFLAGS array too short");
       }
       rpm_trigger &trigger(result.at(*idx));

@@ -31,7 +31,7 @@ struct task::impl {
   impl(std::tr1::function<void () throw()> f)
     : runner(f), terminated(true)
   {
-    int ret = pthread_create(&thread, NULL, &callback, this);
+    int ret = pthread_create(&thread, nullptr, &callback, this);
     if (ret != 0) {
       throw os_exception(ret).function(pthread_create);
     }
@@ -49,7 +49,7 @@ struct task::impl {
   {
     struct impl *impl_(static_cast<impl *>(closure));
     impl_->runner();
-    return NULL;
+    return nullptr;
   }
 };
 
@@ -68,7 +68,7 @@ task::wait()
   if (impl_->terminated) {
     return;
   }
-  int ret = pthread_join(impl_->thread, NULL);
+  int ret = pthread_join(impl_->thread, nullptr);
   impl_->terminated = true;
   if (ret != 0) {
     throw os_exception(ret).function(pthread_join);

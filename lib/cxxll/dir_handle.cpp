@@ -28,7 +28,7 @@ dir_handle::dir_handle(int fd)
 {
   try {
     raw = fdopendir(fd);
-    if (raw == NULL) {
+    if (raw == nullptr) {
       throw os_exception().function(fdopendir).fd(fd).defaults();
     }
   } catch (...) {
@@ -40,14 +40,14 @@ dir_handle::dir_handle(int fd)
 dir_handle::dir_handle(const char *path)
   : raw(opendir(path))
 {
-  if (raw == NULL) {
+  if (raw == nullptr) {
     throw os_exception().function(opendir).path(path);
   }
 }
 
 dir_handle::~dir_handle()
 {
-  if (raw != NULL) {
+  if (raw != nullptr) {
     closedir(raw);
   }
 }
@@ -55,9 +55,9 @@ dir_handle::~dir_handle()
 void
 dir_handle::close()
 {
-  if (raw != NULL) {
+  if (raw != nullptr) {
     int ret = closedir(raw);
-    raw = NULL;
+    raw = nullptr;
     if (ret != 0) {
       throw os_exception().function(closedir);
     }
@@ -75,7 +75,7 @@ dir_handle::readdir()
     }
     return e;
   }
-  return NULL;
+  return nullptr;
 }
 
 dirent *
@@ -84,7 +84,7 @@ dir_handle::readdir_all()
   errno = 0;
   dirent *result = ::readdir(raw);
   int err = errno;
-  if (result == NULL && err != 0) {
+  if (result == nullptr && err != 0) {
     throw os_exception(err).function(::readdir).fd(dirfd()).defaults();
   }
   return result;

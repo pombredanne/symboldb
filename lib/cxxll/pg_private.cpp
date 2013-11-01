@@ -200,7 +200,7 @@ load_text(PGresult *res, int row, int col, T &val)
     size_t len;
     unsigned char *blob =
       PQunescapeBytea(reinterpret_cast<const unsigned char *>(ptr), &len);
-    if (blob == NULL) {
+    if (blob == nullptr) {
       raise<std::bad_alloc>();
     }
     try {

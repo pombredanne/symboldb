@@ -53,7 +53,7 @@ namespace {
   {
     const char *leftslash = strrchr(left, '/');
     const char *rightslash = strrchr(right, '/');
-    if (leftslash == NULL || rightslash == NULL
+    if (leftslash == nullptr || rightslash == nullptr
 	|| (leftslash - left) != (rightslash - right)) {
       return false;
     }

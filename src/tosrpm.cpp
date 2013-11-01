@@ -44,11 +44,11 @@ find_spec_file(const char *path)
 {
   if (is_directory(path)) {
     dir_handle dir(path);
-    const char *spec_name = NULL;
+    const char *spec_name = nullptr;
     while (dirent *entry = dir.readdir()) {
       const char *name = entry->d_name;
       if (ends_with(name, ".spec")) {
-	if (spec_name != NULL) {
+	if (spec_name != nullptr) {
 	  fprintf(stderr, "error: multiple .spec files in: %s\n", path);
 	  fprintf(stderr, "error:   first file: %s\n", spec_name);
 	  fprintf(stderr, "error:   second file: %s\n", name);
@@ -57,7 +57,7 @@ find_spec_file(const char *path)
 	spec_name = name;
       }
     }
-    if (spec_name == NULL) {
+    if (spec_name == nullptr) {
       fprintf(stderr, "error: no .spec file found in: %s\n", path);
     }
     return realpath((std::string(path) + '/' + spec_name).c_str());
@@ -98,14 +98,14 @@ namespace {
   {
     rpm_parser_init();
     rpmSpec spec = rpmSpecParse(path.c_str(), RPMSPEC_FORCE, "/var/empty");
-    if (spec == NULL) {
+    if (spec == nullptr) {
       fprintf(stderr, "error: could not parse spec file: %s\n", path.c_str());
       exit(1);
     }
 
     // Determine tarball.
     rpmSpecSrcIter iter = rpmSpecSrcIterInit(spec);
-    if (iter == NULL) {
+    if (iter == nullptr) {
       fprintf(stderr, "error: could not extract sources from: %s\n", path.c_str());
       exit(1);
     }
@@ -136,7 +136,7 @@ namespace {
 
     // Determine SRPM name.
     if (!headerGet(header, RPMTAG_NVR, td.raw, HEADERGET_ALLOC | HEADERGET_EXT)
-	|| (str = rpmtdGetString(td.raw)) == NULL) {
+	|| (str = rpmtdGetString(td.raw)) == nullptr) {
       fprintf(stderr, "error: could not obtain NVR from: %s\n", path.c_str());
       exit(1);
     }
@@ -144,14 +144,14 @@ namespace {
     srpm += ".src.rpm";
 
     if (!headerGet(header, RPMTAG_NAME, td.raw, 0)
-	|| (str = rpmtdGetString(td.raw)) == NULL) {
+	|| (str = rpmtdGetString(td.raw)) == nullptr) {
       fprintf(stderr, "error: could not obtain NAME from: %s\n", path.c_str());
       exit(1);
     }
     name = str;
 
     if (!headerGet(header, RPMTAG_VERSION, td.raw, 0)
-	|| (str = rpmtdGetString(td.raw)) == NULL) {
+	|| (str = rpmtdGetString(td.raw)) == nullptr) {
       fprintf(stderr, "error: could not obtain VERSION from: %s\n", path.c_str());
       exit(1);
     }
@@ -332,7 +332,7 @@ run_rpmbuild(const temporary_directory &tempdir,
 }
 
 static void
-usage(const char *progname, const char *error = NULL)
+usage(const char *progname, const char *error = nullptr)
 {
   if (error) {
     fprintf(stderr, "error: %s\n", error);

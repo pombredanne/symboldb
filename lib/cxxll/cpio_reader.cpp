@@ -50,8 +50,8 @@ template <unsigned N>
 static const char *
 read_octal(const char *where, const char *p, uint32_t &result, const char *&error)
 {
-  if (p == NULL) {
-    return NULL;
+  if (p == nullptr) {
+    return nullptr;
   }
 
   result = 0;
@@ -59,7 +59,7 @@ read_octal(const char *where, const char *p, uint32_t &result, const char *&erro
     int d = octal_digit(p[i]);
     if (d < 0) {
       error = where;
-      return NULL;
+      return nullptr;
     }
     result = (result << 3) | d;
   }
@@ -69,8 +69,8 @@ read_octal(const char *where, const char *p, uint32_t &result, const char *&erro
 static const char *
 read_hex(const char *where, const char *p, uint32_t &result, const char *&error)
 {
-  if (p == NULL) {
-    return NULL;
+  if (p == nullptr) {
+    return nullptr;
   }
 
   result = 0;
@@ -78,7 +78,7 @@ read_hex(const char *where, const char *p, uint32_t &result, const char *&error)
     int d = hex_digit(p[i]);
     if (d < 0) {
       error = where;
-      return NULL;
+      return nullptr;
     }
     result = (result << 4) | d;
   }
@@ -116,7 +116,7 @@ cxxll::parse(const char *buf, size_t len, cpio_entry &e, const char *&error)
     p = read_octal<11>("mtime", p, e.mtime, error);
     p = read_octal<6>("namesize", p, e.namesize, error);
     p = read_octal<11>("filesize", p, e.filesize, error);
-    if (p != NULL) {
+    if (p != nullptr) {
       assert(buf + 70 == p);
       return true;
     }
@@ -135,7 +135,7 @@ cxxll::parse(const char *buf, size_t len, cpio_entry &e, const char *&error)
     p = read_hex("rdevminor", p, e.rdevminor, error);
     p = read_hex("namesize", p, e.namesize, error);
     p = read_hex("check", p, e.check, error);
-    if (p != NULL) {
+    if (p != nullptr) {
       assert(buf + 104 == p);
       return true;
     }

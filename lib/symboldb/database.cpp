@@ -114,10 +114,10 @@ database::database(const char *host, const char *dbname)
   : impl_(new impl)
 {
   static const char *keys[] = {
-    "host", "port", "dbname", NULL
+    "host", "port", "dbname", nullptr
   };
   const char *values[] = {
-    host, "5432", dbname, NULL
+    host, "5432", dbname, nullptr
   };
   impl_->conn.reset(PQconnectdbParams(keys, values, 0));
 }
@@ -253,7 +253,7 @@ database::intern_package(const rpm_package_info &pkg,
 
   const char *source_rpm;
   if (pkg.source_rpm.empty()) {
-    source_rpm = NULL;
+    source_rpm = nullptr;
   } else {
     source_rpm = pkg.source_rpm.c_str();
   }
@@ -269,7 +269,7 @@ database::intern_package(const rpm_package_info &pkg,
      " $8, 'epoch'::TIMESTAMP WITHOUT TIME ZONE + '1 second'::interval * $9,"
      " $10, $11, $12, $13, $14, $15::symboldb.rpm_kind)"
      " RETURNING package_id",
-     pkg.name, pkg.epoch >= 0 ? &pkg.epoch : NULL, pkg.version, pkg.release,
+     pkg.name, pkg.epoch >= 0 ? &pkg.epoch : nullptr, pkg.version, pkg.release,
      pkg.arch, pkg.hash, source_rpm, pkg.build_host, pkg.build_time,
      pkg.summary, pkg.description, pkg.license, pkg.group, pkg.normalized,
      kind);
@@ -442,7 +442,7 @@ void
 database::add_package_script(package_id pkg, const rpm_script &script)
 {
   pgresult_handle res;
-  const char *scriptlet = NULL;;
+  const char *scriptlet = nullptr;;
   if (script.script_present) {
     scriptlet = script.script.c_str();
   }
@@ -592,7 +592,7 @@ database::add_elf_image(contents_id cid, const elf_image &image,
   assert(impl_->conn.transactionStatus() == PQTRANS_INTRANS);
   const char *interp;
   if (image.interp().empty()) {
-    interp = NULL;
+    interp = nullptr;
   } else {
     interp = image.interp().c_str();
   }
@@ -611,7 +611,7 @@ database::add_elf_image(contents_id cid, const elf_image &image,
      image.arch(),
      soname,
      interp,
-     image.build_id().empty() ? NULL : &image.build_id());
+     image.build_id().empty() ? nullptr : &image.build_id());
 
   elf_image::program_header_range phdr(image);
   while (phdr.next()) {
@@ -647,12 +647,12 @@ database::add_elf_symbol_definition(contents_id cid,
      " VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::symboldb.elf_visibility)",
      cid.value(),
      def.symbol_name.c_str(),
-     def.vda_name.empty() ? NULL : def.vda_name.c_str(),
+     def.vda_name.empty() ? nullptr : def.vda_name.c_str(),
      def.default_version,
      static_cast<int>(def.type),
      static_cast<int>(def.binding),
      static_cast<short>(def.section),
-     def.has_xsection() ? &xsection : NULL,
+     def.has_xsection() ? &xsection : nullptr,
      def.visibility());
 }
 
@@ -669,7 +669,7 @@ database::add_elf_symbol_reference(contents_id cid,
      " VALUES ($1, $2, $3, $4, $5, $6::symboldb.elf_visibility)",
      cid.value(),
      ref.symbol_name,
-     ref.vna_name.empty() ? NULL : ref.vna_name.c_str(),
+     ref.vna_name.empty() ? nullptr : ref.vna_name.c_str(),
      static_cast<int>(ref.type),
      static_cast<int>(ref.binding),
      ref.visibility());
@@ -918,7 +918,7 @@ database::update_package_set(package_set_id set,
 void
 database::update_package_set_caches(package_set_id set)
 {
-  update_elf_closure(impl_->conn, set, NULL);
+  update_elf_closure(impl_->conn, set, nullptr);
 }
 
 static void

@@ -26,7 +26,7 @@ using namespace cxxll;
 file_handle::file_handle(FILE *newptr)
   : raw(newptr)
 {
-  if (raw == NULL) {
+  if (raw == nullptr) {
     throw os_exception();
   }
 }
@@ -34,14 +34,14 @@ file_handle::file_handle(FILE *newptr)
 file_handle::file_handle(const char *path, const char *flags)
   : raw(fopen(path, flags))
 {
-  if (raw == NULL) {
+  if (raw == nullptr) {
     throw os_exception().function(fopen).path(path).defaults();
   }
 }
 
 file_handle::~file_handle()
 {
-  if (raw != NULL) {
+  if (raw != nullptr) {
     fclose(raw);
   }
 }
@@ -49,9 +49,9 @@ file_handle::~file_handle()
 void
 file_handle::close()
 {
-  if (raw != NULL) {
+  if (raw != nullptr) {
     FILE *ptr = raw;
-    raw = NULL;
+    raw = nullptr;
     if (fclose(ptr) != 0) {
       throw os_exception().function(fclose).defaults();
     }
@@ -61,7 +61,7 @@ file_handle::close()
 void
 file_handle::reset(FILE *newptr)
 {
-  if (newptr == NULL) {
+  if (newptr == nullptr) {
     throw os_exception();
   }
   try {

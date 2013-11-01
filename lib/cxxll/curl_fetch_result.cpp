@@ -110,7 +110,7 @@ curl_fetch_result::perform(curl_handle &h, const char *url)
 
 
   ret = curl_easy_perform(h.raw);
-  char *effective_url_c = NULL;
+  char *effective_url_c = nullptr;
   curl_easy_getinfo(h.raw, CURLINFO_EFFECTIVE_URL, &effective_url_c);
   if (strcmp(url, effective_url_c) != 0) {
     effective_url = effective_url_c;
@@ -120,7 +120,7 @@ curl_fetch_result::perform(curl_handle &h, const char *url)
   // A response code of 0 is used if the protocol does not support
   // response codes.
   if (ret != CURLE_OK || (status != 200 && status != 0)) {
-    char *primary_ip = NULL;
+    char *primary_ip = nullptr;
     curl_easy_getinfo(h.raw, CURLINFO_PRIMARY_IP, &primary_ip);
     long primary_port = 0;
     curl_easy_getinfo(h.raw, CURLINFO_PRIMARY_PORT, &primary_port);
