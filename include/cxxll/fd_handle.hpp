@@ -26,8 +26,8 @@ namespace cxxll {
 // POSIX file descriptor which is closed on scope exit.
 class fd_handle {
   int raw;
-  fd_handle(const fd_handle &); // not implemented
-  fd_handle &operator=(const fd_handle &); // not implemented
+  fd_handle(const fd_handle &) = delete;
+  fd_handle &operator=(const fd_handle &) = delete;
 public:
   // Sets the file handle to -1.
   fd_handle();

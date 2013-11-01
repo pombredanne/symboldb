@@ -31,8 +31,8 @@ namespace cxxll {
 class python_analyzer {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  python_analyzer(const python_analyzer &); // not implemented
-  python_analyzer &operator=(const python_analyzer &); // not implemented
+  python_analyzer(const python_analyzer &) = delete;
+  python_analyzer &operator=(const python_analyzer &) = delete;
 public:
   // Throws os_exception if no Python interpreter can be found.
   python_analyzer();

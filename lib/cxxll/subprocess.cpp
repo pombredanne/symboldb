@@ -61,8 +61,8 @@ namespace {
   }
 
   class attr_handle {
-    attr_handle(const attr_handle &); // not implemented
-    attr_handle &operator=(const attr_handle &); // not implemented
+    attr_handle(const attr_handle &) = delete;
+    attr_handle &operator=(const attr_handle &) = delete;
   public:
     posix_spawnattr_t raw;
 
@@ -80,8 +80,8 @@ namespace {
   };
 
   class actions_handle {
-    actions_handle(const actions_handle &); // not implemented
-    actions_handle &operator=(const actions_handle &); // not implemented
+    actions_handle(const actions_handle &) = delete;
+    actions_handle &operator=(const actions_handle &) = delete;
   public:
     posix_spawn_file_actions_t raw;
 

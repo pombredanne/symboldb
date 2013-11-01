@@ -27,8 +27,8 @@ namespace cxxll {
 class task {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  task(const task &); // not implemented
-  task &operator=(const task &); // not implemented
+  task(const task &) = delete;
+  task &operator=(const task &) = delete;
 public:
   // Runs the function in a separate thread.  Can throw os_exception.
   task(std::tr1::function<void() throw()>);

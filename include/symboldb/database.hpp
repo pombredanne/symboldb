@@ -257,8 +257,8 @@ public:
   class files_with_digest {
     struct impl;
     std::tr1::shared_ptr<impl> impl_;
-    files_with_digest(const files_with_digest &); // not implemented
-    files_with_digest &operator=(const files_with_digest &); // not implemented
+    files_with_digest(const files_with_digest &) = delete;
+    files_with_digest &operator=(const files_with_digest &) = delete;
   public:
     files_with_digest(database &, const std::vector<unsigned char> &);
     ~files_with_digest();

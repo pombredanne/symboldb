@@ -26,8 +26,8 @@ namespace cxxll {
 // pointer on scope exit.
 template <class T>
 class malloc_handle {
-  malloc_handle(const malloc_handle &); // not implemented
-  malloc_handle &operator=(const malloc_handle &); // not implemented
+  malloc_handle(const malloc_handle &) = delete;
+  malloc_handle &operator=(const malloc_handle &) = delete;
   T *raw;
 public:
   malloc_handle()

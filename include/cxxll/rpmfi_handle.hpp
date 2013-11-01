@@ -25,8 +25,8 @@ namespace cxxll {
 // Minimal wrapper around rpmfi pointers.
 class rpmfi_handle {
   rpmfi raw_;
-  rpmfi_handle(const rpmfi_handle &); // not implemented
-  rpmfi_handle &operator=(const rpmfi_handle &); // not implemented
+  rpmfi_handle(const rpmfi_handle &) = delete;
+  rpmfi_handle &operator=(const rpmfi_handle &) = delete;
 public:
   // Throws rpm_parser_exception on failure.
   rpmfi_handle();

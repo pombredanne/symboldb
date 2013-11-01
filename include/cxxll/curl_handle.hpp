@@ -34,8 +34,8 @@ struct curl_handle {
   ~curl_handle();
 
 private:
-  curl_handle(const curl_handle&); // not implemented
-  curl_handle &operator=(const curl_handle&); // not implemented
+  curl_handle(const curl_handle&) = delete;
+  curl_handle &operator=(const curl_handle&) = delete;
 };
 
 } // namespace cxxll

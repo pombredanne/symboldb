@@ -26,8 +26,8 @@ class pgconn_handle;
 
 // Wrapper around a PostgreSQL result object (PGresult).
 class pgresult_handle {
-  pgresult_handle(const pgresult_handle &); // not implemented
-  pgresult_handle &operator=(const pgresult_handle &); // not implemented
+  pgresult_handle(const pgresult_handle &) = delete;
+  pgresult_handle &operator=(const pgresult_handle &) = delete;
   PGresult *raw;
 public:
 

@@ -25,8 +25,8 @@ namespace cxxll {
 // Wrapper around pthread_mutex_t.
 class mutex {
   pthread_mutex_t mutex_;
-  mutex(const mutex &); // not implemented
-  mutex &operator=(const mutex &); // not implemented
+  mutex(const mutex &) = delete;
+  mutex &operator=(const mutex &) = delete;
   static void throw_init_error(int errcode) __attribute__((noreturn));
   static void throw_lock_error(int errcode) __attribute__((noreturn));
 public:
@@ -44,8 +44,8 @@ public:
   // Helper class for RAII-style locking.
   class locker {
     mutex &mutex_;
-    locker(const locker &); // not implemented
-    locker &operator=(const locker &); // not implemented
+    locker(const locker &) = delete;
+    locker &operator=(const locker &) = delete;
   public:
     locker(mutex *);
     ~locker() throw();

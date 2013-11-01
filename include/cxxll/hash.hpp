@@ -33,8 +33,8 @@ class checksum;
 class hash_sink : public sink {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  hash_sink(const hash_sink &); // not implemented
-  void operator=(const hash_sink &); // not implemented
+  hash_sink(const hash_sink &) = delete;
+  void operator=(const hash_sink &) = delete;
 public:
   typedef enum {
     md5 = 1,

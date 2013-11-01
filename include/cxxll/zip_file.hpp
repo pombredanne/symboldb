@@ -28,8 +28,8 @@ namespace cxxll {
 class zip_file {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  zip_file(const zip_file &); // not implemented
-  zip_file &operator=(const zip_file &); // not implemented
+  zip_file(const zip_file &) = delete;
+  zip_file &operator=(const zip_file &) = delete;
 public:
   // Returns true if the vector starts with the PK\003\004 signature
   // (although this is optional).

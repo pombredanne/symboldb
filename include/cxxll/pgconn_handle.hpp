@@ -26,8 +26,8 @@ namespace cxxll {
 
 // Wrapper around a PostgreSQL connection object (PGconn).
 class pgconn_handle {
-  pgconn_handle(const pgconn_handle &); // not implemented
-  pgconn_handle &operator=(const pgconn_handle &); // not implemented
+  pgconn_handle(const pgconn_handle &) = delete;
+  pgconn_handle &operator=(const pgconn_handle &) = delete;
   PGconn *raw;
 public:
   // Initializes the raw pointer with NULL.

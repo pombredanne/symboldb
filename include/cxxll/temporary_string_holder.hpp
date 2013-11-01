@@ -32,8 +32,8 @@ class temporary_string_holder {
   mutable char *ptr_;
   temporary_string_holder();
   ~temporary_string_holder();
-  temporary_string_holder(const temporary_string_holder &); // not implemented
-  void operator=(const temporary_string_holder &); // not implemented
+  temporary_string_holder(const temporary_string_holder &) = delete;
+  void operator=(const temporary_string_holder &) = delete;
 };
 
 inline

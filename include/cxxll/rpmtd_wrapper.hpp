@@ -39,8 +39,8 @@ struct rpmtd_wrapper {
   void reset();
 
 private:
-  rpmtd_wrapper(const rpmtd_wrapper &); // not implemented
-  rpmtd_wrapper &operator=(const rpmtd_wrapper &); // not implemented
+  rpmtd_wrapper(const rpmtd_wrapper &) = delete;
+  rpmtd_wrapper &operator=(const rpmtd_wrapper &) = delete;
 };
 
 } // namespace cxxll

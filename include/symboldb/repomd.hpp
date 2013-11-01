@@ -63,8 +63,8 @@ struct repomd {
   class primary_xml : public cxxll::source {
     struct impl;
     std::tr1::shared_ptr<impl> impl_;
-    primary_xml(const primary_xml &); // not implemented
-    primary_xml &operator=(const primary_xml &); // not implemented
+    primary_xml(const primary_xml &) = delete;
+    primary_xml &operator=(const primary_xml &) = delete;
   public:
     // Download the primary.xml file from the repository.  You can use
     // download_options::always_cache because usually, the file name

@@ -25,8 +25,8 @@ namespace cxxll {
 // Wrapper around DIR pointers.
 class dir_handle {
   DIR *raw;
-  dir_handle(const dir_handle &); // not implemented
-  dir_handle &operator=(const dir_handle &); // not implemented
+  dir_handle(const dir_handle &) = delete;
+  dir_handle &operator=(const dir_handle &) = delete;
 public:
 
   // Initialises the raw pointer to NULL.

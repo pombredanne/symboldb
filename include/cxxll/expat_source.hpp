@@ -32,8 +32,8 @@ class source;
 class expat_source {
   struct impl;
   std::tr1::shared_ptr<impl> impl_;
-  expat_source(const expat_source &); // not implemented
-  expat_source &operator=(const expat_source &); // not implemented
+  expat_source(const expat_source &) = delete;
+  expat_source &operator=(const expat_source &) = delete;
 public:
   // Creates a new XML parsers which retrieves data from SOURCE.  Does
   // not take ownership of the pointer.

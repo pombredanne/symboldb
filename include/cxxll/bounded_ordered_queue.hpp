@@ -40,8 +40,8 @@ class bounded_ordered_queue {
   map map_;
   unsigned capacity_;
   unsigned producers_;
-  bounded_ordered_queue(const bounded_ordered_queue &); // not implemented
-  bounded_ordered_queue &operator=(const bounded_ordered_queue &); // same
+  bounded_ordered_queue(const bounded_ordered_queue &) = delete;
+  bounded_ordered_queue &operator=(const bounded_ordered_queue &) = delete;
   void check() const;
 public:
   // Creates a new queue with one producer.

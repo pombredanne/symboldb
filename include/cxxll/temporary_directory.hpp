@@ -24,8 +24,8 @@ namespace cxxll {
 
 class temporary_directory {
   std::string path_;
-  temporary_directory(const temporary_directory &); // not implemented
-  temporary_directory &operator=(const temporary_directory &); // not impl
+  temporary_directory(const temporary_directory &) = delete;
+  temporary_directory &operator=(const temporary_directory &) = delete;
 public:
   // Creates a new temporary directory in an existing temporary
   // directory.  May throw os_exception.

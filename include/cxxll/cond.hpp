@@ -27,8 +27,8 @@ namespace cxxll {
 // Wrapper around pthread_cond_t.
 class cond {
   pthread_cond_t cond_;
-  cond(const cond &); // not implemented
-  cond &operator=(const cond &); // not implemented
+  cond(const cond &) = delete;
+  cond &operator=(const cond &) = delete;
   static void throw_init_error(int errcode) __attribute__((noreturn));
   static void throw_wait_error(int errcode) __attribute__((noreturn));
   static void throw_signal_error(int errcode) __attribute__((noreturn));
