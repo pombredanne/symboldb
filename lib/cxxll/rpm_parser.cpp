@@ -38,7 +38,6 @@
 #include <rpm/rpmts.h>
 
 #include <map>
-#include <tr1/memory>
 #include <sstream>
 
 using namespace cxxll;
