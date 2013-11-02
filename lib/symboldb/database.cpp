@@ -46,7 +46,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include <tr1/tuple>
+#include <tuple>
 
 using namespace cxxll;
 
@@ -84,7 +84,7 @@ using namespace cxxll;
 struct database::impl {
   pgconn_handle conn;
 
-  typedef std::tr1::tuple<
+  typedef std::tuple<
     int, int, std::string, std::string, std::string, bool> attribute_row;
   typedef std::map<attribute_row, attribute_id> file_attribute_map;
   file_attribute_map file_attribute_cache;
@@ -358,7 +358,7 @@ database::intern_file_attribute(const rpm_file_info &info)
   intern_hash(info, row_hash);
 
   pgresult_handle r;
-  using namespace std::tr1;
+  using namespace std;
   pg_query_binary
     (impl_->conn, r,
      "SELECT symboldb.intern_file_attribute($1, $2, $3, $4, $5, $6, $7)",
