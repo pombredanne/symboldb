@@ -41,7 +41,7 @@ background_test() throw()
   int i = 0;
   for (int j = 0; j < 100; ++j) {
     int old = i;
-    task t(std::tr1::bind(&callback, &i));
+    task t(std::bind(&callback, &i));
     t.wait();
     if (i != old + 1) {
       mutex::locker ml(&lock);

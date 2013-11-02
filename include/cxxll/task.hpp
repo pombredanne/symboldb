@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <tr1/functional>
+#include <functional>
 #include <memory>
 
 namespace cxxll {
@@ -31,7 +31,7 @@ class task {
   task &operator=(const task &) = delete;
 public:
   // Runs the function in a separate thread.  Can throw os_exception.
-  task(std::tr1::function<void() throw()>);
+  task(std::function<void() throw()>);
 
   // Detaches from the thread if it is still running.
   ~task();

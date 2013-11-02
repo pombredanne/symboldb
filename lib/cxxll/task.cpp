@@ -24,11 +24,11 @@
 using namespace cxxll;
 
 struct task::impl {
-  std::tr1::function<void () throw()> runner;
+  std::function<void () throw()> runner;
   pthread_t thread;
   bool terminated;
 
-  impl(std::tr1::function<void () throw()> f)
+  impl(std::function<void () throw()> f)
     : runner(f), terminated(true)
   {
     int ret = pthread_create(&thread, nullptr, &callback, this);
@@ -53,7 +53,7 @@ struct task::impl {
   }
 };
 
-task::task(std::tr1::function<void() throw()> f)
+task::task(std::function<void() throw()> f)
   : impl_(new impl(f))
 {
 }
