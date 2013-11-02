@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <tr1/memory>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -30,7 +30,7 @@ namespace cxxll {
 // errors.
 class python_analyzer {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   python_analyzer(const python_analyzer &) = delete;
   python_analyzer &operator=(const python_analyzer &) = delete;
 public:

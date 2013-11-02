@@ -21,7 +21,7 @@
 #include "sink.hpp"
 
 #include <string>
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 namespace cxxll {
@@ -35,7 +35,7 @@ class checksum;
 // tell them apart.
 class file_cache {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 public:
   file_cache(const char *path);
   ~file_cache();
@@ -61,7 +61,7 @@ public:
   // FIXME: Does not use locking yet.
   class add_sink : public sink {
     struct add_impl;
-    std::tr1::shared_ptr<add_impl> impl_;
+    std::shared_ptr<add_impl> impl_;
   public:
     add_sink(file_cache &, const checksum &);
     ~add_sink();

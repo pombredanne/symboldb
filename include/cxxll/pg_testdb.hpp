@@ -21,7 +21,7 @@
 #include <libpq-fe.h>
 
 #include <string>
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 namespace cxxll {
@@ -31,7 +31,7 @@ namespace cxxll {
 // destroyed).
 class pg_testdb {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 public:
   pg_testdb();
   ~pg_testdb();

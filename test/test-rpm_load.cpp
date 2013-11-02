@@ -425,7 +425,7 @@ test()
 	csum.type = hash_sink::sha256;
 	// Copy the RPM file into the RPM cache.
 	{
-	  std::tr1::shared_ptr<file_cache> fcache(opt.rpm_cache());
+	  std::shared_ptr<file_cache> fcache(opt.rpm_cache());
 	  file_cache::add_sink sink(*fcache, csum);
 	  fd_handle fd;
 	  fd.open_read_only(rpmpath.c_str());

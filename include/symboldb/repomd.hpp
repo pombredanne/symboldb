@@ -23,7 +23,7 @@
 #include <cxxll/source.hpp>
 
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 class database;
 class download_options;
@@ -62,7 +62,7 @@ struct repomd {
   // repository.
   class primary_xml : public cxxll::source {
     struct impl;
-    std::tr1::shared_ptr<impl> impl_;
+    std::shared_ptr<impl> impl_;
     primary_xml(const primary_xml &) = delete;
     primary_xml &operator=(const primary_xml &) = delete;
   public:
@@ -83,7 +83,7 @@ struct repomd {
   // false, and examine the accessors after each call.
   class primary {
     struct impl;
-    std::tr1::shared_ptr<impl> impl_;
+    std::shared_ptr<impl> impl_;
   public:
     // SOURCE is the byte stream with the (uncompressed) XML.
     // BASE_URL is the URL relative to which non-absolute URLs are

@@ -103,7 +103,7 @@ file_cache::enable_fsync(bool on)
 }
 
 struct file_cache::add_sink::add_impl {
-  std::tr1::shared_ptr<file_cache::impl> cache;
+  std::shared_ptr<file_cache::impl> cache;
   checksum csum;
   std::string hex;		// part of the file name
   std::string temp_file;
@@ -113,7 +113,7 @@ struct file_cache::add_sink::add_impl {
   tee_sink tee;
   unsigned long long length{};
 
-  add_impl(const std::tr1::shared_ptr<file_cache::impl> &c,
+  add_impl(const std::shared_ptr<file_cache::impl> &c,
 	   hash_sink::type hash_type)
     : cache(c), hash(hash_type), tee(&sink, &hash)
   {

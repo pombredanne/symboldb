@@ -56,7 +56,7 @@ expire(const symboldb_options &opt, database &db)
   }
   {
     typedef std::vector<std::vector<unsigned char> > digvec;
-    std::tr1::shared_ptr<file_cache> fcache(opt.rpm_cache());
+    std::shared_ptr<file_cache> fcache(opt.rpm_cache());
     digvec fcdigests;
     fcache->digests(fcdigests);
     std::sort(fcdigests.begin(), fcdigests.end());

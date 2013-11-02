@@ -33,12 +33,12 @@ using namespace cxxll;
 
 struct repomd::primary_xml::impl {
   std::string url_;
-  std::tr1::shared_ptr<const std::vector<unsigned char> > compressed_;
+  std::shared_ptr<const std::vector<unsigned char> > compressed_;
   memory_range_source mrsource_;
   gunzip_source gzsource_;
 
   impl(const std::string &url,
-       std::tr1::shared_ptr<const std::vector<unsigned char> > compressed)
+       std::shared_ptr<const std::vector<unsigned char> > compressed)
     : url_(url), compressed_(compressed),
       mrsource_(compressed_->data(), compressed_->size()),
       gzsource_(&mrsource_)
@@ -64,7 +64,7 @@ repomd::primary_xml::primary_xml(const repomd &rp,
 	}
       }
       std::string entry_url(url_combine_yum(rp.base_url.c_str(), p->href.c_str()));
-      std::tr1::shared_ptr<std::vector<unsigned char> > compressed
+      std::shared_ptr<std::vector<unsigned char> > compressed
 	(new std::vector<unsigned char>());
       download(dopt, db, entry_url.c_str(), *compressed);
       std::vector<unsigned char> digest

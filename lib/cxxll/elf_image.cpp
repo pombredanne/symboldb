@@ -280,16 +280,16 @@ elf_image::build_id() const
 // elf_image::program_header_range
 
 struct elf_image::program_header_range::state {
-  std::tr1::shared_ptr<elf_image::impl> impl_;
+  std::shared_ptr<elf_image::impl> impl_;
   size_t cnt{};
   GElf_Phdr mem;
 
-  state(std::tr1::shared_ptr<elf_image::impl>);
+  state(std::shared_ptr<elf_image::impl>);
   bool next();
 };
 
 inline
-elf_image::program_header_range::state::state(std::tr1::shared_ptr<elf_image::impl> i)
+elf_image::program_header_range::state::state(std::shared_ptr<elf_image::impl> i)
 {
   std::swap(impl_, i);
   memset(&mem, 0, sizeof(mem));
@@ -406,8 +406,8 @@ struct elf_image::symbol_range::state {
 
   // These are updated by next().
   unsigned cnt{};
-  std::tr1::shared_ptr<elf_symbol_definition> def;
-  std::tr1::shared_ptr<elf_symbol_reference> ref;
+  std::shared_ptr<elf_symbol_definition> def;
+  std::shared_ptr<elf_symbol_reference> ref;
 
   bool next(impl *parent);
   bool next_section(impl *parent);
@@ -684,13 +684,13 @@ elf_image::symbol_range::next()
   return state_->next(impl_.get());
 }
 
-std::tr1::shared_ptr<elf_symbol_definition>
+std::shared_ptr<elf_symbol_definition>
 elf_image::symbol_range::definition() const
 {
   return state_->def;
 }
 
-std::tr1::shared_ptr<elf_symbol_reference>
+std::shared_ptr<elf_symbol_reference>
 elf_image::symbol_range::reference() const
 {
   return state_->ref;
@@ -700,7 +700,7 @@ elf_image::symbol_range::reference() const
 // elf_image::dynamic_section_range
 
 struct elf_image::dynamic_section_range::state {
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   GElf_Shdr *shdr;
   Elf_Data *data;
   size_t cnt;

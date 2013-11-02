@@ -19,7 +19,7 @@
 #pragma once
 
 #include <string>
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 namespace cxxll {
@@ -27,7 +27,7 @@ namespace cxxll {
 // Parses a blob into a ZIP file.
 class zip_file {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   zip_file(const zip_file &) = delete;
   zip_file &operator=(const zip_file &) = delete;
 public:

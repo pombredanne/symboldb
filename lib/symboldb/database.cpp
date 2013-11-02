@@ -159,7 +159,7 @@ database::advisory_lock_guard::~advisory_lock_guard()
 }
 
 struct database::advisory_lock_impl : database::advisory_lock_guard {
-  std::tr1::shared_ptr<database::impl> impl_;
+  std::shared_ptr<database::impl> impl_;
   int a;
   int b;
   virtual ~advisory_lock_impl();
@@ -187,7 +187,7 @@ database::lock(int a, int b)
   } else {
     // Allocate beforehand to avoid exceptions after acquiring the
     // lock.
-    std::tr1::shared_ptr<advisory_lock_impl> lock(new advisory_lock_impl);
+    std::shared_ptr<advisory_lock_impl> lock(new advisory_lock_impl);
     pg_query(impl_->conn, res,  "SELECT pg_advisory_lock($1, $2)", a, b);
     lock->impl_ = impl_;
     lock->a = a;
@@ -1232,7 +1232,7 @@ database::create_schema(bool base, bool index)
 // database::file_with_digest
 
 struct database::files_with_digest::impl {
-  std::tr1::shared_ptr<database::impl> impl_;
+  std::shared_ptr<database::impl> impl_;
   std::vector<unsigned char> rpm_digest_;
   std::string file_name_;
   pgresult_handle res_;

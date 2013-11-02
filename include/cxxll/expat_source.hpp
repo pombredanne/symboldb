@@ -21,7 +21,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 namespace cxxll {
 
@@ -31,7 +31,7 @@ class source;
 // Pull-based XML parser.
 class expat_source {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   expat_source(const expat_source &) = delete;
   expat_source &operator=(const expat_source &) = delete;
 public:

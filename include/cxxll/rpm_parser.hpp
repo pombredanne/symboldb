@@ -20,7 +20,7 @@
 
 #include "rpm_dependency.hpp"
 
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 namespace cxxll {
@@ -39,7 +39,7 @@ void rpm_parser_deinit();
 
 class rpm_parser {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 public:
   // Opens the RPM file at PATH.
   explicit rpm_parser(const char *path);

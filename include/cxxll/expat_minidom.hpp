@@ -21,7 +21,7 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 namespace cxxll {
 
@@ -41,7 +41,7 @@ namespace expat_minidom {
   struct element : node {
     std::string name;
     std::map<std::string, std::string> attributes;
-    std::vector<std::tr1::shared_ptr<node> > children;
+    std::vector<std::shared_ptr<node> > children;
 
     element();
     ~element();
@@ -56,7 +56,7 @@ namespace expat_minidom {
 
   // Loads the element at the current position of EXPAT_SOURCE.
   // EXPAT_SOURCE must be in state INIT or START.
-  std::tr1::shared_ptr<element> parse(expat_source &);
+  std::shared_ptr<element> parse(expat_source &);
 
 } // namespace cxxll::expat_minidom
 } // namespace cxxll

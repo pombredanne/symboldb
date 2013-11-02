@@ -32,7 +32,7 @@ expat_minidom::element::~element() = default;
 expat_minidom::element *
 expat_minidom::element::first_child(const char *name)
 {
-  for(std::vector<std::tr1::shared_ptr<expat_minidom::node> >::iterator
+  for(std::vector<std::shared_ptr<expat_minidom::node> >::iterator
 	p = children.begin(), end = children.end(); p != end; ++p) {
     element *e = dynamic_cast<element *>(p->get());
     if (e && e->name == name) {
@@ -46,7 +46,7 @@ std::string
 expat_minidom::element::text() const
 {
   std::string r;
-  for(std::vector<std::tr1::shared_ptr<expat_minidom::node> >::const_iterator
+  for(std::vector<std::shared_ptr<expat_minidom::node> >::const_iterator
 	p = children.begin(), end = children.end(); p != end; ++p) {
     expat_minidom::text *t = dynamic_cast<expat_minidom::text *>(p->get());
     if (t) {
@@ -56,7 +56,7 @@ expat_minidom::element::text() const
   return r;
 }
 
-std::tr1::shared_ptr<expat_minidom::element>
+std::shared_ptr<expat_minidom::element>
 expat_minidom::parse(expat_source &source)
 {
   if (source.state() == expat_source::INIT) {
@@ -64,10 +64,10 @@ expat_minidom::parse(expat_source &source)
   }
   source.name(); // ensure that we are in state START
 
-  std::vector<std::tr1::shared_ptr<element> > stack;
+  std::vector<std::shared_ptr<element> > stack;
   while (true) {
     if (source.state() == expat_source::START) {
-      std::tr1::shared_ptr<element> n(new element);
+      std::shared_ptr<element> n(new element);
       n->name = source.name_ptr();
       source.attributes(n->attributes);
       if (!stack.empty()) {
@@ -83,7 +83,7 @@ expat_minidom::parse(expat_source &source)
 	stack.pop_back();
       }
     } else {
-      std::tr1::shared_ptr<text> n(new text);
+      std::shared_ptr<text> n(new text);
       stack.back()->children.push_back(n);
       while (source.state() == expat_source::TEXT) {
 	n->data += source.text_ptr();

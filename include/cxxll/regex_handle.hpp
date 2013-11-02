@@ -20,14 +20,14 @@
 
 #include <stdexcept>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 namespace cxxll {
 
 // POSIX extended regular expression.
 class regex_handle {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 public:
   explicit regex_handle(const char *);
   ~regex_handle();

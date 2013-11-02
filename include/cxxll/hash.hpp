@@ -22,7 +22,7 @@
 
 #include <vector>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 
 namespace cxxll {
 
@@ -32,7 +32,7 @@ class checksum;
 // On NSS errors, an exception is thrown.
 class hash_sink : public sink {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   hash_sink(const hash_sink &) = delete;
   void operator=(const hash_sink &) = delete;
 public:

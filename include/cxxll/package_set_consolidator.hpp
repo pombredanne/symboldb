@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 #include <map>
 

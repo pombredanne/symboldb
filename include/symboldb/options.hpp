@@ -24,7 +24,7 @@
 
 #include <stdexcept>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 class symboldb_options {
@@ -68,7 +68,7 @@ public:
   // cache_only or always_cache, depending on no_net.
   download_options download_always_cache() const;
 
-  std::tr1::shared_ptr<cxxll::file_cache> rpm_cache() const;
+  std::shared_ptr<cxxll::file_cache> rpm_cache() const;
 
   std::string rpm_cache_path() const;
 

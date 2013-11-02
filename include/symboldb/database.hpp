@@ -22,7 +22,7 @@
 
 #include <stdexcept>
 #include <string>
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 namespace cxxll {
@@ -42,7 +42,7 @@ namespace cxxll {
 // Members of this class throw pg_exception on error.
 class database {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   struct advisory_lock_impl;
 
 public:
@@ -68,7 +68,7 @@ public:
   struct advisory_lock_guard {
     virtual ~advisory_lock_guard();
   };
-  typedef std::tr1::shared_ptr<advisory_lock_guard> advisory_lock;
+  typedef std::shared_ptr<advisory_lock_guard> advisory_lock;
 
   // Creates an advisory lock on this pair of integers.  The lock is a
   // transaction-scope lock if in a transaction.  Otherwise, it is a
@@ -256,7 +256,7 @@ public:
   // the location of individual files.
   class files_with_digest {
     struct impl;
-    std::tr1::shared_ptr<impl> impl_;
+    std::shared_ptr<impl> impl_;
     files_with_digest(const files_with_digest &) = delete;
     files_with_digest &operator=(const files_with_digest &) = delete;
   public:

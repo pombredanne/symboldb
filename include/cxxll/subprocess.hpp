@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include <tr1/memory>
+#include <memory>
 
 namespace cxxll {
 
 class subprocess {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 public:
   subprocess();
   ~subprocess();

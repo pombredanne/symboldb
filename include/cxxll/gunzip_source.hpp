@@ -20,7 +20,7 @@
 
 #include "source.hpp"
 
-#include <tr1/memory>
+#include <memory>
 
 namespace cxxll {
 
@@ -28,7 +28,7 @@ namespace cxxll {
 // ownership of the pointer.
 class gunzip_source : public source {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 public:
   gunzip_source(source *);
   ~gunzip_source();

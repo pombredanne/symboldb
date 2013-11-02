@@ -170,11 +170,11 @@ namespace {
 
     // Retry three times or until we downloaded all URLs.
     for (int round = 0; round < 3; ++ round) {
-      std::vector<std::tr1::shared_ptr<task> > tasks;
+      std::vector<std::shared_ptr<task> > tasks;
       for (unsigned tid = 0; tid < opt_.download_threads; ++tid) {
 	queue_.add_producer();
-	std::tr1::shared_ptr<task> dtask
-	  (new task(std::tr1::bind(&downloader::download_helper_task, this)));
+	std::shared_ptr<task> dtask
+	  (new task(std::bind(&downloader::download_helper_task, this)));
 	tasks.push_back(dtask);
       }
       std::string name;
@@ -221,7 +221,7 @@ namespace {
   {
     // Per-task database and cache objects.
     database db;
-    std::tr1::shared_ptr<file_cache> fcache(opt_.rpm_cache());
+    std::shared_ptr<file_cache> fcache(opt_.rpm_cache());
 
     while (true) {
       rpm_url url;

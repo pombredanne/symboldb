@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <tr1/memory>
+#include <memory>
 #include <vector>
 
 namespace cxxll {
@@ -28,7 +28,7 @@ class elf_symbol_reference;
 
 class elf_image {
   struct impl;
-  std::tr1::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
   struct symbol_range_impl;
 public:
   // Opens an in-memory elf image.
@@ -53,7 +53,7 @@ public:
   // Iterates over the program header.
   class program_header_range {
     struct state;
-    std::tr1::shared_ptr<state> state_;
+    std::shared_ptr<state> state_;
   public:
     explicit program_header_range(const elf_image &);
     ~program_header_range();
@@ -74,9 +74,9 @@ public:
   };
 
   class symbol_range {
-    std::tr1::shared_ptr<impl> impl_;
+    std::shared_ptr<impl> impl_;
     struct state;
-    std::tr1::shared_ptr<state> state_;
+    std::shared_ptr<state> state_;
   public:
     symbol_range(const elf_image &);
     ~symbol_range();
@@ -86,14 +86,14 @@ public:
 
     // These return a null pointer if the iterator is not position at
     // information of this kind.
-    std::tr1::shared_ptr<elf_symbol_definition> definition() const;
-    std::tr1::shared_ptr<elf_symbol_reference> reference() const;
+    std::shared_ptr<elf_symbol_definition> definition() const;
+    std::shared_ptr<elf_symbol_reference> reference() const;
   };
 
   // Iterates over strings in the dynamic section.
   class dynamic_section_range {
     struct state;
-    std::tr1::shared_ptr<state> state_;
+    std::shared_ptr<state> state_;
   public:
     dynamic_section_range(const elf_image &);
     ~dynamic_section_range();

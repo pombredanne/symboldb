@@ -53,7 +53,7 @@ repomd::parse(const unsigned char *buffer, size_t length,
   memory_range_source mrsource(buffer, length);
   expat_source esource(&mrsource);
   using namespace expat_minidom;
-  std::tr1::shared_ptr<element> root(expat_minidom::parse(esource));
+  std::shared_ptr<element> root(expat_minidom::parse(esource));
   if (!root) {
     return false;
   }
@@ -69,7 +69,7 @@ repomd::parse(const unsigned char *buffer, size_t length,
     revision.clear();
   }
   entries.clear();
-  for(std::vector<std::tr1::shared_ptr<expat_minidom::node> >::iterator
+  for(std::vector<std::shared_ptr<expat_minidom::node> >::iterator
 	p = root->children.begin(), end = root->children.end(); p != end; ++p) {
     element *e = dynamic_cast<element *>(p->get());
     if (e && e->name == "data") {

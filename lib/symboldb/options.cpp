@@ -111,14 +111,14 @@ symboldb_options::rpm_cache_path() const
   return path;
 }
 
-std::tr1::shared_ptr<file_cache>
+std::shared_ptr<file_cache>
 symboldb_options::rpm_cache() const
 {
   std::string fcache_path(rpm_cache_path());
   if (!make_directory_hierarchy(fcache_path.c_str(), 0700)) {
     throw usage_error("could not create cache directory: " + rpm_cache_path());
   }
-  std::tr1::shared_ptr<file_cache> ptr(new file_cache(fcache_path.c_str()));
+  std::shared_ptr<file_cache> ptr(new file_cache(fcache_path.c_str()));
   ptr->enable_fsync(!transient_rpms);
   return ptr;
 }
