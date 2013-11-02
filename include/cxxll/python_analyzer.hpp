@@ -30,9 +30,7 @@ namespace cxxll {
 // errors.
 class python_analyzer {
   struct impl;
-  std::shared_ptr<impl> impl_;
-  python_analyzer(const python_analyzer &) = delete;
-  python_analyzer &operator=(const python_analyzer &) = delete;
+  std::unique_ptr<impl> impl_;
 public:
   // Throws os_exception if no Python interpreter can be found.
   python_analyzer();

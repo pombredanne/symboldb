@@ -31,9 +31,7 @@ class source;
 // Pull-based XML parser.
 class expat_source {
   struct impl;
-  std::shared_ptr<impl> impl_;
-  expat_source(const expat_source &) = delete;
-  expat_source &operator=(const expat_source &) = delete;
+  std::unique_ptr<impl> impl_;
 public:
   // Creates a new XML parsers which retrieves data from SOURCE.  Does
   // not take ownership of the pointer.

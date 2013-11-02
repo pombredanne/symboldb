@@ -120,9 +120,9 @@ test()
   }
 
   bounded_ordered_queue<int, int> boq(max_id, max_id);
-  std::vector<std::shared_ptr<task> > tasks;
+  std::vector<std::unique_ptr<task> > tasks;
   for (int k = 0; k < max_id; ++k) {
-    tasks.push_back(std::shared_ptr<task>(new task(background(boq, k))));
+    tasks.push_back(std::unique_ptr<task>(new task(background(boq, k))));
   }
   std::set<int> results;
   {

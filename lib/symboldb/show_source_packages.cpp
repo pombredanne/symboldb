@@ -87,9 +87,9 @@ symboldb_show_source_packages(const symboldb_options &opt, char **argv)
   }
 
   {
-    std::vector<std::shared_ptr<task> > tasks;
+    std::vector<std::unique_ptr<task> > tasks;
     for (size_t i = 0; i < entries.size(); ++i) {
-      tasks.push_back(std::shared_ptr<task>
+      tasks.push_back(std::unique_ptr<task>
 		      (new task(std::bind(&entry::callback, &opt,
 					       &entries.at(i)))));
     }

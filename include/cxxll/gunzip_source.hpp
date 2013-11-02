@@ -28,7 +28,7 @@ namespace cxxll {
 // ownership of the pointer.
 class gunzip_source : public source {
   struct impl;
-  std::shared_ptr<impl> impl_;
+  std::unique_ptr<impl> impl_;
 public:
   gunzip_source(source *);
   ~gunzip_source();

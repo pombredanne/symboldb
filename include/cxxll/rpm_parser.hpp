@@ -39,7 +39,7 @@ void rpm_parser_deinit();
 
 class rpm_parser {
   struct impl;
-  std::shared_ptr<impl> impl_;
+  std::unique_ptr<impl> impl_;
 public:
   // Opens the RPM file at PATH.
   explicit rpm_parser(const char *path);

@@ -154,12 +154,12 @@ namespace {
 }
 
 struct python_analyzer::impl {
-  std::shared_ptr<interpreter> python2_;
-  std::shared_ptr<interpreter> python3_;
+  std::unique_ptr<interpreter> python2_;
+  std::unique_ptr<interpreter> python3_;
   const interpreter *active_;
 
   impl();
-  void maybe_start(std::shared_ptr<interpreter> &,
+  void maybe_start(std::unique_ptr<interpreter> &,
 		   const char *path, unsigned version);
   bool bad_string(const std::vector<unsigned char> &);
 };
@@ -170,7 +170,7 @@ python_analyzer::impl::impl()
 }
 
 void
-python_analyzer::impl::maybe_start(std::shared_ptr<interpreter> &interp,
+python_analyzer::impl::maybe_start(std::unique_ptr<interpreter> &interp,
 				  const char *path, unsigned version)
 {
   if (!(interp && interp->process_.running())) {

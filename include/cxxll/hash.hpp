@@ -32,9 +32,7 @@ class checksum;
 // On NSS errors, an exception is thrown.
 class hash_sink : public sink {
   struct impl;
-  std::shared_ptr<impl> impl_;
-  hash_sink(const hash_sink &) = delete;
-  void operator=(const hash_sink &) = delete;
+  std::unique_ptr<impl> impl_;
 public:
   typedef enum {
     md5 = 1,

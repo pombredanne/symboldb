@@ -26,9 +26,7 @@ namespace cxxll {
 // Wrapper around a pthread.
 class task {
   struct impl;
-  std::shared_ptr<impl> impl_;
-  task(const task &) = delete;
-  task &operator=(const task &) = delete;
+  std::unique_ptr<impl> impl_;
 public:
   // Runs the function in a separate thread.  Can throw os_exception.
   task(std::function<void() throw()>);

@@ -62,9 +62,7 @@ struct repomd {
   // repository.
   class primary_xml : public cxxll::source {
     struct impl;
-    std::shared_ptr<impl> impl_;
-    primary_xml(const primary_xml &) = delete;
-    primary_xml &operator=(const primary_xml &) = delete;
+    std::unique_ptr<impl> impl_;
   public:
     // Download the primary.xml file from the repository.  You can use
     // download_options::always_cache because usually, the file name
@@ -83,7 +81,7 @@ struct repomd {
   // false, and examine the accessors after each call.
   class primary {
     struct impl;
-    std::shared_ptr<impl> impl_;
+    std::unique_ptr<impl> impl_;
   public:
     // SOURCE is the byte stream with the (uncompressed) XML.
     // BASE_URL is the URL relative to which non-absolute URLs are

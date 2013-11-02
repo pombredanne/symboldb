@@ -31,7 +31,7 @@ namespace cxxll {
 // destroyed).
 class pg_testdb {
   struct impl;
-  std::shared_ptr<impl> impl_;
+  std::unique_ptr<impl> impl_;
 public:
   pg_testdb();
   ~pg_testdb();

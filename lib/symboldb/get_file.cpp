@@ -31,7 +31,7 @@ bool get_file(const symboldb_options &opt, database &db,
 	      const std::vector<unsigned char> &digest, sink &target)
 {
   database::files_with_digest fwd(db, digest);
-  std::shared_ptr<file_cache> fcache(opt.rpm_cache());
+  std::unique_ptr<file_cache> fcache(opt.rpm_cache());
   checksum csum;
   csum.length = checksum::no_length;
   std::string rpm_path;

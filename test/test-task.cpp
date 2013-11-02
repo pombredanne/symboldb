@@ -53,9 +53,9 @@ background_test() throw()
 static void
 test()
 {
-  std::vector<std::shared_ptr<task> > tasks;
+  std::vector<std::unique_ptr<task> > tasks;
   for (int k = 0; k < 5; ++k) {
-    tasks.push_back(std::shared_ptr<task>(new task(background_test)));
+    tasks.push_back(std::unique_ptr<task>(new task(background_test)));
   }
   for (int k = 0; k < 5; ++k) {
     tasks.at(k)->wait();
