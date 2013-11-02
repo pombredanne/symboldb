@@ -20,6 +20,4 @@
 
 using namespace cxxll;
 
-sink::~sink()
-{
-}
+sink::~sink() = default;

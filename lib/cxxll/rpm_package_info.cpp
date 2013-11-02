@@ -21,14 +21,8 @@
 
 using namespace cxxll;
 
-rpm_package_info::rpm_package_info()
-  : build_time(0), epoch(-1), kind(binary), normalized(false)
-{
-}
-
-rpm_package_info::~rpm_package_info()
-{
-}
+rpm_package_info::rpm_package_info() = default;
+rpm_package_info::~rpm_package_info() = default;
 
 void
 rpm_package_info::normalize()

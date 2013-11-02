@@ -20,10 +20,5 @@
 
 using namespace cxxll;
 
-rpm_file_entry::rpm_file_entry()
-{
-}
-
-rpm_file_entry::~rpm_file_entry()
-{
-}
+rpm_file_entry::rpm_file_entry() = default;
+rpm_file_entry::~rpm_file_entry() = default;

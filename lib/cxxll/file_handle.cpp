@@ -97,14 +97,8 @@ file_handle::getline(line &l)
 //////////////////////////////////////////////////////////////////////
 // cxxll::file_hande::line
 
-cxxll::file_handle::line::line()
-  : length(0), allocated(0)
-{
-}
-
-cxxll::file_handle::line::~line()
-{
-}
+cxxll::file_handle::line::line() = default;
+cxxll::file_handle::line::~line() = default;
 
 bool
 cxxll::file_handle::line::strip_nl()

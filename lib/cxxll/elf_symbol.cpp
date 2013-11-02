@@ -26,14 +26,8 @@
 
 using namespace cxxll;
 
-elf_symbol::elf_symbol()
-  : type(0), binding(0), other(0)
-{
-}
-
-elf_symbol::~elf_symbol()
-{
-}
+elf_symbol::elf_symbol() = default;
+elf_symbol::~elf_symbol() = default;
 
 const char *
 elf_symbol::visibility() const

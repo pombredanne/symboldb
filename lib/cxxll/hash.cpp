@@ -36,10 +36,9 @@ using namespace cxxll;
 struct hash_sink::impl {
   PK11Context *raw;
   size_t digest_length;
-  unsigned long long octets;
+  unsigned long long octets{};
 
   impl(type t)
-    : octets(0)
   {
     SECOidTag oid;
     switch (t) {

@@ -20,11 +20,5 @@
 
 using namespace cxxll;
 
-elf_symbol_reference::elf_symbol_reference()
-  : vna_other(0U)
-{
-}
-
-elf_symbol_reference::~elf_symbol_reference()
-{
-}
+elf_symbol_reference::elf_symbol_reference() = default;
+elf_symbol_reference::~elf_symbol_reference() = default;

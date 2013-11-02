@@ -25,14 +25,8 @@
 
 using namespace cxxll;
 
-rpm_file_info::rpm_file_info()
-  : mode(0), mtime(0), ino(0), flags(0), normalized(false)
-{
-}
-
-rpm_file_info::~rpm_file_info()
-{
-}
+rpm_file_info::rpm_file_info() = default;
+rpm_file_info::~rpm_file_info() = default;
 
 bool
 rpm_file_info::is_directory() const

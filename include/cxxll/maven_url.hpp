@@ -38,7 +38,7 @@ namespace cxxll {
       scm,
       connection, // inside scm
       developerConnection, // inside scm
-    } type;
+    } type{other};
 
     maven_url();
     maven_url(const char *, kind);

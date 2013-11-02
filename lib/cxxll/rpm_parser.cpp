@@ -81,16 +81,15 @@ cxxll::rpm_parser_deinit()
 }
 
 struct rpm_parser::impl {
-  FD_t fd;
-  Header header;
+  FD_t fd{};
+  Header header{};
   std::vector<rpm_dependency> dependencies;
 
-  bool payload_is_open;
-  bool reached_ghosts;
+  bool payload_is_open{};
+  bool reached_ghosts{};
 
   impl()
-    : fd(0), header(0), payload_is_open(false),
-      reached_ghosts(false), ghost_files(files.end())
+    : ghost_files(files.end())
   {
   }
 

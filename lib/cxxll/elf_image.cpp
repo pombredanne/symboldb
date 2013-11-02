@@ -281,7 +281,7 @@ elf_image::build_id() const
 
 struct elf_image::program_header_range::state {
   std::tr1::shared_ptr<elf_image::impl> impl_;
-  size_t cnt;
+  size_t cnt{};
   GElf_Phdr mem;
 
   state(std::tr1::shared_ptr<elf_image::impl>);
@@ -293,7 +293,6 @@ elf_image::program_header_range::state::state(std::tr1::shared_ptr<elf_image::im
 {
   std::swap(impl_, i);
   memset(&mem, 0, sizeof(mem));
-  cnt = 0;
 }
 
 inline bool
@@ -390,13 +389,13 @@ elf_image::program_header_range::executable() const
 
 struct elf_image::symbol_range::state {
   // The following are set up by next_section().
-  bool eof;
-  Elf_Scn *scn;
-  GElf_Shdr *shdr;
+  Elf_Scn *scn{};
+  GElf_Shdr *shdr{};
   GElf_Shdr shdr_mem;
+  unsigned nsyms{};
+  bool eof{};
   
   // The following are set up by init_section().
-  unsigned nsyms;
   Elf_Data *data;
   Elf_Data *xndx_data;
   Elf_Data *versym_data;
@@ -406,14 +405,9 @@ struct elf_image::symbol_range::state {
   Elf32_Word verdef_stridx;
 
   // These are updated by next().
-  unsigned cnt;
+  unsigned cnt{};
   std::tr1::shared_ptr<elf_symbol_definition> def;
   std::tr1::shared_ptr<elf_symbol_reference> ref;
-
-  state()
-    : eof(false), scn(nullptr), nsyms(0), cnt(0)
-  {
-  }
 
   bool next(impl *parent);
   bool next_section(impl *parent);
@@ -504,7 +498,6 @@ elf_image::symbol_range::state::init_section(impl *parent)
   nsyms = data->d_size / (class_ == ELFCLASS32
 			  ? sizeof (Elf32_Sym)
 			  : sizeof (Elf64_Sym));
-  cnt = 0;
   return true;
 }
 

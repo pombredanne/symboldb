@@ -55,9 +55,9 @@ public:
   std::string context_; // PG_DIAG_SOURCE_FILE
   std::string source_file_; // PG_DIAG_SOURCE_FILE
   std::string source_function_; // PG_DIAG_SOURCE_FUNCTION
-  int statement_position_; // PG_DIAG_STATEMENT_POSITION
-  int internal_position_; // PG_DIAG_INTERNAL_POSITION
-  int source_line_; // PG_DIAG_SOURCE_LINE
+  int statement_position_{-1}; // PG_DIAG_STATEMENT_POSITION
+  int internal_position_{-1}; // PG_DIAG_INTERNAL_POSITION
+  int source_line_{-1}; // PG_DIAG_SOURCE_LINE
 
   // Returns the message from PQresultErrorMessage().
   const char *what() const throw();

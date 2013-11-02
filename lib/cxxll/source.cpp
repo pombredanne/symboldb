@@ -21,9 +21,7 @@
 
 using namespace cxxll;
 
-source::~source()
-{
-}
+source::~source() = default;
 
 void
 cxxll::read_exactly(source &src, unsigned char *p, size_t count)

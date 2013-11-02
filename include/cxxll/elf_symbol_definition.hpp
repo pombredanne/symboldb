@@ -24,10 +24,10 @@ namespace cxxll {
 
 struct elf_symbol_definition : elf_symbol {
   std::string vda_name;
-  unsigned long long value;
-  unsigned short section;
-  unsigned xsection;
-  bool default_version;
+  unsigned long long value{};
+  unsigned short section{};
+  unsigned xsection{};
+  bool default_version{};
 
   // Returns true if xsection is actually present.
   bool has_xsection() const;

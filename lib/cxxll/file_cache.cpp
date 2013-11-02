@@ -111,11 +111,11 @@ struct file_cache::add_sink::add_impl {
   fd_sink sink;
   hash_sink hash;
   tee_sink tee;
-  unsigned long long length;
+  unsigned long long length{};
 
   add_impl(const std::tr1::shared_ptr<file_cache::impl> &c,
 	   hash_sink::type hash_type)
-    : cache(c), handle(), sink(), hash(hash_type), tee(&sink, &hash), length(0)
+    : cache(c), hash(hash_type), tee(&sink, &hash)
   {
   }
 

@@ -44,7 +44,6 @@ namespace {
 }
 
 pg_exception::pg_exception(const char *message)
-  : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
   status_ = PGRES_FATAL_ERROR;
   message_ = message;
@@ -53,7 +52,6 @@ pg_exception::pg_exception(const char *message)
 }
 
 pg_exception::pg_exception(const std::string &message)
-  : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
   status_ = PGRES_FATAL_ERROR;
   message_ = message;
@@ -62,7 +60,6 @@ pg_exception::pg_exception(const std::string &message)
 }
 
 pg_exception::pg_exception(PGconn *conn)
-  : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
   status_ = PGRES_FATAL_ERROR;
   if (conn == nullptr) {
@@ -75,7 +72,6 @@ pg_exception::pg_exception(PGconn *conn)
 }
 
 pg_exception::pg_exception(PGresult *res)
-  : statement_position_(-1), internal_position_(-1), source_line_(-1)
 {
   if (res == nullptr) {
     status_ = PGRES_FATAL_ERROR;
@@ -100,9 +96,7 @@ pg_exception::pg_exception(PGresult *res)
   }
 }
 
-pg_exception::~pg_exception() throw()
-{
-}
+pg_exception::~pg_exception() throw() = default;
 
 const char *
 pg_exception::what() const throw()

@@ -27,9 +27,7 @@ string_source::string_source(const std::string &src)
 {
 }
 
-string_source::~string_source()
-{
-}
+string_source::~string_source() = default;
 
 size_t
 string_source::read(unsigned char *buf, size_t len)

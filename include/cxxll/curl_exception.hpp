@@ -30,9 +30,9 @@ class curl_exception : public std::exception {
   std::string original_url_;
   std::string url_;
   std::string remote_ip_;
-  int status_;
-  unsigned remote_port_;
-  bool bad_alloc_;
+  int status_{};
+  unsigned remote_port_{};
+  bool bad_alloc_{};
 public:
   explicit curl_exception(const char *message) throw();
   ~curl_exception() throw();

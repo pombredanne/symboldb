@@ -35,10 +35,10 @@ struct rpm_package_info {
   std::string description;
   std::string license;
   std::string group;
-  long long build_time;
-  int epoch;			// -1 if no epoch
-  enum {binary, source} kind;
-  bool normalized;
+  long long build_time{};
+  int epoch{-1};		// -1 if no epoch
+  enum {binary, source} kind{binary};
+  bool normalized{};
 
   rpm_package_info();
   ~rpm_package_info();

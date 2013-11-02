@@ -55,8 +55,8 @@ public:
   // length.
   struct line {
     malloc_handle<char> ptr;
-    size_t length;
-    size_t allocated;
+    size_t length{};
+    size_t allocated{};
 
     line();
     ~line();

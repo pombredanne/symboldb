@@ -26,10 +26,7 @@
 
 using namespace cxxll;
 
-cxxll::maven_url::maven_url()
-  : type(other)
-{
-}
+cxxll::maven_url::maven_url() = default;
 
 cxxll::maven_url::maven_url(const char *u, kind t)
   : url(u), type(t)

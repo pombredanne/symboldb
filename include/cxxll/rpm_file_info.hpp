@@ -36,11 +36,11 @@ struct rpm_file_info {
   std::string capabilities;	// textual form used by RPM
   std::string linkto;		// target of a symbolic link
   checksum digest;
-  uint32_t mode;
-  uint32_t mtime;
-  uint32_t ino;
-  uint32_t flags; // from the FILEFLAGS header
-  bool normalized; // See normalize_name() below.
+  uint32_t mode{};
+  uint32_t mtime{};
+  uint32_t ino{};
+  uint32_t flags{}; // from the FILEFLAGS header
+  bool normalized{}; // See normalize_name() below.
 
   rpm_file_info();
   ~rpm_file_info();

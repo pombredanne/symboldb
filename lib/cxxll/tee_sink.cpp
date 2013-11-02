@@ -25,9 +25,7 @@ tee_sink::tee_sink(sink *l, sink *r)
 {
 }
 
-tee_sink::~tee_sink()
-{
-}
+tee_sink::~tee_sink() = default;
 
 void
 tee_sink::write(const_stringref buf)

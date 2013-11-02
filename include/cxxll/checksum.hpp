@@ -26,12 +26,12 @@
 namespace cxxll {
 
 struct checksum {
-  std::vector<unsigned char> value; // as raw bytes (not hexadecimal)
-  unsigned long long length;	// length of data being checksummed
-  hash_sink::type type;		// defaults to sha256
-
   // dummy length value if the length is not available.
   static const unsigned long long no_length = -1;
+
+  std::vector<unsigned char> value; // as raw bytes (not hexadecimal)
+  unsigned long long length{no_length};	// length of data being checksummed
+  hash_sink::type type{hash_sink::sha256};
 
   checksum();
   ~checksum();

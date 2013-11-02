@@ -23,14 +23,8 @@
 
 using namespace cxxll;
 
-checksum::checksum()
-  : length(checksum::no_length), type(hash_sink::sha256)
-{
-}
-
-checksum::~checksum()
-{
-}
+checksum::checksum() = default;
+checksum::~checksum() = default;
 
 const unsigned long long checksum::no_length;
 

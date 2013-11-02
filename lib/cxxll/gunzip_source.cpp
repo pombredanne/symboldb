@@ -35,10 +35,10 @@ struct gunzip_source::impl {
   source *source_;
   z_stream stream_;
   unsigned char buffer_[BUFFER_SIZE];
-  bool end_seen_;
+  bool end_seen_{};
 
   impl(source *src)
-    : source_(src), end_seen_(false)
+    : source_(src)
   {
     memset(&stream_, 0, sizeof(stream_));
     stream_.next_in = buffer_;

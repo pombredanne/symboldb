@@ -27,35 +27,16 @@
 using namespace cxxll;
 
 os_exception::os_exception()
+  : error_code_(errno)
 {
-  init();
-  error_code_ = errno;
 }
 
 os_exception::os_exception(int code)
+  : error_code_(code)
 {
-  init();
-  error_code_ = code;
 }
 
-void
-os_exception::init()
-{
-  function_ = nullptr;
-  offset_ = 0;
-  length_ = 0;
-  count_ = 0;
-  fd_ = -1;
-  error_code_ = errno;
-  bad_alloc_ = false;
-  offset_set_ = false;
-  length_set_ = false;
-  count_set_ = false;
-}
-
-os_exception::~os_exception() throw()
-{
-}
+os_exception::~os_exception() throw() = default;
 
 os_exception &
 os_exception::set(std::string &target, const char *str)

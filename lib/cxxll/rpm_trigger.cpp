@@ -28,9 +28,7 @@ rpm_trigger::condition::condition(const char *nam, const char *ver, int fl)
 {
 }
 
-rpm_trigger::condition::~condition()
-{
-}
+rpm_trigger::condition::~condition() = default;
 
 //////////////////////////////////////////////////////////////////////
 // rpm_trigger
@@ -40,6 +38,4 @@ rpm_trigger::rpm_trigger(const char *scr, const char *prg)
 {
 }
 
-rpm_trigger::~rpm_trigger()
-{
-}
+rpm_trigger::~rpm_trigger() = default;

@@ -28,18 +28,16 @@ class os_exception : public std::exception {
   std::string path2_;
   std::string function_name_;
   mutable std::string what_;
-  void *function_;
-  unsigned long long offset_;
-  unsigned long long length_;
-  unsigned long long count_;
-  int fd_;
-  int error_code_;
-  bool bad_alloc_;
-  bool offset_set_;
-  bool length_set_;
-  bool count_set_;
-
-  void init(); // set all scalars to 0.
+  void *function_{};
+  unsigned long long offset_{};
+  unsigned long long length_{};
+  unsigned long long count_{};
+  int fd_{-1};
+  int error_code_{};
+  bool bad_alloc_{};
+  bool offset_set_{};
+  bool length_set_{};
+  bool count_set_{};
 
   // No-throwing wrappers setting bad_alloc_ on std::bad_alloc.
   os_exception &set(std::string &, const char *);

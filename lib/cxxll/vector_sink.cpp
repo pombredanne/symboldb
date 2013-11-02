@@ -20,13 +20,8 @@
 
 using namespace cxxll;
 
-vector_sink::vector_sink()
-{
-}
-
-vector_sink::~vector_sink()
-{
-}
+vector_sink::vector_sink() = default;
+vector_sink::~vector_sink() = default;
 
 void
 vector_sink::write(const_stringref buf)

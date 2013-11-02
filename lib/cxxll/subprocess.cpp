@@ -101,20 +101,12 @@ namespace {
 
 struct subprocess::impl {
   malloc_handle<char> image;
-  std::vector<char *> argv;
-  std::vector<char *> envv;
-  fd_activity activity[3];
+  std::vector<char *> argv{nullptr};
+  std::vector<char *> envv{nullptr};
+  fd_activity activity[3]{inherit, inherit, inherit};
   fd_handle redirect_to[3];
   fd_handle pipes[3];
-  pid_t pid;
-
-  impl()
-    : pid(0)
-  {
-    argv.push_back(nullptr);
-    envv.push_back(nullptr);
-    activity[0] = activity[1] = activity[2] = inherit;
-  }
+  pid_t pid{};
 
   ~impl()
   {

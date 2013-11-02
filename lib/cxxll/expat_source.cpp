@@ -61,13 +61,13 @@ enum {
 struct expat_source::impl {
   expat_handle handle_;
   source *source_;
-  size_t consumed_bytes_;
+  size_t consumed_bytes_{};
   std::vector<char> upcoming_;
-  size_t upcoming_pos_;
+  size_t upcoming_pos_{};
 
   struct position {
-    unsigned line;
-    unsigned column;
+    unsigned line{};
+    unsigned column{};
   };
   position position_;
 
@@ -75,9 +75,9 @@ struct expat_source::impl {
   size_t elem_len_;		// only covers the name for START
   size_t attr_start_;
   std::string error_;
-  state_type state_;
-  bool bad_alloc_;
-  bool bad_entity_;
+  state_type state_{INIT};
+  bool bad_alloc_{};
+  bool bad_entity_{};
 
   impl(source *);
 
@@ -133,10 +133,8 @@ struct expat_source::impl {
 
 inline
 expat_source::impl::impl(source *src)
-  : source_(src), consumed_bytes_(0),
-    upcoming_pos_(0), state_(INIT), bad_alloc_(false), bad_entity_(false)
+  : source_(src)
 {
-  position_.line = position_.column = 0;
   XML_SetUserData(handle_.raw, this);
   XML_SetEntityDeclHandler(handle_.raw, EntityDeclHandler);
   XML_SetElementHandler(handle_.raw, StartElementHandler, EndElementHandler);

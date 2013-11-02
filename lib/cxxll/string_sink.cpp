@@ -20,13 +20,8 @@
 
 using namespace cxxll;
 
-string_sink::string_sink()
-{
-}
-
-string_sink::~string_sink()
-{
-}
+string_sink::string_sink() = default;
+string_sink::~string_sink() = default;
 
 void
 string_sink::write(const_stringref buf)

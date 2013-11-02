@@ -22,14 +22,8 @@
 
 using namespace cxxll;
 
-elf_symbol_definition::elf_symbol_definition()
-  : value(0ULL), section(0), xsection(0), default_version(false)
-{
-}
-
-elf_symbol_definition::~elf_symbol_definition()
-{
-}
+elf_symbol_definition::elf_symbol_definition() = default;
+elf_symbol_definition::~elf_symbol_definition() = default;
 
 bool
 elf_symbol_definition::has_xsection() const

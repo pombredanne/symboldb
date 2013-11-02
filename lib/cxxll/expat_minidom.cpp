@@ -21,25 +21,13 @@
 
 using namespace cxxll;
 
-expat_minidom::node::~node()
-{
-}
+expat_minidom::node::~node() = default;
 
-expat_minidom::text::text()
-{
-}
+expat_minidom::text::text() = default;
+expat_minidom::text::~text() = default;
 
-expat_minidom::text::~text()
-{
-}
-
-expat_minidom::element::element()
-{
-}
-
-expat_minidom::element::~element()
-{
-}
+expat_minidom::element::element() = default;
+expat_minidom::element::~element() = default;
 
 expat_minidom::element *
 expat_minidom::element::first_child(const char *name)

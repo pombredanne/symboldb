@@ -26,7 +26,6 @@ using namespace cxxll;
 static const char oom_message[] = "out of memory";
 
 curl_exception::curl_exception(const char *message) throw()
-  : status_(0), remote_port_(0), bad_alloc_(false)
 {
   try {
     message_ = message;
