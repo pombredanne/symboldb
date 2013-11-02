@@ -69,9 +69,8 @@ repomd::parse(const unsigned char *buffer, size_t length,
     revision.clear();
   }
   entries.clear();
-  for(std::vector<std::shared_ptr<expat_minidom::node> >::iterator
-	p = root->children.begin(), end = root->children.end(); p != end; ++p) {
-    element *e = dynamic_cast<element *>(p->get());
+  for (const std::shared_ptr<node> &cld : root->children) {
+    element *e = dynamic_cast<element *>(cld.get());
     if (e && e->name == "data") {
       element *location = e->first_child("location");
       if (!location) {

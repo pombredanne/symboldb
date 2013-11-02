@@ -49,34 +49,34 @@ struct repomd::primary_xml::impl {
 repomd::primary_xml::primary_xml(const repomd &rp,
 				 const download_options &opt, database &db)
 {
-  for (std::vector<repomd::entry>::const_iterator p = rp.entries.begin(),
-	 end = rp.entries.end(); p != end; ++p) {
-    if (p->type == "primary" && ends_with(p->href, ".xml.gz")) {
+  for (const repomd::entry &entry : rp.entries) {
+    if (entry.type == "primary" && ends_with(entry.href, ".xml.gz")) {
       download_options dopt(opt);
       {
 	// Check the cache for staleness if the file name does not
 	// contain the hash.
 	std::string digest
-	  (base16_encode(p->checksum.value.begin(), p->checksum.value.end()));
-	if ((digest.empty() || p->href.find(digest) == std::string::npos)
+	  (base16_encode(entry.checksum.value.begin(), entry.checksum.value.end()));
+	if ((digest.empty() || entry.href.find(digest) == std::string::npos)
 	    && dopt.cache_mode == download_options::always_cache) {
 	  dopt.cache_mode = download_options::check_cache;
 	}
       }
-      std::string entry_url(url_combine_yum(rp.base_url.c_str(), p->href.c_str()));
+      std::string entry_url
+	(url_combine_yum(rp.base_url.c_str(), entry.href.c_str()));
       std::shared_ptr<std::vector<unsigned char> > compressed
 	(new std::vector<unsigned char>());
       download(dopt, db, entry_url.c_str(), *compressed);
       std::vector<unsigned char> digest
-	(hash(p->checksum.type, *compressed));
-      if (digest != p->checksum.value) {
+	(hash(entry.checksum.type, *compressed));
+      if (digest != entry.checksum.value) {
 	std::string msg("compressed data does not match ");
-	msg += hash_sink::to_string(p->checksum.type);
+	msg += hash_sink::to_string(entry.checksum.type);
 	msg += " checksum (actual ";
 	msg += base16_encode(digest.begin(), digest.end());
 	msg += ", expected ";
-	msg += base16_encode(p->checksum.value.begin(),
-			     p->checksum.value.end());
+	msg += base16_encode(entry.checksum.value.begin(),
+			     entry.checksum.value.end());
 	msg += ')';
 	throw curl_exception(msg.c_str());
       }

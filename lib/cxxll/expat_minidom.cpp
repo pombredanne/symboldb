@@ -32,9 +32,8 @@ expat_minidom::element::~element() = default;
 expat_minidom::element *
 expat_minidom::element::first_child(const char *name)
 {
-  for(std::vector<std::shared_ptr<expat_minidom::node> >::iterator
-	p = children.begin(), end = children.end(); p != end; ++p) {
-    element *e = dynamic_cast<element *>(p->get());
+  for(const std::shared_ptr<node> &cld : children) {
+    element *e = dynamic_cast<element *>(cld.get());
     if (e && e->name == name) {
       return e;
     }
@@ -46,9 +45,8 @@ std::string
 expat_minidom::element::text() const
 {
   std::string r;
-  for(std::vector<std::shared_ptr<expat_minidom::node> >::const_iterator
-	p = children.begin(), end = children.end(); p != end; ++p) {
-    expat_minidom::text *t = dynamic_cast<expat_minidom::text *>(p->get());
+  for(const std::shared_ptr<node> &cld : children) {
+    expat_minidom::text *t = dynamic_cast<expat_minidom::text *>(cld.get());
     if (t) {
       r += t->data;
     }

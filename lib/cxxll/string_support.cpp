@@ -28,14 +28,12 @@ using namespace cxxll;
 std::string
 cxxll::quote(const std::string &str)
 {
-  for (const char *p = str.data(), *end = p + str.size(); p != end; ++p) {
-    unsigned char ch = *p;
+  for (unsigned char ch : str) {
     if (ch <= ' ' || ch == '\\' || ch == '"' || ch == '\'' || ch >= 0x7f) {
       std::ostringstream s;
       s << std::hex;
       // Restart from the beginning.
-      for (p = str.data(); p != end; ++p) {
-	unsigned char ch = *p;
+      for (unsigned char ch : str) {
 	switch (ch) {
 	case '\r':
 	  s << "\\r";

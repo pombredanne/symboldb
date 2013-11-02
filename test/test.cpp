@@ -277,9 +277,7 @@ report_descriptor(const char *prefix, int fd)
 static void
 report_descriptors(const char *prefix, const std::vector<int> &fds, bool all)
 {
-  for (std::vector<int>::const_iterator p = fds.begin(), end = fds.end();
-       p != end; ++p) {
-    int fd = *p;
+  for (int fd : fds) {
     if (fd < 0 || fd > 2 || all) {
       report_descriptor(prefix, fd);
     }
@@ -314,17 +312,16 @@ run_tests(const char *pattern)
     curl_fetch_result::global_init();
   }
 
-  for (test_suite::iterator p = tests->begin(), end = tests->end();
-       p != end; ++p) {
-    if (!regexp.match(p->name)) {
+  for (const test_case &test : *tests) {
+    if (!regexp.match(test.name)) {
       continue;
     }
     if (pattern != nullptr) {
-      fprintf(stderr, "info: running test set: %s\n", p->name);
+      fprintf(stderr, "info: running test set: %s\n", test.name);
     }
-    current_test = p->name;
+    current_test = test.name;
     try {
-      p->func();
+      test.func();
     } catch (pg_exception &e) {
       ++exception_count;
       fprintf(stderr, "error: from PostgreSQL:\n");
@@ -333,11 +330,11 @@ run_tests(const char *pattern)
       ++exception_count;
       test_header();
       fprintf(stderr, "error: %s: exception %s: %s\n",
-	      p->name, typeid(e).name(), e.what());
+	      test.name, typeid(e).name(), e.what());
     } catch (...) {
       ++exception_count;
       test_header();
-      fprintf(stderr, "error: %s: unknown exception\n", p->name);
+      fprintf(stderr, "error: %s: unknown exception\n", test.name);
     }
   }
   if (exception_count > 0 || failure_count > 0) {

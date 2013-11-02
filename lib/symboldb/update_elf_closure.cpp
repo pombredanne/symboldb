@@ -195,9 +195,8 @@ namespace {
   {
     std::vector<soname_map::iterator> ignore_queue;
 
-    for (arch_soname_map::iterator parch = arch.begin(), archend = arch.end();
-	 parch != archend; ++parch) {
-      soname_map &soname(parch->second);
+    for (std::pair<const std::string, soname_map> &archp : arch) {
+      soname_map &soname(archp.second);
       for (soname_map::iterator p = soname.begin(), pend = soname.end();
 	   p != pend; ) {
 	soname_map::iterator q = p;
@@ -217,10 +216,8 @@ namespace {
 	// conflicts, so we only proceed if there is just one
 	// remaining resolution.
 	if (ignore_queue.size() + 1 == count) {
-	  for (std::vector<soname_map::iterator>::iterator
-		 v = ignore_queue.begin(), vend = ignore_queue.end();
-	       v != vend; ++v) {
-	    soname.erase(*v);
+	  for (soname_map::iterator ignore : ignore_queue) {
+	    soname.erase(ignore);
 	  }
 	}
 	p = q;
@@ -320,20 +317,14 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
     }
 
     changed = false;
-    for (dependency_map::iterator
-	   needing = closure.begin(), needing_end = closure.end();
-	 needing != needing_end; ++needing) {
-      std::set<database::file_id> &needing_deps(needing->second);
-      for (std::set<database::file_id>::const_iterator
-	     needing_dep = needing_deps.begin(),
-	     needing_dep_end = needing_deps.end();
-	   needing_dep != needing_dep_end; ++needing_dep) {
-	dependency_map::const_iterator dep(closure.find(*needing_dep));
+    for (std::pair<const database::file_id, std::set<database::file_id>>
+	   &needing : closure) {
+      std::set<database::file_id> &needing_deps(needing.second);
+      for (database::file_id needing_dep : needing_deps) {
+	dependency_map::const_iterator dep(closure.find(needing_dep));
 	if (dep != closure.end()) {
-	  for (std::set<database::file_id>::const_iterator
-		 depdep = dep->second.begin(), depdep_end = dep->second.end();
-	       depdep != depdep_end; ++depdep) {
-	    bool new_element = needing_deps.insert(*depdep).second;
+	  for (database::file_id depdep : dep->second) {
+	    bool new_element = needing_deps.insert(depdep).second;
 	    elements += new_element;
 	    changed = changed || new_element;
 	  }
@@ -360,18 +351,13 @@ update_elf_closure(pgconn_handle &conn, database::package_set_id id,
     pgresult_handle copy;
     copy.exec(conn, "COPY update_elf_closure FROM STDIN");
     assert(copy.resultStatus() == PGRES_COPY_IN);
-    for (dependency_map::iterator
-	   needing = closure.begin(), needing_end = closure.end();
-	 needing != needing_end; ++needing) {
+    for (std::pair<const database::file_id, std::set<database::file_id>>
+	   &needing : closure) {
       char filebuf[32];
-      snprintf(filebuf, sizeof(filebuf), "%d", needing->first.value());
+      snprintf(filebuf, sizeof(filebuf), "%d", needing.first.value());
       char *fileend = filebuf + strlen(filebuf);
-      std::set<database::file_id> &needing_deps(needing->second);
-      for (std::set<database::file_id>::const_iterator
-	     needing_dep = needing_deps.begin(),
-	     needing_dep_end = needing_deps.end();
-	   needing_dep != needing_dep_end; ++needing_dep) {
-	database::file_id needed(needing_dep->value());
+      std::set<database::file_id> &needing_deps(needing.second);
+      for (database::file_id needed : needing_deps) {
 	char neededbuf[32];
 	snprintf(neededbuf, sizeof(neededbuf), "%d", needed.value());
 	char *neededend = neededbuf + strlen(neededbuf);

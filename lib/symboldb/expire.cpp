@@ -68,9 +68,8 @@ expire(const symboldb_options &opt, database &db)
 			std::back_inserter(result));
     fd_handle dir;
     dir.open_directory(opt.rpm_cache_path().c_str());
-    for (digvec::iterator p = result.begin(), end = result.end();
-	 p != end; ++p) {
-      dir.unlinkat(base16_encode(p->begin(), p->end()).c_str(), 0);
+    for (const std::vector<unsigned char> &dig : result) {
+      dir.unlinkat(base16_encode(dig.begin(), dig.end()).c_str(), 0);
     }
   }
 }

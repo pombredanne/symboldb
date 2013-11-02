@@ -23,15 +23,12 @@ std::string
 cxxll::pg_encode_array(const std::vector<std::string> &in)
 {
   std::string result("{");
-  for (std::vector<std::string>::const_iterator
-	 p = in.begin(), end = in.end(); p != end; ++p) {
+  for (const std::string &elem : in) {
     if (result.size() > 1) {
       result += ',';
     }
     result += '"';
-    for (std::string::const_iterator
-	   q = p->begin(), qend = p->end(); q != qend; ++q) {
-      char ch = *q;
+    for (char ch : elem) {
       switch (ch) {
       case 0:
 	throw pg_exception("NUL character in pg_encode_array");

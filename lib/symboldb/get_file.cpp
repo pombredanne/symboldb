@@ -51,10 +51,8 @@ bool get_file(const symboldb_options &opt, database &db,
     if (fcache->lookup_path(csum, rpm_path)) {
       rpm_parser rp(rpm_path.c_str());
       while (rp.read_file(rfe)) {
-	typedef std::vector<rpm_file_info>::const_iterator iterator;
-	const iterator end = rfe.infos.end();
-	for (iterator p = rfe.infos.begin(); p != end; ++p) {
-	  if (p->name == fwd.file_name()) {
+	for (const rpm_file_info &fi : rfe.infos) {
+	  if (fi.name == fwd.file_name()) {
 	    target.write(rfe.contents);
 	    return true;
 	  }

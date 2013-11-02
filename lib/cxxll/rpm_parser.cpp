@@ -752,6 +752,7 @@ rpm_parser::read_file(rpm_file_entry &file)
 	// links to the caller.
 	file.infos.resize(std::distance(links.first, links.second));
 	size_t i = 0;
+	// TODO: Introduce "loop over pair of iterators" helper.
 	for (impl::hardlink_map::iterator q = links.first; q != links.second; ++q) {
 	  impl_->seek_fi(q->second);
 	  rpm_file_info &info(file.infos.at(i));
@@ -780,6 +781,7 @@ rpm_parser::read_file(rpm_file_entry &file)
 
 	// Check checksums for consistency.
 	const checksum &ref = file.infos.front().digest;
+	// TODO: Introduce "skip first in range" helper.
 	for (std::vector<rpm_file_info>::const_iterator
 	       q = file.infos.begin() + 1, end = file.infos.end();
 	     q != end; ++q) {

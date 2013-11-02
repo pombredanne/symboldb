@@ -214,24 +214,17 @@ load_python(const symboldb_options &, database &db, python_analyzer &pya,
     db.add_python_error(cid, pya.error_line(), pya.error_message().c_str());
     return;
   }
-  for (std::vector<std::string>::const_iterator
-	 p = pya.imports().begin(), end = pya.imports().end(); p != end; ++p) {
-    db.add_python_import(cid, p->c_str());
+  for (const std::string &imp : pya.imports()) {
+    db.add_python_import(cid, imp.c_str());
   }
-  for (std::vector<std::string>::const_iterator
-	 p = pya.attributes().begin(), end = pya.attributes().end();
-       p != end; ++p) {
-    db.add_python_attribute(cid, p->c_str());
+  for (const std::string &attr : pya.attributes()) {
+    db.add_python_attribute(cid, attr.c_str());
   }
-  for (std::vector<std::string>::const_iterator
-	 p = pya.functions().begin(), end = pya.functions().end();
-       p != end; ++p) {
-    db.add_python_function_def(cid, p->c_str());
+  for (const std::string &func : pya.functions()) {
+    db.add_python_function_def(cid, func.c_str());
   }
-  for (std::vector<std::string>::const_iterator
-	 p = pya.classes().begin(), end = pya.classes().end();
-       p != end; ++p) {
-    db.add_python_class_def(cid, p->c_str());
+  for (const std::string &cls : pya.classes()) {
+    db.add_python_class_def(cid, cls.c_str());
   }
 }
 
@@ -252,10 +245,8 @@ load_xml(const symboldb_options &, database &db,
     std::vector<unsigned char> after(e.after().begin(), e.after().end());
     db.add_xml_error(cid, e.message(), e.line(), before, after);
   }
-  for (std::vector<maven_url>::const_iterator
-	 p = result.begin(), end = result.end();
-       p != end; ++p) {
-      db.add_maven_url(cid, *p);
+  for (const maven_url &url : result) {
+      db.add_maven_url(cid, url);
   }
 }
 
@@ -292,10 +283,8 @@ static bool
 check_any(const std::vector<rpm_file_info> &infos,
 	  bool (*func)(const rpm_file_info &))
 {
-  typedef std::vector<rpm_file_info>::const_iterator iterator;
-  const iterator end = infos.end();
-  for (iterator p = infos.begin(); p != end; ++p) {
-    if (func(*p)) {
+  for (const rpm_file_info &fi : infos) {
+    if (func(fi)) {
       return true;
     }
   }
@@ -478,10 +467,8 @@ static void
 dependencies(const symboldb_options &, database &db,
 	     database::package_id pkg, rpm_parser &rpmparser)
 {
-  const std::vector<rpm_dependency> &deps(rpmparser.dependencies());
-  for (std::vector<rpm_dependency>::const_iterator
-	 p = deps.begin(), end = deps.end(); p != end; ++p) {
-    db.add_package_dependency(pkg, *p);
+  for (const rpm_dependency &dep : rpmparser.dependencies()) {
+    db.add_package_dependency(pkg, dep);
   }
 }
 
@@ -491,9 +478,8 @@ scripts(const symboldb_options &, database &db,
 {
   std::vector<rpm_script> scripts;
   rpmparser.scripts(scripts);
-  for (std::vector<rpm_script>::const_iterator
-	 p = scripts.begin(), end = scripts.end(); p != end; ++p) {
-    db.add_package_script(pkg, *p);
+  for (const rpm_script &scr : scripts) {
+    db.add_package_script(pkg, scr);
   }
 }
 
@@ -504,9 +490,8 @@ triggers(const symboldb_options &, database &db,
   std::vector<rpm_trigger> triggers;
   rpmparser.triggers(triggers);
   int i = 0;
-  for (std::vector<rpm_trigger>::const_iterator
-	 p = triggers.begin(), end = triggers.end(); p != end; ++p) {
-    db.add_package_trigger(pkg, *p, i);
+  for (const rpm_trigger &trg : triggers) {
+    db.add_package_trigger(pkg, trg, i);
     ++i;
   }
 }

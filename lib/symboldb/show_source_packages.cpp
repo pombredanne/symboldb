@@ -88,25 +88,21 @@ symboldb_show_source_packages(const symboldb_options &opt, char **argv)
 
   {
     std::vector<std::unique_ptr<task> > tasks;
-    for (size_t i = 0; i < entries.size(); ++i) {
+    for (entry &e : entries) {
       tasks.push_back(std::unique_ptr<task>
-		      (new task(std::bind(&entry::callback, &opt,
-					       &entries.at(i)))));
+		      (new task(std::bind(&entry::callback, &opt, &e))));
     }
-    for (size_t i = 0; i < tasks.size(); ++i) {
-      tasks.at(i)->wait();
+    for (std::unique_ptr<task> &t : tasks) {
+      t->wait();
     }
   }
 
   std::set<std::string> packages;
-  for (std::vector<entry>::const_iterator
-	 p = entries.begin(), end = entries.end(); p != end; ++p) {
-    packages.insert(p->packages.begin(), p->packages.end());
+  for (const entry &e : entries) {
+    packages.insert(e.packages.begin(), e.packages.end());
   }
-  for (std::set<std::string>::const_iterator
-	 p = packages.begin(), end = packages.end();
-       p != end; ++p) {
-    printf("%s\n", p->c_str());
+  for (const std::string &pkg : packages) {
+    printf("%s\n", pkg.c_str());
   }
 
   return 0;

@@ -41,11 +41,10 @@ namespace {
   void
   free_vector(std::vector<char *> &v)
   {
-    for (std::vector<char *>::iterator p = v.begin(), end = v.end();
-	 p != end; ++p) {
-      char *ptr = *p;
-      *p = nullptr;
-      free(ptr);
+    for (char *&elem : v) {
+      char *orig = elem;
+      elem = nullptr;
+      free(orig);
     }
   }
 

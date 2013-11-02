@@ -51,9 +51,8 @@ test()
     COMPARE_STRING(lines.at(0), "/*");
     COMPARE_STRING(lines.back(),
 		   "static test_register t(\"read_lines\", test);");
-    for (std::vector<std::string>::const_iterator
-	   p = lines.begin(), end = lines.end(); p != end; ++p) {
-      bytes.insert(bytes.end(), p->begin(), p->end());
+    for (const std::string &line : lines) {
+      bytes.insert(bytes.end(), line.begin(), line.end());
       bytes.push_back('\n');
     }
     COMPARE_NUMBER(ref.size(), bytes.size());

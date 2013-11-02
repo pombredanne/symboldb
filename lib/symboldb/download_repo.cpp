@@ -382,9 +382,8 @@ symboldb_download_repo(const symboldb_options &opt, database &db,
 
   if (!urls.empty()) {
     fprintf(stderr, "error: %zu packages failed download:\n", urls.size());
-    for (std::vector<rpm_url>::iterator p = urls.begin(), end = urls.end();
-	 p != end; ++p) {
-      fprintf(stderr, "error:   %s\n", p->href.c_str());
+    for (const rpm_url &url : urls) {
+      fprintf(stderr, "error:   %s\n", url.href.c_str());
     }
     if (opt.ignore_download_errors && do_pset_update) {
       if (pids.empty()) {

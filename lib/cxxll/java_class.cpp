@@ -195,11 +195,9 @@ std::vector<std::string>
 cxxll::java_class::class_references() const
 {
   std::vector<std::string> result;
-  for (std::vector<unsigned>::const_iterator
-	 p = constant_pool_offsets.begin(), end = constant_pool_offsets.end();
-       p != end; ++p) {
-    if (*p != 0 && buffer().at(*p) == CONSTANT_Class) {
-      size_t offset = *p + 1;
+  for (unsigned off0 : constant_pool_offsets) {
+    if (off0 != 0 && buffer().at(off0) == CONSTANT_Class) {
+      size_t offset = off0 + 1;
       unsigned short name_idx;
       big_endian::extract(buffer(), offset, name_idx);
       result.push_back(utf8_string(name_idx));

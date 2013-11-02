@@ -105,10 +105,8 @@ extract_text_contents(expat_source &source,
       extract_text_contents(source, maven_url::site, result);
       return true;
     }
-    std::vector<std::string>::const_iterator p = tags.begin();
-    const std::vector<std::string>::const_iterator end = tags.end();
-    for (; p != end; ++p) {
-      maven_url::kind type = classify(p->c_str());
+    for (const std::string &tag : tags) {
+      maven_url::kind type = classify(tag.c_str());
       if (type != maven_url::other) {
 	extract_text_contents(source, type, result);
 	return true;

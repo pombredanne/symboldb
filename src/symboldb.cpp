@@ -188,11 +188,9 @@ do_show_repomd(const symboldb_options &opt, database &db, const char *base)
   repomd rp;
   rp.acquire(opt.download(), db, base);
   printf("revision: %s\n", rp.revision.c_str());
-  for (std::vector<repomd::entry>::iterator p = rp.entries.begin(),
-	 end = rp.entries.end();
-       p != end; ++p) {
-    std::string entry_url(url_combine_yum(rp.base_url.c_str(), p->href.c_str()));
-    printf("entry: %s %s\n", p->type.c_str(), entry_url.c_str());
+  for (const repomd::entry &e : rp.entries) {
+    std::string entry_url(url_combine_yum(rp.base_url.c_str(), e.href.c_str()));
+    printf("entry: %s %s\n", e.type.c_str(), entry_url.c_str());
   }
   return 0;
 }
@@ -222,9 +220,8 @@ do_show_stale_cached_rpms(const symboldb_options &opt, database &db)
   std::set_difference(fcdigests.begin(), fcdigests.end(),
 		      dbdigests.begin(), dbdigests.end(),
 		      std::back_inserter(result));
-  for (digvec::iterator p = result.begin(), end = result.end();
-       p != end; ++p) {
-    printf("%s\n", base16_encode(p->begin(), p->end()).c_str());
+  for (const std::vector<unsigned char> &dig : result) {
+    printf("%s\n", base16_encode(dig.begin(), dig.end()).c_str());
   }
   return 0;
 }

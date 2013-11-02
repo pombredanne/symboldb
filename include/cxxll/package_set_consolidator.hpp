@@ -97,12 +97,9 @@ std::vector<T>
 package_set_consolidator<T>::values() const
 {
   std::vector<T> result;
-  for (typename arch_map::const_iterator archp = map.begin(),
-	 archend = map.end(); archp != archend; ++archp) {
-    const name_map &arch = archp->second;
-    for (typename name_map::const_iterator namep = arch.begin(),
-	   nameend = arch.end(); namep != nameend; ++namep) {
-      result.push_back(namep->second.data);
+  for (const std::pair<std::string, name_map> &archp : map) {
+    for (const std::pair<std::string, value> &namep : archp.second) {
+      result.push_back(namep.second.data);
     }
   }
   return result;

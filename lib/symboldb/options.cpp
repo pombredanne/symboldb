@@ -51,16 +51,14 @@ symboldb_options::exclude_name() const
 {
   std::string regexp("^(");
   bool first = true;
-  for (std::vector<std::string>::const_iterator
-	 p = exclude_names_.begin(), end = exclude_names_.end();
-       p != end; ++p) {
+  for (const std::string &name : exclude_names_) {
     if (first) {
       first = false;
     } else {
       regexp += '|';
     }
     regexp += '(';
-    regexp += *p;
+    regexp += name;
     regexp += ')';
   }
   regexp += ")$";

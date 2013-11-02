@@ -465,14 +465,12 @@ database::add_package_trigger(package_id pkg,
 	   " (package_id, script_idx, script, prog)"
 	   " VALUES ($1, $2, $3, $4)",
 	   pkg.value(), idx, trigger.script, trigger.prog);
-  for (std::vector<rpm_trigger::condition>::const_iterator
-	 p = trigger.conditions.begin(), end = trigger.conditions.end();
-       p != end; ++p) {
+  for (const rpm_trigger::condition &cond : trigger.conditions) {
     pg_query(impl_->conn, res,
 	     "INSERT INTO " PACKAGE_TRIGGER_CONDITION_TABLE
 	     " (package_id, script_idx, flags, name, version)"
 	     " VALUES ($1, $2, $3, $4, $5)",
-	     pkg.value(), idx, p->flags, p->name, p->version);
+	     pkg.value(), idx, cond.flags, cond.name, cond.version);
   }
 }
 
@@ -781,6 +779,7 @@ database::add_java_class(contents_id cid, const cxxll::java_class &jc)
     std::sort(classes.begin(), classes.end());
     std::vector<std::string>::iterator end =
       std::unique(classes.begin(), classes.end());
+    // TODO: Introduce "loop until end iterator" helper.
     for (std::vector<std::string>::iterator p = classes.begin();
 	 p != end; ++p) {
       const std::string &name(*p);
@@ -895,9 +894,7 @@ database::update_package_set(package_set_id set,
     }
   }
 
-  for (std::vector<package_id>::const_iterator
-	 p = pids.begin(), end = pids.end(); p != end; ++p) {
-    package_id pkg = *p;
+  for (package_id pkg : pids) {
     if (old.erase(pkg) == 0) {
       // New package set member.
       add_package_set(set, pkg);
@@ -906,9 +903,8 @@ database::update_package_set(package_set_id set,
   }
 
   // Remaining old entries have to be deleted.
-  for (std::set<package_id>::const_iterator
-	 p = old.begin(), end = old.end(); p != end; ++p) {
-    delete_from_package_set(set, *p);
+  for (package_id pkg : old) {
+    delete_from_package_set(set, pkg);
     changes = true;
   }
 
@@ -1155,9 +1151,8 @@ database::print_elf_soname_conflicts(package_set_id set)
 	       entry.file.c_str(), entry.nevra.c_str(), soname.c_str());
       }
       const char *first = "*";
-      for (std::vector<file_id>::const_iterator
-	     p = choices.begin(), end = choices.end(); p != end; ++p) {
-	const fc_entry &entry(get_name(*p));
+      for (file_id fid : choices) {
+	const fc_entry &entry(get_name(fid));
 	printf("  %s %s (%s)\n",
 	       first, entry.file.c_str(), entry.nevra.c_str());
 	first = " ";
@@ -1209,9 +1204,8 @@ database::exec_sql(const char *command)
   std::vector<std::string> stmts;
   pg_split_statement(command, stmts);
   pgresult_handle res;
-  for (std::vector<std::string>::const_iterator
-	 p = stmts.begin(), end = stmts.end(); p != end; ++p) {
-    res.exec(impl_->conn, p->c_str());
+  for (const std::string &segment : stmts) {
+    res.exec(impl_->conn, segment.c_str());
   }
 }
 

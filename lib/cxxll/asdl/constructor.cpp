@@ -37,17 +37,16 @@ cxxll::asdl::operator<<(std::ostream &os, const constructor &con)
 }
 
 std::ostream &
-cxxll::asdl::operator<<(std::ostream &os, const std::vector<constructor> &con)
+cxxll::asdl::operator<<(std::ostream &os, const std::vector<constructor> &cons)
 {
   bool first = true;
-  for (std::vector<constructor>::const_iterator p = con.begin(), end = con.end();
-       p != end; ++p) {
+  for (const constructor &con : cons) {
     if (first) {
       first = false;
     } else {
       os << " | ";
     }
-    os << *p;
+    os << con;
   }
   return os;
 }

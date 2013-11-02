@@ -58,8 +58,8 @@ cxxll::asdl::valid_identifier(const identifier &str)
     return false;
   }
   std::string::size_type len = str.size();
-  for (std::string::size_type i = 1; i < len; ++i) {
-    if (!letter(str.at(i))) {
+  for (char ch : str) {
+    if (!letter(ch)) {
       return false;
     }
   }

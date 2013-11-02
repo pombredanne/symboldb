@@ -77,16 +77,14 @@ check_rpm_file_list(pgconn_handle &dbh, const char *nvra, const char *filelist_p
 	   " ORDER BY file.name", nvra);
   r.exec(dbh, "COPY file_list TO STDOUT WITH (FORMAT CSV)");
   std::string row;
-  for (std::vector<std::string>::const_iterator
-	 p = file_list.begin(), end = file_list.end();
-       p != end; ++p) {
+  for (const std::string &line : file_list) {
     if (dbh.getCopyData(row)) {
       CHECK(!row.empty());
       CHECK(row.at(row.size() - 1) == '\n');
       row.resize(row.size() - 1); // strip '\n' at end
-      COMPARE_STRING(row, *p);
+      COMPARE_STRING(row, line);
     } else {
-      COMPARE_STRING("", *p);
+      COMPARE_STRING("", line);
       goto cleanup;
     }
   }
@@ -126,16 +124,14 @@ check_simple_query(pgconn_handle &dbh, const char *name,
   r.exec(dbh, (std::string("COPY (") + sql + 
 	       ") TO STDOUT WITH (FORMAT CSV)").c_str());
   std::string row;
-  for (std::vector<std::string>::const_iterator
-	 p = row_vector.begin(), end = row_vector.end();
-       p != end; ++p) {
+  for (const std::string &exp : row_vector) {
     if (dbh.getCopyData(row)) {
       CHECK(!row.empty());
       CHECK(row.at(row.size() - 1) == '\n');
       row.resize(row.size() - 1); // strip '\n' at end
-      COMPARE_STRING(row, *p);
+      COMPARE_STRING(row, exp);
     } else {
-      COMPARE_STRING("", *p);
+      COMPARE_STRING("", exp);
       return;
     }
   }

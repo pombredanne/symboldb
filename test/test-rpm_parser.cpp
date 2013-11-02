@@ -68,8 +68,8 @@ test()
     std::vector<rpm_trigger> triggers;
     parser.triggers(triggers);
     COMPARE_NUMBER(triggers.size(), 3U);
-    for (unsigned i = 0; i < triggers.size(); ++i) {
-      COMPARE_STRING(triggers.at(i).prog, "/bin/sh");
+    for (rpm_trigger &trg : triggers) {
+      COMPARE_STRING(trg.prog, "/bin/sh");
     }
     // triggerun scriptlet (using /bin/sh) -- cronie-anacron < 1.4.1
     COMPARE_STRING(triggers.at(0).script,

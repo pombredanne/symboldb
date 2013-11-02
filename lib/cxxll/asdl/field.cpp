@@ -38,17 +38,16 @@ cxxll::asdl::operator<<(std::ostream &os, const field &fld)
 }
 
 std::ostream &
-cxxll::asdl::operator<<(std::ostream &os, const std::vector<field> &fld)
+cxxll::asdl::operator<<(std::ostream &os, const std::vector<field> &fields)
 {
   bool first = true;
-  for (std::vector<field>::const_iterator p = fld.begin(), end = fld.end();
-       p != end; ++p) {
+  for (const field &fld : fields) {
     if (first) {
       first = false;
     } else {
       os << ',';
     }
-    os << *p;
+    os << fld;
   }
   return os;
 }
