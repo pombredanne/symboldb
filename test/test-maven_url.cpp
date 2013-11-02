@@ -22,8 +22,6 @@
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/fd_source.hpp>
 
-#include <tr1/memory>
-
 #include "test.hpp"
 
 using namespace cxxll;
