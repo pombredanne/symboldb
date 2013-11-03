@@ -64,34 +64,33 @@ test()
   url += current_directory();
   url += '/';
   url += FILE;
-  std::vector<unsigned char> result;
   try {
-    download(opt, db, url.c_str(), result);
+    download(opt, db, url.c_str());
     CHECK(false);
   } catch (curl_exception &e) {
-    CHECK(result.empty());
     COMPARE_STRING(e.message(), "URL not in cache and network access disabled");
     COMPARE_STRING(e.url(), url);
   }
 
+  vector_sink vsink;
   opt = download_options();
-  download(opt, db, url.c_str(), result);
-  CHECK(result == reference);
+  copy_source_to_sink(*download(opt, db, url.c_str()), vsink);
+  CHECK(vsink.data == reference);
 
   // FIXME: We should check somehow that this does not hit the
   // original file:/// URL.
   opt.cache_mode = download_options::only_cache;
-  result.clear();
-  download(opt, db, url.c_str(), result);
-  CHECK(result == reference);
+  vsink.data.clear();
+  copy_source_to_sink(*download(opt, db, url.c_str()), vsink);
+  CHECK(vsink.data == reference);
 
   // Make sure that we do not hit the database.
   testdb.exec_test_sql(DBNAME, "DROP TABLE symboldb.url_cache");
 
   opt.cache_mode = download_options::no_cache;
-  result.clear();
-  download(opt, db, url.c_str(), result);
-  CHECK(result == reference);
+  vsink.data.clear();
+  copy_source_to_sink(*download(opt, db, url.c_str()), vsink);
+  CHECK(vsink.data == reference);
 }
 
 static test_register t("download", test);
