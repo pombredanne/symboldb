@@ -158,6 +158,7 @@ add_library (CXXLL
   lib/cxxll/tee_sink.cpp
   lib/cxxll/temporary_directory.cpp
   lib/cxxll/url.cpp
+  lib/cxxll/url_source.cpp
   lib/cxxll/utf8.cpp
   lib/cxxll/vector_extract.cpp
   lib/cxxll/vector_sink.cpp
@@ -284,6 +285,7 @@ add_executable (runtests
   test/test-task.cpp
   test/test-temporary_directory.cpp
   test/test-utf8.cpp
+  test/test-url_source.cpp
   test/test-vector_extract.cpp
   test/test-vector_source.cpp
   test/test-zip_file.cpp
