@@ -47,11 +47,9 @@ repomd::~repomd()
 }
 
 bool
-repomd::parse(const unsigned char *buffer, size_t length,
-	      std::string &error)
+repomd::parse(source *src, std::string &error)
 {
-  memory_range_source mrsource(buffer, length);
-  expat_source esource(&mrsource);
+  expat_source esource(src);
   using namespace expat_minidom;
   std::tr1::shared_ptr<element> root(expat_minidom::parse(esource));
   if (!root) {
@@ -145,13 +143,9 @@ repomd::acquire(const download_options &opt, database &db, const char *url)
   }
   std::string mdurl(base_canon);
   mdurl += "repodata/repomd.xml";
-  std::vector<unsigned char> data;
-  download(opt, db, mdurl.c_str(), data);
-  if (data.empty()) {
-    throw curl_exception("empty document").url(url);
-  }
+  std::tr1::shared_ptr<source> src(download(opt, db, mdurl.c_str()));
   std::string error;		// FIXME
-  if (!parse(data.data(), data.size(), error)) {
+  if (!parse(src.get(), error)) {
     return throw curl_exception(error.c_str()).url(url);
   }
   base_url.swap(base_canon);

@@ -33,16 +33,42 @@ using namespace cxxll;
 
 struct repomd::primary_xml::impl {
   std::string url_;
-  std::tr1::shared_ptr<const std::vector<unsigned char> > compressed_;
-  memory_range_source mrsource_;
+  std::tr1::shared_ptr<source> compressed_;
   gunzip_source gzsource_;
+  hash_sink hash_;
+  checksum expected_;
 
-  impl(const std::string &url,
-       std::tr1::shared_ptr<const std::vector<unsigned char> > compressed)
+  impl(const std::string &url, const checksum &expected,
+       std::tr1::shared_ptr<source> compressed)
     : url_(url), compressed_(compressed),
-      mrsource_(compressed_->data(), compressed_->size()),
-      gzsource_(&mrsource_)
+      gzsource_(compressed_.get()), hash_(expected.type),
+      expected_(expected)
   {
+  }
+
+  size_t
+  read(unsigned char *buf, size_t len)
+  {
+    size_t ret = gzsource_.read(buf, len);
+    if (ret == 0) {
+      // All data has been read.  Check the digest.
+      std::vector<unsigned char> digest;
+      hash_.digest(digest);
+      if (digest != expected_.value) {
+	std::string msg("compressed data does not match ");
+	msg += hash_sink::to_string(expected_.type);
+	msg += " checksum (actual ";
+	msg += base16_encode(digest.begin(), digest.end());
+	msg += ", expected ";
+	msg += base16_encode(expected_.value.begin(),
+			     expected_.value.end());
+	msg += ')';
+	throw curl_exception(msg.c_str());
+      }
+    } else {
+      hash_.write(const_stringref(buf, ret));
+    }
+    return ret;
   }
 };
 
@@ -64,23 +90,9 @@ repomd::primary_xml::primary_xml(const repomd &rp,
 	}
       }
       std::string entry_url(url_combine_yum(rp.base_url.c_str(), p->href.c_str()));
-      std::tr1::shared_ptr<std::vector<unsigned char> > compressed
-	(new std::vector<unsigned char>());
-      download(dopt, db, entry_url.c_str(), *compressed);
-      std::vector<unsigned char> digest
-	(hash(p->checksum.type, *compressed));
-      if (digest != p->checksum.value) {
-	std::string msg("compressed data does not match ");
-	msg += hash_sink::to_string(p->checksum.type);
-	msg += " checksum (actual ";
-	msg += base16_encode(digest.begin(), digest.end());
-	msg += ", expected ";
-	msg += base16_encode(p->checksum.value.begin(),
-			     p->checksum.value.end());
-	msg += ')';
-	throw curl_exception(msg.c_str());
-      }
-      impl_.reset(new impl(entry_url, compressed));
+      std::tr1::shared_ptr<source> compressed =
+	download(dopt, db, entry_url.c_str());
+      impl_.reset(new impl(entry_url, p->checksum, compressed));
       return;
     }
   }
@@ -101,5 +113,5 @@ repomd::primary_xml::url()
 size_t
 repomd::primary_xml::read(unsigned char *buf, size_t len)
 {
-  return impl_->gzsource_.read(buf, len);
+  return impl_->read(buf, len);
 }

@@ -50,7 +50,7 @@ struct repomd {
   // Parses an XML document containing the repomd element.
   // Returns true on success, false otherwise (and updates error).
   // Updates the revision and entries members.
-  bool parse(const unsigned char *, size_t, std::string &error);
+  bool parse(cxxll::source *, std::string &error);
 
   // Downloads the repodata/repomd.xml file relative to the passed
   // URL.  (A slash is appended to it if it is missng.)  Parses the
