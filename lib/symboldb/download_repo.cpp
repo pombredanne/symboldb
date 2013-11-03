@@ -30,6 +30,7 @@
 #include <cxxll/mutex.hpp>
 #include <cxxll/bounded_ordered_queue.hpp>
 #include <cxxll/os.hpp>
+#include <cxxll/source_sink.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -282,7 +283,8 @@ namespace {
       bool good = false;
       try {
 	file_cache::add_sink sink(fcache, url.csum);
-	download(dopts_no_cache_, db, url.href.c_str(), &sink);
+	copy_source_to_sink(*download(dopts_no_cache_, db, url.href.c_str()),
+			    sink);
 	sink.finish(to_load.rpm_path);
 	good = true;
       } catch (curl_exception &e) {
