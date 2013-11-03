@@ -19,9 +19,11 @@
 #pragma once
 
 #include <string>
+#include <tr1/memory>
 #include <vector>
 
 #include <cxxll/sink.hpp>
+#include <cxxll/source.hpp>
 
 class database;
 
@@ -45,3 +47,8 @@ void download(const download_options &, database &,
 // pg_exception or curl_exception on errors.
 void download(const download_options &, database &,
 	      const char *url, std::vector<unsigned char> &result);
+
+// Creates a source with data from URL.  Throws pg_exception or
+// curl_exception on errors.
+std::tr1::shared_ptr<cxxll::source> download
+  (const download_options &, database &, const char *url);
