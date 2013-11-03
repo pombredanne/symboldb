@@ -171,13 +171,8 @@ do_file(const symboldb_options &opt, database &db, const char *arg)
 static int
 do_download(const symboldb_options &opt, database &db, const char *url)
 {
-  std::vector<unsigned char> data;
-  download(opt.download(), db, url, data);
-  if (!data.empty()
-      && fwrite(data.data(), data.size(), 1, stdout) != 1) {
-    perror("fwrite");
-    return 1;
-  }
+  fd_sink out(1);
+  copy_source_to_sink(*download(opt.download(), db, url), out);
   return 0;
 }
 
