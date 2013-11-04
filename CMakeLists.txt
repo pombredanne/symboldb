@@ -81,7 +81,6 @@ add_library (CXXLL
   lib/cxxll/cpio_reader.cpp
   lib/cxxll/curl_exception.cpp
   lib/cxxll/curl_exception_dump.cpp
-  lib/cxxll/curl_fetch_result.cpp
   lib/cxxll/curl_handle.cpp
   lib/cxxll/dir_handle.cpp
   lib/cxxll/elf_exception.cpp
