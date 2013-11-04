@@ -53,4 +53,10 @@ public:
   long long file_size() const;
 };
 
+// These functions initialize and deinitialize the underlying HTTP
+// client library.
+void url_source_init();
+void url_source_deinit();
+
+
 } // namespace cxxll

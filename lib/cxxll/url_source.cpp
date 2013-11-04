@@ -351,3 +351,20 @@ cxxll::url_source::file_size() const
   }
   return impl_->file_size_;
 }
+
+//////////////////////////////////////////////////////////////////////
+// Global functions
+
+void
+cxxll::url_source_init()
+{
+  if (curl_global_init(CURL_GLOBAL_ALL) != 0) {
+    raise<std::runtime_error>("libcurl initialization failed");
+  }
+}
+
+void
+cxxll::url_source_deinit()
+{
+  curl_global_cleanup();
+}
