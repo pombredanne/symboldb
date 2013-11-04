@@ -324,6 +324,8 @@ void
 cxxll::url_source::connect()
 {
   impl_->connect();
+  // Establish the connection, saving some data for later reading.
+  impl_->read(NULL, 0);
 }
 
 size_t
