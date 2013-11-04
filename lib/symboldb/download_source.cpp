@@ -20,7 +20,6 @@
 #include <symboldb/database.hpp>
 #include <cxxll/url_source.hpp>
 #include <cxxll/curl_exception.hpp>
-#include <cxxll/curl_fetch_result.hpp>
 #include <cxxll/vector_source.hpp>
 #include <cxxll/vector_sink.hpp>
 
@@ -47,21 +46,29 @@ namespace {
   struct download_source : source {
     database &db;
     std::string url;
-    url_source src;
+    // TODO: Make this a direct member once we have move support.
+    std::tr1::shared_ptr<url_source> src;
     std::vector<unsigned char> buffer;
 
     explicit download_source(database &d, const char *u)
-      : db(d), url(u), src(url)
+      : db(d), url(u), src(new url_source(url))
+    {
+      src->connect();
+    }
+
+    explicit download_source(database &d, const char *u,
+			     std::tr1::shared_ptr<url_source> presrc)
+      : db(d), url(u), src(presrc)
     {
     }
 
     size_t
     read(unsigned char *buf, size_t len)
     {
-      size_t ret = src.read(buf, len);
+      size_t ret = src->read(buf, len);
       if (ret == 0) {
 	// We got the entire data.  Store it in the database.
-	db.url_cache_update(url.c_str(), buffer, src.http_date());
+	db.url_cache_update(url.c_str(), buffer, src->http_date());
       } else {
 	buffer.insert(buffer.end(), buf, buf + ret);
       }
@@ -93,16 +100,16 @@ download(const download_options &opt, database &db,
     return std::tr1::shared_ptr<cxxll::source>(new url_source(url));
   case download_options::check_cache:
     {
-      vector_sink vsink;
-      curl_fetch_result r(&vsink);
-      r.head(url);
-      if (r.http_date > 0 && r.http_size >= 0) {
+      std::tr1::shared_ptr<cxxll::url_source> net(new url_source(url));
+      net->connect();
+      if (net->http_date() > 0 && net->file_size() >= 0) {
 	std::tr1::shared_ptr<database_source> result(new database_source);
-	if (db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
-			       r.http_date, result->data)) {
+	if (db.url_cache_fetch(url, static_cast<size_t>(net->file_size()),
+			       net->http_date(), result->data)) {
 	  return result;
 	}
       }
+      return std::tr1::shared_ptr<cxxll::source>(new download_source(db, url, net));
     }
   }
 
