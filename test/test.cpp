@@ -25,8 +25,8 @@
 #include <cxxll/fd_handle.hpp>
 #include <cxxll/elf_image.hpp>
 #include <cxxll/rpm_parser.hpp>
-#include <cxxll/curl_fetch_result.hpp>
 #include <cxxll/regex_handle.hpp>
+#include <cxxll/url_source.hpp>
 
 #include <algorithm>
 #include <cstdio>
@@ -311,7 +311,7 @@ run_tests(const char *pattern)
     }
     elf_image_init();
     rpm_parser_init();
-    curl_fetch_result::global_init();
+    url_source_init();
   }
 
   for (test_suite::iterator p = tests->begin(), end = tests->end();
@@ -347,7 +347,7 @@ run_tests(const char *pattern)
   }
 
   rpm_parser_deinit();
-  curl_fetch_result::global_deinit();
+  url_source_deinit();
 
   if (file_descriptors_valid(start_fds)) {
     std::vector<int> end_fds(file_descriptors());
