@@ -72,6 +72,12 @@ struct cxxll::url_source::impl {
   // necessary.  Updates http_data_ and http_size_.
   void check();
 
+  // Establishes the underlying connection.
+  void connect();
+
+  // Internal read function.
+  size_t read(unsigned char *, size_t);
+  
   static size_t write_function(char *ptr, size_t size, size_t nmemb, void *);
 };
 
@@ -92,7 +98,7 @@ cxxll::url_source::impl::~impl()
   curl_multi_cleanup(multi_);
 }
 
-void
+inline void
 cxxll::url_source::impl::check()
 {
   if (!before_data_) {
@@ -126,6 +132,155 @@ cxxll::url_source::impl::check()
   curl_easy_getinfo(curl_.raw, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &size);
   file_size_ = size;
   before_data_ = false;
+}
+
+void
+cxxll::url_source::impl::connect()
+{
+  if (connected_) {
+    return;
+  }
+
+  CURL *curl = curl_.raw;
+  const std::string &url(url_);
+  CURLcode ret;
+  ret = curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  long protocols = CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP;
+  ret = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, protocols);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_FILETIME, 1L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, impl::write_function);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_USERAGENT, "symboldb/0.0");
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+
+  // The following settings should detect connectivity issues.  The
+  // throughput limit is fairly low, but it should allow us to detect
+  // dead connections.
+  ret = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 500L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+  ret = curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
+  if (ret != CURLE_OK) {
+    throw curl_exception(curl_easy_strerror(ret)).url(url);
+  }
+
+  CURLMcode mret = curl_multi_add_handle(multi_, curl);
+  if (mret != CURLM_OK) {
+    throw curl_exception(curl_multi_strerror(mret)).url(url);
+  }
+
+  connected_ = true;
+}
+
+size_t
+cxxll::url_source::impl::read(unsigned char *buffer, size_t length)
+{
+  if (pending_pos_ < pending_.size()) {
+    size_t to_copy =
+      std::min(pending_.size() - pending_pos_, length);
+    memcpy(buffer, pending_.data() + pending_pos_, to_copy);
+    pending_pos_ += to_copy;
+    return to_copy;
+  }
+  pending_.clear();
+  pending_pos_ = 0;
+
+  buffer_ = char_cast(buffer);
+  buffer_length_ = length;
+  buffer_written_ = 0;
+  write_callback_ = false;
+
+  // Clear out the target buffer reference on function exit.
+  struct clearer {
+    impl *impl_;
+    ~clearer()
+    {
+      impl_->buffer_ = 0;
+      impl_->buffer_length_ = 0;
+      impl_->buffer_written_ = 0;
+    }
+  } clearer;
+  clearer.impl_ = this;
+
+  connect();
+
+  size_t written;
+  while (true) {
+    CURLM *multi(multi_);
+    int running_handles;
+    CURLMcode ret = curl_multi_perform(multi, &running_handles);
+    if (ret  != CURLM_OK) {
+      throw curl_exception(curl_multi_strerror(ret)).url(url_);
+    }
+    written = buffer_written_;
+    if (write_callback_ || running_handles == 0) {
+      break;
+    }
+
+    // Wait for I/O activity.
+    // TODO: This really should use poll instead of select, but this
+    // will need wiring up another callback.
+    fd_set rset, wset, eset;
+    FD_ZERO(&rset);
+    FD_ZERO(&wset);
+    FD_ZERO(&eset);
+    int max_fd;
+    ret = curl_multi_fdset(multi, &rset, &wset, &eset, &max_fd);
+    if (ret != CURLM_OK) {
+      throw curl_exception(curl_multi_strerror(ret)).url(url_);
+    }
+    if (max_fd < 0) {
+      // Yuck.  Curl requested busy-waiting.
+      ::usleep(10 * 1000);
+      continue;
+    }
+    long timeout;
+    ret = curl_multi_timeout(multi, &timeout);
+    if (ret  != CURLM_OK) {
+      throw curl_exception(curl_multi_strerror(ret)).url(url_);
+    }
+    struct timeval tv;
+    tv.tv_sec = timeout / 1000;
+    tv.tv_usec = timeout * 1000;
+    int osret = ::select(max_fd + 1, &rset, &wset, &eset, &tv);
+    if (osret < 0) {
+      throw os_exception().function(::select).count(max_fd);
+    }
+  }
+
+  check();
+
+  return written;
 }
 
 size_t
@@ -168,150 +323,13 @@ cxxll::url_source::~url_source()
 void
 cxxll::url_source::connect()
 {
-  if (impl_->connected_) {
-    return;
-  }
-
-  CURL *curl = impl_->curl_.raw;
-  const std::string &url(impl_->url_);
-  CURLcode ret;
-  ret = curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  long protocols = CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP;
-  ret = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, protocols);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_FILETIME, 1L);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, impl::write_function);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_WRITEDATA, &*impl_);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_USERAGENT, "symboldb/0.0");
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-
-  // The following settings should detect connectivity issues.  The
-  // throughput limit is fairly low, but it should allow us to detect
-  // dead connections.
-  ret = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 500L);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-  ret = curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
-  if (ret != CURLE_OK) {
-    throw curl_exception(curl_easy_strerror(ret)).url(url);
-  }
-
-  CURLMcode mret = curl_multi_add_handle(impl_->multi_, curl);
-  if (mret != CURLM_OK) {
-    throw curl_exception(curl_multi_strerror(mret)).url(url);
-  }
-
-  impl_->connected_ = true;
+  impl_->connect();
 }
 
 size_t
 cxxll::url_source::read(unsigned char *buffer, size_t length)
 {
-  if (impl_->pending_pos_ < impl_->pending_.size()) {
-    size_t to_copy =
-      std::min(impl_->pending_.size() - impl_->pending_pos_, length);
-    memcpy(buffer, impl_->pending_.data() + impl_->pending_pos_, to_copy);
-    impl_->pending_pos_ += to_copy;
-    return to_copy;
-  }
-  impl_->pending_.clear();
-  impl_->pending_pos_ = 0;
-
-  impl_->buffer_ = char_cast(buffer);
-  impl_->buffer_length_ = length;
-  impl_->buffer_written_ = 0;
-  impl_->write_callback_ = false;
-
-  // Clear out the target buffer reference on function exit.
-  struct clearer {
-    impl *impl_;
-    ~clearer()
-    {
-      impl_->buffer_ = 0;
-      impl_->buffer_length_ = 0;
-      impl_->buffer_written_ = 0;
-    }
-  } clearer;
-  clearer.impl_ = impl_.get();
-
-  connect();
-
-  size_t written;
-  while (true) {
-    CURLM *multi(impl_->multi_);
-    int running_handles;
-    CURLMcode ret = curl_multi_perform(multi, &running_handles);
-    if (ret  != CURLM_OK) {
-      throw curl_exception(curl_multi_strerror(ret)).url(impl_->url_);
-    }
-    written = impl_->buffer_written_;
-    if (impl_->write_callback_ || running_handles == 0) {
-      break;
-    }
-
-    // Wait for I/O activity.
-    // TODO: This really should use poll instead of select, but this
-    // will need wiring up another callback.
-    fd_set rset, wset, eset;
-    FD_ZERO(&rset);
-    FD_ZERO(&wset);
-    FD_ZERO(&eset);
-    int max_fd;
-    ret = curl_multi_fdset(multi, &rset, &wset, &eset, &max_fd);
-    if (ret != CURLM_OK) {
-      throw curl_exception(curl_multi_strerror(ret)).url(impl_->url_);
-    }
-    if (max_fd < 0) {
-      // Yuck.  Curl requested busy-waiting.
-      ::usleep(10 * 1000);
-      continue;
-    }
-    long timeout;
-    ret = curl_multi_timeout(multi, &timeout);
-    if (ret  != CURLM_OK) {
-      throw curl_exception(curl_multi_strerror(ret)).url(impl_->url_);
-    }
-    struct timeval tv;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = timeout * 1000;
-    int osret = ::select(max_fd + 1, &rset, &wset, &eset, &tv);
-    if (osret < 0) {
-      throw os_exception().function(::select).count(max_fd);
-    }
-  }
-
-  impl_->check();
-
-  return written;
+  return impl_->read(buffer, length);
 }
 
 long long
