@@ -17,68 +17,10 @@
  */
 
 #include <symboldb/download.hpp>
-#include <symboldb/database.hpp>
-#include <cxxll/curl_exception.hpp>
-#include <cxxll/curl_fetch_result.hpp>
-#include <cxxll/vector_sink.hpp>
 
 using namespace cxxll;
 
 download_options::download_options()
   : cache_mode(check_cache)
 {
-}
-
-void
-download(const download_options &opt, database &db,
-	 const char *url, sink *target)
-{
-  switch (opt.cache_mode) {
-  case download_options::only_cache:
-  case download_options::always_cache:
-    {
-      std::vector<unsigned char> data;
-      if (db.url_cache_fetch(url, data)) {
-	target->write(data);
-	return;
-      }
-      if (opt.cache_mode == download_options::only_cache) {
-	throw curl_exception("URL not in cache and network access disabled")
-	  .url(url);
-      }
-    }
-    break;
-  case download_options::no_cache:
-    break;
-  case download_options::check_cache:
-    {
-      vector_sink vsink;
-      curl_fetch_result r(&vsink);
-      r.head(url);
-      if (r.http_date > 0 && r.http_size >= 0
-	  && db.url_cache_fetch(url, static_cast<size_t>(r.http_size),
-				r.http_date, vsink.data)) {
-	target->write(vsink.data);
-	return;
-      }
-    }
-  }
-
-  curl_fetch_result r(target);
-  r.get(url);
-  if (opt.cache_mode != download_options::no_cache) {
-    if (vector_sink *vsink = dynamic_cast<vector_sink *>(target)) {
-      db.url_cache_update(url, vsink->data, r.http_date);
-    }
-  }
-}
-
-void
-download(const download_options &opt, database &db,
-	 const char *url, std::vector<unsigned char> &result)
-{
-  vector_sink target;
-  target.data.swap(result);
-  download(opt, db, url, &target);
-  target.data.swap(result);
 }
