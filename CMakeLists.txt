@@ -154,7 +154,6 @@ add_library (CXXLL
   lib/cxxll/string_source.cpp
   lib/cxxll/string_support.cpp
   lib/cxxll/subprocess.cpp
-  lib/cxxll/task.cpp
   lib/cxxll/tee_sink.cpp
   lib/cxxll/temporary_directory.cpp
   lib/cxxll/url.cpp
@@ -281,7 +280,6 @@ add_executable (runtests
   test/test-string_support.cpp
   test/test-subprocess.cpp
   test/test-symboldb-integration.cpp
-  test/test-task.cpp
   test/test-temporary_directory.cpp
   test/test-utf8.cpp
   test/test-vector_extract.cpp
