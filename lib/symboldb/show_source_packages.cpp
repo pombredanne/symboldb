@@ -21,11 +21,11 @@
 #include <symboldb/database.hpp>
 #include <symboldb/repomd.hpp>
 #include <cxxll/rpm_package_info.hpp>
-#include <cxxll/task.hpp>
 
 #include <algorithm>
 #include <cstdio>
 #include <set>
+#include <thread>
 
 using namespace cxxll;
 
@@ -87,13 +87,12 @@ symboldb_show_source_packages(const symboldb_options &opt, char **argv)
   }
 
   {
-    std::vector<std::unique_ptr<task> > tasks;
+    std::vector<std::thread> tasks;
     for (entry &e : entries) {
-      tasks.push_back(std::unique_ptr<task>
-		      (new task(std::bind(&entry::callback, &opt, &e))));
+      tasks.emplace_back(std::thread(&entry::callback, &opt, &e));
     }
-    for (std::unique_ptr<task> &t : tasks) {
-      t->wait();
+    for (std::thread &t : tasks) {
+      t.join();
     }
   }
 
