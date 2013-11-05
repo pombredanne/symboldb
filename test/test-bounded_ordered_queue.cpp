@@ -17,11 +17,11 @@
  */
 
 #include <cxxll/bounded_ordered_queue.hpp>
-#include <cxxll/task.hpp>
 #include "test.hpp"
 
 #include <vector>
 #include <set>
+#include <thread>
 
 #include <unistd.h>
 
@@ -120,9 +120,9 @@ test()
   }
 
   bounded_ordered_queue<int, int> boq(max_id, max_id);
-  std::vector<std::unique_ptr<task> > tasks;
+  std::vector<std::thread> tasks;
   for (int k = 0; k < max_id; ++k) {
-    tasks.push_back(std::unique_ptr<task>(new task(background(boq, k))));
+    tasks.emplace_back(std::thread(background(boq, k)));
   }
   std::set<int> results;
   {
@@ -140,7 +140,7 @@ test()
   CHECK(*results.begin() == 0);
   CHECK(*(--results.end()) == max_id * count - 1);
   for (int k = 0; k < max_id; ++k) {
-    tasks.at(k)->wait();
+    tasks.at(k).join();
   }
 }
 
