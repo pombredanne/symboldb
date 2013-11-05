@@ -26,7 +26,6 @@
 #include <cxxll/curl_exception.hpp>
 #include <cxxll/curl_exception_dump.hpp>
 #include <cxxll/regex_handle.hpp>
-#include <cxxll/task.hpp>
 #include <cxxll/mutex.hpp>
 #include <cxxll/bounded_ordered_queue.hpp>
 #include <cxxll/os.hpp>
@@ -35,6 +34,7 @@
 #include <cassert>
 #include <cstdio>
 #include <set>
+#include <thread>
 #include <vector>
 
 #include <unistd.h>
@@ -170,12 +170,11 @@ namespace {
 
     // Retry three times or until we downloaded all URLs.
     for (int round = 0; round < 3; ++ round) {
-      std::vector<std::unique_ptr<task> > tasks;
+      std::vector<std::thread> tasks;
       for (unsigned tid = 0; tid < opt_.download_threads; ++tid) {
 	queue_.add_producer();
-	std::unique_ptr<task> dtask
-	  (new task(std::bind(&downloader::download_helper_task, this)));
-	tasks.push_back(std::move(dtask));
+	tasks.emplace_back
+	  (std::thread(&downloader::download_helper_task, this));
       }
       std::string name;
       load_info to_load;
@@ -201,6 +200,10 @@ namespace {
 	  mutex::locker ml(&mutex_);
 	  pids_.insert(pid);
 	}
+      }
+
+      for (std::thread &task : tasks) {
+	task.join();
       }
 
       assert(queue_.producers() == 0);
