@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include <cxxll/mutex.hpp>
-#include <cxxll/cond.hpp>
 #include <cxxll/raise.hpp>
 
+#include <condition_variable>
 #include <map>
+#include <mutex>
 
 namespace cxxll {
 
@@ -33,9 +33,9 @@ class queue_without_producers : public std::exception {
 
 template <class Key, class Value>
 class bounded_ordered_queue {
-  mutable mutex mutex_;
-  cond reader_;
-  cond writer_;
+  mutable std::mutex mutex_;
+  std::condition_variable reader_;
+  std::condition_variable writer_;
   typedef std::multimap<Key, Value> map;
   map map_;
   unsigned capacity_;
@@ -96,7 +96,7 @@ bounded_ordered_queue<Key, Value>::~bounded_ordered_queue()
 template <class Key, class Value> void
 bounded_ordered_queue<Key, Value>::add_producer()
 {
-  mutex::locker ml(&mutex_);
+  std::unique_lock<std::mutex> held(mutex_);
   ++producers_;
   if (producers_ == 0) {
     raise<std::runtime_error>("too many producers");
@@ -106,45 +106,45 @@ bounded_ordered_queue<Key, Value>::add_producer()
 template <class Key, class Value> void
 bounded_ordered_queue<Key, Value>::remove_producer()
 {
-  mutex::locker ml(&mutex_);
+  std::unique_lock<std::mutex> held(mutex_);
   if (producers_ == 0) {
     raise<queue_without_producers>();
   }
   --producers_;
   if (producers_ == 0) {
-    reader_.broadcast();
+    reader_.notify_all();
   }
 }
 
 template <class Key, class Value> unsigned
 bounded_ordered_queue<Key, Value>::producers() const
 {
-  mutex::locker ml(&mutex_);
+  std::unique_lock<std::mutex> held(mutex_);
   return producers_;
 }
 
 template <class Key, class Value> void
 bounded_ordered_queue<Key, Value>::push(const Key &key, const Value &value)
 {
-  mutex::locker ml(&mutex_);
+  std::unique_lock<std::mutex> held(mutex_);
   if (producers_ == 0) {
     raise<std::logic_error>
       ("bounded_ordered_queue push without producers");
   }
   while (map_.size() >= capacity_) {
-    writer_.wait(mutex_);
+    writer_.wait(held);
   }
   map_.insert(std::make_pair(key, value));
-  reader_.signal();
+  reader_.notify_one();
 }
 
 template <class Key, class Value> bool
 bounded_ordered_queue<Key, Value>::pop(Key &key, Value &value)
 {
-  mutex::locker ml(&mutex_);
+  std::unique_lock<std::mutex> held(mutex_);
   do {
     while (map_.empty() && producers_ > 0) {
-      reader_.wait(mutex_);
+      reader_.wait(held);
     }
     if (map_.empty() && producers_ == 0) {
       return false;
@@ -154,7 +154,7 @@ bounded_ordered_queue<Key, Value>::pop(Key &key, Value &value)
   key = p->first;
   value = p->second;
   map_.erase(p);
-  writer_.signal();
+  writer_.notify_one();
   return true;
 }
 
@@ -172,7 +172,7 @@ bounded_ordered_queue<Key, Value>::pop()
 template <class Key, class Value> unsigned
 bounded_ordered_queue<Key, Value>::size_estimate() const
 {
-  mutex::locker ml(&mutex_);
+  std::unique_lock<std::mutex> held(mutex_);
   return map_.size();
 }
 
