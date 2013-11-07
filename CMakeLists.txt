@@ -221,6 +221,7 @@ add_executable (symboldb
 
 target_link_libraries (symboldb
   SymbolDB
+  -lpthread
 )
 
 install (TARGETS symboldb DESTINATION bin)
@@ -294,6 +295,7 @@ add_executable (runtests
 
 target_link_libraries (runtests
   SymbolDB
+  -lpthread
 )
 
 add_custom_command (
